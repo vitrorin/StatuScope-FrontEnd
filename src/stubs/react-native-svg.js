@@ -1,0 +1,30 @@
+const stub = () => null
+export default stub
+export const Svg = stub
+export const Circle = stub
+export const Ellipse = stub
+export const G = stub
+export const Text = stub
+export const TSpan = stub
+export const TextPath = stub
+export const Path = stub
+export const Polygon = stub
+export const Polyline = stub
+export const Line = stub
+export const Rect = stub
+export const Use = stub
+export const Image = stub
+export const Symbol = stub
+export const Defs = stub
+export const LinearGradient = stub
+export const RadialGradient = stub
+export const Stop = stub
+export const ClipPath = stub
+export const Pattern = stub
+export const Mask = stub
+export const ForeignObject = stub
+export const Marker = stub
+export const Filter = stub
+export const FeColorMatrix = stub
+export const FeBlend = stub
+export const FeGaussianBlur = stub
