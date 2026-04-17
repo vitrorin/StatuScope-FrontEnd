@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn build *)",
+      "Bash(npx storybook@latest init --yes)",
+      "Bash(yarn storybook *)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 4600 /F)",
+      "Bash(taskkill /PID 31500 /F)",
+      "Bash(cmd /c \"taskkill /PID 4600 /F\")",
+      "Bash(cmd /c \"taskkill /PID 31500 /F\")",
+      "Bash(cmd /c \"netstat -ano | findstr :6006\")",
+      "Bash(cmd /c \"netstat -ano | findstr LISTEN\")",
+      "Bash(npx storybook *)",
+      "Bash(cmd /c \"netstat -ano\")"
+    ]
+  }
+}
