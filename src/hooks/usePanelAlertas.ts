@@ -1,38 +1,7 @@
 import { useState, useCallback } from 'react'
 import type { Alerta, PanelAlertasProps } from '../types/alerta'
 
-const MOCK_ALERTAS: Alerta[] = [
-  {
-    id: '1',
-    enfermedad: 'Dengue hemorrágico',
-    severidad: 'alto',
-    codigoPostal: '64000',
-    casosConfirmados: 47,
-    tendenciaSemanal: 12,
-    pruebasSugeridas: ['PCR dengue', 'Biometría hemática', 'Plaquetas'],
-    perfilUrl: '#',
-  },
-  {
-    id: '2',
-    enfermedad: 'Influenza A (H3N2)',
-    severidad: 'medio',
-    codigoPostal: '64010',
-    casosConfirmados: 23,
-    tendenciaSemanal: -3,
-    pruebasSugeridas: ['Panel viral respiratorio', 'Antígeno influenza'],
-    perfilUrl: '#',
-  },
-  {
-    id: '3',
-    enfermedad: 'COVID-19',
-    severidad: 'bajo',
-    codigoPostal: '64020',
-    casosConfirmados: 8,
-    tendenciaSemanal: -2,
-    pruebasSugeridas: ['Prueba rápida antígenos'],
-    perfilUrl: '#',
-  },
-]
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
 type Estado = PanelAlertasProps['estado']
 
@@ -45,13 +14,11 @@ export function usePanelAlertas() {
     setAlertas([])
 
     try {
-      // Simula llamada al backend — será reemplazada por el endpoint real en SS-33
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      const relevantes = MOCK_ALERTAS.filter((a) =>
-        a.codigoPostal.startsWith(codigoPostal.slice(0, 3))
-      )
-      if (relevantes.length > 0) {
-        setAlertas(relevantes)
+      const res = await fetch(`${API_URL}/api/alertas?codigoPostal=${encodeURIComponent(codigoPostal)}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      if (data.alertas.length > 0) {
+        setAlertas(data.alertas)
         setEstado('con_alertas')
       } else {
         setEstado('sin_alertas')
