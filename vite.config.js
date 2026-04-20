@@ -10,19 +10,6 @@ const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(file
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      // react-native-web missing InputAccessoryView — use shim that adds it
-      'react-native': path.resolve(dirname, 'src/stubs/react-native-shim.js'),
-      'react-native-svg': path.resolve(dirname, 'src/stubs/react-native-svg.js')
-    }
-  },
-  define: {
-    global: 'globalThis'
-  },
-  optimizeDeps: {
-    include: ['react-native-web', 'use-sync-external-store/shim']
-  },
   test: {
     projects: [
       {
