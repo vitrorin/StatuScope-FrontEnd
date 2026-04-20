@@ -1,0 +1,66 @@
+import React from 'react';
+import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+
+export type StatusBadgeVariant = 'critical' | 'success' | 'warning' | 'neutral' | 'info' | 'role';
+
+export interface StatusBadgeProps {
+  label: string;
+  variant?: StatusBadgeVariant;
+  style?: ViewStyle;
+}
+
+const variantStyles = {
+  critical: {
+    background: '#FEE2E2',
+    text: '#DC2626',
+  },
+  success: {
+    background: '#DCFCE7',
+    text: '#16A34A',
+  },
+  warning: {
+    background: '#FEF3C7',
+    text: '#D97706',
+  },
+  neutral: {
+    background: '#F3F4F6',
+    text: '#6B7280',
+  },
+  info: {
+    background: '#DBEAFE',
+    text: '#2563EB',
+  },
+  role: {
+    background: '#EEF2FF',
+    text: '#1D4ED8',
+  },
+};
+
+export function StatusBadge({
+  label,
+  variant = 'neutral',
+  style,
+}: StatusBadgeProps) {
+  const colors = variantStyles[variant];
+
+  return (
+    <View style={[styles.badge, { backgroundColor: colors.background }, style]}>
+      <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    alignSelf: 'flex-start',
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+});
