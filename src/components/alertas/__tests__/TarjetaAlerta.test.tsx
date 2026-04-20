@@ -58,10 +58,10 @@ describe('TarjetaAlerta', () => {
     expect(container.firstChild).toHaveClass('border-l-red-500')
   })
 
-  it('aplica borde amarillo para severidad medio', () => {
+  it('aplica borde ámbar para severidad medio', () => {
     const { container } = render(
       <TarjetaAlerta alerta={{ ...alertaBase, severidad: 'medio' }} />
     )
-    expect(container.firstChild).toHaveClass('border-l-yellow-500')
+    expect(container.firstChild).toHaveClass('border-l-amber-500')
   })
 })

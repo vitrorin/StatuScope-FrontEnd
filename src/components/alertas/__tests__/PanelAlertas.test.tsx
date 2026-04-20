@@ -27,7 +27,7 @@ describe('PanelAlertas', () => {
   it('muestra skeleton en estado cargando', () => {
     render(<PanelAlertas estado="cargando" alertas={[]} onReintentar={() => {}} />)
     expect(
-      screen.getByText('Analizando contexto epidemiológico...')
+      screen.getByText('Consultando base de datos epidemiológica...')
     ).toBeInTheDocument()
   })
 
@@ -38,7 +38,7 @@ describe('PanelAlertas', () => {
 
   it('muestra mensaje de error en estado error', () => {
     render(<PanelAlertas estado="error" alertas={[]} onReintentar={() => {}} />)
-    expect(screen.getByText('No se pudo cargar')).toBeInTheDocument()
+    expect(screen.getByText('Error de conexión')).toBeInTheDocument()
   })
 
   it('llama onReintentar desde el estado error', () => {

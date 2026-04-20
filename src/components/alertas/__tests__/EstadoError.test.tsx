@@ -5,13 +5,13 @@ import { EstadoError } from '../EstadoError'
 describe('EstadoError', () => {
   it('muestra el título de error', () => {
     render(<EstadoError onReintentar={() => {}} />)
-    expect(screen.getByText('No se pudo cargar')).toBeInTheDocument()
+    expect(screen.getByText('Error de conexión')).toBeInTheDocument()
   })
 
   it('muestra descripción del error', () => {
     render(<EstadoError onReintentar={() => {}} />)
     expect(
-      screen.getByText(/Error al consultar el contexto epidemiológico/i)
+      screen.getByText(/No fue posible consultar el sistema de vigilancia epidemiológica/i)
     ).toBeInTheDocument()
   })
 

@@ -5,7 +5,7 @@ import { EstadoCargando } from '../EstadoCargando'
 describe('EstadoCargando', () => {
   it('muestra el mensaje de análisis en curso', () => {
     render(<EstadoCargando />)
-    expect(screen.getByText('Analizando contexto epidemiológico...')).toBeInTheDocument()
+    expect(screen.getByText('Consultando base de datos epidemiológica...')).toBeInTheDocument()
   })
 
   it('renderiza elementos skeleton', () => {

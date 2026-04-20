@@ -20,16 +20,16 @@ describe('BadgeSeveridad', () => {
 
   it('aplica clase de color rojo para severidad alto', () => {
     render(<BadgeSeveridad severidad="alto" />)
-    expect(screen.getByText('ALTO')).toHaveClass('text-red-400')
+    expect(screen.getByText('ALTO')).toHaveClass('text-red-700')
   })
 
-  it('aplica clase de color amarillo para severidad medio', () => {
+  it('aplica clase de color ámbar para severidad medio', () => {
     render(<BadgeSeveridad severidad="medio" />)
-    expect(screen.getByText('MEDIO')).toHaveClass('text-yellow-400')
+    expect(screen.getByText('MEDIO')).toHaveClass('text-amber-700')
   })
 
   it('aplica clase de color azul para severidad bajo', () => {
     render(<BadgeSeveridad severidad="bajo" />)
-    expect(screen.getByText('BAJO')).toHaveClass('text-blue-400')
+    expect(screen.getByText('BAJO')).toHaveClass('text-blue-700')
   })
 })
