@@ -1,15 +1,7 @@
-import { GluestackUIProvider } from '@gluestack-ui/themed'
-import { config } from '@gluestack-ui/config'
+import '../src/index.css';
 
 /** @type { import('@storybook/react-vite').Preview } */
 const preview = {
-  decorators: [
-    (Story) => (
-      <GluestackUIProvider config={config}>
-        <Story />
-      </GluestackUIProvider>
-    ),
-  ],
   parameters: {
     controls: {
       matchers: {
@@ -21,6 +13,6 @@ const preview = {
       test: 'todo',
     },
   },
-}
+};
 
-export default preview
+export default preview;
