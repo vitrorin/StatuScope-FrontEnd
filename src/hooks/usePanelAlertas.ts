@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import type { Alerta, PanelAlertasProps } from '../types/alerta'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+import api from '../api/client'
 
 type Estado = PanelAlertasProps['estado']
 
@@ -14,9 +13,7 @@ export function usePanelAlertas() {
     setAlertas([])
 
     try {
-      const res = await fetch(`${API_URL}/api/alertas?codigoPostal=${encodeURIComponent(codigoPostal)}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
+      const { data } = await api.get<{ alertas: Alerta[] }>(`/api/alertas?codigoPostal=${encodeURIComponent(codigoPostal)}`)
       if (data.alertas.length > 0) {
         setAlertas(data.alertas)
         setEstado('con_alertas')

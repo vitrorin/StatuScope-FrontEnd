@@ -1,10 +1,16 @@
 import { useState } from 'react'
 import './components.css'
 
-function LoginCard({ defaultRole = 'doctor' }) {
-  const [role, setRole] = useState(defaultRole)
+function LoginCard({ onSubmit, loading = false, error = null }) {
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (onSubmit) onSubmit(email, password)
+  }
 
   return (
     <div className="login-card">
@@ -22,72 +28,68 @@ function LoginCard({ defaultRole = 'doctor' }) {
         <h1 className="login-title">Welcome Again!</h1>
         <p className="login-subtitle">Please enter your credentials to access the system</p>
 
-        {/* Role toggle */}
-        <div className="login-label">Login as</div>
-        <div className="login-tabs">
-          <button
-            className={`login-tab ${role === 'doctor' ? 'active' : ''}`}
-            onClick={() => setRole('doctor')}
-          >
-            Doctor
-          </button>
-          <button
-            className={`login-tab ${role === 'admin' ? 'active' : ''}`}
-            onClick={() => setRole('admin')}
-          >
-            Administrator
-          </button>
-        </div>
+        <form onSubmit={handleSubmit}>
+          {/* Email */}
+          <div className="login-field">
+            <div className="login-field-label">Email:</div>
+            <div className="login-input-wrap">
+              <span className="login-input-icon">✉</span>
+              <input
+                className="login-input"
+                type="email"
+                placeholder="name@hospital.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          </div>
 
-        {/* Email */}
-        <div className="login-field">
-          <div className="login-field-label">Email:</div>
-          <div className="login-input-wrap">
-            <span className="login-input-icon">✉</span>
+          {/* Password */}
+          <div className="login-field">
+            <div className="login-field-label">
+              Password
+            </div>
+            <div className="login-input-wrap">
+              <span className="login-input-icon">🔒</span>
+              <input
+                className="login-input"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="login-input-eye"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? '🙈' : '👁'}
+              </button>
+            </div>
+          </div>
+
+          {/* Remember */}
+          <label className="login-remember">
             <input
-              className="login-input"
-              type="email"
-              placeholder="name@hospital.com"
+              type="checkbox"
+              checked={remember}
+              onChange={() => setRemember(!remember)}
             />
-          </div>
-        </div>
+            Remember me on this device
+          </label>
 
-        {/* Password */}
-        <div className="login-field">
-          <div className="login-field-label">
-            Password
-            <a href="#">Forgot my password?</a>
-          </div>
-          <div className="login-input-wrap">
-            <span className="login-input-icon">🔒</span>
-            <input
-              className="login-input"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
-            />
-            <button
-              className="login-input-eye"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? '🙈' : '👁'}
-            </button>
-          </div>
-        </div>
+          {/* Error */}
+          {error && (
+            <p style={{ color: 'red', marginBottom: '0.5rem' }}>{error}</p>
+          )}
 
-        {/* Remember */}
-        <label className="login-remember">
-          <input
-            type="checkbox"
-            checked={remember}
-            onChange={() => setRemember(!remember)}
-          />
-          Remember me on this device
-        </label>
-
-        {/* Submit */}
-        <button className="login-btn">
-          Login to the system →
-        </button>
+          {/* Submit */}
+          <button className="login-btn" type="submit" disabled={loading}>
+            {loading ? 'Signing in…' : 'Login to the system →'}
+          </button>
+        </form>
 
         {/* Footer */}
         <div className="login-footer">

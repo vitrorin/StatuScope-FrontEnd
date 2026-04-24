@@ -25,3 +25,9 @@ dist-ssr
 
 *storybook.log
 storybook-static
+
+# Environment secrets
+.env.development
+.env.local
+.env.production
+.env
