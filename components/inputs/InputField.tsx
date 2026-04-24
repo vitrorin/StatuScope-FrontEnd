@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
 export type InputFieldType = 'text' | 'password' | 'email' | 'number';
 
@@ -16,6 +25,11 @@ export interface InputFieldProps {
   required?: boolean;
   onChangeText?: (text: string) => void;
   style?: ViewStyle;
+  inputContainerStyle?: ViewStyle;
+  inputStyle?: TextStyle;
+  labelStyle?: TextStyle;
+  placeholderTextColor?: string;
+  labelAccessory?: React.ReactNode;
 }
 
 export function InputField({
@@ -31,6 +45,11 @@ export function InputField({
   required = false,
   onChangeText,
   style,
+  inputContainerStyle,
+  inputStyle,
+  labelStyle,
+  placeholderTextColor,
+  labelAccessory,
 }: InputFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -54,13 +73,19 @@ export function InputField({
     if (type === 'password') {
       return (
         <TouchableOpacity onPress={handleTogglePassword} style={styles.iconButton}>
-          <Text style={styles.iconText}>{isPasswordVisible ? '👁️' : '👁️‍🗨️'}</Text>
+          <Feather
+            name={isPasswordVisible ? 'eye' : 'eye-off'}
+            size={18}
+            color={disabled ? '#CBD5E1' : '#94A3B8'}
+          />
         </TouchableOpacity>
       );
     }
+
     if (rightIcon) {
       return <View style={styles.rightIconContainer}>{rightIcon}</View>;
     }
+
     return null;
   };
 
@@ -68,12 +93,12 @@ export function InputField({
     <View style={[styles.container, style]}>
       {label && (
         <View style={styles.labelContainer}>
-          <Text style={[styles.label, disabled && styles.labelDisabled]}>
-            {label}
-          </Text>
+          <Text style={[styles.label, labelStyle, disabled && styles.labelDisabled]}>{label}</Text>
           {required && <Text style={styles.required}>*</Text>}
+          {labelAccessory ? <View style={styles.labelAccessory}>{labelAccessory}</View> : null}
         </View>
       )}
+
       <View
         style={[
           styles.inputContainer,
@@ -83,29 +108,28 @@ export function InputField({
           },
           isFocused && styles.inputFocused,
           disabled && styles.inputDisabled,
+          inputContainerStyle,
         ]}
       >
-        {leftIcon && (
-          <View style={styles.leftIconContainer}>{leftIcon}</View>
-        )}
+        {leftIcon ? <View style={styles.leftIconContainer}>{leftIcon}</View> : null}
         <TextInput
-          style={[
-            styles.input,
-            disabled && styles.inputTextDisabled,
-          ]}
+          style={[styles.input, inputStyle, disabled && styles.inputTextDisabled]}
           placeholder={placeholder}
-          placeholderTextColor={disabled ? '#D1D5DB' : '#94A3B8'}
+          placeholderTextColor={placeholderTextColor ?? (disabled ? '#D1D5DB' : '#94A3B8')}
           value={value}
           onChangeText={onChangeText}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           secureTextEntry={type === 'password' && !isPasswordVisible}
-          keyboardType={type === 'email' ? 'email-address' : type === 'number' ? 'numeric' : 'default'}
+          keyboardType={
+            type === 'email' ? 'email-address' : type === 'number' ? 'numeric' : 'default'
+          }
           editable={!disabled}
           autoCapitalize={type === 'email' ? 'none' : 'sentences'}
         />
         {renderRightIcon()}
       </View>
+
       {error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : hint ? (
@@ -123,6 +147,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  labelAccessory: {
+    marginLeft: 'auto',
   },
   label: {
     fontSize: 14,
@@ -170,9 +197,6 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: 4,
-  },
-  iconText: {
-    fontSize: 16,
   },
   hintText: {
     fontSize: 12,

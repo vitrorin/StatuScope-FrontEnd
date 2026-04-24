@@ -1,137 +1,168 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export type SidebarActive = 'dashboard' | 'diagnosis' | 'analytics';
 
 export interface SidebarProps {
   active?: SidebarActive;
+  onLogout?: () => void;
 }
 
 interface NavItem {
   key: SidebarActive;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 const navItems: NavItem[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: '◉' },
-  { key: 'diagnosis', label: 'Diagnosis', icon: '◎' },
-  { key: 'analytics', label: 'Analytics', icon: '◈' },
+  {
+    key: 'dashboard',
+    label: 'Dashboard',
+    icon: <MaterialCommunityIcons name="view-grid-outline" size={18} color="#475569" />,
+  },
+  {
+    key: 'diagnosis',
+    label: 'Diagnosis',
+    icon: <MaterialCommunityIcons name="stethoscope" size={18} color="#475569" />,
+  },
+  {
+    key: 'analytics',
+    label: 'Analytics',
+    icon: <Feather name="bar-chart-2" size={18} color="#475569" />,
+  },
 ];
 
-export function Sidebar({ active = 'dashboard' }: SidebarProps) {
+export function Sidebar({ active = 'dashboard', onLogout }: SidebarProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.brand}>
-        <Text style={styles.brandName}>StatuScope</Text>
-        <Text style={styles.brandSubtitle}>HEALTHCARE ANALYTICS</Text>
+      <View style={styles.brandWrap}>
+        <View style={styles.brandBadge}>
+          <MaterialCommunityIcons name="radar" size={18} color="#FFFFFF" />
+        </View>
+        <View>
+          <Text style={styles.brandName}>StatuScope</Text>
+          <Text style={styles.brandSubtitle}>HEALTHCARE</Text>
+          <Text style={styles.brandSubtitle}>ANALYTICS</Text>
+        </View>
       </View>
 
       <View style={styles.nav}>
         {navItems.map((item) => {
           const isActive = active === item.key;
+
           return (
             <TouchableOpacity
               key={item.key}
               style={[styles.navItem, isActive && styles.navItemActive]}
-              activeOpacity={0.7}
+              activeOpacity={0.75}
             >
-              <Text style={[styles.navIcon, isActive && styles.navIconActive]}>
-                {item.icon}
-              </Text>
-              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
-                {item.label}
-              </Text>
+              <View style={styles.navIcon}>{item.icon}</View>
+              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <TouchableOpacity style={styles.logout} activeOpacity={0.7}>
-        <Text style={styles.logoutIcon}>⏻</Text>
-        <Text style={styles.logoutLabel}>Logout</Text>
-      </TouchableOpacity>
+      <View style={styles.logoutWrap}>
+        <TouchableOpacity style={styles.logout} activeOpacity={0.75} onPress={onLogout}>
+          <Feather name="power" size={18} color="#64748B" />
+          <Text style={styles.logoutLabel}>Log out</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: 240,
-    backgroundColor: '#FAFBFC',
+    width: 256,
+    backgroundColor: '#FCFDFE',
     borderRightWidth: 1,
-    borderRightColor: '#E5E7EB',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
+    borderRightColor: 'rgba(0, 3, 184, 0.10)',
+    paddingRight: 1,
   },
-  brand: {
-    marginBottom: 32,
-    paddingLeft: 4,
+  brandWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingTop: 23,
+    paddingBottom: 24,
+  },
+  brandBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#0003B8',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   brandName: {
-    fontSize: 20,
+    fontSize: 18,
+    lineHeight: 23,
     fontWeight: '700',
-    color: '#1D4ED8',
-    marginBottom: 4,
+    color: '#0003B8',
   },
   brandSubtitle: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#9CA3AF',
-    letterSpacing: 1.2,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: '#64748B',
+    letterSpacing: 0.6,
   },
   nav: {
     flex: 1,
+    padding: 16,
+    gap: 8,
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    marginBottom: 6,
+    gap: 12,
+    width: '100%',
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 10,
   },
   navItemActive: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(0, 3, 184, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.10)',
   },
   navIcon: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginRight: 12,
     width: 20,
-    textAlign: 'center',
-  },
-  navIconActive: {
-    color: '#1D4ED8',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   navLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#4B5563',
+    lineHeight: 20,
+    fontWeight: '600',
+    color: '#526174',
   },
   navLabelActive: {
-    color: '#1D4ED8',
-    fontWeight: '600',
+    color: '#0003B8',
+  },
+  logoutWrap: {
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingHorizontal: 16,
+    paddingTop: 17,
+    paddingBottom: 16,
   },
   logout: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    marginTop: 16,
-  },
-  logoutIcon: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    marginRight: 12,
-    width: 20,
-    textAlign: 'center',
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   logoutLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
+    lineHeight: 20,
+    fontWeight: '600',
+    color: 'rgba(71, 85, 105, 0.72)',
   },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
 export interface CheckboxFieldProps {
   label: string;
@@ -8,6 +9,8 @@ export interface CheckboxFieldProps {
   helperText?: string;
   onChange?: (checked: boolean) => void;
   style?: ViewStyle;
+  checkboxStyle?: ViewStyle;
+  labelStyle?: TextStyle;
 }
 
 export function CheckboxField({
@@ -17,6 +20,8 @@ export function CheckboxField({
   helperText,
   onChange,
   style,
+  checkboxStyle,
+  labelStyle,
 }: CheckboxFieldProps) {
   const handlePress = () => {
     if (!disabled) {
@@ -37,24 +42,16 @@ export function CheckboxField({
             styles.checkbox,
             checked && styles.checkboxChecked,
             disabled && styles.checkboxDisabled,
+            checkboxStyle,
           ]}
         >
-          {checked && <Text style={styles.checkmark}>✓</Text>}
+          {checked ? <Feather name="check" size={12} color="#FFFFFF" /> : null}
         </View>
-        <Text
-          style={[
-            styles.label,
-            disabled && styles.labelDisabled,
-          ]}
-        >
-          {label}
-        </Text>
+        <Text style={[styles.label, labelStyle, disabled && styles.labelDisabled]}>{label}</Text>
       </TouchableOpacity>
-      {helperText && (
-        <Text style={[styles.helperText, disabled && styles.helperTextDisabled]}>
-          {helperText}
-        </Text>
-      )}
+      {helperText ? (
+        <Text style={[styles.helperText, disabled && styles.helperTextDisabled]}>{helperText}</Text>
+      ) : null}
     </View>
   );
 }
@@ -86,11 +83,6 @@ const styles = StyleSheet.create({
   checkboxDisabled: {
     backgroundColor: '#F3F4F6',
     borderColor: '#E5E7EB',
-  },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
   },
   label: {
     fontSize: 14,

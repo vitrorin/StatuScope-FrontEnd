@@ -43,29 +43,31 @@ const styles = StyleSheet.create({
   containerHorizontal: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 12,
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   itemHorizontal: {
-    marginRight: 16,
+    marginRight: 12,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 16,
     color: '#6B7280',
   },
   value: {
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 16,
     fontWeight: '600',
     color: '#111827',
-    marginLeft: 8,
+    marginLeft: 6,
   },
 });

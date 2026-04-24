@@ -1,4 +1,5 @@
 import React from 'react';
+import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 export type AlertCardVariant = 'critical' | 'warning' | 'info' | 'neutral';
@@ -12,20 +13,32 @@ export interface AlertCardProps {
 
 const variantStyles = {
   critical: {
-    bar: '#EF4444',
+    bar: '#F05252',
     background: '#FEF2F2',
+    title: '#991B1B',
+    text: '#B91C1C',
+    icon: 'alert-circle' as const,
   },
   warning: {
     bar: '#F59E0B',
     background: '#FFFBEB',
+    title: '#92400E',
+    text: '#B45309',
+    icon: 'alert-triangle' as const,
   },
   info: {
-    bar: '#1D4ED8',
+    bar: '#3D7FFF',
     background: '#EFF6FF',
+    title: '#1D4ED8',
+    text: '#2563EB',
+    icon: 'info' as const,
   },
   neutral: {
-    bar: '#9CA3AF',
-    background: '#F9FAFB',
+    bar: '#8A9AAF',
+    background: '#F8FAFC',
+    title: '#334155',
+    text: '#475569',
+    icon: 'refresh-cw' as const,
   },
 };
 
@@ -41,8 +54,11 @@ export function AlertCard({
     <View style={[styles.card, { backgroundColor: colors.background }, style]}>
       <View style={[styles.indicator, { backgroundColor: colors.bar }]} />
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <View style={styles.headerRow}>
+          <Feather name={colors.icon} size={16} color={colors.bar} />
+          <Text style={[styles.title, { color: colors.title }]}>{title}</Text>
+        </View>
+        <Text style={[styles.description, { color: colors.text }]}>{description}</Text>
       </View>
     </View>
   );
@@ -51,32 +67,38 @@ export function AlertCard({
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
+    borderRadius: 10,
+    paddingVertical: 18,
+    paddingRight: 18,
     alignItems: 'stretch',
     overflow: 'hidden',
-    width: 320,
+    width: '100%',
   },
   indicator: {
     width: 4,
     borderRadius: 2,
-    marginRight: 14,
+    marginRight: 18,
+    marginLeft: 0,
   },
   content: {
     flex: 1,
+    paddingLeft: 2,
+    paddingRight: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
   },
   title: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
+    lineHeight: 20,
+    fontWeight: '800',
   },
   description: {
-    fontSize: 13,
-    color: '#6B7280',
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
+    opacity: 0.9,
   },
 });

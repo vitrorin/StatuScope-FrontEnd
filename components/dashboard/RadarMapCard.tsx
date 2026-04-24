@@ -1,7 +1,9 @@
 import React from 'react';
+import { Image } from 'expo-image';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { MapLegend } from './MapLegend';
 import { MapControlButton } from './MapControlButton';
+import { MapLegend } from './MapLegend';
 
 export interface RadarMapCardProps {
   title: string;
@@ -9,12 +11,29 @@ export interface RadarMapCardProps {
   legendItems?: { label: string; color: string }[];
   showOverlayPanel?: boolean;
   overlayTitle?: string;
+  overlayBadgeLabel?: string;
   overlayItems?: { label: string; value: string; color?: string }[];
   showControls?: boolean;
   footerTextLeft?: string;
   footerTextRight?: string;
+  mapImageUri?: string;
   style?: ViewStyle;
 }
+
+const defaultPins = [
+  {
+    top: '49%',
+    left: '48%',
+    borderColor: '#EF4444',
+    icon: <MaterialCommunityIcons name="alert" size={16} color="#EF4444" />,
+  },
+  {
+    top: '33%',
+    left: '63%',
+    borderColor: '#0003B8',
+    icon: <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />,
+  },
+];
 
 export function RadarMapCard({
   title,
@@ -22,56 +41,37 @@ export function RadarMapCard({
   legendItems,
   showOverlayPanel = false,
   overlayTitle,
+  overlayBadgeLabel,
   overlayItems,
   showControls = false,
   footerTextLeft,
   footerTextRight,
+  mapImageUri,
   style,
 }: RadarMapCardProps) {
   return (
     <View style={[styles.card, style]}>
-      <View style={styles.header}>
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-        </View>
-        {legendItems && legendItems.length > 0 && (
-          <MapLegend items={legendItems} orientation="horizontal" />
-        )}
-      </View>
-
       <View style={styles.mapContainer}>
-        <View style={styles.mapPlaceholder}>
-          <View style={styles.mapGrid}>
-            {[...Array(5)].map((_, row) => (
-              <View key={row} style={styles.mapRow}>
-                {[...Array(5)].map((_, col) => {
-                  const isCenter = row === 2 && col === 2;
-                  const isHot = (row === 1 && col === 1) || (row === 1 && col === 3) || (row === 3 && col === 2);
-                  return (
-                    <View
-                      key={col}
-                      style={[
-                        styles.mapCell,
-                        isCenter && styles.mapCellCenter,
-                        isHot && styles.mapCellHot,
-                      ]}
-                    />
-                  );
-                })}
-              </View>
-            ))}
-          </View>
-          <View style={styles.markerContainer}>
-            <View style={[styles.marker, styles.marker1]} />
-            <View style={[styles.marker, styles.marker2]} />
-            <View style={[styles.marker, styles.marker3]} />
-          </View>
-        </View>
+        {mapImageUri ? (
+          <Image source={{ uri: mapImageUri }} style={styles.mapImage} contentFit="cover" />
+        ) : (
+          <View style={styles.mapPlaceholder} />
+        )}
 
-        {showOverlayPanel && (
+        <View style={styles.blueArea} />
+        <View style={styles.heatArea} />
+        <View style={styles.purpleArea} />
+
+        {showOverlayPanel ? (
           <View style={styles.overlayPanel}>
-            <Text style={styles.overlayTitle}>{overlayTitle || 'Info'}</Text>
+            <View style={styles.overlayHeader}>
+              <Text style={styles.overlayTitle}>{overlayTitle || title}</Text>
+              {overlayBadgeLabel ? (
+                <View style={styles.overlayBadge}>
+                  <Text style={styles.overlayBadgeText}>{overlayBadgeLabel}</Text>
+                </View>
+              ) : null}
+            </View>
             {overlayItems?.map((item, index) => (
               <View key={index} style={styles.overlayItem}>
                 <View style={[styles.overlayDot, { backgroundColor: item.color || '#1D4ED8' }]} />
@@ -80,173 +80,210 @@ export function RadarMapCard({
               </View>
             ))}
           </View>
-        )}
+        ) : null}
 
-        {showControls && (
-          <View style={styles.controlsContainer}>
-            <MapControlButton icon="+" variant="default" />
-            <MapControlButton icon="−" variant="default" />
-            <MapControlButton icon="◎" variant="default" />
+        {defaultPins.map((pin, index) => (
+          <View key={index} style={[styles.pinWrap, { top: pin.top, left: pin.left }]}>
+            <View style={[styles.pin, { borderColor: pin.borderColor }]}>{pin.icon}</View>
           </View>
-        )}
+        ))}
+
+        {showControls ? (
+          <View style={styles.controlsContainer}>
+            <MapControlButton icon="plus" style={styles.controlButton} />
+            <MapControlButton icon="minus" style={styles.controlButton} />
+            <MapControlButton icon="settings" style={styles.controlButton} />
+          </View>
+        ) : null}
       </View>
 
-      {(footerTextLeft || footerTextRight) && (
-        <View style={styles.footer}>
+      <View style={styles.footer}>
+        {legendItems && legendItems.length > 0 ? (
+          <MapLegend items={legendItems} orientation="horizontal" style={styles.footerLegend} />
+        ) : (
           <Text style={styles.footerText}>{footerTextLeft}</Text>
-          <Text style={styles.footerText}>{footerTextRight}</Text>
-        </View>
-      )}
+        )}
+        <Text style={styles.footerText}>{footerTextRight}</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    flex: 1,
+    backgroundColor: '#FCFDFE',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
-    shadowRadius: 8,
+    shadowRadius: 26,
     elevation: 3,
-    width: 560,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  titleSection: {
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#6B7280',
-    marginTop: 4,
   },
   mapContainer: {
     position: 'relative',
-    height: 280,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
+    height: 520,
+    backgroundColor: '#E2E8F0',
     overflow: 'hidden',
   },
+  mapImage: {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    opacity: 0.76,
+  },
   mapPlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#DCE7F3',
   },
-  mapGrid: {
-    gap: 8,
-  },
-  mapRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  mapCell: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#E2E8F0',
-  },
-  mapCellCenter: {
-    backgroundColor: '#DBEAFE',
-  },
-  mapCellHot: {
-    backgroundColor: '#FECACA',
-  },
-  markerContainer: {
+  blueArea: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: -24,
+    right: -12,
+    width: '56%',
+    height: '118%',
+    backgroundColor: 'rgba(80, 195, 244, 0.16)',
+    borderRadius: 220,
   },
-  marker: {
+  heatArea: {
     position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    top: 94,
+    left: '34%',
+    width: 230,
+    height: 180,
+    borderRadius: 999,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
   },
-  marker1: {
-    top: '30%',
-    left: '25%',
-    backgroundColor: '#EF4444',
-  },
-  marker2: {
-    top: '45%',
-    left: '60%',
-    backgroundColor: '#F59E0B',
-  },
-  marker3: {
-    top: '65%',
-    left: '40%',
-    backgroundColor: '#1D4ED8',
+  purpleArea: {
+    position: 'absolute',
+    top: 48,
+    left: '44%',
+    width: 220,
+    height: 280,
+    borderRadius: 999,
+    backgroundColor: 'rgba(139, 92, 246, 0.08)',
   },
   overlayPanel: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    top: 24,
+    left: 24,
+    width: 214,
+    backgroundColor: 'rgba(255,255,255,0.94)',
+    borderRadius: 14,
+    padding: 16,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
     elevation: 3,
-    minWidth: 140,
+  },
+  overlayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   overlayTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 8,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    color: '#64748B',
+  },
+  overlayBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  overlayBadgeText: {
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: '700',
+    color: '#16A34A',
   },
   overlayItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginTop: 12,
   },
   overlayDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: 999,
     marginRight: 8,
   },
   overlayLabel: {
-    fontSize: 11,
-    color: '#6B7280',
     flex: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#334155',
   },
   overlayValue: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  pinWrap: {
+    position: 'absolute',
+  },
+  pin: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    borderWidth: 2,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 3,
   },
   controlsContainer: {
     position: 'absolute',
-    right: 12,
-    bottom: 12,
-    gap: 8,
+    right: 18,
+    bottom: 16,
+    gap: 10,
+  },
+  controlButton: {
+    width: 40,
+    minWidth: 40,
+    minHeight: 40,
+    borderWidth: 0,
+    borderRadius: 10,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 3,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 12,
+    minHeight: 38,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#E2E8F0',
+    paddingHorizontal: 18,
+    paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+  },
+  footerLegend: {
+    flex: 1,
   },
   footerText: {
-    fontSize: 11,
-    color: '#94A3B8',
+    fontSize: 10,
+    lineHeight: 14,
+    color: '#64748B',
   },
 });

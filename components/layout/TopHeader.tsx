@@ -1,5 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ViewStyle } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Avatar } from '../foundation/Avatar';
+import { SearchInput } from '../inputs/SearchInput';
 
 export interface TopHeaderProps {
   sectionLabel?: string;
@@ -20,48 +23,30 @@ export function TopHeader({
   userName,
   userId,
   showNotificationDot = false,
-  avatarText,
+  avatarText = 'SC',
   onSearchPress,
   onNotificationPress,
   onProfilePress,
   style,
 }: TopHeaderProps) {
-  const getInitials = (name: string): string => {
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
   return (
     <View style={[styles.container, style]}>
       <View style={styles.leftSection}>
-        {sectionLabel && (
-          <Text style={styles.sectionLabel}>{sectionLabel}</Text>
-        )}
+        {sectionLabel ? <Text style={styles.sectionLabel}>{sectionLabel}</Text> : null}
       </View>
 
       <View style={styles.centerSection}>
-        <View style={styles.searchContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder={searchPlaceholder}
-            placeholderTextColor="#94A3B8"
-            editable={false}
-            onPressIn={onSearchPress}
-          />
-        </View>
+        <SearchInput
+          placeholder={searchPlaceholder}
+          onFocus={onSearchPress}
+          style={styles.searchContainer}
+        />
       </View>
 
       <View style={styles.rightSection}>
-        <TouchableOpacity 
-          style={styles.notificationButton} 
-          onPress={onNotificationPress}
-        >
-          <Text style={styles.notificationIcon}>🔔</Text>
-          {showNotificationDot && <View style={styles.notificationDot} />}
+        <TouchableOpacity style={styles.notificationButton} onPress={onNotificationPress}>
+          <Feather name="bell" size={18} color="#64748B" />
+          {showNotificationDot ? <View style={styles.notificationDot} /> : null}
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -69,13 +54,9 @@ export function TopHeader({
         <TouchableOpacity style={styles.profileSection} onPress={onProfilePress}>
           <View style={styles.profileInfo}>
             <Text style={styles.userName}>{userName}</Text>
-            {userId && <Text style={styles.userId}>{userId}</Text>}
+            {userId ? <Text style={styles.userId}>{userId}</Text> : null}
           </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {avatarText || getInitials(userName)}
-            </Text>
-          </View>
+          <Avatar initials={avatarText} tone="doctor" size="md" style={styles.avatar} />
         </TouchableOpacity>
       </View>
     </View>
@@ -88,103 +69,78 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    minHeight: 68,
+    paddingHorizontal: 32,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    minHeight: 72,
+    borderBottomColor: '#E2E8F0',
   },
   leftSection: {
     flex: 1,
-    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   sectionLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#94A3B8',
   },
   centerSection: {
-    flex: 2,
-    alignItems: 'center',
-    paddingHorizontal: 24,
+    width: 344,
+    marginRight: 28,
+    alignItems: 'flex-end',
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    height: 40,
-    width: '100%',
-    maxWidth: 400,
-  },
-  searchIcon: {
-    fontSize: 14,
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#111827',
-    padding: 0,
+    width: 288,
   },
   rightSection: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    gap: 20,
   },
   notificationButton: {
-    padding: 8,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
-  },
-  notificationIcon: {
-    fontSize: 20,
   },
   notificationDot: {
     position: 'absolute',
-    top: 6,
-    right: 6,
+    right: -1,
+    top: 0,
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: 999,
     backgroundColor: '#EF4444',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   divider: {
     width: 1,
     height: 32,
-    backgroundColor: '#E5E7EB',
-    marginHorizontal: 16,
+    backgroundColor: '#E2E8F0',
   },
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingLeft: 1,
+    gap: 14,
   },
   profileInfo: {
     alignItems: 'flex-end',
-    marginRight: 12,
   },
   userName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    lineHeight: 20,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   userId: {
+    marginTop: 0,
     fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
+    lineHeight: 16,
+    color: '#94A3B8',
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1D4ED8',
+    backgroundColor: '#5FA8A2',
   },
 });

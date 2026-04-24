@@ -1,5 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Badge } from '../foundation/Badge';
+import { ProgressBar } from '../foundation/ProgressBar';
+import { CardBase } from '../patterns/CardBase';
 
 export type StatCardStatus = 'positive' | 'danger' | 'warning' | 'neutral';
 
@@ -17,25 +20,6 @@ export interface StatCardProps {
   style?: ViewStyle;
 }
 
-const statusColors = {
-  positive: {
-    background: '#DCFCE7',
-    text: '#22C55E',
-  },
-  danger: {
-    background: '#FEE2E2',
-    text: '#EF4444',
-  },
-  warning: {
-    background: '#FEF3C7',
-    text: '#F59E0B',
-  },
-  neutral: {
-    background: '#F3F4F6',
-    text: '#6B7280',
-  },
-};
-
 export function StatCard({
   title,
   value,
@@ -49,109 +33,97 @@ export function StatCard({
   icon,
   style,
 }: StatCardProps) {
-  const colors = statusColors[status];
+  const tone =
+    status === 'positive'
+      ? 'info'
+      : status === 'danger'
+        ? 'critical'
+        : status === 'warning'
+          ? 'warning'
+          : 'neutral';
 
   return (
-    <View style={[styles.card, style]}>
+    <CardBase style={[styles.card, style]}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
-        {badge && (
-          <View style={[styles.badge, { backgroundColor: colors.background }]}>
-            <Text style={[styles.badgeText, { color: colors.text }]}>{badge}</Text>
-          </View>
-        )}
+        {badge ? <Badge label={badge} tone={tone} style={styles.badge} /> : null}
       </View>
       <View style={styles.valueRow}>
-        {icon && <View style={styles.iconContainer}>{icon}</View>}
+        {icon ? <View style={styles.iconContainer}>{icon}</View> : null}
         <Text style={styles.value}>{value}</Text>
       </View>
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-      {trendText && (
-        <Text style={[styles.trendText, { color: colors.text }]}>{trendText}</Text>
-      )}
-      {showProgress && (
+      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      {trendText ? <Text style={styles.trendText}>{trendText}</Text> : null}
+      {showProgress ? (
         <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${Math.min(100, Math.max(0, progressValue))}%`, backgroundColor: progressColor },
-              ]}
-            />
-          </View>
+          <ProgressBar value={progressValue} color={progressColor} />
         </View>
-      )}
-    </View>
+      ) : null}
+    </CardBase>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    flex: 1,
+    minHeight: 152,
+    padding: 28,
     borderRadius: 14,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-    width: 220,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FEFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 18,
+    gap: 12,
   },
   title: {
-    fontSize: 13,
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: '500',
-    color: '#6B7280',
-    letterSpacing: 0.3,
+    color: 'rgba(100, 116, 139, 0.84)',
   },
   badge: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 999,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 52,
   },
   iconContainer: {
-    marginRight: 8,
+    marginRight: 10,
   },
   value: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
+    flexShrink: 1,
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '800',
+    letterSpacing: -0.95,
+    color: '#0F172A',
   },
   subtitle: {
+    marginTop: 10,
     fontSize: 12,
-    color: '#6B7280',
     lineHeight: 16,
+    color: '#94A3B8',
   },
   trendText: {
+    marginTop: 6,
     fontSize: 12,
-    fontWeight: '500',
-    marginTop: 4,
+    lineHeight: 16,
+    color: '#94A3B8',
   },
   progressContainer: {
     marginTop: 12,
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
   },
 });

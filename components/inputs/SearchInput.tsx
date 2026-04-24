@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native';
+import { StyleSheet, TextInput, View, ViewStyle } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
 export interface SearchInputProps {
   placeholder?: string;
@@ -41,12 +42,9 @@ export function SearchInput({
         style,
       ]}
     >
-      <Text style={styles.searchIcon}>🔍</Text>
+      <Feather name="search" size={16} color={disabled ? '#CBD5E1' : '#94A3B8'} />
       <TextInput
-        style={[
-          styles.input,
-          disabled && styles.inputDisabled,
-        ]}
+        style={[styles.input, disabled && styles.inputDisabled]}
         placeholder={placeholder}
         placeholderTextColor={disabled ? '#D1D5DB' : '#94A3B8'}
         value={value}
@@ -63,8 +61,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 10,
+    gap: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
     paddingHorizontal: 12,
     height: 40,
     borderWidth: 1,
@@ -72,20 +71,16 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   containerFocused: {
-    borderColor: '#1D4ED8',
+    borderColor: '#CBD5E1',
     backgroundColor: '#FFFFFF',
   },
   containerDisabled: {
-    backgroundColor: '#F9FAFB',
-  },
-  searchIcon: {
-    fontSize: 14,
-    marginRight: 8,
+    backgroundColor: '#F8FAFC',
   },
   input: {
     flex: 1,
     fontSize: 14,
-    color: '#111827',
+    color: '#0F172A',
     padding: 0,
   },
   inputDisabled: {
