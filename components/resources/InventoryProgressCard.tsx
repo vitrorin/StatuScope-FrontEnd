@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { ActionChipButton } from '../recommendations/ActionChipButton';
+import { Button, ButtonVariant } from '../foundation/Button';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
 
@@ -14,6 +14,12 @@ export interface InventoryProgressCardProps {
   variant?: InventoryVariant;
   actionLabel?: string;
   onAction?: () => void;
+  icon?: React.ReactNode;
+  valueTextColor?: string;
+  progressFillColor?: string;
+  progressTrackColor?: string;
+  actionPlacement?: 'inline' | 'below';
+  actionVariant?: ButtonVariant;
   style?: ViewStyle;
 }
 
@@ -43,23 +49,33 @@ export function InventoryProgressCard({
   variant = 'normal',
   actionLabel,
   onAction,
+  icon,
+  valueTextColor,
+  progressFillColor,
+  progressTrackColor,
+  actionPlacement = 'inline',
+  actionVariant = 'secondary',
   style,
 }: InventoryProgressCardProps) {
   const colors = variantStyles[variant];
   const progressWidth = Math.min(Math.max(progress, 0), 100);
+  const isActionBelow = actionPlacement === 'below' && actionLabel && onAction;
 
   return (
     <CardBase style={[styles.container, style]}>
       <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-        {valueText && <Text style={styles.valueText}>{valueText}</Text>}
+        <View style={styles.titleWrap}>
+          {icon ? <View style={styles.titleIcon}>{icon}</View> : null}
+          <Text style={styles.title}>{title}</Text>
+        </View>
+        {valueText && <Text style={[styles.valueText, valueTextColor ? { color: valueTextColor } : null]}>{valueText}</Text>}
       </View>
 
       <View style={styles.progressContainer}>
         <ProgressBar
           value={progressWidth}
-          color={colors.progressFill}
-          trackColor={colors.progressBg}
+          color={progressFillColor || colors.progressFill}
+          trackColor={progressTrackColor || colors.progressBg}
           height={8}
         />
       </View>
@@ -68,10 +84,16 @@ export function InventoryProgressCard({
         {statusText && (
           <Text style={[styles.statusText, { color: colors.statusText }]}>{statusText}</Text>
         )}
-        {actionLabel && onAction && (
-          <ActionChipButton label={actionLabel} variant="ghost" onPress={onAction} />
+        {actionPlacement === 'inline' && actionLabel && onAction && (
+          <Button label={actionLabel} variant={actionVariant} size="chip" onPress={onAction} />
         )}
       </View>
+
+      {isActionBelow ? (
+        <View style={styles.belowActionWrap}>
+          <Button label={actionLabel} variant={actionVariant} size="chip" onPress={onAction} />
+        </View>
+      ) : null}
     </CardBase>
   );
 }
@@ -85,6 +107,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  titleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    marginRight: 12,
+  },
+  titleIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 14,
@@ -103,6 +136,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  belowActionWrap: {
+    marginTop: 10,
+    alignItems: 'flex-end',
   },
   statusText: {
     fontSize: 12,

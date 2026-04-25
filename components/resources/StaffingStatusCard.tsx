@@ -9,6 +9,9 @@ export interface StaffingStatusCardProps {
   value: string;
   variant?: StaffingVariant;
   highlightColor?: string;
+  valueColor?: string;
+  icon?: React.ReactNode;
+  iconBackgroundColor?: string;
   style?: ViewStyle;
 }
 
@@ -25,6 +28,9 @@ export function StaffingStatusCard({
   value,
   variant = 'default',
   highlightColor,
+  valueColor,
+  icon,
+  iconBackgroundColor,
   style,
 }: StaffingStatusCardProps) {
   const accentColor = highlightColor || variantColors[variant];
@@ -33,11 +39,23 @@ export function StaffingStatusCard({
     <View style={[styles.container, style]}>
       <View style={[styles.accent, { backgroundColor: accentColor }]} />
       <View style={styles.content}>
-        <View style={styles.leftContent}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        <View style={styles.leftCluster}>
+          {icon ? (
+            <View
+              style={[
+                styles.iconWrap,
+                { backgroundColor: iconBackgroundColor || `${accentColor}14` },
+              ]}
+            >
+              {icon}
+            </View>
+          ) : null}
+          <View style={styles.leftContent}>
+            <Text style={styles.title}>{title}</Text>
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          </View>
         </View>
-        <Text style={[styles.value, { color: accentColor }]}>{value}</Text>
+        <Text style={[styles.value, { color: valueColor || accentColor }]}>{value}</Text>
       </View>
     </View>
   );
@@ -65,7 +83,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  leftCluster: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   leftContent: {
     flex: 1,

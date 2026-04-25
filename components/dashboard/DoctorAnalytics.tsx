@@ -6,9 +6,10 @@ import { DiseaseBreakdownCard } from '@/components/dashboard/DiseaseBreakdownCar
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
 import { DetectionBanner } from '@/components/feedback/DetectionBanner';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { SidebarItemKey, SidebarNavItem } from '@/components/Sidebar';
 import { SummaryCountCard } from '@/components/users/SummaryCountCard';
 
-const navigationLinks = {
+const doctorNavigationLinks = {
   dashboard: '/dashboard/doctor',
   diagnosis: '/diagnosis',
   analytics: '/analytics',
@@ -46,20 +47,41 @@ const breakdownSummary = [
   { label: 'Growth vs Prev. Week', value: '+12.4%', valueColor: '#DC2626' },
 ];
 
-export function DoctorAnalytics() {
+export interface AnalyticsScreenProps {
+  active?: SidebarItemKey;
+  sectionLabel?: string;
+  searchPlaceholder?: string;
+  userName?: string;
+  userId?: string;
+  avatarText?: string;
+  links?: Partial<Record<SidebarItemKey, string>>;
+  sidebarItems?: SidebarNavItem[];
+}
+
+export function AnalyticsScreen({
+  active = 'analytics',
+  sectionLabel = 'Analytics',
+  searchPlaceholder = 'Search medical records...',
+  userName = 'Dr. Sarah Chen',
+  userId = 'ID: 442910',
+  avatarText = 'SC',
+  links = doctorNavigationLinks,
+  sidebarItems,
+}: AnalyticsScreenProps) {
   const router = useRouter();
   const [timeFilter, setTimeFilter] = useState('24h');
   const [range, setRange] = useState('5km');
 
   return (
     <DashboardLayout
-      active="analytics"
-      sectionLabel="Analytics"
-      searchPlaceholder="Search medical records..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
-      links={navigationLinks}
+      active={active}
+      sectionLabel={sectionLabel}
+      searchPlaceholder={searchPlaceholder}
+      userName={userName}
+      userId={userId}
+      avatarText={avatarText}
+      links={links}
+      sidebarItems={sidebarItems}
       onLogout={() => router.replace('/')}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -201,6 +223,10 @@ export function DoctorAnalytics() {
       </ScrollView>
     </DashboardLayout>
   );
+}
+
+export function DoctorAnalytics() {
+  return <AnalyticsScreen />;
 }
 
 export default DoctorAnalytics;

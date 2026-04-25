@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { ProgressMetricRow } from './ProgressMetricRow';
 
 export interface DiseaseBreakdownRow {
@@ -22,7 +22,7 @@ export interface DiseaseBreakdownCardProps {
   summaryItems?: DiseaseBreakdownSummary[];
   buttonLabel?: string;
   onButtonPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function DiseaseBreakdownCard({

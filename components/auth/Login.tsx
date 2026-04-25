@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
+  DimensionValue,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  ViewStyle,
   useWindowDimensions,
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,14 +22,28 @@ const MUTED_TEXT = '#64748B';
 const FIELD_BORDER = '#E2E8F0';
 const SURFACE_TINT = '#F1F5F9';
 
-const radarStats = [
+type RadarStat = {
+  title: string;
+  value: string;
+  iconBackground: string;
+  iconColor: string;
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  position: ViewStyle;
+};
+
+const radarStats: RadarStat[] = [
   {
     title: 'ST. JUDE MEDICAL',
     value: '98.2%',
     iconBackground: '#34D399',
     iconColor: BRAND_BLUE,
     icon: 'hospital-box-outline' as const,
-    position: { top: '20%', left: '50%', marginTop: -10, marginLeft: -40 },
+    position: {
+      top: '20%' as DimensionValue,
+      left: '50%' as DimensionValue,
+      marginTop: -10,
+      marginLeft: -40,
+    },
   },
   {
     title: 'PATIENT FLOW',
@@ -35,7 +51,12 @@ const radarStats = [
     iconBackground: '#93C5FD',
     iconColor: BRAND_BLUE,
     icon: 'trending-up' as const,
-    position: { top: '50%', left: '50%', marginTop: 98, marginLeft: -170 },
+    position: {
+      top: '50%' as DimensionValue,
+      left: '50%' as DimensionValue,
+      marginTop: 98,
+      marginLeft: -170,
+    },
   },
   {
     title: 'RESOURCE ALLOC.',
@@ -43,7 +64,12 @@ const radarStats = [
     iconBackground: '#FFFFFF',
     iconColor: BRAND_BLUE,
     icon: 'clipboard-pulse-outline' as const,
-    position: { top: '50%', left: '50%', marginTop: 42, marginLeft: 16 },
+    position: {
+      top: '50%' as DimensionValue,
+      left: '50%' as DimensionValue,
+      marginTop: 42,
+      marginLeft: 16,
+    },
   },
 ];
 

@@ -57,7 +57,7 @@ export const WithOverlayPanel: Story = {
       { label: 'Low Risk', color: '#22C55E' },
     ],
     showOverlayPanel: true,
-    overlaytitle: 'Domain/Dashboard/RadarMapCard',
+    overlayTitle: 'Domain/Dashboard/RadarMapCard',
     overlayItems: [
       { label: 'Influenza A', value: '124', color: '#EF4444' },
       { label: 'COVID-19', value: '89', color: '#F59E0B' },
@@ -77,7 +77,7 @@ export const WithControls: Story = {
     ],
     showControls: true,
     showOverlayPanel: true,
-    overlaytitle: 'Domain/Dashboard/RadarMapCard',
+    overlayTitle: 'Domain/Dashboard/RadarMapCard',
     overlayItems: [
       { label: 'Active Clusters', value: '12' },
       { label: 'Hospitals', value: '8' },

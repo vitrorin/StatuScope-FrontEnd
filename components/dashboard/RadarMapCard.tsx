@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image } from 'expo-image';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { MapControlButton } from './MapControlButton';
 import { MapLegend } from './MapLegend';
 
@@ -25,7 +25,7 @@ export interface RadarMapCardProps {
   footerTextLeft?: string;
   footerTextRight?: string;
   mapImageUri?: string;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   showHeader?: boolean;
   showFooter?: boolean;
   mapHeight?: number;

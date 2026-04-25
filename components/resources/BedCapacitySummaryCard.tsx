@@ -14,6 +14,8 @@ export interface BedCapacitySummaryCardProps {
   showProgress?: boolean;
   progressValue?: number;
   variant?: BedCapacityVariant;
+  valueColorOverride?: string;
+  statusColorOverride?: string;
   style?: ViewStyle;
 }
 
@@ -45,6 +47,8 @@ export function BedCapacitySummaryCard({
   showProgress = false,
   progressValue = 0,
   variant = 'default',
+  valueColorOverride,
+  statusColorOverride,
   style,
 }: BedCapacitySummaryCardProps) {
   const colors = variantStyles[variant];
@@ -55,7 +59,7 @@ export function BedCapacitySummaryCard({
       <Text style={styles.title}>{title}</Text>
       
       <View style={styles.valueContainer}>
-        <Text style={[styles.value, { color: colors.valueColor }]}>{value}</Text>
+        <Text style={[styles.value, { color: valueColorOverride || colors.valueColor }]}>{value}</Text>
         {unitText && <Text style={styles.unitText}>{unitText}</Text>}
       </View>
 
@@ -68,7 +72,9 @@ export function BedCapacitySummaryCard({
       )}
 
       {statusText && (
-        <Text style={[styles.statusText, { color: colors.accentColor }]}>{statusText}</Text>
+        <Text style={[styles.statusText, { color: statusColorOverride || colors.accentColor }]}>
+          {statusText}
+        </Text>
       )}
     </CardBase>
   );

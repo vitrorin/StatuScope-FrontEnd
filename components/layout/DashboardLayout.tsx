@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Sidebar, SidebarActive } from '@/components/Sidebar';
+import { Sidebar, SidebarActive, SidebarItemKey, SidebarNavItem } from '@/components/Sidebar';
 import { TopHeader } from '@/components/layout/TopHeader';
 
 export interface DashboardLayoutProps {
@@ -12,7 +12,8 @@ export interface DashboardLayoutProps {
   userId?: string;
   avatarText?: string;
   onLogout?: () => void;
-  links?: Partial<Record<SidebarActive, string>>;
+  links?: Partial<Record<SidebarItemKey, string>>;
+  sidebarItems?: SidebarNavItem[];
 }
 
 export function DashboardLayout({
@@ -25,11 +26,12 @@ export function DashboardLayout({
   avatarText,
   onLogout,
   links,
+  sidebarItems,
 }: DashboardLayoutProps) {
   return (
     <View style={styles.page}>
       <View style={styles.frame}>
-        <Sidebar active={active} onLogout={onLogout} links={links} />
+        <Sidebar active={active} onLogout={onLogout} links={links} items={sidebarItems} />
         <View style={styles.mainArea}>
           <TopHeader
             sectionLabel={sectionLabel}

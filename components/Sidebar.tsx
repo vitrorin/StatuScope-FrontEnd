@@ -3,21 +3,30 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
-export type SidebarActive = 'dashboard' | 'diagnosis' | 'analytics';
+export type SidebarItemKey =
+  | 'dashboard'
+  | 'diagnosis'
+  | 'analytics'
+  | 'resources'
+  | 'recommendations'
+  | 'users';
 
-export interface SidebarProps {
-  active?: SidebarActive;
-  onLogout?: () => void;
-  links?: Partial<Record<SidebarActive, string>>;
-}
+export type SidebarActive = SidebarItemKey;
 
-interface NavItem {
-  key: SidebarActive;
+export interface SidebarNavItem {
+  key: SidebarItemKey;
   label: string;
   icon: React.ReactNode;
 }
 
-const navItems: NavItem[] = [
+export interface SidebarProps {
+  active?: SidebarActive;
+  onLogout?: () => void;
+  links?: Partial<Record<SidebarItemKey, string>>;
+  items?: SidebarNavItem[];
+}
+
+const navItems: SidebarNavItem[] = [
   {
     key: 'dashboard',
     label: 'Dashboard',
@@ -35,7 +44,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-export function Sidebar({ active = 'dashboard', onLogout, links }: SidebarProps) {
+export function Sidebar({ active = 'dashboard', onLogout, links, items = navItems }: SidebarProps) {
   const router = useRouter();
 
   return (
@@ -52,7 +61,7 @@ export function Sidebar({ active = 'dashboard', onLogout, links }: SidebarProps)
       </View>
 
       <View style={styles.nav}>
-        {navItems.map((item) => {
+        {items.map((item) => {
           const isActive = active === item.key;
 
           return (

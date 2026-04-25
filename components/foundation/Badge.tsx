@@ -19,15 +19,15 @@ export interface BadgeProps {
 }
 
 const toneStyles: Record<BadgeTone, { background: string; text: string }> = {
-  critical: { background: '#FEE2E2', text: '#DC2626' },
-  success: { background: '#DCFCE7', text: '#16A34A' },
-  warning: { background: '#FEF3C7', text: '#D97706' },
+  critical: { background: '#FDEBEC', text: '#F04B4B' },
+  success: { background: '#DDF8E8', text: '#35B56A' },
+  warning: { background: '#FFF1CC', text: '#E9A400' },
   neutral: { background: '#F3F4F6', text: '#6B7280' },
   info: { background: '#DBEAFE', text: '#2563EB' },
   role: { background: '#EEF2FF', text: '#1D4ED8' },
-  high: { background: '#FEE2E2', text: '#EF4444' },
-  medium: { background: '#FEF3C7', text: '#F59E0B' },
-  low: { background: '#DCFCE7', text: '#22C55E' },
+  high: { background: '#FDEBEC', text: '#F04B4B' },
+  medium: { background: '#FFF1CC', text: '#E9A400' },
+  low: { background: '#DDF8E8', text: '#35B56A' },
 };
 
 export function Badge({ label, tone = 'neutral', style }: BadgeProps) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 export interface MiniBarChartBar {
   label: string;
@@ -17,9 +17,11 @@ export interface MiniBarChartCardProps {
   subtitle?: string;
   bars: MiniBarChartBar[];
   listItems?: MiniBarChartListItem[];
+  listTitle?: string;
+  headerAccessory?: React.ReactNode;
   buttonLabel?: string;
   onButtonPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function MiniBarChartCard({
@@ -27,6 +29,8 @@ export function MiniBarChartCard({
   subtitle,
   bars,
   listItems,
+  listTitle,
+  headerAccessory,
   buttonLabel,
   onButtonPress,
   style,
@@ -40,6 +44,7 @@ export function MiniBarChartCard({
           <Text style={styles.title}>{title}</Text>
           {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
         </View>
+        {headerAccessory ? <View>{headerAccessory}</View> : null}
       </View>
 
       <View style={styles.chartContainer}>
@@ -68,6 +73,7 @@ export function MiniBarChartCard({
 
       {listItems && listItems.length > 0 && (
         <View style={styles.listContainer}>
+          {listTitle ? <Text style={styles.listTitle}>{listTitle}</Text> : null}
           {listItems.map((item, index) => (
             <View key={index} style={styles.listItem}>
               <Text style={styles.listLabel}>{item.label}</Text>
@@ -149,6 +155,15 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E7EB',
     paddingTop: 16,
     marginBottom: 16,
+  },
+  listTitle: {
+    marginBottom: 12,
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   listItem: {
     flexDirection: 'row',

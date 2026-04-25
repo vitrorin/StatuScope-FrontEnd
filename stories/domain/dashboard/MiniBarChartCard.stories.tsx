@@ -79,7 +79,7 @@ export const BalancedDistribution: Story = {
     ],
     listItems: [
       { label: 'Total this week', value: '350' },
-      { label: 'vs last week', value: '-12%', valueColor: '#22C55E' },
+      { label: 'vs last week', value: '-12%' },
     ],
     buttonLabel: 'View Details',
   },

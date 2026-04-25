@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
 import { AlertCard } from '@/components/feedback/AlertCard';
-import { MiniBarChartCard } from '@/components/dashboard/MiniBarChartCard';
+import { DiseaseBreakdownCard } from '@/components/dashboard/DiseaseBreakdownCard';
 
 const MAP_IMAGE_URI = 'https://www.figma.com/api/mcp/asset/5bd3e67c-b2d1-4685-9db8-9c8033f3f9f3';
 
@@ -142,24 +142,20 @@ export function DoctorDashboard() {
             </View>
           </View>
 
-          <MiniBarChartCard
-            title="Case Analytics"
-            subtitle="Regional Disease Trends"
-            bars={[
-              { label: 'MON', value: 40 },
-              { label: 'TUE', value: 68 },
-              { label: 'WED', value: 92 },
-              { label: 'THU', value: 95, active: true },
-              { label: 'FRI', value: 78 },
-              { label: 'SAT', value: 56 },
-              { label: 'SUN', value: 46 },
+          <DiseaseBreakdownCard
+            title="Disease Breakdown"
+            rows={[
+              { label: 'MEASLES', valueText: '124 Cases', progress: 44, barColor: '#1718C7', barHeight: 12 },
+              { label: 'DENGUE', valueText: '89 Cases', progress: 34, barColor: '#1718C7', barHeight: 12 },
+              { label: 'INFLUENZA', valueText: '312 Cases', progress: 84, barColor: '#1718C7', barHeight: 12 },
+              { label: 'PERTUSSIS', valueText: '12 Cases', progress: 10, barColor: '#1718C7', barHeight: 12 },
+              { label: 'COVID-LIKE ILLNESS', valueText: '245 Cases', progress: 65, barColor: '#1718C7', barHeight: 12 },
             ]}
-            listItems={[
-              { label: 'Respiratory/Viral', value: '2,140 cases' },
-              { label: 'Gastrointestinal', value: '842 cases' },
-              { label: 'Cardiovascular', value: '612 cases' },
+            summaryItems={[
+              { label: 'Total Cases Analysed', value: '782' },
+              { label: 'Growth vs Prev. Week', value: '+12.4%', valueColor: '#EF4444' },
             ]}
-            buttonLabel="View Full Epidemiological Report"
+            buttonLabel="Export Full Report"
             style={[styles.analyticsCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
           />
         </View>
