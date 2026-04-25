@@ -5,6 +5,14 @@ import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { MapControlButton } from './MapControlButton';
 import { MapLegend } from './MapLegend';
 
+export interface RadarMapPin {
+  top: string;
+  left: string;
+  borderColor: string;
+  fillColor?: string;
+  icon?: React.ReactNode;
+}
+
 export interface RadarMapCardProps {
   title: string;
   subtitle?: string;
@@ -18,9 +26,13 @@ export interface RadarMapCardProps {
   footerTextRight?: string;
   mapImageUri?: string;
   style?: ViewStyle;
+  showHeader?: boolean;
+  showFooter?: boolean;
+  mapHeight?: number;
+  pins?: RadarMapPin[];
 }
 
-const defaultPins = [
+const defaultPins: RadarMapPin[] = [
   {
     top: '49%',
     left: '48%',
@@ -48,10 +60,29 @@ export function RadarMapCard({
   footerTextRight,
   mapImageUri,
   style,
+  showHeader = false,
+  showFooter = true,
+  mapHeight = 520,
+  pins,
 }: RadarMapCardProps) {
+  const mapPins = pins ?? defaultPins;
+
   return (
     <View style={[styles.card, style]}>
-      <View style={styles.mapContainer}>
+      {showHeader ? (
+        <View style={styles.header}>
+          <View style={styles.headerTitleRow}>
+            <Feather name="map" size={18} color="#0003B8" />
+            <Text style={styles.headerTitle}>{title}</Text>
+          </View>
+
+          {legendItems && legendItems.length > 0 ? (
+            <MapLegend items={legendItems} orientation="horizontal" />
+          ) : null}
+        </View>
+      ) : null}
+
+      <View style={[styles.mapContainer, { height: mapHeight }]}>
         {mapImageUri ? (
           <Image source={{ uri: mapImageUri }} style={styles.mapImage} contentFit="cover" />
         ) : (
@@ -82,9 +113,22 @@ export function RadarMapCard({
           </View>
         ) : null}
 
-        {defaultPins.map((pin, index) => (
-          <View key={index} style={[styles.pinWrap, { top: pin.top, left: pin.left }]}>
-            <View style={[styles.pin, { borderColor: pin.borderColor }]}>{pin.icon}</View>
+        {mapPins.map((pin, index) => (
+          <View
+            key={index}
+            style={[styles.pinWrap, { top: pin.top as never, left: pin.left as never }]}
+          >
+            <View
+              style={[
+                styles.pin,
+                {
+                  borderColor: pin.borderColor,
+                  backgroundColor: pin.fillColor || '#FFFFFF',
+                },
+              ]}
+            >
+              {pin.icon}
+            </View>
           </View>
         ))}
 
@@ -97,14 +141,16 @@ export function RadarMapCard({
         ) : null}
       </View>
 
-      <View style={styles.footer}>
-        {legendItems && legendItems.length > 0 ? (
-          <MapLegend items={legendItems} orientation="horizontal" style={styles.footerLegend} />
-        ) : (
-          <Text style={styles.footerText}>{footerTextLeft}</Text>
-        )}
-        <Text style={styles.footerText}>{footerTextRight}</Text>
-      </View>
+      {showFooter ? (
+        <View style={styles.footer}>
+          {legendItems && legendItems.length > 0 && !showHeader ? (
+            <MapLegend items={legendItems} orientation="horizontal" style={styles.footerLegend} />
+          ) : (
+            <Text style={styles.footerText}>{footerTextLeft}</Text>
+          )}
+          <Text style={styles.footerText}>{footerTextRight}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -113,19 +159,40 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: '#FCFDFE',
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(0, 3, 184, 0.05)',
     overflow: 'hidden',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.06,
-    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
     elevation: 3,
+  },
+  header: {
+    minHeight: 66,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   mapContainer: {
     position: 'relative',
-    height: 520,
     backgroundColor: '#E2E8F0',
     overflow: 'hidden',
   },
@@ -134,7 +201,7 @@ const styles = StyleSheet.create({
     inset: 0,
     width: '100%',
     height: '100%',
-    opacity: 0.76,
+    opacity: 0.78,
   },
   mapPlaceholder: {
     ...StyleSheet.absoluteFillObject,
@@ -146,7 +213,7 @@ const styles = StyleSheet.create({
     right: -12,
     width: '56%',
     height: '118%',
-    backgroundColor: 'rgba(80, 195, 244, 0.16)',
+    backgroundColor: 'rgba(80, 195, 244, 0.10)',
     borderRadius: 220,
   },
   heatArea: {
@@ -156,7 +223,7 @@ const styles = StyleSheet.create({
     width: 230,
     height: 180,
     borderRadius: 999,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    backgroundColor: 'rgba(239, 68, 68, 0.16)',
   },
   purpleArea: {
     position: 'absolute',
@@ -165,7 +232,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 280,
     borderRadius: 999,
-    backgroundColor: 'rgba(139, 92, 246, 0.08)',
+    backgroundColor: 'rgba(139, 92, 246, 0.06)',
   },
   overlayPanel: {
     position: 'absolute',
@@ -237,7 +304,6 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 999,
     borderWidth: 2,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',

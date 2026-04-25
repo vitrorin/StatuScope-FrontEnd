@@ -20,11 +20,13 @@ export function DiagnosisChatBubble({
 
   return (
     <View style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer, style]}>
-      <Text style={[
-        styles.message,
-        isUser ? styles.userMessage : styles.assistantMessage,
-        compact && styles.compactMessage,
-      ]}>
+      <Text
+        style={[
+          styles.message,
+          isUser ? styles.userMessage : styles.assistantMessage,
+          compact && styles.compactMessage,
+        ]}
+      >
         {message}
       </Text>
     </View>
@@ -39,14 +41,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   userContainer: {
-    backgroundColor: '#1D4ED8',
+    backgroundColor: '#0003B8',
     alignSelf: 'flex-end',
-    borderBottomRightRadius: 4,
   },
   assistantContainer: {
-    backgroundColor: '#F5F7FB',
+    backgroundColor: '#F8FAFC',
     alignSelf: 'flex-start',
-    borderBottomLeftRadius: 4,
   },
   message: {
     fontSize: 14,
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   assistantMessage: {
-    color: '#111827',
+    color: '#0F172A',
   },
   compactMessage: {
     fontSize: 13,

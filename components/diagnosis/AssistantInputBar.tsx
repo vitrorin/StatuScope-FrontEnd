@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { StyleSheet, TextInput, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 export interface AssistantInputBarProps {
   placeholder?: string;
@@ -25,22 +26,22 @@ export function AssistantInputBar({
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor="#6B7280"
         value={value}
         onChangeText={onChangeText}
         editable={!disabled}
         multiline
       />
-      {showSendButton && (
+      {showSendButton ? (
         <TouchableOpacity
           style={[styles.sendButton, disabled && styles.sendButtonDisabled]}
           onPress={onSendPress}
           disabled={disabled || !value}
-          activeOpacity={0.7}
+          activeOpacity={0.75}
         >
-          <Text style={styles.sendIcon}>➤</Text>
+          <Feather name="send" size={14} color="#FFFFFF" />
         </TouchableOpacity>
-      )}
+      ) : null}
     </View>
   );
 }
@@ -48,40 +49,35 @@ export function AssistantInputBar({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 8,
     minHeight: 52,
   },
   containerDisabled: {
-    backgroundColor: '#F9FAFB',
-    borderColor: '#F3F4F6',
+    backgroundColor: '#F8FAFC',
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    color: '#111827',
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#0F172A',
     paddingVertical: 0,
-    maxHeight: 100,
+    maxHeight: 96,
   },
   sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#1D4ED8',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#0003B8',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
   },
   sendButtonDisabled: {
-    backgroundColor: '#E5E7EB',
-  },
-  sendIcon: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    backgroundColor: '#CBD5E1',
   },
 });

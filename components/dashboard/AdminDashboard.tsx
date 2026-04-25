@@ -47,6 +47,10 @@ const users: UserData[] = [
   },
 ];
 
+const navigationLinks = {
+  dashboard: '/dashboard/administrator',
+} as const;
+
 export function AdminDashboard() {
   const router = useRouter();
 
@@ -58,6 +62,7 @@ export function AdminDashboard() {
       userName="Admin Martinez"
       userId="ID: 001245"
       avatarText="AM"
+      links={navigationLinks}
       onLogout={() => router.replace('/')}
     >
       <View style={styles.container}>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 export type FileUploadState = 'empty' | 'dragging' | 'uploaded' | 'error';
@@ -17,161 +18,135 @@ export interface FileUploadDropzoneProps {
 
 export function FileUploadDropzone({
   label,
-  description = 'Drag and drop files here or',
+  description = 'Drag and drop files or',
   supportedFormats = 'PDF, JPG, PNG',
-  maxSizeText = 'Max file size: 10MB',
+  maxSizeText = '10MB',
   state = 'empty',
   fileName,
   error,
   onBrowsePress,
   style,
 }: FileUploadDropzoneProps) {
-  const getContainerStyle = () => {
-    const baseStyle = [styles.container];
-    
-    switch (state) {
-      case 'dragging':
-        baseStyle.push(styles.containerDragging);
-        break;
-      case 'uploaded':
-        baseStyle.push(styles.containerUploaded);
-        break;
-      case 'error':
-        baseStyle.push(styles.containerError);
-        break;
-      default:
-        baseStyle.push(styles.containerEmpty);
-    }
-    
-    return baseStyle;
-  };
-
-  const getIcon = () => {
-    switch (state) {
-      case 'uploaded':
-        return '✅';
-      case 'error':
-        return '⚠️';
-      default:
-        return '📁';
-    }
-  };
-
-  const getDescriptionText = () => {
-    if (state === 'uploaded' && fileName) {
-      return fileName;
-    }
-    return description;
-  };
+  const isUploaded = state === 'uploaded' && fileName;
 
   return (
     <View style={[styles.wrapper, style]}>
-      {label && (
-        <Text style={styles.label}>{label}</Text>
-      )}
-      <View style={getContainerStyle()}>
-        <Text style={styles.icon}>{getIcon()}</Text>
-        {state !== 'uploaded' ? (
+      {label ? <Text style={styles.label}>{label}</Text> : null}
+      <View
+        style={[
+          styles.container,
+          state === 'dragging' && styles.containerDragging,
+          state === 'uploaded' && styles.containerUploaded,
+          state === 'error' && styles.containerError,
+        ]}
+      >
+        <View style={styles.iconWrap}>
+          {state === 'uploaded' ? (
+            <Feather name="check-circle" size={24} color="#16A34A" />
+          ) : state === 'error' ? (
+            <Feather name="alert-circle" size={24} color="#DC2626" />
+          ) : (
+            <Feather name="upload-cloud" size={24} color="#94A3B8" />
+          )}
+        </View>
+
+        {isUploaded ? (
+          <Text style={styles.fileName}>{fileName}</Text>
+        ) : (
           <>
-            <Text style={styles.description}>{description}</Text>
             <View style={styles.browseRow}>
-              <TouchableOpacity onPress={onBrowsePress}>
+              <Text style={styles.description}>{description} </Text>
+              <TouchableOpacity onPress={onBrowsePress} activeOpacity={0.75}>
                 <Text style={styles.browseLink}>browse</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.formatRow}>
-              <Text style={styles.formatText}>{supportedFormats}</Text>
-              <Text style={styles.separator}>•</Text>
-              <Text style={styles.formatText}>{maxSizeText}</Text>
-            </View>
+            <Text style={styles.formatText}>
+              {supportedFormats} up to {maxSizeText}
+            </Text>
           </>
-        ) : (
-          <Text style={styles.fileName}>{fileName}</Text>
         )}
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: 16,
     width: '100%',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#64748B',
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   container: {
+    minHeight: 96,
     borderWidth: 2,
     borderStyle: 'dashed',
     borderRadius: 12,
-    padding: 24,
+    borderColor: '#D9E2F0',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    minHeight: 160,
-  },
-  containerEmpty: {
-    borderColor: '#D1D5DB',
+    paddingHorizontal: 16,
+    paddingVertical: 22,
   },
   containerDragging: {
-    borderColor: '#1D4ED8',
+    borderColor: '#0003B8',
     backgroundColor: '#EEF2FF',
   },
   containerUploaded: {
-    borderColor: '#22C55E',
+    borderColor: '#16A34A',
     backgroundColor: '#F0FDF4',
   },
   containerError: {
-    borderColor: '#EF4444',
+    borderColor: '#FCA5A5',
     backgroundColor: '#FEF2F2',
   },
-  icon: {
-    fontSize: 32,
+  iconWrap: {
     marginBottom: 12,
-  },
-  description: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginBottom: 8,
   },
   browseRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 6,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#475569',
+    textAlign: 'center',
   },
   browseLink: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1D4ED8',
-  },
-  formatRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    lineHeight: 20,
+    fontWeight: '700',
+    color: '#0003B8',
   },
   formatText: {
     fontSize: 12,
-    color: '#9CA3AF',
-  },
-  separator: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginHorizontal: 8,
+    lineHeight: 18,
+    color: '#94A3B8',
+    textAlign: 'center',
   },
   fileName: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
+    lineHeight: 20,
+    fontWeight: '600',
+    color: '#0F172A',
     textAlign: 'center',
   },
   errorText: {
-    fontSize: 12,
-    color: '#EF4444',
     marginTop: 6,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#DC2626',
   },
 });

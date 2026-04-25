@@ -1,4 +1,5 @@
 import React from 'react';
+import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Button } from '../foundation/Button';
 import { IconButton } from '../foundation/IconButton';
@@ -31,7 +32,7 @@ const sexOptions = [
 
 export function PatientEvaluationForm({
   title = 'Patient Evaluation',
-  caseMeta = 'Case ID: #2847 • Started 12 min ago',
+  caseMeta = 'Case ID: #2847 - Started 12 min ago',
   ageValue,
   sexValue,
   postalCodeValue,
@@ -42,39 +43,66 @@ export function PatientEvaluationForm({
   style,
 }: PatientEvaluationFormProps) {
   return (
-    <CardBase style={[styles.container, style]}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.meta}>{caseMeta}</Text>
+    <CardBase style={StyleSheet.flatten([styles.container, style])}>
+      <View style={styles.header}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.meta}>{caseMeta}</Text>
+      </View>
 
       <View style={styles.fields}>
         <View style={styles.row}>
           <View style={styles.halfField}>
-            <InputField label="Patient Age" placeholder="e.g., 34" value={ageValue} />
+            <Text style={styles.fieldLabel}>Patient Age</Text>
+            <InputField
+              placeholder="e.g., 34"
+              value={ageValue}
+              style={styles.fieldBlock}
+              inputContainerStyle={styles.fieldInputContainer}
+            />
           </View>
+
           <View style={styles.halfField}>
+            <Text style={styles.fieldLabel}>Sex</Text>
             <SelectField
-              label="Sex"
               placeholder="Select"
               options={sexOptions}
               value={sexValue}
+              style={styles.fieldBlock}
             />
           </View>
         </View>
 
-        <InputField label="Postal Code" placeholder="e.g., 10001" value={postalCodeValue} />
+        <View>
+          <Text style={styles.fieldLabel}>Postal Code</Text>
+          <InputField
+            placeholder="e.g., 10001"
+            value={postalCodeValue}
+            style={styles.fieldBlock}
+            inputContainerStyle={styles.fieldInputContainer}
+            leftIcon={<Feather name="map-pin" size={14} color="#0003B8" />}
+          />
+        </View>
 
-        <TextareaField
-          label="Symptoms Descriptor"
-          placeholder="Describe patient symptoms, duration, severity..."
-          value={symptomsValue}
-          numberOfLines={3}
-        />
+        <View>
+          <Text style={styles.fieldLabel}>Symptoms Descriptor</Text>
+          <TextareaField
+            placeholder="Describe patient symptoms, duration, severity..."
+            value={symptomsValue}
+            numberOfLines={3}
+            style={styles.fieldBlock}
+          />
+        </View>
 
-        <FileUploadDropzone
-          label="Lab Results & Imaging"
-          state={dropzoneState}
-          fileName={dropzoneState === 'uploaded' ? 'lab_results.pdf' : undefined}
-        />
+        <View>
+          <Text style={styles.fieldLabel}>Lab Results & Imaging</Text>
+          <FileUploadDropzone
+            description="Drag and drop files or"
+            supportedFormats="PDF, JPG, DICOM"
+            maxSizeText="20MB"
+            state={dropzoneState}
+            fileName={dropzoneState === 'uploaded' ? 'lab_results.pdf' : undefined}
+          />
+        </View>
       </View>
 
       <View style={styles.actions}>
@@ -84,9 +112,15 @@ export function PatientEvaluationForm({
           label={primaryButtonLabel}
           onPress={() => {}}
           style={styles.primaryButton}
+          labelStyle={styles.primaryButtonLabel}
         />
+
         {showSecondaryAction ? (
-          <IconButton icon="↻" variant="secondary" style={styles.secondaryButton} />
+          <IconButton
+            icon={<Feather name="clipboard" size={12} color="#64748B" />}
+            variant="secondary"
+            style={styles.secondaryButton}
+          />
         ) : null}
       </View>
     </CardBase>
@@ -95,39 +129,96 @@ export function PatientEvaluationForm({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  header: {
+    backgroundColor: '#FAFCFF',
+    borderTopWidth: 4,
+    borderTopColor: '#0003B8',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 22,
   },
   title: {
     fontSize: 20,
+    lineHeight: 30,
     fontWeight: '700',
-    color: '#111827',
+    color: '#0F172A',
     marginBottom: 4,
   },
   meta: {
-    fontSize: 12,
-    color: '#94A3B8',
-    marginBottom: 20,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#64748B',
   },
   fields: {
-    gap: 16,
+    gap: 24,
+    padding: 24,
+    backgroundColor: '#FFFFFF',
   },
   row: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   halfField: {
     flex: 1,
   },
+  fieldLabel: {
+    marginBottom: 8,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  fieldBlock: {
+    marginBottom: 0,
+  },
+  fieldInputContainer: {
+    height: 42,
+    borderRadius: 10,
+    borderColor: '#D9E2F0',
+    backgroundColor: '#FCFDFE',
+    paddingHorizontal: 13,
+  },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
     gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingHorizontal: 16,
+    paddingTop: 17,
+    paddingBottom: 16,
+    backgroundColor: '#FAFCFF',
   },
   primaryButton: {
     flex: 1,
+    minHeight: 49,
+    borderRadius: 10,
+    borderWidth: 0,
+    backgroundColor: '#0003B8',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  primaryButtonLabel: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '700',
   },
   secondaryButton: {
+    width: 44,
     minWidth: 44,
+    minHeight: 44,
+    borderRadius: 10,
+    borderColor: '#D9E2F0',
+    backgroundColor: '#FFFFFF',
   },
 });

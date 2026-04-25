@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { InlineWarningBanner } from '../feedback/InlineWarningBanner';
 
 export interface DiagnosisResponseCardProps {
   title?: string;
@@ -21,37 +22,39 @@ export function DiagnosisResponseCard({
   style,
 }: DiagnosisResponseCardProps) {
   const renderText = () => {
-    if (!highlightText) {
+    if (!highlightText || !responseText.includes(highlightText)) {
       return <Text style={styles.text}>{responseText}</Text>;
     }
 
-    const parts = responseText.split(highlightText);
+    const [before, after] = responseText.split(highlightText);
+
     return (
       <Text style={styles.text}>
-        {parts[0]}
+        {before}
         <Text style={styles.highlight}>{highlightText}</Text>
-        {parts[1]}
+        {after}
       </Text>
     );
   };
 
   return (
     <View style={[styles.container, style]}>
-      {(title || leadingIcon) && (
+      {title || leadingIcon ? (
         <View style={styles.header}>
-          {leadingIcon && <View style={styles.icon}>{leadingIcon}</View>}
-          {title && <Text style={styles.title}>{title}</Text>}
+          {leadingIcon ? <View style={styles.icon}>{leadingIcon}</View> : null}
+          {title ? <Text style={styles.title}>{title}</Text> : null}
+        </View>
+      ) : (
+        <View style={styles.insightPill}>
+          <Text style={styles.insightPillText}>AI Differential Insight</Text>
         </View>
       )}
-      <View style={styles.content}>
-        {renderText()}
-      </View>
-      {showWarning && warningMessage && (
-        <View style={styles.warningBanner}>
-          <Text style={styles.warningIcon}>⚠️</Text>
-          <Text style={styles.warningText}>{warningMessage}</Text>
-        </View>
-      )}
+
+      <View style={styles.content}>{renderText()}</View>
+
+      {showWarning && warningMessage ? (
+        <InlineWarningBanner message={warningMessage} variant="critical" style={styles.warningBanner} />
+      ) : null}
     </View>
   );
 }
@@ -59,10 +62,17 @@ export function DiagnosisResponseCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 20,
+    borderColor: '#DCE6F5',
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 18,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
@@ -73,39 +83,41 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 17,
+    lineHeight: 25,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  insightPill: {
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: '#EEF2FF',
+  },
+  insightPillText: {
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#0003B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   content: {
     marginBottom: 12,
   },
   text: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#374151',
+    fontSize: 15,
+    lineHeight: 25,
+    color: '#334155',
   },
   highlight: {
-    color: '#EF4444',
-    fontWeight: '600',
+    color: '#DC2626',
+    fontWeight: '700',
   },
   warningBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#FEE2E2',
-  },
-  warningIcon: {
-    fontSize: 14,
-    marginRight: 8,
-  },
-  warningText: {
-    flex: 1,
-    fontSize: 13,
-    color: '#B91C1C',
-    lineHeight: 18,
+    marginTop: 6,
+    borderRadius: 12,
   },
 });

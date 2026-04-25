@@ -7,6 +7,7 @@ export interface DiseaseBreakdownRow {
   valueText: string;
   progress: number;
   barColor?: string;
+  barHeight?: number;
 }
 
 export interface DiseaseBreakdownSummary {
@@ -44,6 +45,7 @@ export function DiseaseBreakdownCard({
             valueText={row.valueText}
             progress={row.progress}
             barColor={row.barColor}
+            barHeight={row.barHeight ?? 12}
           />
         ))}
       </View>
@@ -74,7 +76,9 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.05)',
+    padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -84,43 +88,47 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 20,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 24,
   },
   rowsContainer: {
     marginBottom: 20,
   },
   summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 16,
+    paddingTop: 22,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    marginBottom: 16,
+    borderTopColor: '#F1F5F9',
+    marginBottom: 18,
+    gap: 14,
   },
   summaryItem: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   summaryLabel: {
-    fontSize: 11,
-    color: '#6B7280',
-    marginBottom: 4,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#64748B',
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '700',
-    color: '#111827',
+    color: '#0F172A',
   },
   button: {
-    backgroundColor: '#1D4ED8',
+    backgroundColor: 'rgba(0, 3, 184, 0.10)',
     borderRadius: 10,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
   },
   buttonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0003B8',
   },
 });

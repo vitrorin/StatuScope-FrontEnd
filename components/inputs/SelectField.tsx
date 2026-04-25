@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ViewStyle } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 export interface SelectOption {
   label: string;
@@ -29,46 +30,25 @@ export function SelectField({
 }: SelectFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const selectedOption = options.find(opt => opt.value === value);
-
-  const getBorderColor = () => {
-    if (error) return '#EF4444';
-    if (isOpen) return '#1D4ED8';
-    return '#E5E7EB';
-  };
-
-  const getBackgroundColor = () => {
-    if (disabled) return '#F9FAFB';
-    return '#FFFFFF';
-  };
-
-  const handleSelect = (optionValue: string) => {
-    onChange?.(optionValue);
-    setIsOpen(false);
-  };
+  const selectedOption = options.find((option) => option.value === value);
 
   return (
     <View style={[styles.container, style]}>
-      {label && (
-        <Text style={[styles.label, disabled && styles.labelDisabled]}>
-          {label}
-        </Text>
-      )}
+      {label ? <Text style={[styles.label, disabled && styles.labelDisabled]}>{label}</Text> : null}
+
       <View
         style={[
           styles.selectContainer,
-          {
-            borderColor: getBorderColor(),
-            backgroundColor: getBackgroundColor(),
-          },
           isOpen && styles.selectOpen,
           disabled && styles.selectDisabled,
+          error && styles.selectError,
         ]}
       >
         <TouchableOpacity
           style={styles.selectButton}
-          onPress={() => !disabled && setIsOpen(!isOpen)}
+          onPress={() => !disabled && setIsOpen((current) => !current)}
           disabled={disabled}
+          activeOpacity={0.75}
         >
           <Text
             style={[
@@ -79,33 +59,37 @@ export function SelectField({
           >
             {selectedOption?.label || placeholder}
           </Text>
-          <Text style={styles.chevronIcon}>{isOpen ? '▲' : '▼'}</Text>
+          <Feather name={isOpen ? 'chevron-up' : 'chevron-down'} size={16} color="#64748B" />
         </TouchableOpacity>
       </View>
-      {isOpen && !disabled && (
+
+      {isOpen && !disabled ? (
         <View style={styles.dropdown}>
-          {options.map((option) => (
+          {options.map((option, index) => (
             <TouchableOpacity
               key={option.value}
               style={[
                 styles.option,
+                index < options.length - 1 && styles.optionBorder,
                 option.value === value && styles.optionSelected,
               ]}
-              onPress={() => handleSelect(option.value)}
+              onPress={() => {
+                onChange?.(option.value);
+                setIsOpen(false);
+              }}
+              activeOpacity={0.75}
             >
               <Text
-                style={[
-                  styles.optionText,
-                  option.value === value && styles.optionTextSelected,
-                ]}
+                style={[styles.optionText, option.value === value && styles.optionTextSelected]}
               >
                 {option.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
-      )}
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      ) : null}
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -117,6 +101,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
+    lineHeight: 20,
     fontWeight: '500',
     color: '#374151',
     marginBottom: 8,
@@ -126,28 +111,31 @@ const styles = StyleSheet.create({
   },
   selectContainer: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
-    width: '100%',
   },
   selectOpen: {
-    borderColor: '#1D4ED8',
+    borderColor: '#0003B8',
   },
   selectDisabled: {
     backgroundColor: '#F9FAFB',
-    borderColor: '#E5E7EB',
+  },
+  selectError: {
+    borderColor: '#EF4444',
   },
   selectButton: {
+    height: 42,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 48,
   },
   selectText: {
     fontSize: 16,
-    color: '#111827',
+    lineHeight: 24,
+    color: '#0F172A',
   },
   placeholderText: {
     color: '#94A3B8',
@@ -155,43 +143,43 @@ const styles = StyleSheet.create({
   selectTextDisabled: {
     color: '#9CA3AF',
   },
-  chevronIcon: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
   dropdown: {
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    maxHeight: 200,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   option: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  optionBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#F1F5F9',
   },
   optionSelected: {
     backgroundColor: '#EEF2FF',
   },
   optionText: {
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#0F172A',
   },
   optionTextSelected: {
-    color: '#1D4ED8',
-    fontWeight: '500',
+    color: '#0003B8',
+    fontWeight: '600',
   },
   errorText: {
-    fontSize: 12,
-    color: '#EF4444',
     marginTop: 6,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#EF4444',
   },
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 export interface TestItem {
@@ -19,17 +20,19 @@ export function RecommendedTestsCard({
 }: RecommendedTestsCardProps) {
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.title}>{title}</Text>
+      <View style={styles.header}>
+        <Feather name="activity" size={12} color="#0003B8" />
+        <Text style={styles.title}>{title}</Text>
+      </View>
+
       <View style={styles.list}>
         {tests.map((test, index) => (
-          <View key={index} style={styles.item}>
-            <Text style={styles.bullet}>•</Text>
+          <View key={`${test.label}-${index}`} style={styles.item}>
             <View style={styles.itemContent}>
               <Text style={styles.label}>{test.label}</Text>
-              {test.secondaryText && (
-                <Text style={styles.secondary}>{test.secondaryText}</Text>
-              )}
+              {test.secondaryText ? <Text style={styles.secondary}>{test.secondaryText}</Text> : null}
             </View>
+            <Feather name="plus-circle" size={12} color="#CBD5E1" />
           </View>
         ))}
       </View>
@@ -40,43 +43,58 @@ export function RecommendedTestsCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
+    borderColor: '#DCE6F5',
+    padding: 18,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    elevation: 3,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
   },
   title: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginBottom: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#0F172A',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   list: {
-    gap: 10,
+    gap: 8,
   },
   item: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  bullet: {
-    fontSize: 14,
-    color: '#1D4ED8',
-    marginRight: 10,
-    lineHeight: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E6EDF8',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   itemContent: {
     flex: 1,
+    marginRight: 8,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: '#0F172A',
   },
   secondary: {
-    fontSize: 12,
-    color: '#94A3B8',
     marginTop: 2,
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#94A3B8',
   },
 });

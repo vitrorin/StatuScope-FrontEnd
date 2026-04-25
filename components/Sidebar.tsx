@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -7,6 +8,7 @@ export type SidebarActive = 'dashboard' | 'diagnosis' | 'analytics';
 export interface SidebarProps {
   active?: SidebarActive;
   onLogout?: () => void;
+  links?: Partial<Record<SidebarActive, string>>;
 }
 
 interface NavItem {
@@ -33,7 +35,9 @@ const navItems: NavItem[] = [
   },
 ];
 
-export function Sidebar({ active = 'dashboard', onLogout }: SidebarProps) {
+export function Sidebar({ active = 'dashboard', onLogout, links }: SidebarProps) {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <View style={styles.brandWrap}>
@@ -56,6 +60,12 @@ export function Sidebar({ active = 'dashboard', onLogout }: SidebarProps) {
               key={item.key}
               style={[styles.navItem, isActive && styles.navItemActive]}
               activeOpacity={0.75}
+              disabled={!links?.[item.key] || isActive}
+              onPress={() => {
+                const targetHref = links?.[item.key];
+                if (!targetHref || isActive) return;
+                router.replace(targetHref as never);
+              }}
             >
               <View style={styles.navIcon}>{item.icon}</View>
               <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>

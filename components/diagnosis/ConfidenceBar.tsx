@@ -8,6 +8,7 @@ export interface ConfidenceBarProps {
   value: number;
   valueText?: string;
   color?: string;
+  valueColor?: string;
   style?: ViewStyle;
 }
 
@@ -16,18 +17,19 @@ export function ConfidenceBar({
   value,
   valueText,
   color = '#1D4ED8',
+  valueColor = '#0F172A',
   style,
 }: ConfidenceBarProps) {
   const percentage = Math.min(100, Math.max(0, value));
   const displayValue = valueText || `${percentage}%`;
 
   return (
-    <CardBase style={[styles.container, style]}>
+    <CardBase style={StyleSheet.flatten([styles.container, style])}>
       <View style={styles.header}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={[styles.value, { color }]}>{displayValue}</Text>
+        <Text style={[styles.value, { color: valueColor }]}>{displayValue}</Text>
       </View>
-      <ProgressBar value={percentage} color={color} />
+      <ProgressBar value={percentage} color={color} trackColor="#F1F5F9" />
     </CardBase>
   );
 }
@@ -35,6 +37,9 @@ export function ConfidenceBar({
 const styles = StyleSheet.create({
   container: {
     padding: 14,
+    borderRadius: 14,
+    borderColor: '#DCE6F5',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -43,12 +48,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
   },
   value: {
     fontSize: 16,
+    lineHeight: 24,
     fontWeight: '700',
   },
 });

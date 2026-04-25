@@ -7,6 +7,7 @@ export interface ProgressMetricRowProps {
   valueText: string;
   progress: number;
   barColor?: string;
+  barHeight?: number;
   style?: ViewStyle;
 }
 
@@ -15,6 +16,7 @@ export function ProgressMetricRow({
   valueText,
   progress,
   barColor = '#1D4ED8',
+  barHeight = 6,
   style,
 }: ProgressMetricRowProps) {
   return (
@@ -23,14 +25,14 @@ export function ProgressMetricRow({
         <Text style={styles.label}>{label}</Text>
         <Text style={styles.valueText}>{valueText}</Text>
       </View>
-      <ProgressBar value={progress} color={barColor} />
+      <ProgressBar value={progress} color={barColor} height={barHeight} trackColor="#EEF2F7" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   header: {
     flexDirection: 'row',
@@ -39,13 +41,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#374151',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
   },
   valueText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#111827',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#0003B8',
   },
 });

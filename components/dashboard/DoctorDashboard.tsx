@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -33,8 +33,18 @@ const alerts = [
   },
 ];
 
+const navigationLinks = {
+  dashboard: '/dashboard/doctor',
+  diagnosis: '/diagnosis',
+  analytics: '/analytics',
+} as const;
+
 export function DoctorDashboard() {
   const router = useRouter();
+  const [gridWidth, setGridWidth] = useState(0);
+  const gridGap = 16;
+  const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
+  const mapWidth = metricWidth ? metricWidth * 2 + gridGap : undefined;
 
   return (
     <DashboardLayout
@@ -44,16 +54,26 @@ export function DoctorDashboard() {
       userName="Dr. Sarah Chen"
       userId="ID: 442910"
       avatarText="SC"
+      links={navigationLinks}
       onLogout={() => router.replace('/')}
     >
-      <View style={styles.container}>
-        <View style={styles.metricsRow}>
+      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.container}>
+        <View
+          style={styles.metricsRow}
+          onLayout={(event: LayoutChangeEvent) => {
+            const nextWidth = event.nativeEvent.layout.width;
+            if (Math.abs(nextWidth - gridWidth) > 1) {
+              setGridWidth(nextWidth);
+            }
+          }}
+        >
           <StatCard
             title="Active Cases Nearby"
             value="1,284"
             badge="+2%"
             status="positive"
-            style={styles.metricCard}
+            style={[styles.metricCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
           />
           <StatCard
             title="Fastest Growing Disease"
@@ -61,7 +81,7 @@ export function DoctorDashboard() {
             badge="+25%"
             status="danger"
             subtitle="Projected increase for next 48h"
-            style={styles.metricCard}
+            style={[styles.metricCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
             icon={<Feather name="trending-up" size={14} color="#94A3B8" />}
           />
           <StatCard
@@ -69,7 +89,7 @@ export function DoctorDashboard() {
             value="3 active clusters detected"
             badge="Moderate"
             status="warning"
-            style={styles.metricCard}
+            style={[styles.metricCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
           />
           <StatCard
             title="Hospital Capacity"
@@ -77,15 +97,7 @@ export function DoctorDashboard() {
             badge="Stable"
             status="neutral"
             subtitle="Current emergency response readiness"
-            style={styles.metricCard}
-          />
-          <StatCard
-            title="Response Window"
-            value="18 min"
-            badge="On Track"
-            status="positive"
-            subtitle="Average emergency dispatch time"
-            style={styles.metricCard}
+            style={[styles.metricCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
           />
         </View>
 
@@ -108,10 +120,12 @@ export function DoctorDashboard() {
             ]}
             footerTextRight="Last Sync: Just Now"
             mapImageUri={MAP_IMAGE_URI}
-            style={styles.mapCard}
+            style={[styles.mapCard, mapWidth ? { width: mapWidth, flex: undefined } : null]}
           />
 
-          <View style={styles.alertsPanel}>
+          <View
+            style={[styles.alertsPanel, metricWidth ? { width: metricWidth } : null]}
+          >
             <View style={styles.alertsHeader}>
               <Text style={styles.alertsTitle}>Contextual Disease Alerts</Text>
             </View>
@@ -146,17 +160,20 @@ export function DoctorDashboard() {
               { label: 'Cardiovascular', value: '612 cases' },
             ]}
             buttonLabel="View Full Epidemiological Report"
-            style={styles.analyticsCard}
+            style={[styles.analyticsCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
           />
         </View>
-      </View>
+        </View>
+      </ScrollView>
     </DashboardLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  contentContainer: {
+    paddingBottom: 32,
+  },
   container: {
-    flex: 1,
     padding: 32,
     gap: 32,
   },
@@ -170,17 +187,14 @@ const styles = StyleSheet.create({
   },
   mainGrid: {
     flexDirection: 'row',
-    gap: 24,
+    gap: 16,
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
   },
   mapCard: {
-    width: 600,
     flexShrink: 0,
-    alignSelf: 'center',
+    alignSelf: 'stretch',
   },
   alertsPanel: {
-    width: 320,
     flexShrink: 0,
     backgroundColor: '#FCFDFE',
     borderRadius: 14,
@@ -216,7 +230,6 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   analyticsCard: {
-    width: 320,
     flexShrink: 0,
     minHeight: 540,
   },

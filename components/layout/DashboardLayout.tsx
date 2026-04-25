@@ -12,6 +12,7 @@ export interface DashboardLayoutProps {
   userId?: string;
   avatarText?: string;
   onLogout?: () => void;
+  links?: Partial<Record<SidebarActive, string>>;
 }
 
 export function DashboardLayout({
@@ -23,11 +24,12 @@ export function DashboardLayout({
   userId,
   avatarText,
   onLogout,
+  links,
 }: DashboardLayoutProps) {
   return (
     <View style={styles.page}>
       <View style={styles.frame}>
-        <Sidebar active={active} onLogout={onLogout} />
+        <Sidebar active={active} onLogout={onLogout} links={links} />
         <View style={styles.mainArea}>
           <TopHeader
             sectionLabel={sectionLabel}
