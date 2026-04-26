@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import { initialsFromName } from '@/lib/format';
 import { SidebarNavItem } from '@/components/Sidebar';
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
@@ -86,6 +88,7 @@ const topCards = [
 
 export function AdminDashboard() {
   const router = useRouter();
+  const { logout, profile } = useAuth();
   const [gridWidth, setGridWidth] = useState(0);
   const gridGap = 16;
   const topGap = 12;
@@ -98,12 +101,15 @@ export function AdminDashboard() {
       active="dashboard"
       sectionLabel="Dashboard"
       searchPlaceholder="Search hospital metrics..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
+      userName={profile?.fullName ?? 'Administrator'}
+      userId={profile?.hospitalName ? profile.hospitalName : profile?.email}
+      avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => {
+        await logout();
+        router.replace('/login');
+      }}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>

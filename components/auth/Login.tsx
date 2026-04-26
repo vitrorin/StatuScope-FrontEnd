@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   DimensionValue,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -14,13 +15,13 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CheckboxField } from '@/components/inputs/CheckboxField';
-import { RoleSegmentedControl } from '@/components/inputs/RoleSegmentedControl';
+import { useAuth } from '@/contexts/AuthContext';
+import type { UserProfile } from '@/contexts/AuthContext';
 
 const BRAND_BLUE = '#0003B8';
 const PANEL_TEXT = '#0F172A';
 const MUTED_TEXT = '#64748B';
 const FIELD_BORDER = '#E2E8F0';
-const SURFACE_TINT = '#F1F5F9';
 
 type RadarStat = {
   title: string;
@@ -73,11 +74,22 @@ const radarStats: RadarStat[] = [
   },
 ];
 
+function dashboardForProfile(profile: UserProfile): string {
+  if (profile.roles.includes('SYSTEM_ADMIN') || profile.roles.includes('HOSPITAL_ADMIN')) {
+    return '/dashboard/administrator';
+  }
+  return '/dashboard/doctor';
+}
+
 export function Login() {
   const router = useRouter();
+  const { login } = useAuth();
   const { width } = useWindowDimensions();
-  const [role, setRole] = useState('doctor');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isCompact = width < 980;
   const shellWidth = useMemo(() => {
@@ -86,6 +98,24 @@ export function Login() {
     if (width >= 980) return width - 48;
     return Math.max(width - 32, 320);
   }, [width]);
+
+  const handleSubmit = async () => {
+    if (submitting) return;
+    if (!email.trim() || !password) {
+      setError('Please enter your email and password.');
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const me = await login(email.trim(), password);
+      router.replace(dashboardForProfile(me) as never);
+    } catch {
+      setError('Invalid email or password.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.page}>
@@ -118,29 +148,20 @@ export function Login() {
                 </Text>
               </View>
 
-              <RoleSegmentedControl
-                options={[
-                  { label: 'Doctor', value: 'doctor' },
-                  { label: 'Administrator', value: 'administrator' },
-                ]}
-                value={role}
-                onChange={setRole}
-                style={styles.segmentedWrapper}
-                label="Login as"
-                labelStyle={styles.fieldLabel}
-                containerStyle={styles.segmentedContainer}
-                segmentStyle={styles.segmentedItem}
-                activeSegmentStyle={styles.segmentedItemActive}
-                textStyle={styles.segmentedText}
-                activeTextStyle={styles.segmentedTextActive}
-                fullWidth
-              />
+              {error ? (
+                <View style={styles.errorBanner}>
+                  <Feather name="alert-circle" size={14} color="#B91C1C" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
 
               <View style={styles.formFields}>
                 <InputField
                   label="Email:"
                   placeholder="name@hospital.com"
                   type="email"
+                  value={email}
+                  onChangeText={setEmail}
                   labelStyle={styles.fieldLabel}
                   placeholderTextColor="#6B7280"
                   inputContainerStyle={styles.loginInput}
@@ -152,6 +173,8 @@ export function Login() {
                   label="Password"
                   placeholder="********"
                   type="password"
+                  value={password}
+                  onChangeText={setPassword}
                   labelStyle={styles.fieldLabel}
                   placeholderTextColor="#6B7280"
                   inputContainerStyle={styles.loginInput}
@@ -170,14 +193,24 @@ export function Login() {
                 />
 
                 <Button
-                  label="Login to the system"
+                  label={submitting ? 'Signing in…' : 'Login to the system'}
                   variant="primary"
                   size="lg"
+                  disabled={submitting}
                   style={styles.loginButton}
                   labelStyle={styles.loginButtonLabel}
-                  trailingIcon={<Feather name="arrow-right" size={16} color="#FFFFFF" />}
-                  onPress={() => router.push(`/dashboard/${role}`)}
+                  trailingIcon={
+                    submitting ? null : <Feather name="arrow-right" size={16} color="#FFFFFF" />
+                  }
+                  onPress={handleSubmit}
                 />
+
+                <View style={styles.signUpRow}>
+                  <Text style={styles.signUpPrompt}>Don&apos;t have an account?</Text>
+                  <Pressable onPress={() => router.push('/register')}>
+                    <Text style={styles.signUpLink}>Sign up</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
 
@@ -316,9 +349,24 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: MUTED_TEXT,
   },
-  segmentedWrapper: {
-    marginTop: 40,
-    width: '100%',
+  errorBanner: {
+    marginTop: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#B91C1C',
+    fontWeight: '600',
   },
   fieldLabel: {
     fontSize: 14,
@@ -329,42 +377,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     marginBottom: 0,
   },
-  segmentedContainer: {
-    marginTop: 12,
-    height: 50,
-    borderRadius: 8,
-    padding: 4,
-    backgroundColor: SURFACE_TINT,
-    gap: 0,
-    width: '100%',
-  },
-  segmentedItem: {
-    borderRadius: 8,
-    minWidth: 0,
-    paddingVertical: 13,
-    paddingHorizontal: 32,
-  },
-  segmentedItemActive: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  segmentedText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: MUTED_TEXT,
-    textAlign: 'center',
-  },
-  segmentedTextActive: {
-    color: BRAND_BLUE,
-  },
   formFields: {
-    marginTop: 24,
+    marginTop: 32,
   },
   loginInput: {
     height: 48,
@@ -414,6 +428,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
+  },
+  signUpRow: {
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  signUpPrompt: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#475569',
+  },
+  signUpLink: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: BRAND_BLUE,
   },
   footer: {
     paddingTop: 38,

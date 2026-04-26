@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { initialsFromName } from '@/lib/format';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
@@ -41,6 +43,7 @@ const navigationLinks = {
 
 export function DoctorDashboard() {
   const router = useRouter();
+  const { logout, profile } = useAuth();
   const [gridWidth, setGridWidth] = useState(0);
   const gridGap = 16;
   const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
@@ -51,11 +54,14 @@ export function DoctorDashboard() {
       active="dashboard"
       sectionLabel="Dashboard"
       searchPlaceholder="Search medical records..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
+      userName={profile?.fullName ?? 'Doctor'}
+      userId={profile?.hospitalName ? profile.hospitalName : profile?.email}
+      avatarText={initialsFromName(profile?.fullName)}
       links={navigationLinks}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => {
+        await logout();
+        router.replace('/login');
+      }}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>

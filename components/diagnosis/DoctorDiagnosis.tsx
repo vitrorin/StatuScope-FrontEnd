@@ -10,6 +10,8 @@ import { DiagnosisRiskCard } from '@/components/diagnosis/DiagnosisRiskCard';
 import { PatientEvaluationForm } from '@/components/diagnosis/PatientEvaluationForm';
 import { RecommendedTestsCard } from '@/components/diagnosis/RecommendedTestsCard';
 import { Button } from '@/components/foundation/Button';
+import { useAuth } from '@/contexts/AuthContext';
+import { initialsFromName } from '@/lib/format';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
 
@@ -21,6 +23,7 @@ const navigationLinks = {
 
 export function DoctorDiagnosis() {
   const router = useRouter();
+  const { logout, profile } = useAuth();
   const [assistantQuery, setAssistantQuery] = useState('');
 
   return (
@@ -28,11 +31,14 @@ export function DoctorDiagnosis() {
       active="diagnosis"
       sectionLabel="Diagnosis"
       searchPlaceholder="Search medical records..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
+      userName={profile?.fullName ?? 'Doctor'}
+      userId={profile?.hospitalName ? profile.hospitalName : profile?.email}
+      avatarText={initialsFromName(profile?.fullName)}
       links={navigationLinks}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => {
+        await logout();
+        router.replace('/login');
+      }}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.heroStrip}>

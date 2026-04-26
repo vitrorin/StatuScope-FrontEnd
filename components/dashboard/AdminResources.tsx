@@ -2,6 +2,8 @@ import React from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import { initialsFromName } from '@/lib/format';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
 import { ProgressBar } from '@/components/foundation/ProgressBar';
@@ -15,6 +17,7 @@ import { StaffingStatusCard } from '@/components/resources/StaffingStatusCard';
 
 export function AdminResources() {
   const router = useRouter();
+  const { logout, profile } = useAuth();
 
   const columns = [
     { key: 'department', label: 'Department' },
@@ -72,12 +75,15 @@ export function AdminResources() {
       active="resources"
       sectionLabel="Resources"
       searchPlaceholder="Search beds, inventory..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
+      userName={profile?.fullName ?? 'Administrator'}
+      userId={profile?.hospitalName ? profile.hospitalName : profile?.email}
+      avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => {
+        await logout();
+        router.replace('/login');
+      }}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>

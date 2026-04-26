@@ -8,9 +8,6 @@ export function AdminAnalytics() {
       active="analytics"
       sectionLabel="Analytics"
       searchPlaceholder="Search hospital metrics..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
     />

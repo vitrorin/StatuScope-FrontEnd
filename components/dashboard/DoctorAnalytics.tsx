@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import { initialsFromName } from '@/lib/format';
 import { DiseaseBreakdownCard } from '@/components/dashboard/DiseaseBreakdownCard';
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
 import { DetectionBanner } from '@/components/feedback/DetectionBanner';
@@ -62,13 +64,14 @@ export function AnalyticsScreen({
   active = 'analytics',
   sectionLabel = 'Analytics',
   searchPlaceholder = 'Search medical records...',
-  userName = 'Dr. Sarah Chen',
-  userId = 'ID: 442910',
-  avatarText = 'SC',
+  userName,
+  userId,
+  avatarText,
   links = doctorNavigationLinks,
   sidebarItems,
 }: AnalyticsScreenProps) {
   const router = useRouter();
+  const { logout, profile } = useAuth();
   const [timeFilter, setTimeFilter] = useState('24h');
   const [range, setRange] = useState('5km');
 
@@ -77,12 +80,15 @@ export function AnalyticsScreen({
       active={active}
       sectionLabel={sectionLabel}
       searchPlaceholder={searchPlaceholder}
-      userName={userName}
-      userId={userId}
-      avatarText={avatarText}
+      userName={userName ?? profile?.fullName ?? 'Doctor'}
+      userId={userId ?? (profile?.hospitalName ? profile.hospitalName : profile?.email)}
+      avatarText={avatarText ?? initialsFromName(profile?.fullName)}
       links={links}
       sidebarItems={sidebarItems}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => {
+        await logout();
+        router.replace('/login');
+      }}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
