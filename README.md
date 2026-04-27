@@ -1,50 +1,92 @@
-# Welcome to your Expo app 👋
+# StatuScope — Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Cross-platform (iOS, Android, Web) medical radar system for hospitals. Built with **Expo React Native**, **Expo Router**, and **NativeWind**.
 
-## Get started
+## Prerequisites
 
-1. Install dependencies
+- [Node.js](https://nodejs.org/) 18 or later
+- [npm](https://www.npmjs.com/) (comes with Node) or [Yarn](https://yarnpkg.com/)
+- [Expo Go](https://expo.dev/go) on your physical device **or** an Android/iOS emulator
+- A running instance of the [StatusScope Backend](../StatusScope-Backend)
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 1. Clone & install dependencies
 
 ```bash
-npm run reset-project
+git clone <repo-url>
+cd StatuScope-FrontEnd
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 2. Configure environment variables
+
+Create a `.env.local` file in the project root:
+
+```bash
+cp .env.example .env.local   # if an example file exists, otherwise create it manually
+```
+
+Add your Firebase project credentials:
+
+```env
+EXPO_PUBLIC_FIREBASE_API_KEY=your-api-key
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+EXPO_PUBLIC_FIREBASE_APP_ID=your-app-id
+```
+
+> You can find these values in your Firebase console under **Project Settings → General → Your apps**.
+
+## 3. Run the app
+
+```bash
+npx expo start
+```
+
+Then choose how to open it:
+
+| Key | Target |
+|-----|--------|
+| `a` | Android emulator |
+| `i` | iOS simulator (macOS only) |
+| `w` | Web browser |
+| Scan QR | Expo Go on a physical device |
+
+### Platform-specific shortcuts
+
+```bash
+npm run android   # open directly on Android emulator
+npm run ios       # open directly on iOS simulator (macOS only)
+npm run web       # open in the browser
+```
+
+## 4. Run tests
+
+```bash
+npx vitest
+```
+
+## 5. Run Storybook (component explorer)
+
+```bash
+npm run storybook           # web Storybook at http://localhost:6006
+npm run storybook-generate  # regenerate story index after adding new stories
+```
+
+## Project structure
+
+```
+app/          ← file-based routes (Expo Router)
+components/   ← UI components organised by domain
+contexts/     ← React Context providers (auth, etc.)
+constants/    ← design tokens and theme
+lib/          ← shared utilities (api client, firebase init)
+hooks/        ← custom React hooks
+types/        ← shared TypeScript types
+stories/      ← Storybook stories
+```
 
 ## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [Expo documentation](https://docs.expo.dev/)
+- [Expo Router](https://docs.expo.dev/router/introduction/)
+- [NativeWind](https://www.nativewind.dev/)
