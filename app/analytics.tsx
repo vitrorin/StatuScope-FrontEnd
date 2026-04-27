@@ -1,1 +1,1 @@
-export { default } from '@/components/dashboard/DoctorAnalytics';
+export { default } from '@/components/views/doctor/analytics';

@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
-import { DoctorDashboard } from '@/components/dashboard/DoctorDashboard';
+import { DoctorDashboard } from '@/components/views/doctor/dashboard';
 
 const meta = {
-  title: 'Screens/DoctorDashboard',
+  title: 'Views/Doctor/Dashboard',
   component: DoctorDashboard,
   parameters: {
     layout: 'fullscreen',

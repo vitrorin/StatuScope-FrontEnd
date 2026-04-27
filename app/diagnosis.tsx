@@ -1,1 +1,1 @@
-export { default } from '@/components/diagnosis/DoctorDiagnosis';
+export { default } from '@/components/views/doctor/diagnosis';

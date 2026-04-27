@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
-import { AdminAnalytics } from '@/components/dashboard/AdminAnalytics';
+import { AdminAnalytics } from '@/components/views/admin/analytics';
 
 const meta = {
-  title: 'Screens/AdminAnalytics',
+  title: 'Views/Admin/Analytics',
   component: AdminAnalytics,
   parameters: {
     layout: 'fullscreen',

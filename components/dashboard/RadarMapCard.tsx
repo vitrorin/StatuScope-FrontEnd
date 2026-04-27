@@ -1,16 +1,18 @@
 import React from 'react';
 import { Image } from 'expo-image';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { MapControlButton } from './MapControlButton';
 import { MapLegend } from './MapLegend';
 
 export interface RadarMapPin {
+  id?: string;
   top: string;
   left: string;
   borderColor: string;
   fillColor?: string;
   icon?: React.ReactNode;
+  onPress?: () => void;
 }
 
 export interface RadarMapCardProps {
@@ -30,6 +32,8 @@ export interface RadarMapCardProps {
   showFooter?: boolean;
   mapHeight?: number;
   pins?: RadarMapPin[];
+  bottomRightActionLabel?: string;
+  onBottomRightActionPress?: () => void;
 }
 
 const defaultPins: RadarMapPin[] = [
@@ -64,6 +68,8 @@ export function RadarMapCard({
   showFooter = true,
   mapHeight = 520,
   pins,
+  bottomRightActionLabel,
+  onBottomRightActionPress,
 }: RadarMapCardProps) {
   const mapPins = pins ?? defaultPins;
 
@@ -113,11 +119,9 @@ export function RadarMapCard({
           </View>
         ) : null}
 
-        {mapPins.map((pin, index) => (
-          <View
-            key={index}
-            style={[styles.pinWrap, { top: pin.top as never, left: pin.left as never }]}
-          >
+        {mapPins.map((pin, index) => {
+          const key = pin.id ?? index;
+          const pinNode = (
             <View
               style={[
                 styles.pin,
@@ -129,8 +133,23 @@ export function RadarMapCard({
             >
               {pin.icon}
             </View>
-          </View>
-        ))}
+          );
+
+          return (
+            <View
+              key={key}
+              style={[styles.pinWrap, { top: pin.top as never, left: pin.left as never }]}
+            >
+              {pin.onPress ? (
+                <TouchableOpacity activeOpacity={0.85} onPress={pin.onPress}>
+                  {pinNode}
+                </TouchableOpacity>
+              ) : (
+                pinNode
+              )}
+            </View>
+          );
+        })}
 
         {showControls ? (
           <View style={styles.controlsContainer}>
@@ -138,6 +157,16 @@ export function RadarMapCard({
             <MapControlButton icon="minus" style={styles.controlButton} />
             <MapControlButton icon="settings" style={styles.controlButton} />
           </View>
+        ) : null}
+
+        {bottomRightActionLabel && onBottomRightActionPress ? (
+          <TouchableOpacity
+            style={styles.expandButton}
+            activeOpacity={0.8}
+            onPress={onBottomRightActionPress}
+          >
+            <Text style={styles.expandButtonText}>{bottomRightActionLabel}</Text>
+          </TouchableOpacity>
         ) : null}
       </View>
 
@@ -317,6 +346,28 @@ const styles = StyleSheet.create({
     right: 18,
     bottom: 16,
     gap: 10,
+  },
+  expandButton: {
+    position: 'absolute',
+    right: 18,
+    bottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.12)',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+  expandButtonText: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#0003B8',
   },
   controlButton: {
     width: 40,

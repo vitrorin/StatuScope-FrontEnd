@@ -1,1 +1,1 @@
-export { default } from '@/components/dashboard/AdminAnalytics';
+export { default } from '@/components/views/admin/analytics';

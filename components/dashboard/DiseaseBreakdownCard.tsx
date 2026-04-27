@@ -3,11 +3,13 @@ import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from '
 import { ProgressMetricRow } from './ProgressMetricRow';
 
 export interface DiseaseBreakdownRow {
+  id?: string;
   label: string;
   valueText: string;
   progress: number;
   barColor?: string;
   barHeight?: number;
+  onPress?: () => void;
 }
 
 export interface DiseaseBreakdownSummary {
@@ -38,16 +40,32 @@ export function DiseaseBreakdownCard({
       <Text style={styles.title}>{title}</Text>
       
       <View style={styles.rowsContainer}>
-        {rows.map((row, index) => (
-          <ProgressMetricRow
-            key={index}
-            label={row.label}
-            valueText={row.valueText}
-            progress={row.progress}
-            barColor={row.barColor}
-            barHeight={row.barHeight ?? 12}
-          />
-        ))}
+        {rows.map((row, index) => {
+          const content = (
+            <ProgressMetricRow
+              label={row.label}
+              valueText={row.valueText}
+              progress={row.progress}
+              barColor={row.barColor}
+              barHeight={row.barHeight ?? 12}
+            />
+          );
+
+          if (row.onPress) {
+            return (
+              <TouchableOpacity
+                key={row.id ?? index}
+                onPress={row.onPress}
+                activeOpacity={0.75}
+                style={styles.rowPressable}
+              >
+                {content}
+              </TouchableOpacity>
+            );
+          }
+
+          return <View key={row.id ?? index}>{content}</View>;
+        })}
       </View>
 
       {summaryItems && summaryItems.length > 0 && (
@@ -95,6 +113,9 @@ const styles = StyleSheet.create({
   },
   rowsContainer: {
     marginBottom: 20,
+  },
+  rowPressable: {
+    borderRadius: 10,
   },
   summaryContainer: {
     paddingTop: 22,

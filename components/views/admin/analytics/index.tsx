@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnalyticsScreen } from '@/components/dashboard/DoctorAnalytics';
+import { AnalyticsScreen } from '@/components/views/doctor/analytics';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
 
 export function AdminAnalytics() {

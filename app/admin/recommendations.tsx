@@ -1,1 +1,1 @@
-export { default } from '@/components/dashboard/AdminRecommendations';
+export { default } from '@/components/views/admin/recommendations';
