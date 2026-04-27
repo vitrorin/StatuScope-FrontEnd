@@ -34,4 +34,6 @@ export const adminNavigationLinks = {
   dashboard: '/dashboard/administrator',
   analytics: '/admin/analytics',
   resources: '/admin/resources',
+  recommendations: '/admin/recommendations',
+  users: '/admin/users',
 } as const;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Sidebar, SidebarActive, SidebarItemKey, SidebarNavItem } from '@/components/Sidebar';
 import { TopHeader } from '@/components/layout/TopHeader';
 
@@ -28,9 +28,11 @@ export function DashboardLayout({
   links,
   sidebarItems,
 }: DashboardLayoutProps) {
+  const { height } = useWindowDimensions();
+
   return (
-    <View style={styles.page}>
-      <View style={styles.frame}>
+    <View style={[styles.page, { minHeight: height }]}>
+      <View style={[styles.frame, { minHeight: height }]}>
         <Sidebar active={active} onLogout={onLogout} links={links} items={sidebarItems} />
         <View style={styles.mainArea}>
           <TopHeader

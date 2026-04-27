@@ -95,11 +95,14 @@ export function Sidebar({ active = 'dashboard', onLogout, links, items = navItem
 
 const styles = StyleSheet.create({
   container: {
+    position: 'relative',
     width: 256,
     backgroundColor: '#FCFDFE',
     borderRightWidth: 1,
     borderRightColor: 'rgba(0, 3, 184, 0.10)',
     paddingRight: 1,
+    alignSelf: 'stretch',
+    minHeight: '100%',
   },
   brandWrap: {
     flexDirection: 'row',
@@ -133,6 +136,7 @@ const styles = StyleSheet.create({
   nav: {
     flex: 1,
     padding: 16,
+    paddingBottom: 88,
     gap: 8,
   },
   navItem: {
@@ -164,6 +168,11 @@ const styles = StyleSheet.create({
     color: '#0003B8',
   },
   logoutWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 1,
+    bottom: 0,
+    backgroundColor: '#FCFDFE',
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
     paddingHorizontal: 16,
