@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Login } from '@/components/auth/Login';
 
 const meta = {
-  title: 'Screens/Login',
+  title: 'Views/Auth/Login',
   component: Login,
   parameters: {
     layout: 'fullscreen',

@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
-import { AdminDashboard } from '@/components/dashboard/AdminDashboard';
+import { AdminDashboard } from '@/components/views/admin/dashboard';
 
 const meta = {
-  title: 'Screens/AdminDashboard',
+  title: 'Views/Admin/Dashboard',
   component: AdminDashboard,
   parameters: {
     layout: 'fullscreen',

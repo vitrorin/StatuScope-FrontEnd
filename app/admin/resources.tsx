@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { RoleGate } from '@/components/auth/RoleGate';
-import AdminResources from '@/components/dashboard/AdminResources';
+import AdminResources from '@/components/views/admin/resources';
 
 export default function AdminResourcesScreen() {
   return (

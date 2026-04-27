@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { RoleGate } from '@/components/auth/RoleGate';
-import AdminAnalytics from '@/components/dashboard/AdminAnalytics';
+import AdminAnalytics from '@/components/views/admin/analytics';
 
 export default function AdminAnalyticsScreen() {
   return (

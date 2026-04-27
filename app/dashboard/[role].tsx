@@ -1,8 +1,8 @@
 import React from 'react';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { RoleGate } from '@/components/auth/RoleGate';
-import { AdminDashboard } from '@/components/dashboard/AdminDashboard';
-import { DoctorDashboard } from '@/components/dashboard/DoctorDashboard';
+import { AdminDashboard } from '@/components/views/admin/dashboard';
+import { DoctorDashboard } from '@/components/views/doctor/dashboard';
 
 export default function RoleDashboardScreen() {
   const { role } = useLocalSearchParams<{ role?: string }>();

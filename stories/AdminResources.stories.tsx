@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
-import { AdminResources } from '@/components/dashboard/AdminResources';
+import { AdminResources } from '@/components/views/admin/resources';
 
 const meta = {
-  title: 'Screens/AdminResources',
+  title: 'Views/Admin/Resources',
   component: AdminResources,
   parameters: {
     layout: 'fullscreen',

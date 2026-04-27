@@ -10,6 +10,15 @@ import { DetectionBanner } from '@/components/feedback/DetectionBanner';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SidebarItemKey, SidebarNavItem } from '@/components/Sidebar';
 import { SummaryCountCard } from '@/components/users/SummaryCountCard';
+import {
+  AnalyticsDiseaseDetail,
+  DiseaseDetailOverlay,
+} from '@/components/views/doctor/analytics/Sub-funcionalidades/DiseaseDetailOverlay';
+import {
+  AnalyticsZoneDetail,
+  ZoneDetailOverlay,
+} from '@/components/views/doctor/analytics/Sub-funcionalidades/ZoneDetailOverlay';
+import { ExpandedMapOverlay } from '@/components/views/doctor/analytics/Sub-funcionalidades/ExpandedMapOverlay';
 
 const doctorNavigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -37,16 +46,87 @@ const legendItems = [
 ];
 
 const breakdownRows = [
-  { label: 'Measles', valueText: '124 Cases', progress: 45, barColor: '#0003B8' },
-  { label: 'Dengue', valueText: '89 Cases', progress: 35, barColor: '#0003B8' },
-  { label: 'Influenza', valueText: '312 Cases', progress: 85, barColor: '#0003B8' },
-  { label: 'Pertussis', valueText: '12 Cases', progress: 10, barColor: '#0003B8' },
-  { label: 'COVID-like Illness', valueText: '245 Cases', progress: 65, barColor: '#0003B8' },
+  { id: 'measles', label: 'Measles', valueText: '124 Cases', progress: 45, barColor: '#0003B8' },
+  { id: 'dengue', label: 'Dengue', valueText: '89 Cases', progress: 35, barColor: '#0003B8' },
+  { id: 'influenza', label: 'Influenza', valueText: '312 Cases', progress: 85, barColor: '#0003B8' },
+  { id: 'pertussis', label: 'Pertussis', valueText: '12 Cases', progress: 10, barColor: '#0003B8' },
+  { id: 'covid-like-illness', label: 'COVID-like Illness', valueText: '245 Cases', progress: 65, barColor: '#0003B8' },
 ];
 
 const breakdownSummary = [
   { label: 'Total Cases Analysed', value: '782' },
   { label: 'Growth vs Prev. Week', value: '+12.4%', valueColor: '#DC2626' },
+];
+
+const zoneDetails: AnalyticsZoneDetail[] = [
+  {
+    id: 'west-district',
+    name: 'West District Cluster',
+    risk: 'High',
+    disease: 'Influenza-like illness',
+    radius: '3.2 km',
+    priority: 'Immediate monitoring',
+    trend: 'Case density has risen steadily over the last 24 hours with concentrated respiratory complaints around the western corridor.',
+    note: 'This hotspot is the most active cluster in the current radar window.',
+  },
+  {
+    id: 'south-east-corridor',
+    name: 'South-East Corridor',
+    risk: 'Moderate',
+    disease: 'Dengue',
+    radius: '1.8 km',
+    priority: 'Field review recommended',
+    trend: 'Mosquito-borne symptom reports increased near the corridor, but growth remains slower than the west cluster.',
+    note: 'Moderate risk area with vector-borne activity requiring prevention follow-up.',
+  },
+];
+
+const diseaseDetails: AnalyticsDiseaseDetail[] = [
+  {
+    id: 'measles',
+    name: 'Measles',
+    cases: '124 current cases',
+    weeklyGrowth: '+6.8%',
+    riskLevel: 'Moderate',
+    affectedZones: 'North and central neighborhoods',
+    trend: 'Vaccination gap pockets are driving a moderate but steady increase this week.',
+  },
+  {
+    id: 'dengue',
+    name: 'Dengue',
+    cases: '89 current cases',
+    weeklyGrowth: '+9.4%',
+    riskLevel: 'Moderate',
+    affectedZones: 'South-East corridor',
+    trend: 'Localized vector activity is producing a contained but meaningful rise in suspected dengue cases.',
+  },
+  {
+    id: 'influenza',
+    name: 'Influenza',
+    cases: '312 current cases',
+    weeklyGrowth: '+12.4%',
+    riskLevel: 'High',
+    affectedZones: 'West district and nearby wards',
+    trend: 'Influenza-like illness is the dominant growth signal and the strongest contributor to current regional pressure.',
+  },
+  {
+    id: 'pertussis',
+    name: 'Pertussis',
+    cases: '12 current cases',
+    weeklyGrowth: '+2.1%',
+    riskLevel: 'Low',
+    affectedZones: 'Scattered low-density pockets',
+    trend: 'Case volume remains small with only isolated pediatric reporting.',
+  },
+  {
+    id: 'covid-like-illness',
+    name: 'COVID-like Illness',
+    cases: '245 current cases',
+    weeklyGrowth: '+10.2%',
+    riskLevel: 'High',
+    affectedZones: 'Central transit belt',
+    trend: 'Respiratory symptom clusters are increasing near high-mobility areas and should be closely monitored.',
+  },
 ];
 
 export interface AnalyticsScreenProps {
@@ -74,6 +154,28 @@ export function AnalyticsScreen({
   const { logout, profile } = useAuth();
   const [timeFilter, setTimeFilter] = useState('24h');
   const [range, setRange] = useState('5km');
+  const [selectedZone, setSelectedZone] = useState<AnalyticsZoneDetail | null>(null);
+  const [selectedDisease, setSelectedDisease] = useState<AnalyticsDiseaseDetail | null>(null);
+  const [isExpandedMapOpen, setIsExpandedMapOpen] = useState(false);
+
+  const mapPins = [
+    {
+      id: 'west-district',
+      top: '30%',
+      left: '40%',
+      borderColor: '#FFFFFF',
+      fillColor: '#EF4444',
+      onPress: () => setSelectedZone(zoneDetails[0]),
+    },
+    {
+      id: 'south-east-corridor',
+      top: '48%',
+      left: '65%',
+      borderColor: '#FFFFFF',
+      fillColor: '#FB923C',
+      onPress: () => setSelectedZone(zoneDetails[1]),
+    },
+  ];
 
   return (
     <DashboardLayout
@@ -90,6 +192,7 @@ export function AnalyticsScreen({
         router.replace('/login');
       }}
     >
+      <>
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
         <View style={styles.filtersRow}>
@@ -147,20 +250,9 @@ export function AnalyticsScreen({
               showHeader
               showFooter={false}
               mapHeight={508}
-              pins={[
-                {
-                  top: '30%',
-                  left: '40%',
-                  borderColor: '#FFFFFF',
-                  fillColor: '#EF4444',
-                },
-                {
-                  top: '48%',
-                  left: '65%',
-                  borderColor: '#FFFFFF',
-                  fillColor: '#FB923C',
-                },
-              ]}
+              pins={mapPins}
+              bottomRightActionLabel="Expand"
+              onBottomRightActionPress={() => setIsExpandedMapOpen(true)}
               style={styles.mapCard}
             />
 
@@ -173,7 +265,13 @@ export function AnalyticsScreen({
 
           <DiseaseBreakdownCard
             title="Disease Breakdown"
-            rows={breakdownRows}
+            rows={breakdownRows.map((row) => ({
+              ...row,
+              onPress: () =>
+                setSelectedDisease(
+                  diseaseDetails.find((item) => item.id === row.id) ?? null
+                ),
+            }))}
             summaryItems={breakdownSummary}
             buttonLabel="Export Full Report"
             style={styles.breakdownCard}
@@ -227,6 +325,25 @@ export function AnalyticsScreen({
         </View>
         </View>
       </ScrollView>
+      <ZoneDetailOverlay
+        visible={selectedZone !== null}
+        zone={selectedZone}
+        onClose={() => setSelectedZone(null)}
+      />
+      <DiseaseDetailOverlay
+        visible={selectedDisease !== null}
+        disease={selectedDisease}
+        onClose={() => setSelectedDisease(null)}
+      />
+      <ExpandedMapOverlay
+        visible={isExpandedMapOpen}
+        title="Geographic Disease Radar"
+        mapImageUri={MAP_IMAGE_URI}
+        legendItems={legendItems}
+        pins={mapPins}
+        onClose={() => setIsExpandedMapOpen(false)}
+      />
+      </>
     </DashboardLayout>
   );
 }

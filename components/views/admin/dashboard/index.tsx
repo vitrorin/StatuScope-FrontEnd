@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { useAuth } from '@/contexts/AuthContext';
-import { initialsFromName } from '@/lib/format';
+import { LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { SidebarNavItem } from '@/components/Sidebar';
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
@@ -12,31 +10,58 @@ import { Button } from '@/components/foundation/Button';
 import { ProgressBar } from '@/components/foundation/ProgressBar';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
+import { AlertDetailOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/AlertDetailOverlay';
+import { AlertProtocolOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/AlertProtocolOverlay';
+import { EpidemiologicalReportOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/EpidemiologicalReportOverlay';
+import { ExportReportOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/ExportReportOverlay';
+import { MapZoneDetailOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/MapZoneDetailOverlay';
+import { MetricDetailOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/MetricDetailOverlay';
+import {
+  AdminDashboardAlert,
+  AdminDashboardMetric,
+  AdminDashboardZone,
+} from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 
 const MAP_IMAGE_URI = 'https://www.figma.com/api/mcp/asset/5bd3e67c-b2d1-4685-9db8-9c8033f3f9f3';
 
 const alerts = [
   {
+    id: 'influenza-a-spike',
     title: 'Influenza A Spike',
     description: 'Confirmed 45% increase in pediatric ward in the last 6 hours.',
     variant: 'critical' as const,
+    department: 'Pediatric Ward',
+    priority: 'Immediate',
+    recommendedAction: 'Escalate respiratory observation capacity and deploy additional monitoring staff in pediatric care.',
   },
   {
+    id: 'dengue-risk-alert',
     title: 'Dengue Risk Alert',
     description: '7 suspected dengue cases reported within 3km radius today.',
     variant: 'warning' as const,
+    department: 'Emergency Dept',
+    priority: 'High',
+    recommendedAction: 'Prepare vector-borne case triage protocol and verify hydration treatment stock availability.',
   },
   {
+    id: 'vaccine-supply-update',
     title: 'Vaccine Supply Update',
     description: 'New shipment of Bivalent boosters arrived in Pharmacy Unit B.',
     variant: 'info' as const,
+    department: 'Pharmacy Unit B',
+    priority: 'Normal',
+    recommendedAction: 'Rebalance booster allocation across outpatient and inpatient immunization areas.',
   },
   {
+    id: 'new-epidemiological-pattern',
     title: 'New Epidemiological Pattern',
     description: 'Unusual increase in pediatric fever cases detected today.',
     variant: 'neutral' as const,
+    department: 'General Pediatrics',
+    priority: 'Review',
+    recommendedAction: 'Open clinical review on the fever cluster and compare with ongoing regional trend signals.',
   },
-];
+] satisfies AdminDashboardAlert[];
 
 const topCards = [
   {
@@ -46,6 +71,10 @@ const topCards = [
     badgeColor: '#22C55E',
     progressValue: 78,
     progressColor: '#22C55E',
+    detailTitle: 'Available Beds',
+    detailSummary: 'Current inpatient bed availability across monitored hospital units.',
+    signalLabel: 'Moderate pressure',
+    recommendedAction: 'Keep overflow beds on standby and monitor ICU conversion capacity for the next shift.',
   },
   {
     title: 'ICU BEDS',
@@ -54,6 +83,10 @@ const topCards = [
     badgeColor: '#EF4444',
     progressValue: 64,
     progressColor: '#3B82F6',
+    detailTitle: 'ICU Bed Capacity',
+    detailSummary: 'Occupied versus available critical care beds updated from the latest operational snapshot.',
+    signalLabel: 'Tight capacity',
+    recommendedAction: 'Review ICU discharge opportunities and prepare step-down transfer candidates before next intake surge.',
   },
   {
     title: 'OXYGEN SUPPLY',
@@ -61,6 +94,10 @@ const topCards = [
     badge: 'Stable',
     badgeColor: '#94A3B8',
     segmented: true,
+    detailTitle: 'Oxygen Supply Resilience',
+    detailSummary: 'Mainline oxygen reserve and refill continuity status for respiratory-heavy scenarios.',
+    signalLabel: 'Stable reserve',
+    recommendedAction: 'Maintain current reserve policy and verify emergency refill lead time with supply operations.',
   },
   {
     title: 'STAFFING',
@@ -69,6 +106,10 @@ const topCards = [
     badgeColor: '#EF4444',
     progressValue: 84,
     progressColor: '#22C55E',
+    detailTitle: 'Clinical Staffing Coverage',
+    detailSummary: 'Coverage level based on the active roster against target staff requirements for the current cycle.',
+    signalLabel: 'Near target',
+    recommendedAction: 'Protect current staffing ratio and pre-alert float personnel if respiratory admissions continue climbing.',
   },
   {
     title: 'ISOLATION ROOMS',
@@ -77,19 +118,77 @@ const topCards = [
     badgeColor: '#22C55E',
     progressValue: 58,
     progressColor: '#1718C7',
+    detailTitle: 'Isolation Room Availability',
+    detailSummary: 'Dedicated rooms currently free for infectious or high-observation patient isolation.',
+    signalLabel: 'Healthy buffer',
+    recommendedAction: 'Reserve at least four rooms for fast escalation pathways linked to respiratory cluster alerts.',
   },
   {
     title: 'EMERGENCY CAPACITY',
     value: 'Warning',
     subtitle: 'Surgical Ward Overflow\nImminent',
     tone: 'critical' as const,
+    detailTitle: 'Emergency Capacity Risk',
+    detailSummary: 'The emergency flow model is detecting pressure likely to overflow into adjacent bed capacity.',
+    signalLabel: 'Critical watch',
+    recommendedAction: 'Trigger escalation protocol for surge routing and prepare a rapid redistribution of non-critical admissions.',
   },
-];
+] satisfies AdminDashboardMetric[];
+
+const mapZones = [
+  {
+    id: 'west-cluster',
+    name: 'West Respiratory Cluster',
+    risk: 'High',
+    disease: 'Influenza-like Illness',
+    cases: '14 active signals',
+    radius: '3.2 km',
+    priority: 'Immediate',
+    note: 'The west district is showing the strongest spike in respiratory pressure over the last reporting window.',
+    recommendedAction: 'Shift respiratory-ready beds to the west intake corridor and increase oxygen cart coverage nearby.',
+    top: '49%',
+    left: '48%',
+    borderColor: '#EF4444',
+  },
+  {
+    id: 'central-hospital-node',
+    name: 'Central Hospital Node',
+    risk: 'Monitored',
+    disease: 'Mixed intake pressure',
+    cases: '42 tracked admissions',
+    radius: 'Hospital core',
+    priority: 'Operational review',
+    note: 'This node concentrates referral pressure and is acting as the main balancing point for nearby districts.',
+    recommendedAction: 'Keep transfer routing active and maintain live coordination with ICU and emergency bed managers.',
+    top: '33%',
+    left: '63%',
+    borderColor: '#0003B8',
+  },
+  {
+    id: 'south-east-zone',
+    name: 'South-East Growth Area',
+    risk: 'Moderate',
+    disease: 'Pediatric fever cluster',
+    cases: '9 monitored cases',
+    radius: '2.4 km',
+    priority: 'Early action',
+    note: 'Early case grouping is appearing in the south-east corridor with growing pediatric symptom similarity.',
+    recommendedAction: 'Prepare pediatric observation capacity and sustain rapid triage for fever-compatible presentations.',
+    top: '61%',
+    left: '57%',
+    borderColor: '#F97316',
+  },
+] satisfies AdminDashboardZone[];
 
 export function AdminDashboard() {
   const router = useRouter();
-  const { logout, profile } = useAuth();
   const [gridWidth, setGridWidth] = useState(0);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isProtocolOpen, setIsProtocolOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [selectedAlert, setSelectedAlert] = useState<AdminDashboardAlert | null>(null);
+  const [selectedMetric, setSelectedMetric] = useState<AdminDashboardMetric | null>(null);
+  const [selectedZone, setSelectedZone] = useState<AdminDashboardZone | null>(null);
   const gridGap = 16;
   const topGap = 12;
   const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
@@ -101,15 +200,12 @@ export function AdminDashboard() {
       active="dashboard"
       sectionLabel="Dashboard"
       searchPlaceholder="Search hospital metrics..."
-      userName={profile?.fullName ?? 'Administrator'}
-      userId={profile?.hospitalName ? profile.hospitalName : profile?.email}
-      avatarText={initialsFromName(profile?.fullName)}
+      userName="Dr. Sarah Chen"
+      userId="ID: 442910"
+      avatarText="SC"
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
-      onLogout={async () => {
-        await logout();
-        router.replace('/login');
-      }}
+      onLogout={() => router.replace('/')}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
@@ -128,6 +224,7 @@ export function AdminDashboard() {
                 variant="secondary"
                 leadingIcon={<Feather name="download" size={12} color="#334155" />}
                 style={styles.secondaryAction}
+                onPress={() => setIsExportOpen(true)}
               />
               <Button
                 label="Alert Protocol"
@@ -135,18 +232,20 @@ export function AdminDashboard() {
                 variant="primary"
                 leadingIcon={<Feather name="star" size={12} color="#FFFFFF" />}
                 style={styles.primaryAction}
+                onPress={() => setIsProtocolOpen(true)}
               />
             </View>
           </View>
 
-          <View style={styles.topCardsRow}>
-            {topCards.map((card) => (
-              <OverviewMetricCard
-                key={card.title}
-                {...card}
-                style={
-                  topCardWidth
-                    ? { width: topCardWidth, minHeight: 132, flex: undefined }
+            <View style={styles.topCardsRow}>
+              {topCards.map((card) => (
+                <OverviewMetricCard
+                  key={card.title}
+                  {...card}
+                  onPress={() => setSelectedMetric(card)}
+                  style={
+                    topCardWidth
+                      ? { width: topCardWidth, minHeight: 132, flex: undefined }
                     : undefined
                 }
               />
@@ -181,6 +280,22 @@ export function AdminDashboard() {
                 ]}
                 footerTextRight="Last Sync: Just Now"
                 mapImageUri={MAP_IMAGE_URI}
+                pins={mapZones.map((zone) => ({
+                  id: zone.id,
+                  top: zone.top,
+                  left: zone.left,
+                  borderColor: zone.borderColor,
+                  fillColor: '#FFFFFF',
+                  icon:
+                    zone.borderColor === '#0003B8' ? (
+                      <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
+                    ) : zone.borderColor === '#F97316' ? (
+                      <MaterialCommunityIcons name="virus-outline" size={14} color="#F97316" />
+                    ) : (
+                      <MaterialCommunityIcons name="alert" size={16} color="#EF4444" />
+                    ),
+                  onPress: () => setSelectedZone(zone),
+                }))}
                 style={[styles.mapCard, mapWidth ? { width: mapWidth, flex: undefined } : null]}
               />
 
@@ -190,24 +305,36 @@ export function AdminDashboard() {
                 </View>
                 <View style={styles.alertsList}>
                   {alerts.map((alert) => (
-                    <AlertCard
-                      key={alert.title}
-                      title={alert.title}
-                      description={alert.description}
-                      variant={alert.variant}
-                      style={styles.alertCard}
-                    />
+                    <TouchableOpacity
+                      key={alert.id}
+                      activeOpacity={0.8}
+                      onPress={() => setSelectedAlert(alert)}
+                    >
+                      <AlertCard
+                        title={alert.title}
+                        description={alert.description}
+                        variant={alert.variant}
+                        style={styles.alertCard}
+                      />
+                    </TouchableOpacity>
                   ))}
                 </View>
               </View>
 
               <AdminCaseAnalyticsCard
                 style={[styles.analyticsCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
+                onOpenReport={() => setIsReportOpen(true)}
               />
             </View>
           </View>
         </View>
       </ScrollView>
+      <ExportReportOverlay visible={isExportOpen} onClose={() => setIsExportOpen(false)} />
+      <AlertProtocolOverlay visible={isProtocolOpen} onClose={() => setIsProtocolOpen(false)} />
+      <AlertDetailOverlay visible={selectedAlert !== null} alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
+      <EpidemiologicalReportOverlay visible={isReportOpen} onClose={() => setIsReportOpen(false)} />
+      <MetricDetailOverlay visible={selectedMetric !== null} metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
+      <MapZoneDetailOverlay visible={selectedZone !== null} zone={selectedZone} onClose={() => setSelectedZone(null)} />
     </DashboardLayout>
   );
 }
@@ -223,6 +350,7 @@ interface OverviewMetricCardProps {
   segmented?: boolean;
   tone?: 'default' | 'critical';
   style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
 }
 
 function OverviewMetricCard({
@@ -236,49 +364,54 @@ function OverviewMetricCard({
   segmented = false,
   tone = 'default',
   style,
+  onPress,
 }: OverviewMetricCardProps) {
   const isCritical = tone === 'critical';
 
   return (
-    <CardBase style={[styles.metricCard, isCritical && styles.metricCardCritical, style]}>
-      <View style={styles.metricHeader}>
-        <Text style={[styles.metricTitle, isCritical && styles.metricTitleCritical]}>{title}</Text>
-        {badge ? <Text style={[styles.metricBadge, { color: badgeColor }]}>{badge}</Text> : null}
-        {isCritical ? (
-          <Feather name="alert-triangle" size={14} color="#EF4444" style={styles.metricIcon} />
-        ) : null}
-      </View>
-
-      <Text style={[styles.metricValue, isCritical && styles.metricValueCritical]}>{value}</Text>
-
-      {subtitle ? (
-        <Text style={[styles.metricSubtitle, isCritical && styles.metricSubtitleCritical]}>
-          {subtitle}
-        </Text>
-      ) : null}
-
-      {segmented ? (
-        <View style={styles.segmentedBar}>
-          <View style={[styles.segmentedFill, { backgroundColor: '#0003B8' }]} />
-          <View style={[styles.segmentedFill, { backgroundColor: '#0003B8' }]} />
-          <View style={[styles.segmentedFill, { backgroundColor: '#CBD5E1' }]} />
+    <TouchableOpacity activeOpacity={0.84} onPress={onPress} disabled={!onPress}>
+      <CardBase style={[styles.metricCard, isCritical && styles.metricCardCritical, style]}>
+        <View style={styles.metricHeader}>
+          <Text style={[styles.metricTitle, isCritical && styles.metricTitleCritical]}>{title}</Text>
+          {badge ? <Text style={[styles.metricBadge, { color: badgeColor }]}>{badge}</Text> : null}
+          {isCritical ? (
+            <Feather name="alert-triangle" size={14} color="#EF4444" style={styles.metricIcon} />
+          ) : null}
         </View>
-      ) : progressValue !== undefined ? (
-        <ProgressBar
-          value={progressValue}
-          color={progressColor}
-          trackColor={isCritical ? '#FEE2E2' : '#E2E8F0'}
-          style={styles.metricProgress}
-        />
-      ) : null}
-    </CardBase>
+
+        <Text style={[styles.metricValue, isCritical && styles.metricValueCritical]}>{value}</Text>
+
+        {subtitle ? (
+          <Text style={[styles.metricSubtitle, isCritical && styles.metricSubtitleCritical]}>
+            {subtitle}
+          </Text>
+        ) : null}
+
+        {segmented ? (
+          <View style={styles.segmentedBar}>
+            <View style={[styles.segmentedFill, { backgroundColor: '#0003B8' }]} />
+            <View style={[styles.segmentedFill, { backgroundColor: '#0003B8' }]} />
+            <View style={[styles.segmentedFill, { backgroundColor: '#CBD5E1' }]} />
+          </View>
+        ) : progressValue !== undefined ? (
+          <ProgressBar
+            value={progressValue}
+            color={progressColor}
+            trackColor={isCritical ? '#FEE2E2' : '#E2E8F0'}
+            style={styles.metricProgress}
+          />
+        ) : null}
+      </CardBase>
+    </TouchableOpacity>
   );
 }
 
 function AdminCaseAnalyticsCard({
   style,
+  onOpenReport,
 }: {
   style?: StyleProp<ViewStyle>;
+  onOpenReport?: () => void;
 }) {
   const chartBars = [
     { label: 'MON', value: 50 },
@@ -369,6 +502,7 @@ function AdminCaseAnalyticsCard({
         size="sm"
         style={styles.caseAction}
         labelStyle={styles.caseActionLabel}
+        onPress={onOpenReport}
       />
     </CardBase>
   );
