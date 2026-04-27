@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LayoutChangeEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
@@ -157,6 +158,7 @@ const navigationLinks = {
 
 export function DoctorDashboard() {
   const router = useRouter();
+  const { logout } = useAuth();
   const [gridWidth, setGridWidth] = useState(0);
   const [selectedMetric, setSelectedMetric] = useState<DoctorDashboardMetric | null>(null);
   const [selectedZone, setSelectedZone] = useState<DoctorDashboardZone | null>(null);
@@ -175,7 +177,7 @@ export function DoctorDashboard() {
       userId="ID: 442910"
       avatarText="SC"
       links={navigationLinks}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>

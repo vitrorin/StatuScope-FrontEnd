@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 import { ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
@@ -33,6 +34,7 @@ import {
 
 export function AdminResources() {
   const router = useRouter();
+  const { logout } = useAuth();
   const [isEditConfigurationOpen, setIsEditConfigurationOpen] = useState(false);
   const [isRosterOpen, setIsRosterOpen] = useState(false);
   const [isInventoryMapOpen, setIsInventoryMapOpen] = useState(false);
@@ -123,7 +125,7 @@ export function AdminResources() {
       avatarText="SC"
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>

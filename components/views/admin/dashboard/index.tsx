@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 import { LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { SidebarNavItem } from '@/components/Sidebar';
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
@@ -182,6 +183,7 @@ const mapZones = [
 
 export function AdminDashboard() {
   const router = useRouter();
+  const { logout } = useAuth();
   const [gridWidth, setGridWidth] = useState(0);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isProtocolOpen, setIsProtocolOpen] = useState(false);
@@ -205,7 +207,7 @@ export function AdminDashboard() {
       avatarText="SC"
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
@@ -134,6 +135,7 @@ const initialRecommendations: RecommendationFeedItem[] = [
 
 export function AdminRecommendations() {
   const router = useRouter();
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState<RecommendationTab>('active');
   const [recommendations, setRecommendations] = useState<RecommendationFeedItem[]>(initialRecommendations);
   const [selectedRecommendationId, setSelectedRecommendationId] = useState<string | null>(null);
@@ -179,7 +181,7 @@ export function AdminRecommendations() {
       avatarText="SC"
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>

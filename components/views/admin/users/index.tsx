@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
@@ -32,6 +33,7 @@ const ITEMS_PER_PAGE = 6;
 
 export function AdminUsers() {
   const router = useRouter();
+  const { logout } = useAuth();
   const [users, setUsers] = useState<AdminUserRecord[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeRoleFilter, setActiveRoleFilter] = useState<'All' | UserRole>('All');
@@ -89,7 +91,7 @@ export function AdminUsers() {
       avatarText="SC"
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
-      onLogout={() => router.replace('/')}
+      onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
