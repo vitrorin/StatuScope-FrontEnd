@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { initialsFromName } from '@/lib/format';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
+import { askAssistant, AssistantMessage } from '@/lib/diagnosisAssistant';
 
 const navigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -25,6 +26,29 @@ export function DoctorDiagnosis() {
   const router = useRouter();
   const { logout, profile } = useAuth();
   const [assistantQuery, setAssistantQuery] = useState('');
+  const [chatHistory, setChatHistory] = useState<AssistantMessage[]>([]);
+
+  const handleSendPress = async () => {
+    const userMessage = assistantQuery.trim();
+    if (!userMessage) return;
+    setAssistantQuery('');
+
+    const updatedHistory: AssistantMessage[] = [
+      ...chatHistory,
+      { role: 'user', content: userMessage },
+    ];
+    setChatHistory(updatedHistory);
+
+    try {
+      const response = await askAssistant({ messages: updatedHistory });
+      setChatHistory([
+        ...updatedHistory,
+        { role: 'assistant', content: response.reply },
+      ]);
+    } catch {
+      // keep the user message in history even if request fails
+    }
+  };
 
   return (
     <DashboardLayout
@@ -138,7 +162,7 @@ export function DoctorDiagnosis() {
                 <AssistantInputBar
                   value={assistantQuery}
                   onChangeText={setAssistantQuery}
-                  onSendPress={() => setAssistantQuery('')}
+                  onSendPress={handleSendPress}
                 />
               </View>
             </CardBase>
