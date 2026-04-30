@@ -14,13 +14,26 @@ export type FileUploadState = 'empty' | 'dragging' | 'uploaded' | 'error';
 export interface PatientEvaluationFormProps {
   title?: string;
   caseMeta?: string;
-  ageValue?: string;
+  patientNameValue?: string;
+  birthDateValue?: string;
   sexValue?: string;
   postalCodeValue?: string;
   symptomsValue?: string;
   dropzoneState?: FileUploadState;
+  uploadedFileName?: string;
+  dropzoneError?: string;
   primaryButtonLabel?: string;
+  primaryButtonDisabled?: boolean;
+  secondaryButtonDisabled?: boolean;
   showSecondaryAction?: boolean;
+  onPatientNameChange?: (value: string) => void;
+  onBirthDateChange?: (value: string) => void;
+  onSexChange?: (value: string) => void;
+  onPostalCodeChange?: (value: string) => void;
+  onSymptomsChange?: (value: string) => void;
+  onBrowsePress?: () => void;
+  onPrimaryActionPress?: () => void;
+  onSecondaryActionPress?: () => void;
   style?: ViewStyle;
 }
 
@@ -33,13 +46,26 @@ const sexOptions = [
 export function PatientEvaluationForm({
   title = 'Patient Evaluation',
   caseMeta = 'Case ID: #2847 - Started 12 min ago',
-  ageValue,
+  patientNameValue,
+  birthDateValue,
   sexValue,
   postalCodeValue,
   symptomsValue,
   dropzoneState = 'empty',
+  uploadedFileName,
+  dropzoneError,
   primaryButtonLabel = 'Run AI Analysis',
+  primaryButtonDisabled = false,
+  secondaryButtonDisabled = false,
   showSecondaryAction = false,
+  onPatientNameChange,
+  onBirthDateChange,
+  onSexChange,
+  onPostalCodeChange,
+  onSymptomsChange,
+  onBrowsePress,
+  onPrimaryActionPress,
+  onSecondaryActionPress,
   style,
 }: PatientEvaluationFormProps) {
   return (
@@ -50,12 +76,25 @@ export function PatientEvaluationForm({
       </View>
 
       <View style={styles.fields}>
+        <View>
+          <Text style={styles.fieldLabel}>Patient Name</Text>
+          <InputField
+            placeholder="e.g., Sofia Martinez"
+            value={patientNameValue}
+            onChangeText={onPatientNameChange}
+            style={styles.fieldBlock}
+            inputContainerStyle={styles.fieldInputContainer}
+          />
+        </View>
+
         <View style={styles.row}>
           <View style={styles.halfField}>
-            <Text style={styles.fieldLabel}>Patient Age</Text>
+            <Text style={styles.fieldLabel}>Birth Date</Text>
             <InputField
-              placeholder="e.g., 34"
-              value={ageValue}
+              placeholder="YYYY-MM-DD"
+              value={birthDateValue}
+              onChangeText={onBirthDateChange}
+              maxLength={10}
               style={styles.fieldBlock}
               inputContainerStyle={styles.fieldInputContainer}
             />
@@ -67,6 +106,7 @@ export function PatientEvaluationForm({
               placeholder="Select"
               options={sexOptions}
               value={sexValue}
+              onChange={onSexChange}
               style={styles.fieldBlock}
             />
           </View>
@@ -77,6 +117,7 @@ export function PatientEvaluationForm({
           <InputField
             placeholder="e.g., 10001"
             value={postalCodeValue}
+            onChangeText={onPostalCodeChange}
             style={styles.fieldBlock}
             inputContainerStyle={styles.fieldInputContainer}
             leftIcon={<Feather name="map-pin" size={14} color="#0003B8" />}
@@ -88,6 +129,7 @@ export function PatientEvaluationForm({
           <TextareaField
             placeholder="Describe patient symptoms, duration, severity..."
             value={symptomsValue}
+            onChangeText={onSymptomsChange}
             numberOfLines={3}
             style={styles.fieldBlock}
           />
@@ -100,7 +142,9 @@ export function PatientEvaluationForm({
             supportedFormats="PDF, JPG, DICOM"
             maxSizeText="20MB"
             state={dropzoneState}
-            fileName={dropzoneState === 'uploaded' ? 'lab_results.pdf' : undefined}
+            fileName={uploadedFileName}
+            error={dropzoneError}
+            onBrowsePress={onBrowsePress}
           />
         </View>
       </View>
@@ -110,7 +154,8 @@ export function PatientEvaluationForm({
           variant="primary"
           size="lg"
           label={primaryButtonLabel}
-          onPress={() => {}}
+          disabled={primaryButtonDisabled}
+          onPress={onPrimaryActionPress}
           style={styles.primaryButton}
           labelStyle={styles.primaryButtonLabel}
         />
@@ -119,6 +164,8 @@ export function PatientEvaluationForm({
           <IconButton
             icon={<Feather name="clipboard" size={12} color="#64748B" />}
             variant="secondary"
+            disabled={secondaryButtonDisabled}
+            onPress={onSecondaryActionPress}
             style={styles.secondaryButton}
           />
         ) : null}

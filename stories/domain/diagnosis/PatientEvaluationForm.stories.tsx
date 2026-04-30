@@ -32,7 +32,8 @@ export const Filled: Story = {
   args: {
     title: 'Patient Evaluation Form',
     caseMeta: 'Case ID: #2847 • Started 12 min ago',
-    ageValue: '34',
+    patientNameValue: 'Camila Herrera',
+    birthDateValue: '1992-06-14',
     sexValue: 'male',
     postalCodeValue: '10001',
     symptomsValue: 'Patient presents with fever, headache, and muscle aches for the past 3 days.',
@@ -44,11 +45,13 @@ export const WithUploadedFile: Story = {
   args: {
     title: 'Patient Evaluation Form',
     caseMeta: 'Case ID: #2847 • Started 12 min ago',
-    ageValue: '34',
+    patientNameValue: 'Camila Herrera',
+    birthDateValue: '1992-06-14',
     sexValue: 'male',
     postalCodeValue: '10001',
     symptomsValue: 'Patient presents with fever, headache, and muscle aches for the past 3 days.',
     dropzoneState: 'uploaded',
+    uploadedFileName: 'lab_results.pdf',
   },
 };
 
