@@ -26,7 +26,6 @@ export interface DiagnosisEvaluationPatient {
   ageYears: number | null;
   weightKg: number | null;
   heightCm: number | null;
-  postalCode: string | null;
 }
 
 export interface DiagnosisEvaluationEvent {
@@ -55,7 +54,6 @@ export interface UpdateDiagnosisEvaluationPayload {
   patientFullName: string;
   birthDate: string;
   sex: string;
-  postalCode?: string;
   symptomsText: string;
 }
 

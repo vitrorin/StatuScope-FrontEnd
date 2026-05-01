@@ -8,7 +8,6 @@ export interface AssistantMessage {
 export interface PatientContext {
   ageYears?: number;
   sex?: string;
-  postalCode?: string;
   symptoms?: string;
 }
 

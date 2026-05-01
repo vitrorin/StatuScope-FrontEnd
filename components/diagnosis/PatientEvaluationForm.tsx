@@ -17,7 +17,6 @@ export interface PatientEvaluationFormProps {
   patientNameValue?: string;
   birthDateValue?: string;
   sexValue?: string;
-  postalCodeValue?: string;
   symptomsValue?: string;
   dropzoneState?: FileUploadState;
   uploadedFileName?: string;
@@ -29,7 +28,6 @@ export interface PatientEvaluationFormProps {
   onPatientNameChange?: (value: string) => void;
   onBirthDateChange?: (value: string) => void;
   onSexChange?: (value: string) => void;
-  onPostalCodeChange?: (value: string) => void;
   onSymptomsChange?: (value: string) => void;
   onBrowsePress?: () => void;
   onPrimaryActionPress?: () => void;
@@ -49,7 +47,6 @@ export function PatientEvaluationForm({
   patientNameValue,
   birthDateValue,
   sexValue,
-  postalCodeValue,
   symptomsValue,
   dropzoneState = 'empty',
   uploadedFileName,
@@ -61,7 +58,6 @@ export function PatientEvaluationForm({
   onPatientNameChange,
   onBirthDateChange,
   onSexChange,
-  onPostalCodeChange,
   onSymptomsChange,
   onBrowsePress,
   onPrimaryActionPress,
@@ -110,18 +106,6 @@ export function PatientEvaluationForm({
               style={styles.fieldBlock}
             />
           </View>
-        </View>
-
-        <View>
-          <Text style={styles.fieldLabel}>Postal Code</Text>
-          <InputField
-            placeholder="e.g., 10001"
-            value={postalCodeValue}
-            onChangeText={onPostalCodeChange}
-            style={styles.fieldBlock}
-            inputContainerStyle={styles.fieldInputContainer}
-            leftIcon={<Feather name="map-pin" size={14} color="#0003B8" />}
-          />
         </View>
 
         <View>

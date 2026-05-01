@@ -130,7 +130,6 @@ export function DoctorDiagnosis() {
   const [patientName, setPatientName] = useState('');
   const [patientBirthDate, setPatientBirthDate] = useState('');
   const [patientSex, setPatientSex] = useState('');
-  const [postalCode, setPostalCode] = useState('');
   const [symptoms, setSymptoms] = useState('');
   const [assistantQuery, setAssistantQuery] = useState('');
   const [chatHistory, setChatHistory] = useState<AssistantMessage[]>([]);
@@ -152,7 +151,6 @@ export function DoctorDiagnosis() {
     setPatientName(nextEvaluation.patient.fullName ?? '');
     setPatientBirthDate(nextEvaluation.patient.birthDate ?? '');
     setPatientSex(nextEvaluation.patient.sex ?? '');
-    setPostalCode(nextEvaluation.patient.postalCode ?? '');
     setSymptoms(nextEvaluation.symptomsText ?? '');
   };
 
@@ -162,7 +160,6 @@ export function DoctorDiagnosis() {
     return {
       ageYears: parsedAge,
       sex: patientSex || undefined,
-      postalCode: postalCode.trim() || undefined,
       symptoms: symptoms.trim() || undefined,
     };
   };
@@ -195,7 +192,6 @@ export function DoctorDiagnosis() {
         patientFullName: patientName.trim(),
         birthDate: patientBirthDate.trim(),
         sex: patientSex,
-        postalCode: postalCode.trim() || undefined,
         symptomsText: symptoms.trim(),
       };
       const updatedEvaluation = evaluation
@@ -350,7 +346,6 @@ export function DoctorDiagnosis() {
             patientNameValue={patientName}
             birthDateValue={patientBirthDate}
             sexValue={patientSex}
-            postalCodeValue={postalCode}
             symptomsValue={symptoms}
             dropzoneState={dropzoneState}
             uploadedFileName={latestFile?.fileName ?? undefined}
@@ -368,7 +363,6 @@ export function DoctorDiagnosis() {
             onPatientNameChange={setPatientName}
             onBirthDateChange={handleBirthDateChange}
             onSexChange={setPatientSex}
-            onPostalCodeChange={setPostalCode}
             onSymptomsChange={setSymptoms}
             onBrowsePress={handleUploadPress}
             onPrimaryActionPress={handleRunAnalysisPress}
@@ -429,9 +423,9 @@ export function DoctorDiagnosis() {
                             showWarning={!!contextUsed?.regionName || outbreakCount > 0}
                             warningMessage={
                               contextUsed?.regionName
-                                ? `Context used: ${contextUsed.regionName} with ${outbreakCount} active outbreak signal${outbreakCount === 1 ? '' : 's'}.`
+                                ? `Hospital region context: ${contextUsed.regionName} with ${outbreakCount} active outbreak signal${outbreakCount === 1 ? '' : 's'}.`
                                 : outbreakCount > 0
-                                  ? `Context used: ${outbreakCount} active outbreak signal${outbreakCount === 1 ? '' : 's'}.`
+                                  ? `Hospital region context: ${outbreakCount} active outbreak signal${outbreakCount === 1 ? '' : 's'}.`
                                   : undefined
                             }
                             style={styles.responseCard}
