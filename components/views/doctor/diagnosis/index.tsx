@@ -82,6 +82,27 @@ function deriveDropzoneState(
   return 'empty';
 }
 
+function formatOutbreakContextMessage(context: AssistantContext | null): string | undefined {
+  const outbreaks = context?.outbreaks ?? [];
+
+  if (outbreaks.length === 0) {
+    return context?.regionName ? `Hospital region context: ${context.regionName}.` : undefined;
+  }
+
+  const outbreakLabels = outbreaks
+    .map((outbreak) => {
+      const caseLabel = outbreak.caseCount === 1 ? '1 case' : `${outbreak.caseCount} cases`;
+      return `${outbreak.diseaseName} (${caseLabel})`;
+    })
+    .join(', ');
+  const regionLabel = context?.regionName
+    ? `Hospital region context: ${context.regionName}`
+    : 'Hospital region context';
+  const signalLabel = outbreaks.length === 1 ? 'Active outbreak signal' : 'Active outbreak signals';
+
+  return `${regionLabel}. ${signalLabel}: ${outbreakLabels}.`;
+}
+
 async function pickDiagnosisFile(): Promise<PickedDiagnosisFile | null> {
   if (typeof document === 'undefined') {
     throw new Error('File upload is currently available in the web app only.');
@@ -301,7 +322,7 @@ export function DoctorDiagnosis() {
     }
   };
 
-  const outbreakCount = contextUsed?.outbreaks?.length ?? 0;
+  const outbreakWarningMessage = formatOutbreakContextMessage(contextUsed);
   const latestFile = evaluation?.files?.[0] ?? null;
   const dropzoneState = deriveDropzoneState(isUploadingFile, uploadError, evaluation);
 
@@ -420,14 +441,8 @@ export function DoctorDiagnosis() {
                           <DiagnosisResponseCard
                             responseText={message.content}
                             highlightText="HOWEVER"
-                            showWarning={!!contextUsed?.regionName || outbreakCount > 0}
-                            warningMessage={
-                              contextUsed?.regionName
-                                ? `Hospital region context: ${contextUsed.regionName} with ${outbreakCount} active outbreak signal${outbreakCount === 1 ? '' : 's'}.`
-                                : outbreakCount > 0
-                                  ? `Hospital region context: ${outbreakCount} active outbreak signal${outbreakCount === 1 ? '' : 's'}.`
-                                  : undefined
-                            }
+                            showWarning={!!outbreakWarningMessage}
+                            warningMessage={outbreakWarningMessage}
                             style={styles.responseCard}
                           />
                         </View>
