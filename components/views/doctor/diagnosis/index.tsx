@@ -84,9 +84,10 @@ function deriveDropzoneState(
 
 function formatOutbreakContextMessage(context: AssistantContext | null): string | undefined {
   const outbreaks = context?.outbreaks ?? [];
+  const stateName = context?.stateName ?? context?.regionName;
 
   if (outbreaks.length === 0) {
-    return context?.regionName ? `Hospital region context: ${context.regionName}.` : undefined;
+    return stateName ? `Hospital state context: ${stateName}.` : undefined;
   }
 
   const outbreakLabels = outbreaks
@@ -95,9 +96,9 @@ function formatOutbreakContextMessage(context: AssistantContext | null): string 
       return `${outbreak.diseaseName} (${caseLabel})`;
     })
     .join(', ');
-  const regionLabel = context?.regionName
-    ? `Hospital region context: ${context.regionName}`
-    : 'Hospital region context';
+  const regionLabel = stateName
+    ? `Hospital state context: ${stateName}`
+    : 'Hospital state context';
   const signalLabel = outbreaks.length === 1 ? 'Active outbreak signal' : 'Active outbreak signals';
 
   return `${regionLabel}. ${signalLabel}: ${outbreakLabels}.`;

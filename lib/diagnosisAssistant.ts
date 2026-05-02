@@ -13,12 +13,17 @@ export interface PatientContext {
 
 export interface OutbreakSummary {
   diseaseName: string;
+  municipalityName?: string | null;
+  cityName?: string | null;
+  stateName?: string | null;
+  regionName?: string | null;
   caseCount: number;
   startedAt: string;
 }
 
 export interface AssistantContext {
-  regionName: string | null;
+  stateName?: string | null;
+  regionName?: string | null;
   outbreaks: OutbreakSummary[];
 }
 
