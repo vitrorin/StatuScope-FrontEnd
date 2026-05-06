@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -12,10 +12,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { initialsFromName } from '@/lib/format';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
-import { askAssistant, AssistantContext, AssistantMessage, PatientContext } from '@/lib/diagnosisAssistant';
+import { ApiError } from '@/lib/api';
+import {
+  askAssistant,
+  AssistantContext,
+  AssistantMessage,
+  getAssistantThread,
+  PatientContext,
+} from '@/lib/diagnosisAssistant';
 import {
   DiagnosisEvaluation,
   createDiagnosisEvaluation,
+  getCurrentDiagnosisEvaluation,
   updateDiagnosisEvaluation,
   updateDiagnosisEvaluationStatus,
   uploadDiagnosisEvaluationFile,
@@ -142,6 +150,63 @@ export function DoctorDiagnosis() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const hydrateExistingSession = async () => {
+      try {
+        const currentEvaluation = await getCurrentDiagnosisEvaluation();
+        if (!isActive) return;
+
+        setEvaluation(currentEvaluation);
+        setPatientName(currentEvaluation.patient.fullName ?? '');
+        setPatientBirthDate(currentEvaluation.patient.birthDate ?? '');
+        setPatientSex(currentEvaluation.patient.sex ?? '');
+        setSymptoms(currentEvaluation.symptomsText ?? '');
+
+        try {
+          const thread = await getAssistantThread(currentEvaluation.id);
+          if (!isActive) return;
+
+          setChatHistory(
+            thread.messages
+              .filter(
+                (message): message is AssistantMessage =>
+                  message.role === 'user' || message.role === 'assistant',
+              )
+              .map((message) => ({
+                role: message.role,
+                content: message.content,
+              })),
+          );
+          setContextUsed(thread.contextUsed);
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 404) {
+            return;
+          }
+          if (!isActive) return;
+          setAssistantError(
+            error instanceof Error ? error.message : 'Unable to load the saved assistant thread.',
+          );
+        }
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return;
+        }
+        if (!isActive) return;
+        setEvaluationError(
+          error instanceof Error ? error.message : 'Unable to restore the active diagnosis evaluation.',
+        );
+      }
+    };
+
+    void hydrateExistingSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   const handleBirthDateChange = (value: string) => {
     setPatientBirthDate(formatBirthDateInput(value));
   };
@@ -209,9 +274,19 @@ export function DoctorDiagnosis() {
     }
   };
 
-  const sendAssistantMessage = async (content: string) => {
+  const sendAssistantMessage = async (
+    content: string,
+    activeEvaluationOverride?: DiagnosisEvaluation,
+  ) => {
     const userMessage = content.trim();
     if (!userMessage || isAssistantLoading) return;
+
+    let activeEvaluation: DiagnosisEvaluation;
+    try {
+      activeEvaluation = activeEvaluationOverride ?? evaluation ?? (await persistEvaluation());
+    } catch {
+      return;
+    }
 
     setAssistantQuery('');
     setAssistantError(null);
@@ -225,7 +300,8 @@ export function DoctorDiagnosis() {
 
     try {
       const response = await askAssistant({
-        messages: updatedHistory,
+        evaluationId: activeEvaluation.id,
+        messages: [{ role: 'user', content: userMessage }],
         patientContext: buildPatientContext(),
       });
       setChatHistory([
@@ -250,8 +326,8 @@ export function DoctorDiagnosis() {
       : 'Evaluate this patient and suggest differential diagnoses, risk factors, and next diagnostic steps.';
 
     try {
-      await persistEvaluation();
-      await sendAssistantMessage(contextPrompt);
+      const activeEvaluation = await persistEvaluation();
+      await sendAssistantMessage(contextPrompt, activeEvaluation);
     } catch {
       return;
     }
@@ -319,7 +395,7 @@ export function DoctorDiagnosis() {
         router.replace('/login');
       }}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <View style={styles.contentContainer}>
         <View style={styles.heroStrip}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroEyebrow}>Clinical Intelligence Workspace</Text>
@@ -392,7 +468,11 @@ export function DoctorDiagnosis() {
                 </View>
               </View>
 
-              <View style={styles.chatBody}>
+              <ScrollView
+                style={styles.chatBody}
+                contentContainerStyle={styles.chatBodyContent}
+                showsVerticalScrollIndicator={false}
+              >
                 {chatHistory.length === 0 ? (
                   <View style={styles.emptyState}>
                     <MaterialCommunityIcons name="stethoscope" size={24} color="#0003B8" />
@@ -446,7 +526,7 @@ export function DoctorDiagnosis() {
                 {assistantError ? (
                   <Text style={styles.errorText}>{assistantError}</Text>
                 ) : null}
-              </View>
+              </ScrollView>
 
               <View style={styles.chatFooter}>
                 <AssistantInputBar
@@ -502,7 +582,7 @@ export function DoctorDiagnosis() {
             </View>
           </View>
         </View>
-      </ScrollView>
+      </View>
     </DashboardLayout>
   );
 }
@@ -511,6 +591,7 @@ export default DoctorDiagnosis;
 
 const styles = StyleSheet.create({
   contentContainer: {
+    flex: 1,
     padding: 24,
   },
   heroStrip: {
@@ -581,9 +662,11 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   workspace: {
+    flex: 1,
     flexDirection: 'row',
     gap: 24,
     alignItems: 'stretch',
+    minHeight: 0,
   },
   pageErrorText: {
     marginBottom: 16,
@@ -603,10 +686,13 @@ const styles = StyleSheet.create({
   rightColumn: {
     flex: 1,
     gap: 24,
+    minHeight: 0,
   },
   chatCard: {
+    flex: 1,
     padding: 0,
     overflow: 'hidden',
+    minHeight: 0,
     borderRadius: 22,
     borderColor: 'rgba(148, 163, 184, 0.24)',
     shadowColor: '#000F6B',
@@ -680,7 +766,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   chatBody: {
+    flex: 1,
+    minHeight: 0,
     backgroundColor: '#F8FAFF',
+  },
+  chatBodyContent: {
     padding: 26,
     gap: 24,
   },

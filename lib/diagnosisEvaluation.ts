@@ -103,3 +103,7 @@ export async function uploadDiagnosisEvaluationFile(
     body: JSON.stringify(payload),
   });
 }
+
+export async function getCurrentDiagnosisEvaluation(): Promise<DiagnosisEvaluation> {
+  return api<DiagnosisEvaluation>('/diagnosis/evaluations/current');
+}
