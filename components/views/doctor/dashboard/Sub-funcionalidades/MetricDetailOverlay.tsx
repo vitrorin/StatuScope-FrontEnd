@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DoctorDashboardMetric } from '@/components/views/doctor/dashboard/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
 
 interface MetricDetailOverlayProps {
   visible: boolean;
@@ -11,6 +12,8 @@ interface MetricDetailOverlayProps {
 }
 
 export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOverlayProps) {
+  const { t } = useTranslation();
+
   if (!metric) return null;
 
   return (
@@ -20,7 +23,7 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>Clinical Metric</Text>
+              <Text style={styles.eyebrow}>{t('doctor.dashboard.overlays.clinicalMetric')}</Text>
               <Text style={styles.title}>{metric.detailTitle}</Text>
               <Text style={styles.subtitle}>{metric.detailSummary}</Text>
             </View>
@@ -30,12 +33,12 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricStat label="Current Value" value={metric.value} />
-            <MetricStat label="Signal" value={metric.signalLabel} />
+            <MetricStat label={t('doctor.dashboard.overlays.currentValue')} value={metric.value} />
+            <MetricStat label={t('doctor.dashboard.overlays.signal')} value={metric.signalLabel} />
           </View>
 
           <CardBase style={styles.noteCard}>
-            <Text style={styles.noteLabel}>Recommended Action</Text>
+            <Text style={styles.noteLabel}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
             <Text style={styles.noteText}>{metric.recommendedAction}</Text>
           </CardBase>
         </CardBase>

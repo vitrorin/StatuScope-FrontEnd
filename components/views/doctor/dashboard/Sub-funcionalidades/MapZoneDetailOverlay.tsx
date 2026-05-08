@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DoctorDashboardZone } from '@/components/views/doctor/dashboard/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
 
 interface MapZoneDetailOverlayProps {
   visible: boolean;
@@ -11,6 +12,8 @@ interface MapZoneDetailOverlayProps {
 }
 
 export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOverlayProps) {
+  const { t } = useTranslation();
+
   if (!zone) return null;
 
   return (
@@ -20,7 +23,7 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>Zone Detail</Text>
+              <Text style={styles.eyebrow}>{t('doctor.dashboard.overlays.zoneDetail')}</Text>
               <Text style={styles.title}>{zone.name}</Text>
               <Text style={styles.subtitle}>{zone.note}</Text>
             </View>
@@ -30,15 +33,15 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricStat label="Risk Level" value={zone.risk} />
-            <MetricStat label="Primary Disease" value={zone.disease} />
-            <MetricStat label="Cases" value={zone.cases} />
-            <MetricStat label="Radius" value={zone.radius} />
-            <MetricStat label="Priority" value={zone.priority} />
+            <MetricStat label={t('doctor.dashboard.overlays.riskLevel')} value={zone.risk} />
+            <MetricStat label={t('doctor.dashboard.overlays.primaryDisease')} value={zone.disease} />
+            <MetricStat label={t('doctor.dashboard.overlays.cases')} value={zone.cases} />
+            <MetricStat label={t('doctor.dashboard.overlays.radius')} value={zone.radius} />
+            <MetricStat label={t('doctor.dashboard.overlays.priority')} value={zone.priority} />
           </View>
 
           <CardBase style={styles.noteCard}>
-            <Text style={styles.noteLabel}>Recommended Action</Text>
+            <Text style={styles.noteLabel}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
             <Text style={styles.noteText}>{zone.recommendedAction}</Text>
           </CardBase>
         </CardBase>

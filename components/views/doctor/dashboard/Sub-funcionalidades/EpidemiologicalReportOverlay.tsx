@@ -2,6 +2,7 @@ import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
+import { useTranslation } from '@/i18n';
 
 interface EpidemiologicalReportOverlayProps {
   visible: boolean;
@@ -9,6 +10,8 @@ interface EpidemiologicalReportOverlayProps {
 }
 
 export function EpidemiologicalReportOverlay({ visible, onClose }: EpidemiologicalReportOverlayProps) {
+  const { t } = useTranslation();
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -16,9 +19,9 @@ export function EpidemiologicalReportOverlay({ visible, onClose }: Epidemiologic
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Report Preview</Text>
-              <Text style={styles.title}>Disease Breakdown Summary</Text>
-              <Text style={styles.subtitle}>Regional burden and clinical trend overview for the active diseases currently tracked.</Text>
+              <Text style={styles.eyebrow}>{t('doctor.dashboard.overlays.reportPreview')}</Text>
+              <Text style={styles.title}>{t('doctor.dashboard.overlays.reportTitle')}</Text>
+              <Text style={styles.subtitle}>{t('doctor.dashboard.overlays.reportSubtitle')}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
@@ -27,16 +30,16 @@ export function EpidemiologicalReportOverlay({ visible, onClose }: Epidemiologic
 
           <View style={styles.sections}>
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Top Signal</Text>
-              <Text style={styles.sectionText}>Influenza remains the most dominant pressure source and continues leading the weekly case volume.</Text>
+              <Text style={styles.sectionTitle}>{t('doctor.dashboard.overlays.topSignal')}</Text>
+              <Text style={styles.sectionText}>{t('doctor.dashboard.overlays.topSignalText')}</Text>
             </CardBase>
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Area Watch</Text>
-              <Text style={styles.sectionText}>Pediatric-adjacent zones and COVID-like illness clusters should stay under active observation this cycle.</Text>
+              <Text style={styles.sectionTitle}>{t('doctor.dashboard.overlays.areaWatch')}</Text>
+              <Text style={styles.sectionText}>{t('doctor.dashboard.overlays.areaWatchText')}</Text>
             </CardBase>
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Clinical Recommendation</Text>
-              <Text style={styles.sectionText}>Sustain respiratory triage readiness and keep high-risk fever presentations under rapid escalation review.</Text>
+              <Text style={styles.sectionTitle}>{t('doctor.dashboard.overlays.clinicalRecommendation')}</Text>
+              <Text style={styles.sectionText}>{t('doctor.dashboard.overlays.clinicalRecommendationText')}</Text>
             </CardBase>
           </View>
         </CardBase>

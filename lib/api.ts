@@ -1,4 +1,5 @@
 import { firebaseAuth } from './firebase';
+import { getCurrentLanguage } from '@/i18n/language';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -22,6 +23,7 @@ export async function api<T = unknown>(
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
+  headers.set('Accept-Language', getCurrentLanguage());
   if (user) {
     const token = await user.getIdToken();
     headers.set('Authorization', `Bearer ${token}`);

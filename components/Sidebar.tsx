@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTranslation } from '@/i18n';
 
 export type SidebarItemKey =
   | 'dashboard'
@@ -46,6 +47,15 @@ const navItems: SidebarNavItem[] = [
 
 export function Sidebar({ active = 'dashboard', onLogout, links, items = navItems }: SidebarProps) {
   const router = useRouter();
+  const { t } = useTranslation();
+
+  const labelForItem = (item: SidebarNavItem) => {
+    if (item.label !== navItems.find((navItem) => navItem.key === item.key)?.label) {
+      return item.label;
+    }
+    const key = item.key === 'analytics' ? 'analyticsNav' : item.key;
+    return t(`layout.sidebar.${key}`);
+  };
 
   return (
     <View style={styles.container}>
@@ -55,8 +65,8 @@ export function Sidebar({ active = 'dashboard', onLogout, links, items = navItem
         </View>
         <View>
           <Text style={styles.brandName}>StatuScope</Text>
-          <Text style={styles.brandSubtitle}>HEALTHCARE</Text>
-          <Text style={styles.brandSubtitle}>ANALYTICS</Text>
+          <Text style={styles.brandSubtitle}>{t('layout.sidebar.healthcare')}</Text>
+          <Text style={styles.brandSubtitle}>{t('layout.sidebar.analytics')}</Text>
         </View>
       </View>
 
@@ -77,7 +87,7 @@ export function Sidebar({ active = 'dashboard', onLogout, links, items = navItem
               }}
             >
               <View style={styles.navIcon}>{item.icon}</View>
-              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
+              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{labelForItem(item)}</Text>
             </TouchableOpacity>
           );
         })}
@@ -86,7 +96,7 @@ export function Sidebar({ active = 'dashboard', onLogout, links, items = navItem
       <View style={styles.logoutWrap}>
         <TouchableOpacity style={styles.logout} activeOpacity={0.75} onPress={onLogout}>
           <Feather name="power" size={18} color="#64748B" />
-          <Text style={styles.logoutLabel}>Log out</Text>
+          <Text style={styles.logoutLabel}>{t('layout.sidebar.logout')}</Text>
         </TouchableOpacity>
       </View>
     </View>

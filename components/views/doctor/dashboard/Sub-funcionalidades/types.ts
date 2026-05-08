@@ -34,4 +34,6 @@ export interface DoctorDashboardZone {
   top: string;
   left: string;
   borderColor: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }

@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DoctorDashboardAlert } from '@/components/views/doctor/dashboard/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
 
 interface AlertDetailOverlayProps {
   visible: boolean;
@@ -11,6 +12,8 @@ interface AlertDetailOverlayProps {
 }
 
 export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverlayProps) {
+  const { t } = useTranslation();
+
   if (!alert) return null;
 
   return (
@@ -20,7 +23,7 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Alert Detail</Text>
+              <Text style={styles.eyebrow}>{t('doctor.dashboard.overlays.alertDetail')}</Text>
               <Text style={styles.title}>{alert.title}</Text>
               <Text style={styles.subtitle}>{alert.description}</Text>
             </View>
@@ -30,12 +33,12 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
           </View>
 
           <View style={styles.grid}>
-            <MetricCard label="Area" value={alert.area} />
-            <MetricCard label="Priority" value={alert.priority} />
+            <MetricCard label={t('doctor.dashboard.overlays.area')} value={alert.area} />
+            <MetricCard label={t('doctor.dashboard.overlays.priority')} value={alert.priority} />
           </View>
 
           <CardBase style={styles.actionCard}>
-            <Text style={styles.actionTitle}>Recommended Action</Text>
+            <Text style={styles.actionTitle}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
             <Text style={styles.actionText}>{alert.recommendedAction}</Text>
           </CardBase>
         </CardBase>

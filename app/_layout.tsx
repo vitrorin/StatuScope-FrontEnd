@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { AuthProvider, useAuth, UserProfile } from '@/contexts/AuthContext';
+import { I18nProvider } from '@/i18n';
 import '@/global.css';
 
 export const unstable_settings = {
@@ -55,16 +56,18 @@ export default function RootLayout() {
   return (
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AuthProvider>
-          <AuthGate>
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F5F5F8' } }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="login" />
-              <Stack.Screen name="register" />
-              <Stack.Screen name="modal" options={{ headerShown: true, presentation: 'modal', title: 'Modal' }} />
-            </Stack>
-          </AuthGate>
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <AuthGate>
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F5F5F8' } }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="login" />
+                <Stack.Screen name="register" />
+                <Stack.Screen name="modal" options={{ headerShown: true, presentation: 'modal', title: 'Modal' }} />
+              </Stack>
+            </AuthGate>
+          </AuthProvider>
+        </I18nProvider>
         <StatusBar style="auto" />
       </ThemeProvider>
     </GluestackUIProvider>
