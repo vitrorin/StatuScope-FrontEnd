@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { jsPDF } from 'jspdf';
 import { CardBase } from '@/components/patterns/CardBase';
 import { useTranslation } from '@/i18n';
 import { getDoctorDashboardReport, DoctorDashboardReportResponse, DoctorDashboardReportScope } from '@/lib/doctorDashboard';
@@ -136,25 +135,20 @@ function exportReportPdf({
   report: DoctorDashboardReportResponse;
   t: (key: string, params?: Record<string, string | number>) => string;
 }) {
-  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const pdf = createSimplePdf();
   const reportDate = report.generatedAt ? new Date(report.generatedAt) : new Date();
   const totalCases = report.outbreaks.reduce((sum, outbreak) => sum + outbreak.caseCount, 0);
 
   let y = 54;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text(t('doctor.dashboard.reports.pdfTitle'), 48, y);
+  pdf.text(t('doctor.dashboard.reports.pdfTitle'), 48, y, 18, true);
   y += 24;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(82, 97, 116);
-  doc.text(`${t('doctor.dashboard.reports.hospital')}: ${report.hospitalName ?? ''}`, 48, y);
+  pdf.text(`${t('doctor.dashboard.reports.hospital')}: ${report.hospitalName ?? ''}`, 48, y, 10, false, [82, 97, 116]);
   y += 16;
-  doc.text(`${t('doctor.dashboard.reports.generatedAt')}: ${reportDate.toLocaleString()}`, 48, y);
+  pdf.text(`${t('doctor.dashboard.reports.generatedAt')}: ${reportDate.toLocaleString()}`, 48, y, 10, false, [82, 97, 116]);
   y += 16;
-  doc.text(`${t('doctor.dashboard.reports.scope')}: ${scopeLabel(report.scope, t)}`, 48, y);
+  pdf.text(`${t('doctor.dashboard.reports.scope')}: ${scopeLabel(report.scope, t)}`, 48, y, 10, false, [82, 97, 116]);
   y += 16;
-  doc.text(`${t('doctor.dashboard.diseaseBreakdown.totalActiveCases')}: ${formatNumber(totalCases)}`, 48, y);
+  pdf.text(`${t('doctor.dashboard.diseaseBreakdown.totalActiveCases')}: ${formatNumber(totalCases)}`, 48, y, 10, false, [82, 97, 116]);
   y += 28;
 
   const scopeGroups = report.scope === 'both'
@@ -168,72 +162,59 @@ function exportReportPdf({
 
   scopeGroups.forEach((scopeGroup) => {
     if (scopeGroup.rows.length === 0) return;
-    y = ensureSpace(doc, y, 52);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(15, 23, 42);
-    doc.text(scopeGroup.title, 48, y);
+    y = pdf.ensureSpace(y, 52);
+    pdf.text(scopeGroup.title, 48, y, 13, true);
     y += 30;
 
     (['CONFIRMED', 'SUSPECTED'] as const).forEach((status) => {
       const rows = scopeGroup.rows.filter((outbreak) => outbreak.confirmationStatus === status);
       if (rows.length === 0) return;
-      y = drawStatusSection(doc, y, status, rows, t);
+      y = drawStatusSection(pdf, y, status, rows, t);
     });
   });
 
   const filename = `statuscope-${report.scope}-outbreak-report-${new Date().toISOString().slice(0, 10)}.pdf`;
-  doc.save(filename);
+  pdf.save(filename);
 }
 
 function drawStatusSection(
-  doc: jsPDF,
+  pdf: SimplePdf,
   y: number,
   status: 'CONFIRMED' | 'SUSPECTED',
   rows: DoctorDashboardReportResponse['outbreaks'],
   t: (key: string, params?: Record<string, string | number>) => string,
 ) {
-  y = ensureSpace(doc, y, 56);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(status === 'CONFIRMED' ? 22 : 180, status === 'CONFIRMED' ? 101 : 83, status === 'CONFIRMED' ? 52 : 9);
-  doc.text(status === 'CONFIRMED' ? t('doctor.dashboard.reports.confirmedSection') : t('doctor.dashboard.reports.suspectedSection'), 58, y);
+  y = pdf.ensureSpace(y, 56);
+  pdf.text(
+    status === 'CONFIRMED' ? t('doctor.dashboard.reports.confirmedSection') : t('doctor.dashboard.reports.suspectedSection'),
+    58,
+    y,
+    11,
+    true,
+    status === 'CONFIRMED' ? [22, 101, 52] : [180, 83, 9],
+  );
   y += 18;
-  y = drawReportHeader(doc, y, t);
+  y = drawReportHeader(pdf, y, t);
 
   rows.forEach((outbreak) => {
-    y = ensureSpace(doc, y, 42);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(15, 23, 42);
-    const diseaseLines = doc.splitTextToSize(translateDiseaseName(t, outbreak.diseaseName), 165);
-    const locationLines = doc.splitTextToSize(outbreak.location, 205);
+    y = pdf.ensureSpace(y, 42);
+    const diseaseLines = wrapText(translateDiseaseName(t, outbreak.diseaseName), 28);
+    const locationLines = wrapText(outbreak.location, 34);
     const rowHeight = Math.max(diseaseLines.length, locationLines.length, 1) * 12 + 8;
-    doc.text(diseaseLines, 58, y);
-    doc.text(locationLines, 240, y);
-    doc.text(formatNumber(outbreak.caseCount), 475, y);
+    diseaseLines.forEach((line, index) => pdf.text(line, 58, y + index * 12, 9));
+    locationLines.forEach((line, index) => pdf.text(line, 240, y + index * 12, 9));
+    pdf.text(formatNumber(outbreak.caseCount), 475, y, 9);
     y += rowHeight;
   });
 
   return y + 8;
 }
 
-function drawReportHeader(doc: jsPDF, y: number, t: (key: string, params?: Record<string, string | number>) => string) {
-  doc.setFillColor(248, 250, 252);
-  doc.rect(48, y - 12, 516, 24, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text(t('doctor.dashboard.reports.diseaseColumn'), 58, y + 4);
-  doc.text(t('doctor.dashboard.reports.locationColumn'), 240, y + 4);
-  doc.text(t('doctor.dashboard.reports.casesColumn'), 475, y + 4);
+function drawReportHeader(pdf: SimplePdf, y: number, t: (key: string, params?: Record<string, string | number>) => string) {
+  pdf.text(t('doctor.dashboard.reports.diseaseColumn'), 58, y + 4, 9, true, [100, 116, 139]);
+  pdf.text(t('doctor.dashboard.reports.locationColumn'), 240, y + 4, 9, true, [100, 116, 139]);
+  pdf.text(t('doctor.dashboard.reports.casesColumn'), 475, y + 4, 9, true, [100, 116, 139]);
   return y + 28;
-}
-
-function ensureSpace(doc: jsPDF, y: number, minSpace: number) {
-  if (y + minSpace <= 740) return y;
-  doc.addPage();
-  return 54;
 }
 
 function scopeLabel(scope: string | null | undefined, t: (key: string) => string) {
@@ -245,6 +226,123 @@ function scopeLabel(scope: string | null | undefined, t: (key: string) => string
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat().format(value);
+}
+
+type PdfColor = [number, number, number];
+
+interface SimplePdf {
+  text: (value: string, x: number, y: number, size?: number, bold?: boolean, color?: PdfColor) => void;
+  ensureSpace: (y: number, minSpace: number) => number;
+  save: (filename: string) => void;
+}
+
+function createSimplePdf(): SimplePdf {
+  const pages: string[][] = [[]];
+  const pageWidth = 612;
+  const pageHeight = 792;
+
+  const currentPage = () => pages[pages.length - 1];
+  const addPage = () => pages.push([]);
+
+  return {
+    text(value, x, y, size = 10, bold = false, color = [15, 23, 42]) {
+      const pdfY = pageHeight - y;
+      const [r, g, b] = color.map((component) => (component / 255).toFixed(3));
+      currentPage().push(
+        `BT /${bold ? 'F2' : 'F1'} ${size} Tf ${r} ${g} ${b} rg ${x.toFixed(2)} ${pdfY.toFixed(2)} Td (${escapePdfText(value)}) Tj ET`,
+      );
+    },
+    ensureSpace(y, minSpace) {
+      if (y + minSpace <= 740) return y;
+      addPage();
+      return 54;
+    },
+    save(filename) {
+      const pdf = buildPdfDocument(pages, pageWidth, pageHeight);
+      const webGlobal = globalThis as typeof globalThis & {
+        Blob?: typeof Blob;
+        URL?: typeof URL;
+        document?: Document;
+      };
+      if (!webGlobal.Blob || !webGlobal.URL || !webGlobal.document) {
+        return;
+      }
+      const blob = new webGlobal.Blob([pdf], { type: 'application/pdf' });
+      const url = webGlobal.URL.createObjectURL(blob);
+      const link = webGlobal.document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      webGlobal.URL.revokeObjectURL(url);
+    },
+  };
+}
+
+function buildPdfDocument(pages: string[][], pageWidth: number, pageHeight: number) {
+  const objects: string[] = [];
+  const addObject = (content: string) => {
+    objects.push(content);
+    return objects.length;
+  };
+
+  const catalogId = addObject('');
+  const pagesId = addObject('');
+  const fontRegularId = addObject('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+  const fontBoldId = addObject('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+  const pageIds: number[] = [];
+
+  pages.forEach((lines) => {
+    const content = lines.join('\n');
+    const contentId = addObject(`<< /Length ${latin1Length(content)} >>\nstream\n${content}\nendstream`);
+    const pageId = addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${fontRegularId} 0 R /F2 ${fontBoldId} 0 R >> >> /Contents ${contentId} 0 R >>`);
+    pageIds.push(pageId);
+  });
+
+  objects[catalogId - 1] = `<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
+  objects[pagesId - 1] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(' ')}] /Count ${pageIds.length} >>`;
+
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(latin1Length(pdf));
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xrefOffset = latin1Length(pdf);
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach((offset) => {
+    pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return pdf;
+}
+
+function latin1Length(value: string) {
+  return value.length;
+}
+
+function escapePdfText(value: string) {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/\r?\n/g, ' ');
+}
+
+function wrapText(value: string, maxChars: number) {
+  const words = value.split(/\s+/);
+  const lines: string[] = [];
+  let current = '';
+  words.forEach((word) => {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxChars && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  });
+  if (current) lines.push(current);
+  return lines.length > 0 ? lines : [''];
 }
 
 const styles = StyleSheet.create({
