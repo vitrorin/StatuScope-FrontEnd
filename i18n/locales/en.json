@@ -52,10 +52,16 @@
   "doctor": {
     "dashboard": {
       "sectionLabel": "Dashboard",
+      "screenSummary": "Operational summary of outbreaks, alerts, and hospital capacity.",
       "searchPlaceholder": "Search medical records...",
       "loading": "Loading doctor dashboard data...",
       "errorTitle": "Dashboard data unavailable",
       "retry": "Retry",
+      "radiusControl": {
+        "label": "Analysis range",
+        "contextTitle": "Outbreak zone",
+        "contextDescription": "Adjust the radius used to recalculate the dashboard."
+      },
       "map": {
         "title": "Live Heatmap",
         "overlayTitle": "Live Heatmap",
@@ -96,6 +102,29 @@
         "stateContext": "State",
         "hospitalRegion": "Hospital region",
         "exportReport": "Export Full Report"
+      },
+      "reports": {
+        "localOptionTitle": "Municipal outbreaks",
+        "stateOptionTitle": "State outbreaks",
+        "bothOptionTitle": "Municipal and state",
+        "bothOptionDescription": "Includes both contexts in one PDF.",
+        "pdfTitle": "Epidemiological outbreak report",
+        "hospital": "Hospital",
+        "generatedAt": "Generated",
+        "scope": "Scope",
+        "localScope": "Municipal",
+        "stateScope": "State",
+        "bothScope": "Municipal and state",
+        "stateSectionTitle": "State outbreaks",
+        "localSectionTitle": "Municipal outbreaks",
+        "confirmedSection": "Confirmed",
+        "suspectedSection": "Suspected",
+        "diseaseColumn": "Disease",
+        "locationColumn": "Location",
+        "casesColumn": "Cases",
+        "statusColumn": "Status",
+        "scopeColumn": "Scope",
+        "outbreaksColumn": "Outbreaks"
       },
       "overlays": {
         "clinicalMetric": "Clinical Metric",

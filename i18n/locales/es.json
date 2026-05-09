@@ -52,10 +52,16 @@
   "doctor": {
     "dashboard": {
       "sectionLabel": "Panel",
+      "screenSummary": "Resumen operativo de brotes, alertas y capacidad hospitalaria.",
       "searchPlaceholder": "Buscar expedientes clinicos...",
       "loading": "Cargando datos del panel medico...",
       "errorTitle": "Datos del panel no disponibles",
       "retry": "Reintentar",
+      "radiusControl": {
+        "label": "Rango de analisis",
+        "contextTitle": "Zona de brotes",
+        "contextDescription": "Ajusta el radio usado para recalcular el panel."
+      },
       "map": {
         "title": "Mapa de calor en vivo",
         "overlayTitle": "Mapa de calor",
@@ -96,6 +102,29 @@
         "stateContext": "Estado",
         "hospitalRegion": "Region hospitalaria",
         "exportReport": "Exportar reporte completo"
+      },
+      "reports": {
+        "localOptionTitle": "Brotes municipales",
+        "stateOptionTitle": "Brotes estatales",
+        "bothOptionTitle": "Municipales y estatales",
+        "bothOptionDescription": "Incluye ambos contextos en un solo PDF.",
+        "pdfTitle": "Reporte epidemiologico de brotes",
+        "hospital": "Hospital",
+        "generatedAt": "Generado",
+        "scope": "Alcance",
+        "localScope": "Municipal",
+        "stateScope": "Estatal",
+        "bothScope": "Municipal y estatal",
+        "stateSectionTitle": "Brotes estatales",
+        "localSectionTitle": "Brotes municipales",
+        "confirmedSection": "Confirmados",
+        "suspectedSection": "Sospechosos",
+        "diseaseColumn": "Enfermedad",
+        "locationColumn": "Ubicacion",
+        "casesColumn": "Casos",
+        "statusColumn": "Estado",
+        "scopeColumn": "Alcance",
+        "outbreaksColumn": "Brotes"
       },
       "overlays": {
         "clinicalMetric": "Metrica clinica",

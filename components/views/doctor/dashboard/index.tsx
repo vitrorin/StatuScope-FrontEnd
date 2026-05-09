@@ -9,7 +9,7 @@ import { RadarMapCard, RadarMapPolygon } from '@/components/dashboard/RadarMapCa
 import { AlertCard } from '@/components/feedback/AlertCard';
 import { DiseaseBreakdownCard } from '@/components/dashboard/DiseaseBreakdownCard';
 import { AlertDetailOverlay } from '@/components/views/doctor/dashboard/Sub-funcionalidades/AlertDetailOverlay';
-import { EpidemiologicalReportOverlay } from '@/components/views/doctor/dashboard/Sub-funcionalidades/EpidemiologicalReportOverlay';
+import { EpidemiologicalReportOverlay, ReportSection } from '@/components/views/doctor/dashboard/Sub-funcionalidades/EpidemiologicalReportOverlay';
 import { MapZoneDetailOverlay } from '@/components/views/doctor/dashboard/Sub-funcionalidades/MapZoneDetailOverlay';
 import { MetricDetailOverlay } from '@/components/views/doctor/dashboard/Sub-funcionalidades/MetricDetailOverlay';
 import {
@@ -43,6 +43,8 @@ const navigationLinks = {
   diagnosis: '/diagnosis',
   analytics: '/analytics',
 } as const;
+
+const outbreakRadiusOptions = [35, 75, 150] as const;
 
 type SectionStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -186,6 +188,34 @@ function formatSurroundingsLabel(
 ) {
   if (!municipalityName) return fallback;
   return t('doctor.dashboard.diseaseBreakdown.municipalitySurroundings', { municipality: municipalityName });
+}
+
+function buildReportSection({
+  title,
+  contextLabel,
+  contextValue,
+  rows,
+  totalCases,
+  t,
+}: {
+  title: string;
+  contextLabel: string;
+  contextValue: string;
+  rows: DoctorDashboardDiseaseResponse[];
+  totalCases: number;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}): ReportSection {
+  return {
+    title,
+    contextLabel,
+    contextValue,
+    totalCases,
+    rows: rows.map((row) => ({
+      disease: translateDiseaseName(t, row.diseaseName),
+      cases: row.caseCount,
+      outbreaks: row.outbreakCount,
+    })),
+  };
 }
 
 function buildDiseaseRows(
@@ -447,6 +477,7 @@ export function DoctorDashboard() {
   const [stateMapState, setStateMapState] = useState<SectionState<{ states: DoctorDashboardStateMapItem[] }>>(initialSectionState);
   const [stateOutbreakMapState, setStateOutbreakMapState] = useState<SectionState<DoctorDashboardMapResponse>>(initialSectionState);
   const [isMapHovered, setIsMapHovered] = useState(false);
+  const [selectedRadiusKm, setSelectedRadiusKm] = useState<number>(75);
   const gridGap = 16;
   const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
   const mapWidth = metricWidth ? metricWidth * 2 + gridGap : undefined;
@@ -454,7 +485,7 @@ export function DoctorDashboard() {
   const loadMetrics = useCallback(async () => {
     setMetricsState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const data = await getDoctorDashboardMetrics();
+      const data = await getDoctorDashboardMetrics(selectedRadiusKm);
       setMetricsState({ status: 'success', data, error: null });
     } catch (error) {
       setMetricsState((current) => ({
@@ -463,12 +494,12 @@ export function DoctorDashboard() {
         error: error instanceof Error ? error.message : 'Unable to load dashboard metrics.',
       }));
     }
-  }, []);
+  }, [selectedRadiusKm]);
 
   const loadMap = useCallback(async () => {
     setMapState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const data = await getDoctorDashboardMap();
+      const data = await getDoctorDashboardMap(selectedRadiusKm);
       setMapState({ status: 'success', data, error: null });
     } catch (error) {
       setMapState((current) => ({
@@ -477,12 +508,12 @@ export function DoctorDashboard() {
         error: error instanceof Error ? error.message : 'Unable to load map data.',
       }));
     }
-  }, []);
+  }, [selectedRadiusKm]);
 
   const loadAlerts = useCallback(async () => {
     setAlertsState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const data = await getDoctorDashboardAlerts();
+      const data = await getDoctorDashboardAlerts(selectedRadiusKm);
       setAlertsState({ status: 'success', data, error: null });
     } catch (error) {
       setAlertsState((current) => ({
@@ -491,12 +522,12 @@ export function DoctorDashboard() {
         error: error instanceof Error ? error.message : 'Unable to load alerts.',
       }));
     }
-  }, []);
+  }, [selectedRadiusKm]);
 
   const loadLocalBreakdown = useCallback(async () => {
     setLocalBreakdownState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const data = await getDoctorDashboardLocalBreakdown();
+      const data = await getDoctorDashboardLocalBreakdown(selectedRadiusKm);
       setLocalBreakdownState({ status: 'success', data, error: null });
     } catch (error) {
       setLocalBreakdownState((current) => ({
@@ -505,7 +536,7 @@ export function DoctorDashboard() {
         error: error instanceof Error ? error.message : 'Unable to load local breakdown.',
       }));
     }
-  }, []);
+  }, [selectedRadiusKm]);
 
   const loadStateBreakdown = useCallback(async () => {
     setStateBreakdownState((current) => ({ ...current, status: 'loading', error: null }));
@@ -629,6 +660,28 @@ export function DoctorDashboard() {
     stateName,
     t,
   );
+  const localReportSection = useMemo(
+    () => buildReportSection({
+      title: t('doctor.dashboard.diseaseBreakdown.localTitle'),
+      contextLabel: t('doctor.dashboard.diseaseBreakdown.outbreakContext'),
+      contextValue: localBreakdownContext,
+      rows: localBreakdownState.data?.diseaseBreakdown ?? [],
+      totalCases,
+      t,
+    }),
+    [localBreakdownContext, localBreakdownState.data?.diseaseBreakdown, t, totalCases],
+  );
+  const stateReportSection = useMemo(
+    () => buildReportSection({
+      title: t('doctor.dashboard.diseaseBreakdown.stateTitle'),
+      contextLabel: t('doctor.dashboard.diseaseBreakdown.stateContext'),
+      contextValue: stateName,
+      rows: stateBreakdownState.data?.diseaseBreakdown ?? [],
+      totalCases: totalStateCases,
+      t,
+    }),
+    [stateBreakdownState.data?.diseaseBreakdown, stateName, t, totalStateCases],
+  );
 
   return (
     <DashboardLayout
@@ -647,6 +700,34 @@ export function DoctorDashboard() {
         scrollEnabled={!isMapHovered}
       >
         <View style={styles.container}>
+        <View style={styles.dashboardToolbar}>
+          <View style={styles.dashboardToolbarContext}>
+            <View>
+              <Text style={styles.toolbarEyebrow}>Dashboard</Text>
+              <View style={styles.dashboardTitleUnderline} />
+            </View>
+          </View>
+          <View style={styles.radiusControlGroup}>
+            <Text style={styles.radiusControlLabel}>{t('doctor.dashboard.radiusControl.label')}</Text>
+            <View style={styles.radiusButtons}>
+              {outbreakRadiusOptions.map((radius) => {
+                const isActive = radius === selectedRadiusKm;
+                return (
+                  <TouchableOpacity
+                    key={radius}
+                    style={[styles.radiusSegment, isActive ? styles.radiusSegmentActive : null]}
+                    activeOpacity={0.82}
+                    onPress={() => setSelectedRadiusKm(radius)}
+                  >
+                    <Text style={[styles.radiusSegmentText, isActive ? styles.radiusSegmentTextActive : null]}>
+                      {radius} km
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
         <View
           style={styles.metricsRow}
           onLayout={(event: LayoutChangeEvent) => {
@@ -870,7 +951,15 @@ export function DoctorDashboard() {
         }}
         t={t}
       />
-      <EpidemiologicalReportOverlay visible={isReportOpen} onClose={() => setIsReportOpen(false)} />
+      <EpidemiologicalReportOverlay
+        visible={isReportOpen}
+        hospitalName={hospitalName}
+        generatedAt={mapState.data?.generatedAt}
+        localSection={localReportSection}
+        stateSection={stateReportSection}
+        onClose={() => setIsReportOpen(false)}
+        radiusKm={selectedRadiusKm}
+      />
       <StateOutbreakExplorer
         visible={isStateExplorerOpen}
         states={stateMapState.data?.states ?? []}
@@ -1116,6 +1205,76 @@ const styles = StyleSheet.create({
   container: {
     padding: 32,
     gap: 32,
+  },
+  dashboardToolbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 18,
+  },
+  dashboardToolbarContext: {
+    minWidth: 0,
+    flex: 1,
+  },
+  toolbarEyebrow: {
+    fontSize: 40,
+    lineHeight: 48,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  dashboardTitleUnderline: {
+    width: 214,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: '#0F172A',
+    marginTop: 8,
+  },
+  radiusControlGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  radiusControlLabel: {
+    fontSize: 13,
+    lineHeight: 17,
+    fontWeight: '900',
+    color: '#8A9AAF',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  radiusButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  radiusSegment: {
+    height: 48,
+    minWidth: 90,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.18)',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radiusSegmentActive: {
+    backgroundColor: '#0003B8',
+    borderColor: '#0003B8',
+    shadowColor: '#0003B8',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    elevation: 5,
+  },
+  radiusSegmentText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  radiusSegmentTextActive: {
+    color: '#FFFFFF',
   },
   metricsRow: {
     flexDirection: 'row',

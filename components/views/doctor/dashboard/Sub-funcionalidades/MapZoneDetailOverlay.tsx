@@ -18,11 +18,10 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
   const eyebrow = zone.id === 'hospital-node'
     ? t('doctor.dashboard.overlays.hospitalDetail')
     : t('doctor.dashboard.overlays.zoneDetail');
+  const locationText = [zone.municipalityName, zone.stateName].filter(Boolean).join(', ');
   const metrics = [
-    { label: t('doctor.dashboard.overlays.state'), value: zone.stateName ?? zone.name },
-    { label: t('doctor.dashboard.overlays.municipality'), value: zone.municipalityName ?? zone.name },
-    { label: t('doctor.dashboard.overlays.riskLevel'), value: zone.risk },
     { label: t('doctor.dashboard.overlays.primaryDisease'), value: zone.disease },
+    { label: t('doctor.dashboard.overlays.riskLevel'), value: zone.risk },
     { label: t('doctor.dashboard.overlays.cases'), value: zone.cases },
     zone.radius ? { label: t('doctor.dashboard.overlays.radius'), value: zone.radius } : null,
     { label: t('doctor.dashboard.overlays.priority'), value: zone.priority },
@@ -38,6 +37,12 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
               <Text style={styles.eyebrow}>{eyebrow}</Text>
               <Text style={styles.title}>{zone.name}</Text>
               <Text style={styles.subtitle}>{zone.note}</Text>
+              {locationText ? (
+                <View style={[styles.locationPill, { borderColor: `${zone.borderColor}30`, backgroundColor: `${zone.borderColor}0D` }]}>
+                  <Feather name="map-pin" size={13} color={zone.borderColor} />
+                  <Text style={styles.locationText}>{locationText}</Text>
+                </View>
+              ) : null}
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
               <Feather name="x" size={18} color="#64748B" />
@@ -99,6 +104,18 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
   subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
+  locationPill: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  locationText: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: '#0F172A' },
   closeButton: {
     width: 40,
     height: 40,
