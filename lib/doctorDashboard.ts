@@ -11,6 +11,16 @@ export interface DoctorDashboardMetricResponse {
   signalLabel: string;
   recommendedAction: string;
   iconKey?: 'trend' | null;
+  insights?: DoctorDashboardMetricInsightResponse[] | null;
+}
+
+export interface DoctorDashboardMetricInsightResponse {
+  title: string;
+  location: string;
+  cases: string;
+  severity: string;
+  color: string;
+  meta?: string | null;
 }
 
 export interface DoctorDashboardDiseaseResponse {
@@ -24,10 +34,15 @@ export interface DoctorDashboardAlertResponse {
   id: string;
   title: string;
   description: string;
-  variant: 'critical' | 'warning' | 'info' | 'neutral';
+  variant: 'critical' | 'warning' | 'success' | 'info' | 'neutral';
   area: string;
   priority: string;
   recommendedAction: string;
+  caseCount?: number | null;
+  caseLabel?: string | null;
+  confirmationStatus?: string | null;
+  municipalityName?: string | null;
+  stateName?: string | null;
 }
 
 export interface DoctorDashboardZoneResponse {
@@ -40,6 +55,8 @@ export interface DoctorDashboardZoneResponse {
   priority: string;
   note: string;
   recommendedAction: string;
+  municipalityName?: string | null;
+  stateName?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   borderColor: string;
@@ -67,6 +84,20 @@ export interface DoctorDashboardMapResponse {
   zones: DoctorDashboardZoneResponse[];
   diseaseBreakdown: DoctorDashboardDiseaseResponse[];
   generatedAt: string;
+  radiusKm: number;
+}
+
+export interface DoctorDashboardStateMapItem {
+  stateId: string;
+  stateName: string;
+  latitude: number;
+  longitude: number;
+  outbreakCount: number;
+  caseCount: number;
+}
+
+export interface DoctorDashboardStateMapResponse {
+  states: DoctorDashboardStateMapItem[];
 }
 
 export interface DoctorDashboardAlertsResponse {
@@ -76,6 +107,7 @@ export interface DoctorDashboardAlertsResponse {
 export interface DoctorDashboardBreakdownResponse {
   diseaseBreakdown: DoctorDashboardDiseaseResponse[];
   stateName?: string | null;
+  municipalityName?: string | null;
 }
 
 export async function getDoctorDashboardSummary(): Promise<DoctorDashboardSummary> {
@@ -88,6 +120,14 @@ export async function getDoctorDashboardMetrics(): Promise<DoctorDashboardMetric
 
 export async function getDoctorDashboardMap(): Promise<DoctorDashboardMapResponse> {
   return api<DoctorDashboardMapResponse>('/doctor/dashboard/map');
+}
+
+export async function getDoctorDashboardStateMap(): Promise<DoctorDashboardStateMapResponse> {
+  return api<DoctorDashboardStateMapResponse>('/doctor/dashboard/map/states');
+}
+
+export async function getDoctorDashboardStateOutbreakMap(stateId: string): Promise<DoctorDashboardMapResponse> {
+  return api<DoctorDashboardMapResponse>(`/doctor/dashboard/map/states/${stateId}/outbreaks`);
 }
 
 export async function getDoctorDashboardAlerts(): Promise<DoctorDashboardAlertsResponse> {

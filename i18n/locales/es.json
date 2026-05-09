@@ -62,16 +62,28 @@
         "secure": "Seguro",
         "highRisk": "Riesgo alto",
         "emerging": "Emergente",
+        "lowRisk": "Riesgo bajo",
         "hospitalNode": "Nodo hospitalario",
+        "expand": "Expandir",
+        "viewOtherStates": "Ver otros estados",
+        "stateSelector": "Selector de estados",
+        "stateOutbreaks": "Brotes estatales",
+        "backToStates": "Regresar",
+        "selectStateHint": "Selecciona un estado para ver brotes municipales",
+        "stateOutbreakCount": "{{count}} senales municipales de brote",
         "lastSyncPending": "Ultima sincronizacion: pendiente",
         "lastSync": "Ultima sincronizacion: {{time}}"
       },
       "alerts": {
-        "title": "Alertas contextuales de enfermedades",
+        "title": "Brotes activos más relevantes",
         "emptyTitle": "Sin alertas activas",
         "emptyDescription": "No hay senales activas de brotes para el contexto de este hospital.",
         "activityTitle": "Actividad de {{disease}}",
-        "activityDescription": "{{cases}} en {{area}}. Estado: {{status}}."
+        "activityDescription": "{{cases}} en {{area}}. Estado: {{status}}.",
+        "activeCasesLabel": "Casos activos",
+        "showMore": "Mostrar más brotes",
+        "moreEyebrow": "Brotes activos",
+        "moreTitle": "Más brotes contextuales"
       },
       "diseaseBreakdown": {
         "title": "Desglose por enfermedad",
@@ -80,21 +92,27 @@
         "totalActiveCases": "Casos activos totales",
         "totalStateCases": "Casos estatales totales",
         "outbreakContext": "Contexto de brotes",
+        "municipalitySurroundings": "{{municipality}} y alrededores",
         "stateContext": "Estado",
         "hospitalRegion": "Region hospitalaria",
         "exportReport": "Exportar reporte completo"
       },
       "overlays": {
         "clinicalMetric": "Metrica clinica",
-        "currentValue": "Valor actual",
-        "signal": "Senal",
+        "currentValue": "Situacion actual",
+        "signal": "Indicador",
+        "metricInsights": "Información clínica relevante",
         "recommendedAction": "Accion recomendada",
         "alertDetail": "Detalle de alerta",
         "area": "Area",
         "priority": "Prioridad",
-        "zoneDetail": "Detalle de zona",
+        "zoneDetail": "Detalle de brote",
+        "hospitalDetail": "Detalles del hospital",
         "riskLevel": "Nivel de riesgo",
-        "primaryDisease": "Enfermedad principal",
+        "primaryDisease": "Enfermedad",
+        "state": "Estado",
+        "municipality": "Municipio",
+        "status": "Estatus",
         "cases": "Casos",
         "radius": "Radio",
         "reportPreview": "Vista previa del reporte",
@@ -113,6 +131,7 @@
           "subtitle": "Casos activos de brotes en el contexto hospitalario",
           "detailSummary": "Suma de brotes municipales activos dentro del radio del hospital mas los brotes estatales activos del estado del hospital.",
           "signalLabel": "Carga regional activa",
+          "insightCriteria": "Top de brotes cercanos ordenados por severidad y luego por casos.",
           "recommendedAction": "Mantener el triaje alineado con las enfermedades activas cerca del hospital."
         },
         "highest-case-disease": {
@@ -120,6 +139,7 @@
           "subtitle": "Mayor conteo de casos activos en el contexto actual",
           "detailSummary": "Esta metrica reemplaza la proyeccion de crecimiento hasta contar con series historicas semanales.",
           "signalLabel": "Mayor carga actual",
+          "insightCriteria": "Ubicaciones con mas casos de la enfermedad dominante.",
           "recommendedAction": "Usar esta senal como contexto epidemiologico, no como diagnostico independiente."
         },
         "local-risk-level": {
@@ -127,6 +147,7 @@
           "subtitle": "Basado en brotes activos y casos totales",
           "detailSummary": "El riesgo se deriva del volumen de brotes activos en el contexto geografico del hospital.",
           "signalLabel": "Presion regional",
+          "insightCriteria": "Brotes activos mas cercanos al hospital.",
           "recommendedAction": "Revisar los brotes cercanos antes de evaluar sintomas compatibles."
         },
         "hospital-profile": {

@@ -46,3 +46,6 @@ app-example
 
 *storybook.log
 storybook-static
+
+# Large map source downloads used to regenerate simplified boundaries.
+assets/maps/raw-states/

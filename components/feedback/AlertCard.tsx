@@ -2,7 +2,7 @@ import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 
-export type AlertCardVariant = 'critical' | 'warning' | 'info' | 'neutral';
+export type AlertCardVariant = 'critical' | 'warning' | 'success' | 'info' | 'neutral';
 
 export interface AlertCardProps {
   title: string;
@@ -25,6 +25,13 @@ const variantStyles = {
     title: '#92400E',
     text: '#B45309',
     icon: 'alert-triangle' as const,
+  },
+  success: {
+    bar: '#22C55E',
+    background: '#F0FDF4',
+    title: '#166534',
+    text: '#15803D',
+    icon: 'check-circle' as const,
   },
   info: {
     bar: '#3D7FFF',

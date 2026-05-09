@@ -15,6 +15,18 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
   const { t } = useTranslation();
 
   if (!zone) return null;
+  const eyebrow = zone.id === 'hospital-node'
+    ? t('doctor.dashboard.overlays.hospitalDetail')
+    : t('doctor.dashboard.overlays.zoneDetail');
+  const metrics = [
+    { label: t('doctor.dashboard.overlays.state'), value: zone.stateName ?? zone.name },
+    { label: t('doctor.dashboard.overlays.municipality'), value: zone.municipalityName ?? zone.name },
+    { label: t('doctor.dashboard.overlays.riskLevel'), value: zone.risk },
+    { label: t('doctor.dashboard.overlays.primaryDisease'), value: zone.disease },
+    { label: t('doctor.dashboard.overlays.cases'), value: zone.cases },
+    zone.radius ? { label: t('doctor.dashboard.overlays.radius'), value: zone.radius } : null,
+    { label: t('doctor.dashboard.overlays.priority'), value: zone.priority },
+  ].filter((metric): metric is { label: string; value: string } => metric !== null);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -23,7 +35,7 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>{t('doctor.dashboard.overlays.zoneDetail')}</Text>
+              <Text style={styles.eyebrow}>{eyebrow}</Text>
               <Text style={styles.title}>{zone.name}</Text>
               <Text style={styles.subtitle}>{zone.note}</Text>
             </View>
@@ -33,15 +45,13 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricStat label={t('doctor.dashboard.overlays.riskLevel')} value={zone.risk} />
-            <MetricStat label={t('doctor.dashboard.overlays.primaryDisease')} value={zone.disease} />
-            <MetricStat label={t('doctor.dashboard.overlays.cases')} value={zone.cases} />
-            <MetricStat label={t('doctor.dashboard.overlays.radius')} value={zone.radius} />
-            <MetricStat label={t('doctor.dashboard.overlays.priority')} value={zone.priority} />
+            {metrics.map((metric) => (
+              <MetricStat key={metric.label} label={metric.label} value={metric.value} accentColor={zone.borderColor} />
+            ))}
           </View>
 
-          <CardBase style={styles.noteCard}>
-            <Text style={styles.noteLabel}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
+          <CardBase style={[styles.noteCard, { borderColor: `${zone.borderColor}33` }]}>
+            <Text style={[styles.noteLabel, { color: zone.borderColor }]}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
             <Text style={styles.noteText}>{zone.recommendedAction}</Text>
           </CardBase>
         </CardBase>
@@ -50,11 +60,15 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
   );
 }
 
-function MetricStat({ label, value }: { label: string; value: string }) {
+function MetricStat({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
   return (
-    <CardBase style={styles.statCard}>
+    <CardBase style={[styles.statCard, { borderColor: `${accentColor}24` }]}>
+      <View style={[styles.statAccent, { backgroundColor: accentColor }]} />
+      <View style={[styles.statIcon, { backgroundColor: `${accentColor}12` }]}>
+        <Feather name="activity" size={15} color={accentColor} />
+      </View>
       <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statValue} numberOfLines={2}>{value}</Text>
     </CardBase>
   );
 }
@@ -95,7 +109,31 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 24 },
-  statCard: { width: '48%', borderRadius: 16, padding: 14 },
+  statCard: {
+    width: '48%',
+    minHeight: 118,
+    borderRadius: 14,
+    padding: 16,
+    paddingLeft: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  statAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+  },
+  statIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
   statLabel: {
     fontSize: 12,
     lineHeight: 16,
@@ -105,8 +143,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.7,
     marginBottom: 8,
   },
-  statValue: { fontSize: 16, lineHeight: 22, fontWeight: '800', color: '#0F172A' },
-  noteCard: { marginHorizontal: 24, marginBottom: 24, borderRadius: 18, padding: 16 },
+  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
+  noteCard: { marginHorizontal: 24, marginBottom: 24, borderRadius: 18, padding: 16, borderWidth: 1 },
   noteLabel: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: '#1718C7', marginBottom: 8 },
   noteText: { fontSize: 14, lineHeight: 22, color: '#526174' },
 });

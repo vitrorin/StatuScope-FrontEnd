@@ -2,13 +2,19 @@ export interface DoctorDashboardAlert {
   id: string;
   title: string;
   description: string;
-  variant: 'critical' | 'warning' | 'info' | 'neutral';
+  variant: 'critical' | 'warning' | 'success' | 'info' | 'neutral';
   area: string;
   priority: string;
   recommendedAction: string;
+  caseCount?: number | null;
+  caseLabel?: string | null;
+  confirmationStatus?: string | null;
+  municipalityName?: string | null;
+  stateName?: string | null;
 }
 
 export interface DoctorDashboardMetric {
+  id: string;
   title: string;
   value: string;
   badge?: string;
@@ -19,6 +25,16 @@ export interface DoctorDashboardMetric {
   signalLabel: string;
   recommendedAction: string;
   iconKey?: 'trend';
+  insights?: DoctorDashboardMetricInsight[];
+}
+
+export interface DoctorDashboardMetricInsight {
+  title: string;
+  location: string;
+  cases: string;
+  severity: string;
+  color: string;
+  meta?: string | null;
 }
 
 export interface DoctorDashboardZone {
@@ -31,6 +47,8 @@ export interface DoctorDashboardZone {
   priority: string;
   note: string;
   recommendedAction: string;
+  municipalityName?: string | null;
+  stateName?: string | null;
   top: string;
   left: string;
   borderColor: string;

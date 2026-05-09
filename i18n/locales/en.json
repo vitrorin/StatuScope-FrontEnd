@@ -62,16 +62,28 @@
         "secure": "Secure",
         "highRisk": "High Risk",
         "emerging": "Emerging",
+        "lowRisk": "Low Risk",
         "hospitalNode": "Hospital Node",
+        "expand": "Expand",
+        "viewOtherStates": "View other states",
+        "stateSelector": "State selector",
+        "stateOutbreaks": "State outbreaks",
+        "backToStates": "Back",
+        "selectStateHint": "Select a state to inspect municipal outbreaks",
+        "stateOutbreakCount": "{{count}} municipal outbreak signals",
         "lastSyncPending": "Last Sync: Pending",
         "lastSync": "Last Sync: {{time}}"
       },
       "alerts": {
-        "title": "Contextual Disease Alerts",
+        "title": "Most Relevant Active Outbreaks",
         "emptyTitle": "No active disease alerts",
         "emptyDescription": "No active outbreak signals are currently available for this hospital context.",
         "activityTitle": "{{disease}} activity",
-        "activityDescription": "{{cases}} in {{area}}. Status: {{status}}."
+        "activityDescription": "{{cases}} in {{area}}. Status: {{status}}.",
+        "activeCasesLabel": "Active cases",
+        "showMore": "Show more outbreaks",
+        "moreEyebrow": "Active outbreaks",
+        "moreTitle": "More contextual outbreaks"
       },
       "diseaseBreakdown": {
         "title": "Disease Breakdown",
@@ -80,6 +92,7 @@
         "totalActiveCases": "Total Active Cases",
         "totalStateCases": "Total State Cases",
         "outbreakContext": "Outbreak Context",
+        "municipalitySurroundings": "{{municipality}} and surroundings",
         "stateContext": "State",
         "hospitalRegion": "Hospital region",
         "exportReport": "Export Full Report"
@@ -88,13 +101,18 @@
         "clinicalMetric": "Clinical Metric",
         "currentValue": "Current Value",
         "signal": "Signal",
+        "metricInsights": "Relevant clinical context",
         "recommendedAction": "Recommended Action",
         "alertDetail": "Alert Detail",
         "area": "Area",
         "priority": "Priority",
-        "zoneDetail": "Zone Detail",
+        "zoneDetail": "Outbreak Detail",
+        "hospitalDetail": "Hospital Details",
         "riskLevel": "Risk Level",
-        "primaryDisease": "Primary Disease",
+        "primaryDisease": "Disease",
+        "state": "State",
+        "municipality": "Municipality",
+        "status": "Status",
         "cases": "Cases",
         "radius": "Radius",
         "reportPreview": "Report Preview",
@@ -113,6 +131,7 @@
           "subtitle": "Active outbreak cases in hospital context",
           "detailSummary": "Sum of active municipal outbreaks in the hospital radius plus active state-level outbreaks for the hospital state.",
           "signalLabel": "Active regional load",
+          "insightCriteria": "Nearby outbreaks ranked by severity, then case count.",
           "recommendedAction": "Keep triage aligned with diseases currently active near the hospital."
         },
         "highest-case-disease": {
@@ -120,6 +139,7 @@
           "subtitle": "Largest active case count in current context",
           "detailSummary": "This replaces projected growth until weekly historical series are available.",
           "signalLabel": "Largest current burden",
+          "insightCriteria": "Locations with the most cases of the dominant disease.",
           "recommendedAction": "Use this signal as epidemiological context, not as a standalone diagnosis."
         },
         "local-risk-level": {
@@ -127,6 +147,7 @@
           "subtitle": "Based on active outbreak count and total cases",
           "detailSummary": "Risk is derived from active outbreak volume in the hospital geographic context.",
           "signalLabel": "Regional pressure",
+          "insightCriteria": "Active outbreaks closest to the hospital.",
           "recommendedAction": "Review nearby outbreaks before evaluating compatible symptoms."
         },
         "hospital-profile": {

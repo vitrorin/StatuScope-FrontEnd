@@ -33,9 +33,10 @@ export function StatCard({
   icon,
   style,
 }: StatCardProps) {
+  const statusStyle = statusStyles[status];
   const tone =
     status === 'positive'
-      ? 'info'
+      ? 'success'
       : status === 'danger'
         ? 'critical'
         : status === 'warning'
@@ -43,13 +44,20 @@ export function StatCard({
           : 'neutral';
 
   return (
-    <CardBase style={[styles.card, style]}>
+    <CardBase style={[styles.card, { borderColor: statusStyle.border }, style]}>
+      <View style={[styles.accentBar, { backgroundColor: statusStyle.accent }]} />
       <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
+        <View>
+          <Text style={styles.title}>{title}</Text>
+        </View>
         {badge ? <Badge label={badge} tone={tone} style={styles.badge} /> : null}
       </View>
       <View style={styles.valueRow}>
-        {icon ? <View style={styles.iconContainer}>{icon}</View> : null}
+        {icon ? (
+          <View style={[styles.iconContainer, { backgroundColor: statusStyle.iconBackground }]}>
+            {icon}
+          </View>
+        ) : null}
         <Text style={styles.value}>{value}</Text>
       </View>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -63,19 +71,54 @@ export function StatCard({
   );
 }
 
+const statusStyles: Record<StatCardStatus, {
+  accent: string;
+  border: string;
+  iconBackground: string;
+}> = {
+  positive: {
+    accent: '#22C55E',
+    border: 'rgba(34, 197, 94, 0.22)',
+    iconBackground: 'rgba(34, 197, 94, 0.10)',
+  },
+  danger: {
+    accent: '#EF4444',
+    border: 'rgba(239, 68, 68, 0.22)',
+    iconBackground: 'rgba(239, 68, 68, 0.10)',
+  },
+  warning: {
+    accent: '#F59E0B',
+    border: 'rgba(245, 158, 11, 0.24)',
+    iconBackground: 'rgba(245, 158, 11, 0.12)',
+  },
+  neutral: {
+    accent: '#64748B',
+    border: '#E2E8F0',
+    iconBackground: '#F1F5F9',
+  },
+};
+
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    minHeight: 152,
-    padding: 28,
+    minHeight: 176,
+    padding: 24,
+    paddingTop: 22,
     borderRadius: 14,
-    borderColor: '#E2E8F0',
     backgroundColor: '#FEFFFF',
+    overflow: 'hidden',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.06,
-    shadowRadius: 26,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.10,
+    shadowRadius: 30,
+    elevation: 5,
+  },
+  accentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
   },
   header: {
     flexDirection: 'row',
@@ -85,37 +128,40 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '500',
-    color: 'rgba(100, 116, 139, 0.84)',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#64748B',
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 52,
+    minHeight: 54,
   },
   iconContainer: {
-    marginRight: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   value: {
     flexShrink: 1,
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '800',
-    letterSpacing: -0.95,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '900',
     color: '#0F172A',
   },
   subtitle: {
-    marginTop: 10,
+    marginTop: 14,
     fontSize: 12,
-    lineHeight: 16,
-    color: '#94A3B8',
+    lineHeight: 17,
+    color: '#64748B',
   },
   trendText: {
     marginTop: 6,

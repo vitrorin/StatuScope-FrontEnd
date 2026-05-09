@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { LayoutChangeEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { LayoutChangeEvent, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
+import { RadarMapCard, RadarMapPolygon } from '@/components/dashboard/RadarMapCard';
 import { AlertCard } from '@/components/feedback/AlertCard';
 import { DiseaseBreakdownCard } from '@/components/dashboard/DiseaseBreakdownCard';
 import { AlertDetailOverlay } from '@/components/views/doctor/dashboard/Sub-funcionalidades/AlertDetailOverlay';
@@ -24,17 +24,19 @@ import {
   DoctorDashboardDiseaseResponse,
   DoctorDashboardMapResponse,
   DoctorDashboardMetricResponse,
+  DoctorDashboardStateMapItem,
   getDoctorDashboardAlerts,
   getDoctorDashboardLocalBreakdown,
   getDoctorDashboardMap,
   getDoctorDashboardMetrics,
   getDoctorDashboardStateBreakdown,
+  getDoctorDashboardStateMap,
+  getDoctorDashboardStateOutbreakMap,
 } from '@/lib/doctorDashboard';
 import { useTranslation } from '@/i18n';
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboardLocalization';
-
-const MAP_IMAGE_URI = 'https://www.figma.com/api/mcp/asset/5bd3e67c-b2d1-4685-9db8-9c8033f3f9f3';
+import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
 
 const navigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -137,19 +139,26 @@ function describeAlert(
       status: statusLabel(status, t),
     }),
     priority: translateDashboardValue(t, alert.priority),
+    caseLabel: alert.caseLabel ? translateDashboardValue(t, alert.caseLabel) : undefined,
+    confirmationStatus: alert.confirmationStatus ? statusLabel(alert.confirmationStatus, t) : undefined,
   };
 }
 
 function toMetric(
   metric: DoctorDashboardMetricResponse,
   t: (key: string, params?: Record<string, string | number>) => string,
+  hospitalName?: string | null,
 ): DoctorDashboardMetric {
-  const title = t(`doctor.dashboard.metrics.${metric.id}.title`);
+  const translatedTitle = t(`doctor.dashboard.metrics.${metric.id}.title`);
+  const title = metric.id === 'hospital-profile' && hospitalName
+    ? hospitalName
+    : translatedTitle;
   const value = metric.id === 'highest-case-disease'
     ? translateDiseaseName(t, metric.value)
     : translateDashboardValue(t, metric.value);
 
   return {
+    id: metric.id,
     title,
     value,
     badge: translateDashboardBadge(t, metric.badge ?? undefined),
@@ -160,7 +169,23 @@ function toMetric(
     signalLabel: t(`doctor.dashboard.metrics.${metric.id}.signalLabel`),
     recommendedAction: t(`doctor.dashboard.metrics.${metric.id}.recommendedAction`),
     iconKey: metric.iconKey ?? undefined,
+    insights: metric.insights?.map((insight) => ({
+      ...insight,
+      title: translateDiseaseName(t, insight.title),
+      severity: translateDashboardValue(t, insight.severity),
+      cases: translateDashboardValue(t, insight.cases),
+      meta: insight.meta ? translateDashboardValue(t, insight.meta) : insight.meta,
+    })),
   };
+}
+
+function formatSurroundingsLabel(
+  municipalityName: string | null | undefined,
+  fallback: string,
+  t: (key: string, params?: Record<string, string | number>) => string,
+) {
+  if (!municipalityName) return fallback;
+  return t('doctor.dashboard.diseaseBreakdown.municipalitySurroundings', { municipality: municipalityName });
 }
 
 function buildDiseaseRows(
@@ -177,6 +202,132 @@ function buildDiseaseRows(
     barColor: '#1718C7',
     barHeight: 12,
   }));
+}
+
+function getMapCenter(zones: DoctorDashboardZone[]) {
+  const hospitalNode = zones.find(
+    (zone) => zone.id === 'hospital-node' && typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (hospitalNode && typeof hospitalNode.latitude === 'number' && typeof hospitalNode.longitude === 'number') {
+    return { latitude: hospitalNode.latitude, longitude: hospitalNode.longitude };
+  }
+
+  const geocodedZones = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (geocodedZones.length === 0) return null;
+
+  return {
+    latitude: geocodedZones.reduce((sum, zone) => sum + (zone.latitude as number), 0) / geocodedZones.length,
+    longitude: geocodedZones.reduce((sum, zone) => sum + (zone.longitude as number), 0) / geocodedZones.length,
+  };
+}
+
+function shortStateName(name: string): string {
+  const aliases: Record<string, string> = {
+    'Coahuila de Zaragoza': 'Coahuila',
+    'Michoacan de Ocampo': 'Michoacan',
+    'Michoacán de Ocampo': 'Michoacán',
+    'Veracruz de Ignacio de la Llave': 'Veracruz',
+    'Mexico': 'México',
+  };
+  return aliases[name] ?? name;
+}
+
+function stateLookupKey(name: string): string {
+  const aliases: Record<string, string> = {
+    'Coahuila de Zaragoza': 'Coahuila',
+    'Michoacan de Ocampo': 'Michoacan',
+    'Michoacán de Ocampo': 'Michoacán',
+    'Veracruz de Ignacio de la Llave': 'Veracruz',
+    'Mexico': 'Mexico',
+    'México': 'Mexico',
+  };
+  return (aliases[name] ?? shortStateName(name))
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function getStateBoundary(stateName: string | undefined | null) {
+  if (!stateName) return undefined;
+  const targetKey = stateLookupKey(stateName);
+  return mexicoStateBoundaries.find((boundary) => stateLookupKey(boundary.name) === targetKey);
+}
+
+function getZoneBounds(zones: DoctorDashboardZone[]) {
+  const geocodedZones = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (geocodedZones.length === 0) return undefined;
+
+  const latitudes = geocodedZones.map((zone) => zone.latitude as number);
+  const longitudes = geocodedZones.map((zone) => zone.longitude as number);
+  const latitudePadding = Math.max(0.12, (Math.max(...latitudes) - Math.min(...latitudes)) * 0.18);
+  const longitudePadding = Math.max(0.12, (Math.max(...longitudes) - Math.min(...longitudes)) * 0.18);
+
+  return {
+    minLatitude: Math.min(...latitudes) - latitudePadding,
+    maxLatitude: Math.max(...latitudes) + latitudePadding,
+    minLongitude: Math.min(...longitudes) - longitudePadding,
+    maxLongitude: Math.max(...longitudes) + longitudePadding,
+  };
+}
+
+function getBoundaryBounds(boundary: MexicoStateBoundary | undefined) {
+  if (!boundary) return undefined;
+  const points = boundary.geometry.coordinates.flat(2);
+  if (points.length === 0) return undefined;
+
+  const longitudes = points.map(([longitude]) => longitude);
+  const latitudes = points.map(([, latitude]) => latitude);
+  const latitudePadding = Math.max(0.1, (Math.max(...latitudes) - Math.min(...latitudes)) * 0.12);
+  const longitudePadding = Math.max(0.1, (Math.max(...longitudes) - Math.min(...longitudes)) * 0.12);
+
+  return {
+    minLatitude: Math.min(...latitudes) - latitudePadding,
+    maxLatitude: Math.max(...latitudes) + latitudePadding,
+    minLongitude: Math.min(...longitudes) - longitudePadding,
+    maxLongitude: Math.max(...longitudes) + longitudePadding,
+  };
+}
+
+function getRadiusBounds(
+  center: { latitude: number; longitude: number } | null,
+  radiusKm: number | undefined,
+) {
+  if (!center || typeof radiusKm !== 'number') return undefined;
+  const latitudePadding = radiusKm / 111;
+  const longitudePadding = radiusKm / (111 * Math.cos(center.latitude * Math.PI / 180));
+
+  return {
+    minLatitude: center.latitude - latitudePadding,
+    maxLatitude: center.latitude + latitudePadding,
+    minLongitude: center.longitude - longitudePadding,
+    maxLongitude: center.longitude + longitudePadding,
+  };
+}
+
+function metricAccentColor(status?: DoctorDashboardMetric['status']) {
+  if (status === 'danger') return '#EF4444';
+  if (status === 'warning') return '#F59E0B';
+  if (status === 'positive') return '#22C55E';
+  return '#64748B';
+}
+
+function metricIcon(metric: DoctorDashboardMetric) {
+  const color = metricAccentColor(metric.status);
+  const iconName = metric.id === 'active-cases-nearby'
+    ? 'activity'
+    : metric.id === 'highest-case-disease'
+      ? 'trending-up'
+      : metric.id === 'local-risk-level'
+        ? 'alert-triangle'
+        : metric.id === 'hospital-profile'
+          ? 'briefcase'
+          : 'bar-chart-2';
+
+  return <Feather name={iconName} size={18} color={color} />;
 }
 
 function SkeletonLine({ width, height = 12, style }: { width: number | string; height?: number; style?: object }) {
@@ -289,7 +440,13 @@ export function DoctorDashboard() {
   const [selectedMetric, setSelectedMetric] = useState<DoctorDashboardMetric | null>(null);
   const [selectedZone, setSelectedZone] = useState<DoctorDashboardZone | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<DoctorDashboardAlert | null>(null);
+  const [isMoreAlertsOpen, setIsMoreAlertsOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isStateExplorerOpen, setIsStateExplorerOpen] = useState(false);
+  const [selectedState, setSelectedState] = useState<DoctorDashboardStateMapItem | null>(null);
+  const [stateMapState, setStateMapState] = useState<SectionState<{ states: DoctorDashboardStateMapItem[] }>>(initialSectionState);
+  const [stateOutbreakMapState, setStateOutbreakMapState] = useState<SectionState<DoctorDashboardMapResponse>>(initialSectionState);
+  const [isMapHovered, setIsMapHovered] = useState(false);
   const gridGap = 16;
   const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
   const mapWidth = metricWidth ? metricWidth * 2 + gridGap : undefined;
@@ -364,6 +521,42 @@ export function DoctorDashboard() {
     }
   }, []);
 
+  const loadStateMap = useCallback(async () => {
+    setStateMapState((current) => ({ ...current, status: 'loading', error: null }));
+    try {
+      const data = await getDoctorDashboardStateMap();
+      setStateMapState({ status: 'success', data, error: null });
+    } catch (error) {
+      setStateMapState((current) => ({
+        status: 'error',
+        data: current.data,
+        error: error instanceof Error ? error.message : 'Unable to load state map.',
+      }));
+    }
+  }, []);
+
+  const loadStateOutbreakMap = useCallback(async (state: DoctorDashboardStateMapItem) => {
+    setSelectedState(state);
+    setStateOutbreakMapState({ status: 'loading', data: null, error: null });
+    try {
+      const data = await getDoctorDashboardStateOutbreakMap(state.stateId);
+      setStateOutbreakMapState({ status: 'success', data, error: null });
+    } catch (error) {
+      setStateOutbreakMapState({
+        status: 'error',
+        data: null,
+        error: error instanceof Error ? error.message : 'Unable to load state outbreaks.',
+      });
+    }
+  }, []);
+
+  const openStateExplorer = useCallback(() => {
+    setIsStateExplorerOpen(true);
+    setSelectedState(null);
+    setStateOutbreakMapState(initialSectionState());
+    void loadStateMap();
+  }, [loadStateMap]);
+
   useEffect(() => {
     void loadMetrics();
     void loadMap();
@@ -372,14 +565,17 @@ export function DoctorDashboard() {
     void loadStateBreakdown();
   }, [loadAlerts, loadLocalBreakdown, loadMap, loadMetrics, loadStateBreakdown]);
 
+  const hospitalName = metricsState.data?.hospitalName ?? profile?.hospitalName ?? profile?.email;
   const topMetrics = useMemo(
-    () => metricsState.data?.metrics.map((metric) => toMetric(metric, t)) ?? [],
-    [metricsState.data?.metrics, t],
+    () => metricsState.data?.metrics.map((metric) => toMetric(metric, t, hospitalName)) ?? [],
+    [hospitalName, metricsState.data?.metrics, t],
   );
   const alerts = useMemo(
     () => (alertsState.data?.alerts ?? []).map((alert) => describeAlert(alert, t)),
     [alertsState.data?.alerts, t],
   );
+  const visibleAlerts = useMemo(() => alerts.slice(0, 4), [alerts]);
+  const remainingAlerts = useMemo(() => alerts.slice(4), [alerts]);
   const mapZones = useMemo(
     () => positionZones(mapState.data?.zones ?? []).map((zone) => ({
       ...zone,
@@ -391,6 +587,32 @@ export function DoctorDashboard() {
     })),
     [mapState.data?.zones, t],
   );
+  const mapCenter = useMemo(() => getMapCenter(mapZones), [mapZones]);
+  const localMapBounds = useMemo(
+    () => getRadiusBounds(mapCenter, mapState.data?.radiusKm),
+    [mapCenter, mapState.data?.radiusKm],
+  );
+  const stateOutbreakZones = useMemo(
+    () => positionZones(stateOutbreakMapState.data?.zones ?? []).map((zone) => ({
+      ...zone,
+      stateName: zone.stateName ?? selectedState?.stateName,
+      risk: translateDashboardValue(t, zone.risk),
+      disease: translateDiseaseName(t, zone.disease),
+      cases: translateDashboardValue(t, zone.cases),
+      radius: translateDashboardValue(t, zone.radius),
+      priority: translateDashboardValue(t, zone.priority),
+    })),
+    [selectedState?.stateName, stateOutbreakMapState.data?.zones, t],
+  );
+  const selectedStateCenter = useMemo(
+    () => selectedState ? { latitude: selectedState.latitude, longitude: selectedState.longitude } : getMapCenter(stateOutbreakZones),
+    [selectedState, stateOutbreakZones],
+  );
+  const selectedStateBoundary = useMemo(() => getStateBoundary(selectedState?.stateName), [selectedState?.stateName]);
+  const selectedStateBounds = useMemo(
+    () => getBoundaryBounds(selectedStateBoundary) ?? getZoneBounds(stateOutbreakZones),
+    [selectedStateBoundary, stateOutbreakZones],
+  );
   const totalCases = useMemo(
     () => localBreakdownState.data?.diseaseBreakdown.reduce((total, disease) => total + disease.caseCount, 0) ?? 0,
     [localBreakdownState.data?.diseaseBreakdown],
@@ -399,10 +621,14 @@ export function DoctorDashboard() {
     () => stateBreakdownState.data?.diseaseBreakdown.reduce((total, disease) => total + disease.caseCount, 0) ?? 0,
     [stateBreakdownState.data?.diseaseBreakdown],
   );
-  const hospitalName = metricsState.data?.hospitalName ?? profile?.hospitalName ?? profile?.email;
   const stateName = localBreakdownState.data?.stateName
     ?? stateBreakdownState.data?.stateName
     ?? t('doctor.dashboard.diseaseBreakdown.hospitalRegion');
+  const localBreakdownContext = formatSurroundingsLabel(
+    localBreakdownState.data?.municipalityName,
+    stateName,
+    t,
+  );
 
   return (
     <DashboardLayout
@@ -415,7 +641,11 @@ export function DoctorDashboard() {
       links={navigationLinks}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={!isMapHovered}
+      >
         <View style={styles.container}>
         <View
           style={styles.metricsRow}
@@ -454,11 +684,7 @@ export function DoctorDashboard() {
                 status={metric.status}
                 subtitle={metric.subtitle}
                 style={[styles.metricCard, metricWidth ? { width: undefined, flex: undefined } : null]}
-                icon={
-                  metric.iconKey === 'trend' ? (
-                    <Feather name="trending-up" size={14} color="#94A3B8" />
-                  ) : undefined
-                }
+                icon={metricIcon(metric)}
               />
             </TouchableOpacity>
           ))}
@@ -487,23 +713,39 @@ export function DoctorDashboard() {
               legendItems={[
                 { label: t('doctor.dashboard.map.highRisk'), color: '#EF4444' },
                 { label: t('doctor.dashboard.map.emerging'), color: '#FB923C' },
+                { label: t('doctor.dashboard.map.lowRisk'), color: '#22C55E' },
                 { label: t('doctor.dashboard.map.hospitalNode'), color: '#0003B8' },
               ]}
+              footerTextLeft="© OpenStreetMap contributors"
               footerTextRight={formatSyncTime(mapState.data?.generatedAt, t)}
-              mapImageUri={MAP_IMAGE_URI}
+              mapCenterLatitude={mapCenter?.latitude}
+              mapCenterLongitude={mapCenter?.longitude}
+              mapZoom={10}
+              minZoom={10}
+              maxZoom={14}
+              mapBounds={localMapBounds}
+              enablePan
+              onMapHoverChange={setIsMapHovered}
+              surveillanceRadiusKm={mapState.data?.radiusKm}
+              bottomRightActionLabel={t('doctor.dashboard.map.viewOtherStates')}
+              onBottomRightActionPress={openStateExplorer}
               pins={mapZones.map((zone) => ({
                 id: zone.id,
                 top: zone.top,
                 left: zone.left,
+                latitude: zone.latitude,
+                longitude: zone.longitude,
                 borderColor: zone.borderColor,
                 fillColor: '#FFFFFF',
                 icon:
                   zone.borderColor === '#0003B8' ? (
                     <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
                   ) : zone.borderColor === '#F97316' ? (
-                    <MaterialCommunityIcons name="virus-outline" size={14} color="#F97316" />
+                    <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
+                  ) : zone.borderColor === '#22C55E' ? (
+                    <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
                   ) : (
-                    <MaterialCommunityIcons name="alert" size={16} color="#EF4444" />
+                    <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />
                   ),
                 onPress: () => setSelectedZone(zone),
               }))}
@@ -533,20 +775,37 @@ export function DoctorDashboard() {
                     variant="neutral"
                     style={styles.alertCard}
                   />
-                ) : alerts.map((alert) => (
-                  <TouchableOpacity
-                    key={alert.id}
-                    activeOpacity={0.8}
-                    onPress={() => setSelectedAlert(alert)}
-                  >
-                    <AlertCard
-                      title={alert.title}
-                      description={alert.description}
-                      variant={alert.variant}
-                      style={styles.alertCard}
-                    />
-                  </TouchableOpacity>
-                ))}
+                ) : (
+                  <>
+                    {visibleAlerts.map((alert) => (
+                      <TouchableOpacity
+                        key={alert.id}
+                        activeOpacity={0.8}
+                        onPress={() => setSelectedAlert(alert)}
+                      >
+                        <AlertCard
+                          title={alert.title}
+                          description={alert.description}
+                          variant={alert.variant}
+                          style={styles.alertCard}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                    {remainingAlerts.length > 0 ? (
+                      <TouchableOpacity
+                        style={styles.moreAlertsButton}
+                        activeOpacity={0.82}
+                        onPress={() => setIsMoreAlertsOpen(true)}
+                      >
+                        <Feather name="list" size={17} color="#0003B8" />
+                        <Text style={styles.moreAlertsText}>{t('doctor.dashboard.alerts.showMore')}</Text>
+                        <View style={styles.moreAlertsBadge}>
+                          <Text style={styles.moreAlertsBadgeText}>{remainingAlerts.length}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    ) : null}
+                  </>
+                )}
               </View>
             </View>
           )}
@@ -567,7 +826,7 @@ export function DoctorDashboard() {
               rows={buildDiseaseRows(localBreakdownState.data?.diseaseBreakdown ?? [], t)}
               summaryItems={[
                 { label: t('doctor.dashboard.diseaseBreakdown.totalActiveCases'), value: formatNumber(totalCases) },
-                { label: t('doctor.dashboard.diseaseBreakdown.outbreakContext'), value: stateName },
+                { label: t('doctor.dashboard.diseaseBreakdown.outbreakContext'), value: localBreakdownContext },
               ]}
               buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
               onButtonPress={() => setIsReportOpen(true)}
@@ -601,8 +860,252 @@ export function DoctorDashboard() {
       <MetricDetailOverlay visible={selectedMetric !== null} metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
       <MapZoneDetailOverlay visible={selectedZone !== null} zone={selectedZone} onClose={() => setSelectedZone(null)} />
       <AlertDetailOverlay visible={selectedAlert !== null} alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
+      <MoreAlertsOverlay
+        visible={isMoreAlertsOpen}
+        alerts={remainingAlerts}
+        onClose={() => setIsMoreAlertsOpen(false)}
+        onSelectAlert={(alert) => {
+          setIsMoreAlertsOpen(false);
+          setSelectedAlert(alert);
+        }}
+        t={t}
+      />
       <EpidemiologicalReportOverlay visible={isReportOpen} onClose={() => setIsReportOpen(false)} />
+      <StateOutbreakExplorer
+        visible={isStateExplorerOpen}
+        states={stateMapState.data?.states ?? []}
+        statesStatus={stateMapState.status}
+        selectedState={selectedState}
+        selectedStateCenter={selectedStateCenter}
+        selectedStateBounds={selectedStateBounds}
+        stateZones={stateOutbreakZones}
+        stateMapStatus={stateOutbreakMapState.status}
+        onClose={() => setIsStateExplorerOpen(false)}
+        onRetryStates={loadStateMap}
+        onSelectState={(state) => { void loadStateOutbreakMap(state); }}
+        onBack={() => {
+          setSelectedState(null);
+          setStateOutbreakMapState(initialSectionState());
+        }}
+        onZonePress={setSelectedZone}
+        onMapHoverChange={setIsMapHovered}
+        t={t}
+      />
     </DashboardLayout>
+  );
+}
+
+function StateOutbreakExplorer({
+  visible,
+  states,
+  statesStatus,
+  selectedState,
+  selectedStateCenter,
+  selectedStateBounds,
+  stateZones,
+  stateMapStatus,
+  onClose,
+  onRetryStates,
+  onSelectState,
+  onBack,
+  onZonePress,
+  onMapHoverChange,
+  t,
+}: {
+  visible: boolean;
+  states: DoctorDashboardStateMapItem[];
+  statesStatus: SectionStatus;
+  selectedState: DoctorDashboardStateMapItem | null;
+  selectedStateCenter: { latitude: number; longitude: number } | null;
+  selectedStateBounds?: { minLatitude: number; maxLatitude: number; minLongitude: number; maxLongitude: number };
+  stateZones: DoctorDashboardZone[];
+  stateMapStatus: SectionStatus;
+  onClose: () => void;
+  onRetryStates: () => void;
+  onSelectState: (state: DoctorDashboardStateMapItem) => void;
+  onBack: () => void;
+  onZonePress: (zone: DoctorDashboardZone) => void;
+  onMapHoverChange: (isHovering: boolean) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
+  const mexicoCenter = { latitude: 23.6345, longitude: -102.5528 };
+  const statesByName = useMemo(() => new Map(
+    states.map((state) => [stateLookupKey(state.stateName), state]),
+  ), [states]);
+  const selectedBoundary = useMemo(() => getStateBoundary(selectedState?.stateName), [selectedState?.stateName]);
+  const selectorPolygons = useMemo<RadarMapPolygon[]>(() => mexicoStateBoundaries.map((boundary) => {
+    const state = statesByName.get(stateLookupKey(boundary.name));
+    const hasOutbreaks = (state?.outbreakCount ?? 0) > 0;
+    return {
+      id: boundary.id,
+      geometry: boundary.geometry,
+      fillColor: hasOutbreaks ? 'rgba(0, 3, 184, 0.08)' : 'rgba(100, 116, 139, 0.04)',
+      strokeColor: hasOutbreaks ? 'rgba(0, 3, 184, 0.42)' : 'rgba(100, 116, 139, 0.24)',
+      strokeWidth: hasOutbreaks ? 1.3 : 1,
+    };
+  }), [statesByName]);
+  const selectedPolygons = useMemo<RadarMapPolygon[]>(() => (
+    selectedBoundary
+      ? [{
+        id: selectedBoundary.id,
+        geometry: selectedBoundary.geometry,
+        fillColor: 'rgba(0, 3, 184, 0.12)',
+        strokeColor: '#0003B8',
+        strokeWidth: 2,
+      }]
+      : []
+  ), [selectedBoundary]);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.stateExplorerOverlay}>
+        <Pressable style={styles.stateExplorerBackdrop} onPress={onClose} />
+        <View style={styles.stateExplorerCard}>
+          <View style={styles.stateExplorerHeader}>
+            <View>
+              <Text style={styles.stateExplorerEyebrow}>
+                {selectedState ? t('doctor.dashboard.map.stateOutbreaks') : t('doctor.dashboard.map.stateSelector')}
+              </Text>
+              <Text style={styles.stateExplorerTitle}>
+                {selectedState ? shortStateName(selectedState.stateName) : t('doctor.dashboard.map.viewOtherStates')}
+              </Text>
+            </View>
+            <View style={styles.stateExplorerActions}>
+              {selectedState ? (
+                <TouchableOpacity style={styles.stateExplorerSecondaryButton} onPress={onBack} activeOpacity={0.75}>
+                  <Feather name="arrow-left" size={16} color="#0003B8" />
+                  <Text style={styles.stateExplorerSecondaryText}>{t('doctor.dashboard.map.backToStates')}</Text>
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
+                <Feather name="x" size={18} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {selectedState ? (
+            stateMapStatus === 'loading' ? (
+              <MapSkeleton />
+            ) : stateMapStatus === 'error' ? (
+              <View style={styles.stateExplorerError}>
+                <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={() => onSelectState(selectedState)} />
+              </View>
+            ) : (
+              <RadarMapCard
+                title={shortStateName(selectedState.stateName)}
+                showControls
+                showFooter
+                footerTextLeft="© OpenStreetMap contributors"
+                footerTextRight={t('doctor.dashboard.map.stateOutbreakCount', {
+                  count: formatNumber(stateZones.length),
+                })}
+                mapHeight={720}
+                mapCenterLatitude={selectedStateCenter?.latitude}
+                mapCenterLongitude={selectedStateCenter?.longitude}
+                mapZoom={7}
+                minZoom={6}
+                maxZoom={13}
+                mapBounds={selectedStateBounds}
+                enablePan
+                onMapHoverChange={onMapHoverChange}
+                polygons={selectedPolygons}
+                pins={stateZones.map((zone) => ({
+                  id: zone.id,
+                  latitude: zone.latitude,
+                  longitude: zone.longitude,
+                  borderColor: zone.borderColor,
+                  fillColor: '#FFFFFF',
+                  icon: zone.borderColor === '#22C55E'
+                    ? <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
+                    : zone.borderColor === '#F97316'
+                      ? <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
+                      : <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />,
+                  onPress: () => onZonePress(zone),
+                }))}
+              />
+            )
+          ) : statesStatus === 'loading' ? (
+            <MapSkeleton />
+          ) : statesStatus === 'error' ? (
+            <View style={styles.stateExplorerError}>
+              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={onRetryStates} />
+            </View>
+          ) : (
+            <RadarMapCard
+              title={t('doctor.dashboard.map.stateSelector')}
+              showControls
+              showFooter
+              footerTextLeft="© OpenStreetMap contributors"
+              footerTextRight={t('doctor.dashboard.map.selectStateHint')}
+              mapHeight={720}
+              mapCenterLatitude={mexicoCenter.latitude}
+              mapCenterLongitude={mexicoCenter.longitude}
+              mapZoom={5}
+              minZoom={5}
+              maxZoom={12}
+              enablePan
+              onMapHoverChange={onMapHoverChange}
+              polygons={selectorPolygons}
+              pins={states.map((state) => ({
+                id: state.stateId,
+                latitude: state.latitude,
+                longitude: state.longitude,
+                borderColor: state.outbreakCount > 0 ? '#0003B8' : '#64748B',
+                fillColor: '#FFFFFF',
+                label: shortStateName(state.stateName),
+                icon: <Feather name="map-pin" size={13} color={state.outbreakCount > 0 ? '#0003B8' : '#64748B'} />,
+                onPress: () => onSelectState(state),
+              }))}
+            />
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function MoreAlertsOverlay({
+  visible,
+  alerts,
+  onClose,
+  onSelectAlert,
+  t,
+}: {
+  visible: boolean;
+  alerts: DoctorDashboardAlert[];
+  onClose: () => void;
+  onSelectAlert: (alert: DoctorDashboardAlert) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.moreAlertsOverlay}>
+        <Pressable style={styles.stateExplorerBackdrop} onPress={onClose} />
+        <View style={styles.moreAlertsCard}>
+          <View style={styles.moreAlertsHeader}>
+            <View>
+              <Text style={styles.stateExplorerEyebrow}>{t('doctor.dashboard.alerts.moreEyebrow')}</Text>
+              <Text style={styles.stateExplorerTitle}>{t('doctor.dashboard.alerts.moreTitle')}</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
+              <Feather name="x" size={18} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
+            {alerts.map((alert) => (
+              <TouchableOpacity key={alert.id} activeOpacity={0.82} onPress={() => onSelectAlert(alert)}>
+                <AlertCard
+                  title={alert.title}
+                  description={alert.description}
+                  variant={alert.variant}
+                  style={styles.alertCard}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -673,8 +1176,8 @@ const styles = StyleSheet.create({
   },
   metricSkeleton: {
     flex: 1,
-    minHeight: 152,
-    padding: 28,
+    minHeight: 176,
+    padding: 24,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -829,8 +1332,8 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   alertsHeader: {
-    paddingHorizontal: 24,
-    paddingVertical: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -849,6 +1352,38 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 0,
   },
+  moreAlertsButton: {
+    minHeight: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.16)',
+    backgroundColor: '#EEF2FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  moreAlertsText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#0003B8',
+  },
+  moreAlertsBadge: {
+    minWidth: 26,
+    height: 24,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  moreAlertsBadgeText: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '900',
+    color: '#0003B8',
+  },
   breakdownGrid: {
     flexDirection: 'row',
     gap: 16,
@@ -862,6 +1397,128 @@ const styles = StyleSheet.create({
   breakdownRetryHost: {
     flex: 1,
     minHeight: 540,
+  },
+  stateExplorerOverlay: {
+    flex: 1,
+    padding: 28,
+    justifyContent: 'center',
+  },
+  stateExplorerBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.38)',
+  },
+  stateExplorerCard: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.16,
+    shadowRadius: 34,
+    elevation: 6,
+  },
+  stateExplorerHeader: {
+    minHeight: 76,
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  stateExplorerEyebrow: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    color: '#0003B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  stateExplorerTitle: {
+    marginTop: 4,
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  stateExplorerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  stateExplorerSecondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.14)',
+    backgroundColor: '#F8FAFC',
+  },
+  stateExplorerSecondaryText: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '800',
+    color: '#0003B8',
+  },
+  stateExplorerError: {
+    flex: 1,
+    minHeight: 620,
+    position: 'relative',
+    backgroundColor: '#F8FAFC',
+  },
+  moreAlertsOverlay: {
+    flex: 1,
+    padding: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreAlertsCard: {
+    width: '100%',
+    maxWidth: 760,
+    maxHeight: '86%',
+    overflow: 'hidden',
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.16,
+    shadowRadius: 42,
+    elevation: 6,
+  },
+  moreAlertsHeader: {
+    minHeight: 84,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  moreAlertsList: {
+    padding: 24,
+    gap: 14,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
   },
 });
 

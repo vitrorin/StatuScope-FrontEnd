@@ -41,6 +41,12 @@ export function translateDashboardValue(t: Translate, value: string): string {
     return t('common.units.activeCases', { count: activeCases[1] });
   }
 
+  const cases = value.match(/^([\d,]+) cases?$/i);
+  if (cases) {
+    const count = cases[1];
+    return t(count === '1' ? 'common.units.case' : 'common.units.cases', { count });
+  }
+
   return translateKnownValue(t, translateDiseaseName(t, value));
 }
 
