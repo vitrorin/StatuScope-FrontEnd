@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AssistantInputBar } from '@/components/diagnosis/AssistantInputBar';
 import { AssistantSuggestionsList } from '@/components/diagnosis/AssistantSuggestionsList';
 import { DiagnosisChatBubble } from '@/components/diagnosis/DiagnosisChatBubble';
 import { DiagnosisResponseCard } from '@/components/diagnosis/DiagnosisResponseCard';
 import { FileUploadState, PatientEvaluationForm } from '@/components/diagnosis/PatientEvaluationForm';
 import { RecommendedTestsCard } from '@/components/diagnosis/RecommendedTestsCard';
-import { Button } from '@/components/foundation/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { initialsFromName } from '@/lib/format';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -22,16 +21,12 @@ import {
   PatientContext,
 } from '@/lib/diagnosisAssistant';
 import {
-  AssistantFeedbackDecision,
   DiagnosisEvaluation,
   createDiagnosisEvaluation,
   getCurrentDiagnosisEvaluation,
-  submitAssistantFeedback,
   updateDiagnosisEvaluation,
   uploadDiagnosisEvaluationFile,
 } from '@/lib/diagnosisEvaluation';
-import { InputField } from '@/components/inputs/InputField';
-import { TextareaField } from '@/components/inputs/TextareaField';
 
 const navigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -97,23 +92,32 @@ function deriveDropzoneState(
 function formatOutbreakContextMessage(context: AssistantContext | null): string | undefined {
   const outbreaks = context?.outbreaks ?? [];
   const stateName = context?.stateName ?? context?.regionName;
+  const regionLabel = stateName ? `Hospital state context: ${stateName}.` : 'Hospital state context.';
 
   if (outbreaks.length === 0) {
-    return stateName ? `Hospital state context: ${stateName}.` : undefined;
+    return stateName ? `${regionLabel} No active outbreak signals matched this case.` : undefined;
   }
 
-  const outbreakLabels = outbreaks
-    .map((outbreak) => {
-      const caseLabel = outbreak.caseCount === 1 ? '1 case' : `${outbreak.caseCount} cases`;
-      return `${outbreak.diseaseName} (${caseLabel})`;
-    })
-    .join(', ');
-  const regionLabel = stateName
-    ? `Hospital state context: ${stateName}`
-    : 'Hospital state context';
-  const signalLabel = outbreaks.length === 1 ? 'Active outbreak signal' : 'Active outbreak signals';
+  const casesByDisease = new Map<string, number>();
+  outbreaks.forEach((outbreak) => {
+    const current = casesByDisease.get(outbreak.diseaseName) ?? 0;
+    casesByDisease.set(outbreak.diseaseName, current + outbreak.caseCount);
+  });
 
-  return `${regionLabel}. ${signalLabel}: ${outbreakLabels}.`;
+  const rankedDiseases = [...casesByDisease.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([diseaseName, caseCount]) => `${diseaseName} (${caseCount})`);
+
+  const totalCases = [...casesByDisease.values()].reduce((sum, caseCount) => sum + caseCount, 0);
+  const diseaseCount = casesByDisease.size;
+  const summaryLabel = diseaseCount === 1 ? '1 disease signal' : `${diseaseCount} disease signals`;
+  const headline = `${regionLabel} ${summaryLabel} covering ${totalCases} reported cases.`;
+  const topDiseasesLabel = rankedDiseases.length > 0
+    ? ` Highest activity: ${rankedDiseases.join(', ')}.`
+    : '';
+
+  return `${headline}${topDiseasesLabel}`;
 }
 
 async function pickDiagnosisFile(): Promise<PickedDiagnosisFile | null> {
@@ -161,6 +165,7 @@ export function DoctorDiagnosis() {
   const router = useRouter();
   const { logout, profile } = useAuth();
   const [evaluation, setEvaluation] = useState<DiagnosisEvaluation | null>(null);
+  const [formPanelHeight, setFormPanelHeight] = useState<number | null>(null);
   const [patientName, setPatientName] = useState('');
   const [patientBirthDate, setPatientBirthDate] = useState('');
   const [patientSex, setPatientSex] = useState('');
@@ -173,12 +178,7 @@ export function DoctorDiagnosis() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isSavingEvaluation, setIsSavingEvaluation] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
-  const [feedbackDecision, setFeedbackDecision] = useState<AssistantFeedbackDecision | null>(null);
-  const [feedbackLabel, setFeedbackLabel] = useState('');
-  const [feedbackNotes, setFeedbackNotes] = useState('');
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -398,44 +398,15 @@ export function DoctorDiagnosis() {
     }
   };
 
-  const handleOpenFeedback = (decision: AssistantFeedbackDecision) => {
-    setFeedbackError(null);
-    setFeedbackDecision(decision);
-    setFeedbackLabel(evaluation?.finalDiagnosisLabel ?? '');
-    setFeedbackNotes(evaluation?.doctorFeedbackNotes ?? '');
-  };
-
-  const handleCancelFeedback = () => {
-    setFeedbackDecision(null);
-    setFeedbackError(null);
-  };
-
-  const handleSubmitFeedback = async () => {
-    if (!feedbackDecision) return;
-
-    try {
-      const activeEvaluation = await persistEvaluation();
-      setIsUpdatingStatus(true);
-      setFeedbackError(null);
-      const updatedEvaluation = await submitAssistantFeedback(activeEvaluation.id, {
-        finalDecisionSource: feedbackDecision,
-        finalDiagnosisLabel: feedbackLabel.trim() || undefined,
-        doctorFeedbackNotes: feedbackNotes.trim() || undefined,
-      });
-      hydrateForm(updatedEvaluation);
-      setFeedbackDecision(null);
-    } catch (error) {
-      setFeedbackError(
-        error instanceof Error ? error.message : 'Unable to record diagnosis feedback.',
-      );
-    } finally {
-      setIsUpdatingStatus(false);
-    }
-  };
-
   const outbreakWarningMessage = formatOutbreakContextMessage(contextUsed);
   const latestFile = evaluation?.files?.[0] ?? null;
   const dropzoneState = deriveDropzoneState(isUploadingFile, uploadError, evaluation);
+  const boundedChatHeight = formPanelHeight ? Math.max(formPanelHeight, 520) : 520;
+
+  const handleFormPanelLayout = (event: LayoutChangeEvent) => {
+    const nextHeight = Math.round(event.nativeEvent.layout.height);
+    setFormPanelHeight((currentHeight) => (currentHeight === nextHeight ? currentHeight : nextHeight));
+  };
 
   return (
     <DashboardLayout
@@ -451,238 +422,165 @@ export function DoctorDiagnosis() {
         router.replace('/login');
       }}
     >
-      <View style={styles.contentContainer}>
-        <View style={styles.heroStrip}>
-          <View style={styles.heroCopy}>
-            <Text style={styles.heroEyebrow}>Clinical Intelligence Workspace</Text>
-            <Text style={styles.heroTitle}>Differential diagnosis with locality-aware risk context</Text>
-            <Text style={styles.heroDescription}>
-              Evaluate the patient, contrast symptoms with nearby outbreaks, and confirm the most reliable diagnostic path.
-            </Text>
-          </View>
-
-          <View style={styles.heroBadge}>
-            <View style={styles.heroBadgeDot} />
-            <Text style={styles.heroBadgeText}>
-              {evaluation?.status ? `Status: ${evaluation.status.replace('_', ' ')}` : 'Ready to start'}
-            </Text>
-          </View>
-        </View>
-
-        {evaluationError ? <Text style={styles.pageErrorText}>{evaluationError}</Text> : null}
-
-        <View style={styles.workspace}>
-          <PatientEvaluationForm
-            title="Patient Evaluation"
-            caseMeta={formatCaseMeta(evaluation)}
-            patientNameValue={patientName}
-            birthDateValue={patientBirthDate}
-            sexValue={patientSex}
-            symptomsValue={symptoms}
-            dropzoneState={dropzoneState}
-            uploadedFileName={latestFile?.fileName ?? undefined}
-            dropzoneError={uploadError ?? undefined}
-            primaryButtonLabel={
-              isAssistantLoading
-                ? 'Analyzing...'
-                : isSavingEvaluation
-                  ? 'Saving...'
-                  : 'Run AI Analysis'
-            }
-            primaryButtonDisabled={isAssistantLoading || isSavingEvaluation || isUpdatingStatus}
-            secondaryButtonDisabled={isSavingEvaluation || isAssistantLoading || isUpdatingStatus}
-            showSecondaryAction
-            onPatientNameChange={setPatientName}
-            onBirthDateChange={handleBirthDateChange}
-            onSexChange={setPatientSex}
-            onSymptomsChange={setSymptoms}
-            onBrowsePress={handleUploadPress}
-            onPrimaryActionPress={handleRunAnalysisPress}
-            onSecondaryActionPress={handleSaveDraftPress}
-            style={styles.formPanel}
-          />
-
-          <View style={styles.rightColumn}>
-            <CardBase style={styles.chatCard}>
-              <View style={styles.chatHeader}>
-                <View style={styles.chatTitleGroup}>
-                  <View style={styles.chatIconWrap}>
-                    <MaterialCommunityIcons name="brain" size={18} color="#0003B8" />
-                  </View>
-
-                  <View style={styles.chatCopy}>
-                    <Text style={styles.chatTitle}>Diagnosis Assistant</Text>
-                    <Text style={styles.chatSubtitle}>
-                      Cross-checking symptoms with nearby epidemiological activity
-                    </Text>
-                  </View>
-                </View>
-
-                {isAssistantLoading ? (
-                  <View style={styles.liveBadge}>
-                    <View style={styles.liveBadgeDot} />
-                    <Text style={styles.liveBadgeText}>Thinking</Text>
-                  </View>
-                ) : null}
-              </View>
-
-              <ScrollView
-                style={styles.chatBody}
-                contentContainerStyle={styles.chatBodyContent}
-                showsVerticalScrollIndicator={false}
-              >
-                {chatHistory.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <MaterialCommunityIcons name="stethoscope" size={24} color="#0003B8" />
-                    <Text style={styles.emptyTitle}>Ready for patient context</Text>
-                    <Text style={styles.emptyText}>
-                      Run the analysis or ask a follow-up question to query the backend assistant.
-                    </Text>
-                  </View>
-                ) : (
-                  chatHistory.map((message, index) =>
-                    message.role === 'user' ? (
-                      <DiagnosisChatBubble
-                        key={`${message.role}-${index}`}
-                        sender="user"
-                        message={message.content}
-                        style={styles.userBubble}
-                      />
-                    ) : (
-                      <View key={`${message.role}-${index}`} style={styles.responseRow}>
-                        <View style={styles.assistantAvatar}>
-                          <MaterialCommunityIcons name="robot-excited-outline" size={16} color="#FFFFFF" />
-                        </View>
-
-                        <View style={styles.responseStack}>
-                          <DiagnosisResponseCard
-                            responseText={message.content}
-                            highlightText="HOWEVER"
-                            showWarning={!!outbreakWarningMessage}
-                            warningMessage={outbreakWarningMessage}
-                            style={styles.responseCard}
-                          />
-                          {message.suggestions?.length ? (
-                            <AssistantSuggestionsList suggestions={message.suggestions} />
-                          ) : null}
-                        </View>
-                      </View>
-                    ),
-                  )
-                )}
-
-                {isAssistantLoading ? (
-                  <View style={styles.loadingRow}>
-                    <ActivityIndicator color="#0003B8" />
-                    <Text style={styles.loadingText}>Consulting diagnosis assistant...</Text>
-                  </View>
-                ) : null}
-
-                {assistantError ? (
-                  <Text style={styles.errorText}>{assistantError}</Text>
-                ) : null}
-              </ScrollView>
-
-              <View style={styles.chatFooter}>
-                <AssistantInputBar
-                  value={assistantQuery}
-                  onChangeText={setAssistantQuery}
-                  onSendPress={handleSendPress}
-                  disabled={isAssistantLoading}
-                />
-              </View>
-            </CardBase>
-
-            <View style={styles.bottomRow}>
-              {evaluation?.recommendedTests?.length ? (
-                <RecommendedTestsCard
-                  title="Recommended Tests"
-                  tests={evaluation.recommendedTests.map((test) => ({
-                    label: test.testName,
-                    secondaryText: test.reason ?? undefined,
-                  }))}
-                  style={styles.testsCard}
-                />
-              ) : null}
-
-              <View style={styles.actionGroup}>
-                <Button
-                  label="Confirm Diagnosis"
-                  size="lg"
-                  variant="secondary"
-                  leadingIcon={<Feather name="check-circle" size={18} color="#0003B8" />}
-                  disabled={isAssistantLoading || isSavingEvaluation || isUpdatingStatus}
-                  onPress={() => handleOpenFeedback('ASSISTANT_ACCEPTED')}
-                  style={styles.confirmButton}
-                  labelStyle={styles.confirmButtonLabel}
-                />
-
-                <Button
-                  label="Reject Suggestion"
-                  size="lg"
-                  variant="surface"
-                  leadingIcon={<Feather name="x-circle" size={18} color="#475569" />}
-                  disabled={isAssistantLoading || isSavingEvaluation || isUpdatingStatus}
-                  onPress={() => handleOpenFeedback('ASSISTANT_REJECTED_DOCTOR_OVERRIDE')}
-                  style={styles.rejectButton}
-                  labelStyle={styles.rejectButtonLabel}
-                />
-              </View>
+      <ScrollView contentContainerStyle={styles.pageScrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.contentContainer}>
+          <View style={styles.heroStrip}>
+            <View style={styles.heroCopy}>
+              <Text style={styles.heroEyebrow}>Clinical Intelligence Workspace</Text>
+              <Text style={styles.heroTitle}>Differential diagnosis with locality-aware risk context</Text>
+              <Text style={styles.heroDescription}>
+                Evaluate the patient, contrast symptoms with nearby outbreaks, and confirm the most reliable diagnostic path.
+              </Text>
             </View>
 
-            {feedbackDecision ? (
-              <CardBase style={styles.feedbackPanel}>
-                <Text style={styles.feedbackTitle}>
-                  {feedbackDecision === 'ASSISTANT_ACCEPTED'
-                    ? 'Confirm assistant suggestion'
-                    : 'Reject and record final diagnosis'}
-                </Text>
-                <Text style={styles.feedbackSubtitle}>
-                  {feedbackDecision === 'ASSISTANT_ACCEPTED'
-                    ? 'Optionally label the confirmed diagnosis and add notes for analytics.'
-                    : 'Add the doctor-determined final diagnosis and the reason for rejecting the assistant.'}
-                </Text>
+            <View style={styles.heroBadge}>
+              <View style={styles.heroBadgeDot} />
+              <Text style={styles.heroBadgeText}>
+                {evaluation?.status ? `Status: ${evaluation.status.replace('_', ' ')}` : 'Ready to start'}
+              </Text>
+            </View>
+          </View>
 
-                <Text style={styles.feedbackFieldLabel}>Final diagnosis label</Text>
-                <InputField
-                  placeholder="e.g., Confirmed dengue"
-                  value={feedbackLabel}
-                  onChangeText={setFeedbackLabel}
-                />
+          {evaluationError ? <Text style={styles.pageErrorText}>{evaluationError}</Text> : null}
 
-                <Text style={styles.feedbackFieldLabel}>Notes</Text>
-                <TextareaField
-                  placeholder="Reason, supporting evidence, or context for this decision..."
-                  value={feedbackNotes}
-                  onChangeText={setFeedbackNotes}
-                  numberOfLines={3}
-                />
+          <View style={styles.workspace}>
+            <View style={styles.formPanelWrap} onLayout={handleFormPanelLayout}>
+              <PatientEvaluationForm
+                title="Patient Evaluation"
+                caseMeta={formatCaseMeta(evaluation)}
+                patientNameValue={patientName}
+                birthDateValue={patientBirthDate}
+                sexValue={patientSex}
+                symptomsValue={symptoms}
+                dropzoneState={dropzoneState}
+                uploadedFileName={latestFile?.fileName ?? undefined}
+                dropzoneError={uploadError ?? undefined}
+                primaryButtonLabel={
+                  isAssistantLoading
+                    ? 'Analyzing...'
+                    : isSavingEvaluation
+                      ? 'Saving...'
+                      : 'Run AI Analysis'
+                }
+                primaryButtonDisabled={isAssistantLoading || isSavingEvaluation}
+                secondaryButtonDisabled={isSavingEvaluation || isAssistantLoading}
+                showSecondaryAction
+                onPatientNameChange={setPatientName}
+                onBirthDateChange={handleBirthDateChange}
+                onSexChange={setPatientSex}
+                onSymptomsChange={setSymptoms}
+                onBrowsePress={handleUploadPress}
+                onPrimaryActionPress={handleRunAnalysisPress}
+                onSecondaryActionPress={handleSaveDraftPress}
+                style={styles.formPanel}
+              />
+            </View>
 
-                {feedbackError ? <Text style={styles.errorText}>{feedbackError}</Text> : null}
+            <View style={styles.rightColumn}>
+              <CardBase style={[styles.chatCard, { height: boundedChatHeight }]}>
+                <View style={styles.chatHeader}>
+                  <View style={styles.chatTitleGroup}>
+                    <View style={styles.chatIconWrap}>
+                      <MaterialCommunityIcons name="brain" size={18} color="#0003B8" />
+                    </View>
 
-                <View style={styles.feedbackActions}>
-                  <Button
-                    label="Cancel"
-                    size="md"
-                    variant="surface"
-                    onPress={handleCancelFeedback}
-                    disabled={isUpdatingStatus}
-                  />
-                  <Button
-                    label={isUpdatingStatus ? 'Submitting...' : 'Submit feedback'}
-                    size="md"
-                    variant="primary"
-                    onPress={() => {
-                      void handleSubmitFeedback();
-                    }}
-                    disabled={isUpdatingStatus}
+                    <View style={styles.chatCopy}>
+                      <Text style={styles.chatTitle}>Diagnosis Assistant</Text>
+                      <Text style={styles.chatSubtitle}>
+                        Cross-checking symptoms with nearby epidemiological activity
+                      </Text>
+                    </View>
+                  </View>
+
+                  {isAssistantLoading ? (
+                    <View style={styles.liveBadge}>
+                      <View style={styles.liveBadgeDot} />
+                      <Text style={styles.liveBadgeText}>Thinking</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <ScrollView
+                  style={styles.chatBody}
+                  contentContainerStyle={styles.chatBodyContent}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {chatHistory.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <MaterialCommunityIcons name="stethoscope" size={24} color="#0003B8" />
+                      <Text style={styles.emptyTitle}>Ready for patient context</Text>
+                      <Text style={styles.emptyText}>
+                        Run the analysis or ask a follow-up question to query the backend assistant.
+                      </Text>
+                    </View>
+                  ) : (
+                    chatHistory.map((message, index) =>
+                      message.role === 'user' ? (
+                        <DiagnosisChatBubble
+                          key={`${message.role}-${index}`}
+                          sender="user"
+                          message={message.content}
+                          style={styles.userBubble}
+                        />
+                      ) : (
+                        <View key={`${message.role}-${index}`} style={styles.responseRow}>
+                          <View style={styles.assistantAvatar}>
+                            <MaterialCommunityIcons name="robot-excited-outline" size={16} color="#FFFFFF" />
+                          </View>
+
+                          <View style={styles.responseStack}>
+                            <DiagnosisResponseCard
+                              responseText={message.content}
+                              highlightText="HOWEVER"
+                              showWarning={!!outbreakWarningMessage}
+                              warningMessage={outbreakWarningMessage}
+                              style={styles.responseCard}
+                            />
+                            {message.suggestions?.length ? (
+                              <AssistantSuggestionsList suggestions={message.suggestions} />
+                            ) : null}
+
+                            {index === chatHistory.length - 1 && evaluation?.recommendedTests?.length ? (
+                              <RecommendedTestsCard
+                                title="Recommended Tests"
+                                tests={evaluation.recommendedTests.map((test) => ({
+                                  label: test.testName,
+                                  secondaryText: test.reason ?? undefined,
+                                }))}
+                                style={styles.testsCard}
+                              />
+                            ) : null}
+                          </View>
+                        </View>
+                      ),
+                    )
+                  )}
+
+                  {isAssistantLoading ? (
+                    <View style={styles.loadingRow}>
+                      <ActivityIndicator color="#0003B8" />
+                      <Text style={styles.loadingText}>Consulting diagnosis assistant...</Text>
+                    </View>
+                  ) : null}
+
+                  {assistantError ? (
+                    <Text style={styles.errorText}>{assistantError}</Text>
+                  ) : null}
+                </ScrollView>
+
+                <View style={styles.chatFooter}>
+                  <AssistantInputBar
+                    value={assistantQuery}
+                    onChangeText={setAssistantQuery}
+                    onSendPress={handleSendPress}
+                    disabled={isAssistantLoading}
                   />
                 </View>
               </CardBase>
-            ) : null}
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </DashboardLayout>
   );
 }
@@ -690,8 +588,10 @@ export function DoctorDiagnosis() {
 export default DoctorDiagnosis;
 
 const styles = StyleSheet.create({
+  pageScrollContent: {
+    paddingBottom: 32,
+  },
   contentContainer: {
-    flex: 1,
     padding: 24,
   },
   heroStrip: {
@@ -762,11 +662,9 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   workspace: {
-    flex: 1,
     flexDirection: 'row',
     gap: 24,
     alignItems: 'stretch',
-    minHeight: 0,
   },
   pageErrorText: {
     marginBottom: 16,
@@ -779,20 +677,20 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '600',
   },
-  formPanel: {
+  formPanelWrap: {
     width: 340,
     flexShrink: 0,
   },
+  formPanel: {
+    width: '100%',
+  },
   rightColumn: {
     flex: 1,
-    gap: 24,
     minHeight: 0,
   },
   chatCard: {
-    flex: 1,
     padding: 0,
     overflow: 'hidden',
-    minHeight: 0,
     borderRadius: 22,
     borderColor: 'rgba(148, 163, 184, 0.24)',
     shadowColor: '#000F6B',
@@ -986,81 +884,6 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   testsCard: {
-    width: 216,
-    flexShrink: 0,
-  },
-  actionGroup: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-  },
-  confirmButton: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#0003B8',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0003B8',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-  confirmButtonLabel: {
-    color: '#0003B8',
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
-  rejectButton: {
-    flex: 1,
-    minHeight: 46,
-    borderWidth: 0,
-    borderRadius: 16,
-    backgroundColor: '#E8EEF7',
-  },
-  rejectButtonLabel: {
-    color: '#334155',
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
-  feedbackPanel: {
-    marginTop: 4,
-    padding: 18,
-    gap: 8,
-    borderRadius: 18,
-    borderColor: 'rgba(148, 163, 184, 0.24)',
-    backgroundColor: '#FFFFFF',
-  },
-  feedbackTitle: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  feedbackSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#64748B',
-    marginBottom: 8,
-  },
-  feedbackFieldLabel: {
-    marginTop: 6,
-    marginBottom: 6,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: '#64748B',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  feedbackActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 12,
+    width: '100%',
   },
 });
