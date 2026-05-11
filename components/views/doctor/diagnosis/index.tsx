@@ -3,6 +3,7 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AssistantInputBar } from '@/components/diagnosis/AssistantInputBar';
+import { AssistantSuggestionsList } from '@/components/diagnosis/AssistantSuggestionsList';
 import { DiagnosisChatBubble } from '@/components/diagnosis/DiagnosisChatBubble';
 import { DiagnosisResponseCard } from '@/components/diagnosis/DiagnosisResponseCard';
 import { FileUploadState, PatientEvaluationForm } from '@/components/diagnosis/PatientEvaluationForm';
