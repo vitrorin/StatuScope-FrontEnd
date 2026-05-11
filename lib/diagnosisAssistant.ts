@@ -8,18 +8,21 @@ export interface AssistantMessage {
 export interface PatientContext {
   ageYears?: number;
   sex?: string;
-  postalCode?: string;
   symptoms?: string;
 }
 
 export interface OutbreakSummary {
   diseaseName: string;
+  municipalityName?: string | null;
+  stateName?: string | null;
+  regionName?: string | null;
   caseCount: number;
   startedAt: string;
 }
 
 export interface AssistantContext {
-  regionName: string | null;
+  stateName?: string | null;
+  regionName?: string | null;
   outbreaks: OutbreakSummary[];
 }
 

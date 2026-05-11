@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { Avatar } from '../foundation/Avatar';
 import { SearchInput } from '../inputs/SearchInput';
+import { LanguageSwitcher } from '../inputs/LanguageSwitcher';
 
 export interface TopHeaderProps {
   sectionLabel?: string;
@@ -44,6 +45,8 @@ export function TopHeader({
       </View>
 
       <View style={styles.rightSection}>
+        <LanguageSwitcher />
+
         <TouchableOpacity style={styles.notificationButton} onPress={onNotificationPress}>
           <Feather name="bell" size={18} color="#64748B" />
           {showNotificationDot ? <View style={styles.notificationDot} /> : null}

@@ -5,6 +5,7 @@ node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
 expo-env.d.ts
@@ -20,11 +21,14 @@ expo-env.d.ts
 
 # Metro
 .metro-health-check*
+.metro/
+.cache/
 
 # debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
 
 # macOS
 .DS_Store
@@ -38,6 +42,13 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# test/build artifacts
+coverage/
+.nyc_output/
+.turbo/
+.parcel-cache/
+.next/
+
 app-example
 
 # generated native folders
@@ -46,3 +57,9 @@ app-example
 
 *storybook.log
 storybook-static
+
+# Large map source downloads used to regenerate simplified boundaries.
+assets/maps/raw-states/
+
+# Local report exports
+statuscope-*-outbreak-report-*.pdf
