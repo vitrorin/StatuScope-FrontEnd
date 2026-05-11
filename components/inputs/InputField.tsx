@@ -30,6 +30,7 @@ export interface InputFieldProps {
   labelStyle?: TextStyle;
   placeholderTextColor?: string;
   labelAccessory?: React.ReactNode;
+  maxLength?: number;
 }
 
 export function InputField({
@@ -50,6 +51,7 @@ export function InputField({
   labelStyle,
   placeholderTextColor,
   labelAccessory,
+  maxLength,
 }: InputFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -124,6 +126,7 @@ export function InputField({
           keyboardType={
             type === 'email' ? 'email-address' : type === 'number' ? 'numeric' : 'default'
           }
+          maxLength={maxLength}
           editable={!disabled}
           autoCapitalize={type === 'email' ? 'none' : 'sentences'}
         />

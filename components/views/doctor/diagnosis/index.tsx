@@ -1,20 +1,37 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AssistantInputBar } from '@/components/diagnosis/AssistantInputBar';
-import { ConfidenceBar } from '@/components/diagnosis/ConfidenceBar';
+import { AssistantSuggestionsList } from '@/components/diagnosis/AssistantSuggestionsList';
 import { DiagnosisChatBubble } from '@/components/diagnosis/DiagnosisChatBubble';
 import { DiagnosisResponseCard } from '@/components/diagnosis/DiagnosisResponseCard';
-import { DiagnosisRiskCard } from '@/components/diagnosis/DiagnosisRiskCard';
-import { PatientEvaluationForm } from '@/components/diagnosis/PatientEvaluationForm';
+import { FileUploadState, PatientEvaluationForm } from '@/components/diagnosis/PatientEvaluationForm';
 import { RecommendedTestsCard } from '@/components/diagnosis/RecommendedTestsCard';
 import { Button } from '@/components/foundation/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { initialsFromName } from '@/lib/format';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
-import { askAssistant, AssistantMessage } from '@/lib/diagnosisAssistant';
+import { ApiError } from '@/lib/api';
+import {
+  askAssistant,
+  AssistantContext,
+  AssistantMessage,
+  getAssistantThread,
+  PatientContext,
+} from '@/lib/diagnosisAssistant';
+import {
+  AssistantFeedbackDecision,
+  DiagnosisEvaluation,
+  createDiagnosisEvaluation,
+  getCurrentDiagnosisEvaluation,
+  submitAssistantFeedback,
+  updateDiagnosisEvaluation,
+  uploadDiagnosisEvaluationFile,
+} from '@/lib/diagnosisEvaluation';
+import { InputField } from '@/components/inputs/InputField';
+import { TextareaField } from '@/components/inputs/TextareaField';
 
 const navigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -22,33 +39,381 @@ const navigationLinks = {
   analytics: '/analytics',
 } as const;
 
+interface PickedDiagnosisFile {
+  fileName: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  contentBase64: string;
+}
+
+function formatBirthDateInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 4) {
+    return digits;
+  }
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  }
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`;
+}
+
+function calculateAgeYears(birthDate: string): number | undefined {
+  const parsed = new Date(`${birthDate}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - parsed.getFullYear();
+  const monthDiff = today.getMonth() - parsed.getMonth();
+  const dayDiff = today.getDate() - parsed.getDate();
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    age -= 1;
+  }
+  return age >= 0 ? age : undefined;
+}
+
+function formatCaseMeta(evaluation: DiagnosisEvaluation | null): string {
+  if (!evaluation) {
+    return 'New case - not saved yet';
+  }
+
+  const shortId = evaluation.id.slice(0, 8).toUpperCase();
+  const startedLabel = new Date(evaluation.createdAt).toLocaleString();
+  return `Case ID: #${shortId} - Started ${startedLabel}`;
+}
+
+function deriveDropzoneState(
+  isUploading: boolean,
+  uploadError: string | null,
+  evaluation: DiagnosisEvaluation | null,
+): FileUploadState {
+  if (uploadError) return 'error';
+  if (isUploading) return 'dragging';
+  if ((evaluation?.files?.length ?? 0) > 0) return 'uploaded';
+  return 'empty';
+}
+
+async function pickDiagnosisFile(): Promise<PickedDiagnosisFile | null> {
+  if (typeof document === 'undefined') {
+    throw new Error('File upload is currently available in the web app only.');
+  }
+
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.jpg,.jpeg,.png,.dcm,.dicom,application/pdf,image/*';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) {
+        resolve(null);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result !== 'string') {
+          reject(new Error('Unable to read the selected file.'));
+          return;
+        }
+
+        const contentBase64 = reader.result.includes(',')
+          ? reader.result.split(',')[1] ?? ''
+          : reader.result;
+
+        resolve({
+          fileName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          fileSizeBytes: file.size,
+          contentBase64,
+        });
+      };
+      reader.onerror = () => reject(new Error('Unable to read the selected file.'));
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  });
+}
+
 export function DoctorDiagnosis() {
   const router = useRouter();
   const { logout, profile } = useAuth();
+  const [evaluation, setEvaluation] = useState<DiagnosisEvaluation | null>(null);
+  const [patientName, setPatientName] = useState('');
+  const [patientBirthDate, setPatientBirthDate] = useState('');
+  const [patientSex, setPatientSex] = useState('');
+  const [symptoms, setSymptoms] = useState('');
   const [assistantQuery, setAssistantQuery] = useState('');
   const [chatHistory, setChatHistory] = useState<AssistantMessage[]>([]);
+  const [contextUsed, setContextUsed] = useState<AssistantContext | null>(null);
+  const [assistantError, setAssistantError] = useState<string | null>(null);
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isSavingEvaluation, setIsSavingEvaluation] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isAssistantLoading, setIsAssistantLoading] = useState(false);
+  const [feedbackDecision, setFeedbackDecision] = useState<AssistantFeedbackDecision | null>(null);
+  const [feedbackLabel, setFeedbackLabel] = useState('');
+  const [feedbackNotes, setFeedbackNotes] = useState('');
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
-  const handleSendPress = async () => {
-    const userMessage = assistantQuery.trim();
-    if (!userMessage) return;
+  useEffect(() => {
+    let isActive = true;
+
+    const hydrateExistingSession = async () => {
+      try {
+        const currentEvaluation = await getCurrentDiagnosisEvaluation();
+        if (!isActive) return;
+
+        setEvaluation(currentEvaluation);
+        setPatientName(currentEvaluation.patient.fullName ?? '');
+        setPatientBirthDate(currentEvaluation.patient.birthDate ?? '');
+        setPatientSex(currentEvaluation.patient.sex ?? '');
+        setSymptoms(currentEvaluation.symptomsText ?? '');
+
+        try {
+          const thread = await getAssistantThread(currentEvaluation.id);
+          if (!isActive) return;
+
+          setChatHistory(
+            thread.messages
+              .filter(
+                (message): message is AssistantMessage =>
+                  message.role === 'user' || message.role === 'assistant',
+              )
+              .map((message) => ({
+                id: message.id,
+                role: message.role,
+                content: message.content,
+                suggestions: message.suggestions ?? [],
+              })),
+          );
+          setContextUsed(thread.contextUsed);
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 404) {
+            return;
+          }
+          if (!isActive) return;
+          setAssistantError(
+            error instanceof Error ? error.message : 'Unable to load the saved assistant thread.',
+          );
+        }
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return;
+        }
+        if (!isActive) return;
+        setEvaluationError(
+          error instanceof Error ? error.message : 'Unable to restore the active diagnosis evaluation.',
+        );
+      }
+    };
+
+    void hydrateExistingSession();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const handleBirthDateChange = (value: string) => {
+    setPatientBirthDate(formatBirthDateInput(value));
+  };
+
+  const hydrateForm = (nextEvaluation: DiagnosisEvaluation) => {
+    setEvaluation(nextEvaluation);
+    setPatientName(nextEvaluation.patient.fullName ?? '');
+    setPatientBirthDate(nextEvaluation.patient.birthDate ?? '');
+    setPatientSex(nextEvaluation.patient.sex ?? '');
+    setSymptoms(nextEvaluation.symptomsText ?? '');
+  };
+
+  const buildPatientContext = (): PatientContext => {
+    const parsedAge = calculateAgeYears(patientBirthDate);
+
+    return {
+      ageYears: parsedAge,
+      sex: patientSex || undefined,
+      symptoms: symptoms.trim() || undefined,
+    };
+  };
+
+  const persistEvaluation = async (): Promise<DiagnosisEvaluation> => {
+    if (!patientName.trim()) {
+      throw new Error('Patient name is required.');
+    }
+
+    if (!patientBirthDate.trim()) {
+      throw new Error('Birth date is required.');
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(patientBirthDate.trim())) {
+      throw new Error('Birth date must use YYYY-MM-DD format.');
+    }
+
+    if (!patientSex.trim()) {
+      throw new Error('Patient sex is required.');
+    }
+
+    if (!symptoms.trim()) {
+      throw new Error('Symptoms are required.');
+    }
+
+    setIsSavingEvaluation(true);
+    setEvaluationError(null);
+    try {
+      const payload = {
+        patientFullName: patientName.trim(),
+        birthDate: patientBirthDate.trim(),
+        sex: patientSex,
+        symptomsText: symptoms.trim(),
+      };
+      const updatedEvaluation = evaluation
+        ? await updateDiagnosisEvaluation(evaluation.id, payload)
+        : await createDiagnosisEvaluation(payload);
+      hydrateForm(updatedEvaluation);
+      return updatedEvaluation;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unable to save the patient evaluation.';
+      setEvaluationError(message);
+      throw error;
+    } finally {
+      setIsSavingEvaluation(false);
+    }
+  };
+
+  const sendAssistantMessage = async (
+    content: string,
+    activeEvaluationOverride?: DiagnosisEvaluation,
+  ) => {
+    const userMessage = content.trim();
+    if (!userMessage || isAssistantLoading) return;
+
+    let activeEvaluation: DiagnosisEvaluation;
+    try {
+      activeEvaluation = activeEvaluationOverride ?? evaluation ?? (await persistEvaluation());
+    } catch {
+      return;
+    }
+
     setAssistantQuery('');
+    setAssistantError(null);
+    setIsAssistantLoading(true);
 
     const updatedHistory: AssistantMessage[] = [
       ...chatHistory,
-      { role: 'user', content: userMessage },
-    ];
+      { role: 'user' as const, content: userMessage },
+    ].slice(-19);
     setChatHistory(updatedHistory);
 
     try {
-      const response = await askAssistant({ messages: updatedHistory });
+      const response = await askAssistant({
+        evaluationId: activeEvaluation.id,
+        messages: [{ role: 'user', content: userMessage }],
+        patientContext: buildPatientContext(),
+      });
       setChatHistory([
         ...updatedHistory,
-        { role: 'assistant', content: response.reply },
+        {
+          id: response.messageId ?? undefined,
+          role: 'assistant',
+          content: response.reply,
+          suggestions: response.suggestions ?? [],
+        },
       ]);
-    } catch {
-      // keep the user message in history even if request fails
+      setContextUsed(response.contextUsed);
+    } catch (error) {
+      setAssistantError(error instanceof Error ? error.message : 'Unable to reach the diagnosis assistant.');
+    } finally {
+      setIsAssistantLoading(false);
     }
   };
+
+  const handleSendPress = () => {
+    void sendAssistantMessage(assistantQuery);
+  };
+
+  const handleRunAnalysisPress = async () => {
+    const contextPrompt = symptoms.trim()
+      ? `Evaluate this patient and suggest differential diagnoses, risk factors, and next diagnostic steps. Symptoms: ${symptoms.trim()}`
+      : 'Evaluate this patient and suggest differential diagnoses, risk factors, and next diagnostic steps.';
+
+    try {
+      const activeEvaluation = await persistEvaluation();
+      await sendAssistantMessage(contextPrompt, activeEvaluation);
+    } catch {
+      return;
+    }
+  };
+
+  const handleSaveDraftPress = async () => {
+    try {
+      await persistEvaluation();
+    } catch {
+      return;
+    }
+  };
+
+  const handleUploadPress = async () => {
+    setUploadError(null);
+    try {
+      const selectedFile = await pickDiagnosisFile();
+      if (!selectedFile) return;
+
+      const activeEvaluation = await persistEvaluation();
+      setIsUploadingFile(true);
+      const updatedEvaluation = await uploadDiagnosisEvaluationFile(activeEvaluation.id, {
+        ...selectedFile,
+        documentType: 'LAB_RESULT',
+      });
+      hydrateForm(updatedEvaluation);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Unable to upload the selected file.');
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
+  const handleOpenFeedback = (decision: AssistantFeedbackDecision) => {
+    setFeedbackError(null);
+    setFeedbackDecision(decision);
+    setFeedbackLabel(evaluation?.finalDiagnosisLabel ?? '');
+    setFeedbackNotes(evaluation?.doctorFeedbackNotes ?? '');
+  };
+
+  const handleCancelFeedback = () => {
+    setFeedbackDecision(null);
+    setFeedbackError(null);
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackDecision) return;
+
+    try {
+      const activeEvaluation = await persistEvaluation();
+      setIsUpdatingStatus(true);
+      setFeedbackError(null);
+      const updatedEvaluation = await submitAssistantFeedback(activeEvaluation.id, {
+        finalDecisionSource: feedbackDecision,
+        finalDiagnosisLabel: feedbackLabel.trim() || undefined,
+        doctorFeedbackNotes: feedbackNotes.trim() || undefined,
+      });
+      hydrateForm(updatedEvaluation);
+      setFeedbackDecision(null);
+    } catch (error) {
+      setFeedbackError(
+        error instanceof Error ? error.message : 'Unable to record diagnosis feedback.',
+      );
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const outbreakCount = contextUsed?.outbreaks?.length ?? 0;
+  const latestFile = evaluation?.files?.[0] ?? null;
+  const dropzoneState = deriveDropzoneState(isUploadingFile, uploadError, evaluation);
 
   return (
     <DashboardLayout
@@ -64,7 +429,7 @@ export function DoctorDiagnosis() {
         router.replace('/login');
       }}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <View style={styles.contentContainer}>
         <View style={styles.heroStrip}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroEyebrow}>Clinical Intelligence Workspace</Text>
@@ -76,20 +441,42 @@ export function DoctorDiagnosis() {
 
           <View style={styles.heroBadge}>
             <View style={styles.heroBadgeDot} />
-            <Text style={styles.heroBadgeText}>Case monitored live</Text>
+            <Text style={styles.heroBadgeText}>
+              {evaluation?.status ? `Status: ${evaluation.status.replace('_', ' ')}` : 'Ready to start'}
+            </Text>
           </View>
         </View>
+
+        {evaluationError ? <Text style={styles.pageErrorText}>{evaluationError}</Text> : null}
 
         <View style={styles.workspace}>
           <PatientEvaluationForm
             title="Patient Evaluation"
-            caseMeta="Case ID: #88291 - Started 4m ago"
-            ageValue="7"
-            sexValue="male"
-            postalCodeValue="90210"
-            symptomsValue="High fever, watery eyes, reddish spots appearing on face."
-            dropzoneState="empty"
+            caseMeta={formatCaseMeta(evaluation)}
+            patientNameValue={patientName}
+            birthDateValue={patientBirthDate}
+            sexValue={patientSex}
+            symptomsValue={symptoms}
+            dropzoneState={dropzoneState}
+            uploadedFileName={latestFile?.fileName ?? undefined}
+            dropzoneError={uploadError ?? undefined}
+            primaryButtonLabel={
+              isAssistantLoading
+                ? 'Analyzing...'
+                : isSavingEvaluation
+                  ? 'Saving...'
+                  : 'Run AI Analysis'
+            }
+            primaryButtonDisabled={isAssistantLoading || isSavingEvaluation || isUpdatingStatus}
+            secondaryButtonDisabled={isSavingEvaluation || isAssistantLoading || isUpdatingStatus}
             showSecondaryAction
+            onPatientNameChange={setPatientName}
+            onBirthDateChange={handleBirthDateChange}
+            onSexChange={setPatientSex}
+            onSymptomsChange={setSymptoms}
+            onBrowsePress={handleUploadPress}
+            onPrimaryActionPress={handleRunAnalysisPress}
+            onSecondaryActionPress={handleSaveDraftPress}
             style={styles.formPanel}
           />
 
@@ -109,73 +496,97 @@ export function DoctorDiagnosis() {
                   </View>
                 </View>
 
-                <View style={styles.liveBadge}>
-                  <View style={styles.liveBadgeDot} />
-                  <Text style={styles.liveBadgeText}>Live Monitor</Text>
-                </View>
+                {isAssistantLoading ? (
+                  <View style={styles.liveBadge}>
+                    <View style={styles.liveBadgeDot} />
+                    <Text style={styles.liveBadgeText}>Thinking</Text>
+                  </View>
+                ) : null}
               </View>
 
-              <View style={styles.chatBody}>
-                <DiagnosisChatBubble
-                  sender="user"
-                  message="Patient with fever 39 C, conjunctivitis, rash"
-                  style={styles.userBubble}
-                />
-
-                <View style={styles.responseRow}>
-                  <View style={styles.assistantAvatar}>
-                    <MaterialCommunityIcons name="robot-excited-outline" size={16} color="#FFFFFF" />
+              <ScrollView
+                style={styles.chatBody}
+                contentContainerStyle={styles.chatBodyContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {chatHistory.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <MaterialCommunityIcons name="stethoscope" size={24} color="#0003B8" />
+                    <Text style={styles.emptyTitle}>Ready for patient context</Text>
+                    <Text style={styles.emptyText}>
+                      Run the analysis or ask a follow-up question to query the backend assistant.
+                    </Text>
                   </View>
-
-                  <View style={styles.responseStack}>
-                    <DiagnosisResponseCard
-                      responseText="Symptoms are consistent with dengue. HOWEVER, within a 5 km radius there have been 12 confirmed measles cases in the last 72 hours."
-                      highlightText="HOWEVER"
-                      showWarning
-                      warningMessage="Please check for Koplik spots and review vaccination history. Locality risk factor is extremely high for this profile."
-                      style={styles.responseCard}
-                    />
-
-                    <View style={styles.riskRow}>
-                      <ConfidenceBar
-                        label="Dengue"
-                        value={85}
-                        valueText="85%"
-                        color="#0003B8"
-                        style={styles.confidenceCard}
+                ) : (
+                  chatHistory.map((message, index) =>
+                    message.role === 'user' ? (
+                      <DiagnosisChatBubble
+                        key={`${message.role}-${index}`}
+                        sender="user"
+                        message={message.content}
+                        style={styles.userBubble}
                       />
+                    ) : (
+                      <View key={`${message.role}-${index}`} style={styles.responseRow}>
+                        <View style={styles.assistantAvatar}>
+                          <MaterialCommunityIcons name="robot-excited-outline" size={16} color="#FFFFFF" />
+                        </View>
 
-                      <DiagnosisRiskCard
-                        title="Measles"
-                        subtitle="High Risk (Locality)"
-                        statusText="Alert"
-                        variant="critical"
-                        statusTone="text"
-                        style={styles.riskCard}
-                      />
-                    </View>
+                        <View style={styles.responseStack}>
+                          <DiagnosisResponseCard
+                            responseText={message.content}
+                            showWarning={!!contextUsed?.regionName || outbreakCount > 0}
+                            warningMessage={
+                              contextUsed?.regionName
+                                ? `Hospital region context: ${contextUsed.regionName} with ${outbreakCount} active outbreak signal${outbreakCount === 1 ? '' : 's'}.`
+                                : outbreakCount > 0
+                                  ? `Hospital region context: ${outbreakCount} active outbreak signal${outbreakCount === 1 ? '' : 's'}.`
+                                  : undefined
+                            }
+                            style={styles.responseCard}
+                          />
+                          {message.suggestions?.length ? (
+                            <AssistantSuggestionsList suggestions={message.suggestions} />
+                          ) : null}
+                        </View>
+                      </View>
+                    ),
+                  )
+                )}
+
+                {isAssistantLoading ? (
+                  <View style={styles.loadingRow}>
+                    <ActivityIndicator color="#0003B8" />
+                    <Text style={styles.loadingText}>Consulting diagnosis assistant...</Text>
                   </View>
-                </View>
-              </View>
+                ) : null}
+
+                {assistantError ? (
+                  <Text style={styles.errorText}>{assistantError}</Text>
+                ) : null}
+              </ScrollView>
 
               <View style={styles.chatFooter}>
                 <AssistantInputBar
                   value={assistantQuery}
                   onChangeText={setAssistantQuery}
                   onSendPress={handleSendPress}
+                  disabled={isAssistantLoading}
                 />
               </View>
             </CardBase>
 
             <View style={styles.bottomRow}>
-              <RecommendedTestsCard
-                title="Recommended Tests"
-                tests={[
-                  { label: 'Complete Blood Count' },
-                  { label: 'Measles IgM' },
-                ]}
-                style={styles.testsCard}
-              />
+              {evaluation?.recommendedTests?.length ? (
+                <RecommendedTestsCard
+                  title="Recommended Tests"
+                  tests={evaluation.recommendedTests.map((test) => ({
+                    label: test.testName,
+                    secondaryText: test.reason ?? undefined,
+                  }))}
+                  style={styles.testsCard}
+                />
+              ) : null}
 
               <View style={styles.actionGroup}>
                 <Button
@@ -183,6 +594,8 @@ export function DoctorDiagnosis() {
                   size="lg"
                   variant="secondary"
                   leadingIcon={<Feather name="check-circle" size={18} color="#0003B8" />}
+                  disabled={isAssistantLoading || isSavingEvaluation || isUpdatingStatus}
+                  onPress={() => handleOpenFeedback('ASSISTANT_ACCEPTED')}
                   style={styles.confirmButton}
                   labelStyle={styles.confirmButtonLabel}
                 />
@@ -192,14 +605,67 @@ export function DoctorDiagnosis() {
                   size="lg"
                   variant="surface"
                   leadingIcon={<Feather name="x-circle" size={18} color="#475569" />}
+                  disabled={isAssistantLoading || isSavingEvaluation || isUpdatingStatus}
+                  onPress={() => handleOpenFeedback('ASSISTANT_REJECTED_DOCTOR_OVERRIDE')}
                   style={styles.rejectButton}
                   labelStyle={styles.rejectButtonLabel}
                 />
               </View>
             </View>
+
+            {feedbackDecision ? (
+              <CardBase style={styles.feedbackPanel}>
+                <Text style={styles.feedbackTitle}>
+                  {feedbackDecision === 'ASSISTANT_ACCEPTED'
+                    ? 'Confirm assistant suggestion'
+                    : 'Reject and record final diagnosis'}
+                </Text>
+                <Text style={styles.feedbackSubtitle}>
+                  {feedbackDecision === 'ASSISTANT_ACCEPTED'
+                    ? 'Optionally label the confirmed diagnosis and add notes for analytics.'
+                    : 'Add the doctor-determined final diagnosis and the reason for rejecting the assistant.'}
+                </Text>
+
+                <Text style={styles.feedbackFieldLabel}>Final diagnosis label</Text>
+                <InputField
+                  placeholder="e.g., Confirmed dengue"
+                  value={feedbackLabel}
+                  onChangeText={setFeedbackLabel}
+                />
+
+                <Text style={styles.feedbackFieldLabel}>Notes</Text>
+                <TextareaField
+                  placeholder="Reason, supporting evidence, or context for this decision..."
+                  value={feedbackNotes}
+                  onChangeText={setFeedbackNotes}
+                  numberOfLines={3}
+                />
+
+                {feedbackError ? <Text style={styles.errorText}>{feedbackError}</Text> : null}
+
+                <View style={styles.feedbackActions}>
+                  <Button
+                    label="Cancel"
+                    size="md"
+                    variant="surface"
+                    onPress={handleCancelFeedback}
+                    disabled={isUpdatingStatus}
+                  />
+                  <Button
+                    label={isUpdatingStatus ? 'Submitting...' : 'Submit feedback'}
+                    size="md"
+                    variant="primary"
+                    onPress={() => {
+                      void handleSubmitFeedback();
+                    }}
+                    disabled={isUpdatingStatus}
+                  />
+                </View>
+              </CardBase>
+            ) : null}
           </View>
         </View>
-      </ScrollView>
+      </View>
     </DashboardLayout>
   );
 }
@@ -208,6 +674,7 @@ export default DoctorDiagnosis;
 
 const styles = StyleSheet.create({
   contentContainer: {
+    flex: 1,
     padding: 24,
   },
   heroStrip: {
@@ -278,9 +745,22 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   workspace: {
+    flex: 1,
     flexDirection: 'row',
     gap: 24,
     alignItems: 'stretch',
+    minHeight: 0,
+  },
+  pageErrorText: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#FEF2F2',
+    color: '#B91C1C',
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '600',
   },
   formPanel: {
     width: 340,
@@ -289,10 +769,13 @@ const styles = StyleSheet.create({
   rightColumn: {
     flex: 1,
     gap: 24,
+    minHeight: 0,
   },
   chatCard: {
+    flex: 1,
     padding: 0,
     overflow: 'hidden',
+    minHeight: 0,
     borderRadius: 22,
     borderColor: 'rgba(148, 163, 184, 0.24)',
     shadowColor: '#000F6B',
@@ -366,13 +849,44 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   chatBody: {
+    flex: 1,
+    minHeight: 0,
     backgroundColor: '#F8FAFF',
+  },
+  chatBodyContent: {
     padding: 26,
     gap: 24,
   },
   userBubble: {
     maxWidth: 340,
     alignSelf: 'flex-end',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 220,
+    paddingHorizontal: 24,
+    paddingVertical: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  emptyTitle: {
+    marginTop: 12,
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0F172A',
+    textAlign: 'center',
+  },
+  emptyText: {
+    marginTop: 6,
+    maxWidth: 420,
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#64748B',
+    textAlign: 'center',
   },
   responseRow: {
     flexDirection: 'row',
@@ -401,6 +915,34 @@ const styles = StyleSheet.create({
   },
   responseCard: {
     borderColor: 'rgba(148, 163, 184, 0.2)',
+  },
+  loadingRow: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  loadingText: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  errorText: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
+    color: '#B91C1C',
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '600',
   },
   riskRow: {
     flexDirection: 'row',
@@ -467,5 +1009,41 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '700',
+  },
+  feedbackPanel: {
+    marginTop: 4,
+    padding: 18,
+    gap: 8,
+    borderRadius: 18,
+    borderColor: 'rgba(148, 163, 184, 0.24)',
+    backgroundColor: '#FFFFFF',
+  },
+  feedbackTitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  feedbackSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#64748B',
+    marginBottom: 8,
+  },
+  feedbackFieldLabel: {
+    marginTop: 6,
+    marginBottom: 6,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  feedbackActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 12,
   },
 });
