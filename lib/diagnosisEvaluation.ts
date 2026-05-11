@@ -44,10 +44,27 @@ export interface DiagnosisEvaluation {
   createdAt: string;
   updatedAt: string;
   finalizedAt: string | null;
+  finalDiseaseId: string | null;
+  finalDiagnosisLabel: string | null;
+  finalDecisionSource: string | null;
+  doctorFeedbackNotes: string | null;
   patient: DiagnosisEvaluationPatient;
   event: DiagnosisEvaluationEvent | null;
   recommendedTests: DiagnosisRecommendedTest[];
   files: DiagnosisEvaluationFile[];
+}
+
+export type AssistantFeedbackDecision =
+  | 'ASSISTANT_ACCEPTED'
+  | 'ASSISTANT_REJECTED_DOCTOR_OVERRIDE'
+  | 'DOCTOR_ONLY';
+
+export interface SubmitAssistantFeedbackPayload {
+  finalDecisionSource: AssistantFeedbackDecision;
+  finalDiagnosisLabel?: string;
+  doctorFeedbackNotes?: string;
+  acceptedAssistantMessageId?: string;
+  finalDiseaseId?: string;
 }
 
 export interface UpdateDiagnosisEvaluationPayload {
@@ -106,4 +123,14 @@ export async function uploadDiagnosisEvaluationFile(
 
 export async function getCurrentDiagnosisEvaluation(): Promise<DiagnosisEvaluation> {
   return api<DiagnosisEvaluation>('/diagnosis/evaluations/current');
+}
+
+export async function submitAssistantFeedback(
+  evaluationId: string,
+  payload: SubmitAssistantFeedbackPayload,
+): Promise<DiagnosisEvaluation> {
+  return api<DiagnosisEvaluation>(`/diagnosis/evaluations/${evaluationId}/assistant-feedback`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }

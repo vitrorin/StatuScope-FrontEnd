@@ -43,7 +43,7 @@ const sexOptions = [
 
 export function PatientEvaluationForm({
   title = 'Patient Evaluation',
-  caseMeta = 'Case ID: #2847 - Started 12 min ago',
+  caseMeta,
   patientNameValue,
   birthDateValue,
   sexValue,
@@ -68,14 +68,14 @@ export function PatientEvaluationForm({
     <CardBase style={StyleSheet.flatten([styles.container, style])}>
       <View style={styles.header}>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.meta}>{caseMeta}</Text>
+        {caseMeta ? <Text style={styles.meta}>{caseMeta}</Text> : null}
       </View>
 
       <View style={styles.fields}>
         <View>
           <Text style={styles.fieldLabel}>Patient Name</Text>
           <InputField
-            placeholder="e.g., Sofia Martinez"
+            placeholder="Patient full name"
             value={patientNameValue}
             onChangeText={onPatientNameChange}
             style={styles.fieldBlock}

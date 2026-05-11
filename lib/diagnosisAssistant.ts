@@ -1,9 +1,25 @@
 import { api } from './api';
 
+export type LocalityRiskLevel = 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
+
+export interface AssistantSuggestion {
+  id?: string;
+  messageId?: string;
+  diseaseId?: string | null;
+  displayName: string;
+  rankOrder: number;
+  confidence?: number | null;
+  rationale?: string | null;
+  localityRiskLevel?: LocalityRiskLevel | null;
+  primary: boolean;
+}
+
 export interface AssistantMessage {
+  id?: string;
   role: 'user' | 'assistant';
   content: string;
   createdAt?: string;
+  suggestions?: AssistantSuggestion[];
 }
 
 export interface PatientContext {
@@ -32,6 +48,8 @@ export interface AssistantRequest {
 export interface AssistantResponse {
   reply: string;
   contextUsed: AssistantContext;
+  messageId?: string | null;
+  suggestions?: AssistantSuggestion[];
 }
 
 export interface AssistantThread {

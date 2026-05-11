@@ -21,13 +21,16 @@ import {
   PatientContext,
 } from '@/lib/diagnosisAssistant';
 import {
+  AssistantFeedbackDecision,
   DiagnosisEvaluation,
   createDiagnosisEvaluation,
   getCurrentDiagnosisEvaluation,
+  submitAssistantFeedback,
   updateDiagnosisEvaluation,
-  updateDiagnosisEvaluationStatus,
   uploadDiagnosisEvaluationFile,
 } from '@/lib/diagnosisEvaluation';
+import { InputField } from '@/components/inputs/InputField';
+import { TextareaField } from '@/components/inputs/TextareaField';
 
 const navigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -149,6 +152,10 @@ export function DoctorDiagnosis() {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
+  const [feedbackDecision, setFeedbackDecision] = useState<AssistantFeedbackDecision | null>(null);
+  const [feedbackLabel, setFeedbackLabel] = useState('');
+  const [feedbackNotes, setFeedbackNotes] = useState('');
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -175,8 +182,10 @@ export function DoctorDiagnosis() {
                   message.role === 'user' || message.role === 'assistant',
               )
               .map((message) => ({
+                id: message.id,
                 role: message.role,
                 content: message.content,
+                suggestions: message.suggestions ?? [],
               })),
           );
           setContextUsed(thread.contextUsed);
@@ -306,7 +315,12 @@ export function DoctorDiagnosis() {
       });
       setChatHistory([
         ...updatedHistory,
-        { role: 'assistant', content: response.reply },
+        {
+          id: response.messageId ?? undefined,
+          role: 'assistant',
+          content: response.reply,
+          suggestions: response.suggestions ?? [],
+        },
       ]);
       setContextUsed(response.contextUsed);
     } catch (error) {
@@ -361,16 +375,35 @@ export function DoctorDiagnosis() {
     }
   };
 
-  const handleStatusChange = async (status: 'CONFIRMED' | 'REJECTED') => {
+  const handleOpenFeedback = (decision: AssistantFeedbackDecision) => {
+    setFeedbackError(null);
+    setFeedbackDecision(decision);
+    setFeedbackLabel(evaluation?.finalDiagnosisLabel ?? '');
+    setFeedbackNotes(evaluation?.doctorFeedbackNotes ?? '');
+  };
+
+  const handleCancelFeedback = () => {
+    setFeedbackDecision(null);
+    setFeedbackError(null);
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackDecision) return;
+
     try {
       const activeEvaluation = await persistEvaluation();
       setIsUpdatingStatus(true);
-      setEvaluationError(null);
-      const updatedEvaluation = await updateDiagnosisEvaluationStatus(activeEvaluation.id, status);
+      setFeedbackError(null);
+      const updatedEvaluation = await submitAssistantFeedback(activeEvaluation.id, {
+        finalDecisionSource: feedbackDecision,
+        finalDiagnosisLabel: feedbackLabel.trim() || undefined,
+        doctorFeedbackNotes: feedbackNotes.trim() || undefined,
+      });
       hydrateForm(updatedEvaluation);
+      setFeedbackDecision(null);
     } catch (error) {
-      setEvaluationError(
-        error instanceof Error ? error.message : 'Unable to update the diagnosis status.',
+      setFeedbackError(
+        error instanceof Error ? error.message : 'Unable to record diagnosis feedback.',
       );
     } finally {
       setIsUpdatingStatus(false);
@@ -462,10 +495,12 @@ export function DoctorDiagnosis() {
                   </View>
                 </View>
 
-                <View style={styles.liveBadge}>
-                  <View style={styles.liveBadgeDot} />
-                  <Text style={styles.liveBadgeText}>{isAssistantLoading ? 'Thinking' : 'Live Monitor'}</Text>
-                </View>
+                {isAssistantLoading ? (
+                  <View style={styles.liveBadge}>
+                    <View style={styles.liveBadgeDot} />
+                    <Text style={styles.liveBadgeText}>Thinking</Text>
+                  </View>
+                ) : null}
               </View>
 
               <ScrollView
@@ -499,7 +534,6 @@ export function DoctorDiagnosis() {
                         <View style={styles.responseStack}>
                           <DiagnosisResponseCard
                             responseText={message.content}
-                            highlightText="HOWEVER"
                             showWarning={!!contextUsed?.regionName || outbreakCount > 0}
                             warningMessage={
                               contextUsed?.regionName
@@ -510,6 +544,9 @@ export function DoctorDiagnosis() {
                             }
                             style={styles.responseCard}
                           />
+                          {message.suggestions?.length ? (
+                            <AssistantSuggestionsList suggestions={message.suggestions} />
+                          ) : null}
                         </View>
                       </View>
                     ),
@@ -539,18 +576,16 @@ export function DoctorDiagnosis() {
             </CardBase>
 
             <View style={styles.bottomRow}>
-              <RecommendedTestsCard
-                title="Recommended Tests"
-                tests={
-                  evaluation?.recommendedTests?.length
-                    ? evaluation.recommendedTests.map((test) => ({
-                        label: test.testName,
-                        secondaryText: test.reason ?? undefined,
-                      }))
-                    : [{ label: 'No recommended tests available yet.' }]
-                }
-                style={styles.testsCard}
-              />
+              {evaluation?.recommendedTests?.length ? (
+                <RecommendedTestsCard
+                  title="Recommended Tests"
+                  tests={evaluation.recommendedTests.map((test) => ({
+                    label: test.testName,
+                    secondaryText: test.reason ?? undefined,
+                  }))}
+                  style={styles.testsCard}
+                />
+              ) : null}
 
               <View style={styles.actionGroup}>
                 <Button
@@ -559,9 +594,7 @@ export function DoctorDiagnosis() {
                   variant="secondary"
                   leadingIcon={<Feather name="check-circle" size={18} color="#0003B8" />}
                   disabled={isAssistantLoading || isSavingEvaluation || isUpdatingStatus}
-                  onPress={() => {
-                    void handleStatusChange('CONFIRMED');
-                  }}
+                  onPress={() => handleOpenFeedback('ASSISTANT_ACCEPTED')}
                   style={styles.confirmButton}
                   labelStyle={styles.confirmButtonLabel}
                 />
@@ -572,14 +605,63 @@ export function DoctorDiagnosis() {
                   variant="surface"
                   leadingIcon={<Feather name="x-circle" size={18} color="#475569" />}
                   disabled={isAssistantLoading || isSavingEvaluation || isUpdatingStatus}
-                  onPress={() => {
-                    void handleStatusChange('REJECTED');
-                  }}
+                  onPress={() => handleOpenFeedback('ASSISTANT_REJECTED_DOCTOR_OVERRIDE')}
                   style={styles.rejectButton}
                   labelStyle={styles.rejectButtonLabel}
                 />
               </View>
             </View>
+
+            {feedbackDecision ? (
+              <CardBase style={styles.feedbackPanel}>
+                <Text style={styles.feedbackTitle}>
+                  {feedbackDecision === 'ASSISTANT_ACCEPTED'
+                    ? 'Confirm assistant suggestion'
+                    : 'Reject and record final diagnosis'}
+                </Text>
+                <Text style={styles.feedbackSubtitle}>
+                  {feedbackDecision === 'ASSISTANT_ACCEPTED'
+                    ? 'Optionally label the confirmed diagnosis and add notes for analytics.'
+                    : 'Add the doctor-determined final diagnosis and the reason for rejecting the assistant.'}
+                </Text>
+
+                <Text style={styles.feedbackFieldLabel}>Final diagnosis label</Text>
+                <InputField
+                  placeholder="e.g., Confirmed dengue"
+                  value={feedbackLabel}
+                  onChangeText={setFeedbackLabel}
+                />
+
+                <Text style={styles.feedbackFieldLabel}>Notes</Text>
+                <TextareaField
+                  placeholder="Reason, supporting evidence, or context for this decision..."
+                  value={feedbackNotes}
+                  onChangeText={setFeedbackNotes}
+                  numberOfLines={3}
+                />
+
+                {feedbackError ? <Text style={styles.errorText}>{feedbackError}</Text> : null}
+
+                <View style={styles.feedbackActions}>
+                  <Button
+                    label="Cancel"
+                    size="md"
+                    variant="surface"
+                    onPress={handleCancelFeedback}
+                    disabled={isUpdatingStatus}
+                  />
+                  <Button
+                    label={isUpdatingStatus ? 'Submitting...' : 'Submit feedback'}
+                    size="md"
+                    variant="primary"
+                    onPress={() => {
+                      void handleSubmitFeedback();
+                    }}
+                    disabled={isUpdatingStatus}
+                  />
+                </View>
+              </CardBase>
+            ) : null}
           </View>
         </View>
       </View>
@@ -926,5 +1008,41 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '700',
+  },
+  feedbackPanel: {
+    marginTop: 4,
+    padding: 18,
+    gap: 8,
+    borderRadius: 18,
+    borderColor: 'rgba(148, 163, 184, 0.24)',
+    backgroundColor: '#FFFFFF',
+  },
+  feedbackTitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  feedbackSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#64748B',
+    marginBottom: 8,
+  },
+  feedbackFieldLabel: {
+    marginTop: 6,
+    marginBottom: 6,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  feedbackActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 12,
   },
 });
