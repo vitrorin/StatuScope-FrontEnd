@@ -45,6 +45,7 @@ export interface DiagnosisEvaluation {
   updatedAt: string;
   finalizedAt: string | null;
   finalDiseaseId: string | null;
+  finalDiseaseName: string | null;
   finalDiagnosisLabel: string | null;
   finalDecisionSource: string | null;
   doctorFeedbackNotes: string | null;
