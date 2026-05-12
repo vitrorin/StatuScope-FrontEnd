@@ -17,7 +17,7 @@ interface InventoryActionOverlayProps {
   visible: boolean;
   inventoryItem: InventoryResourceItem | null;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (payload: { quantity: string; priority: string }) => void;
 }
 
 export function InventoryActionOverlay({
@@ -94,7 +94,7 @@ export function InventoryActionOverlay({
               variant="primary"
               size="md"
               style={{ ...styles.footerButton, ...styles.primaryButton }}
-              onPress={onConfirm}
+              onPress={() => onConfirm({ quantity, priority })}
             />
           </View>
         </CardBase>

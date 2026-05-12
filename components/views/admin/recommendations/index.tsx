@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -20,130 +20,91 @@ import {
   RecommendationStatus,
   RecommendationTab,
 } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
+import {
+  AdminRecommendationStatus,
+  createAdminRecommendationNotification,
+  createAdminRecommendationTask,
+  createAdminSupplyRequest,
+  getAdminRecommendationDetail,
+  listAdminRecommendations,
+  OperationalRecommendationResponse,
+  refreshAdminRecommendations,
+  updateAdminRecommendationStatus,
+} from '@/lib/adminOperational';
 
-const tabs = [
-  { label: 'Active Alerts', value: 'active' as const, badge: 12 },
-  { label: 'High Urgency', value: 'high' as const },
-  { label: 'In Progress', value: 'inProgress' as const },
-  { label: 'Archive', value: 'archive' as const },
+const tabs: { label: string; value: RecommendationTab }[] = [
+  { label: 'Active Alerts', value: 'active' },
+  { label: 'High Urgency', value: 'high' },
+  { label: 'In Progress', value: 'inProgress' },
+  { label: 'Archive', value: 'archive' },
 ];
 
-const initialRecommendations: RecommendationFeedItem[] = [
-  {
-    id: 'respiratory-surge',
-    severity: 'high',
-    category: 'Respiratory Surge Alert',
-    title: 'Increased asthma cases detected in Northeast sector',
-    description:
-      'Projection: 30% increase in respiratory patients tonight. Recommendation: Prepare 3 additional beds in Ward 4 and ensure supplementary oxygen inventory is verified.',
-    metaItems: [
-      { label: '14 mins ago', icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
-      { label: 'Resource Team B', icon: <Feather name="briefcase" size={13} color="#7C8CA4" /> },
-    ],
-    imageMode: 'heatmap',
-    accentColor: '#F7C9CC',
-    actions: [
-      { label: 'Assign task', variant: 'primary' },
-      { label: 'Notify staff', variant: 'secondary' },
-      { label: 'Order supplies', variant: 'secondary' },
-    ],
-    confidenceScore: 94,
-    expectedImpact: 'High respiratory inflow',
-    urgencyWindow: 'Next 6 hours',
-    affectedDepartments: ['ICU', 'Ward 4', 'Respiratory Unit'],
-    affectedResources: ['Supplementary oxygen', 'Emergency beds', 'Respiratory staff'],
-    rationale: [
-      'Regional disease model detected a sharp rise in asthma-like respiratory signals near the Northeast corridor.',
-      'Hospital intake data shows a correlated increase in triage respiratory complaints over the last 2 hours.',
-      'Current oxygen reserve and ward bed capacity indicate potential saturation if the trend continues into the evening.',
-    ],
-    recommendedActions: [
-      'Open three additional monitored beds in Ward 4.',
-      'Pre-stage supplementary oxygen for all respiratory observation bays.',
-      'Place the respiratory response team on elevated operational readiness.',
-    ],
-    status: 'new',
-    auditTrail: [{ timestamp: '14 mins ago', label: 'AI generated the recommendation from regional respiratory data.' }],
-  },
-  {
-    id: 'staffing-optimization',
-    severity: 'medium',
-    category: 'Staffing Optimization',
-    title: 'Optimized shift redistribution for Pediatric ICU',
-    description:
-      'Projection: Lower intake expected in general medicine. Recommendation: Redistribute 2 RNs from Med-Surg to PICU for the 19:00 - 07:00 shift to maintain optimal nurse-to-patient ratios.',
-    metaItems: [
-      { label: '1 hour ago', icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
-      { label: 'Nursing Admin', icon: <Feather name="briefcase" size={13} color="#7C8CA4" /> },
-    ],
-    imageMode: 'chart',
-    accentColor: '#F2E5C1',
-    actions: [
-      { label: 'Assign task', variant: 'primary' },
-      { label: 'Notify staff', variant: 'secondary' },
-    ],
-    confidenceScore: 87,
-    expectedImpact: 'Staffing stability',
-    urgencyWindow: 'Tonight shift',
-    affectedDepartments: ['PICU', 'Med-Surg'],
-    affectedResources: ['Registered nurses', 'Shift coordination'],
-    rationale: [
-      'Projected intake in general medicine is lower than the weekly average for the upcoming overnight window.',
-      'PICU acuity is trending upward and will require tighter nurse-to-patient coverage.',
-    ],
-    recommendedActions: [
-      'Reassign two registered nurses to PICU for the overnight rotation.',
-      'Update handoff sheets before 19:00 to avoid transition gaps.',
-    ],
-    status: 'new',
-    auditTrail: [{ timestamp: '1 hour ago', label: 'AI proposed a staffing redistribution based on overnight volume forecasting.' }],
-  },
-  {
-    id: 'inventory-insight',
-    severity: 'low',
-    category: 'Inventory Insight',
-    title: 'Predicted shortage of specific surgical sutures',
-    description:
-      'Insight: Usage trends suggest a stockout of size 3-0 absorbable sutures within 5 days. Recommendation: Proactively reorder 20 units ahead of the standard replenishment cycle.',
-    metaItems: [
-      { label: '3 hours ago', icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
-      { label: 'Supply Chain', icon: <Feather name="truck" size={13} color="#7C8CA4" /> },
-    ],
-    imageMode: 'supply',
-    accentColor: '#E3E8F0',
-    actions: [
-      { label: 'Order supplies', variant: 'primary' },
-      { label: 'Dismiss', variant: 'secondary' },
-    ],
-    confidenceScore: 79,
-    expectedImpact: 'Inventory continuity',
-    urgencyWindow: 'Next 5 days',
-    affectedDepartments: ['Surgery', 'Central Supply'],
-    affectedResources: ['Absorbable sutures 3-0', 'OR consumables'],
-    rationale: [
-      'Inventory burn rate over the last 10 procedures is 18% above expected baseline.',
-      'Next supplier delivery window does not align with the projected usage spike.',
-    ],
-    recommendedActions: [
-      'Issue an early reorder request for 20 additional units.',
-      'Reserve remaining stock for priority surgical cases.',
-    ],
-    status: 'new',
-    auditTrail: [{ timestamp: '3 hours ago', label: 'AI flagged a procurement risk based on operating room consumption trends.' }],
-  },
-];
+type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminRecommendations() {
   const router = useRouter();
   const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState<RecommendationTab>('active');
-  const [recommendations, setRecommendations] = useState<RecommendationFeedItem[]>(initialRecommendations);
-  const [selectedRecommendationId, setSelectedRecommendationId] = useState<string | null>(null);
+  const [loadState, setLoadState] = useState<LoadState>('idle');
+  const [refreshing, setRefreshing] = useState(false);
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationFeedItem[]>([]);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [notifyId, setNotifyId] = useState<string | null>(null);
   const [supplyId, setSupplyId] = useState<string | null>(null);
   const [dismissId, setDismissId] = useState<string | null>(null);
+
+  const loadRecommendations = useCallback(async () => {
+    setLoadState((current) => (current === 'success' ? 'success' : 'loading'));
+    setError(null);
+    try {
+      const data = await listAdminRecommendations();
+      setRecommendations(data.map(mapRecommendation));
+      setLoadState('success');
+    } catch (nextError) {
+      setLoadState('error');
+      setError(nextError instanceof Error ? nextError.message : 'Unable to load recommendations.');
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadRecommendations();
+  }, [loadRecommendations]);
+
+  const refreshRecommendation = useCallback(async (id: string) => {
+    const detail = await getAdminRecommendationDetail(id);
+    const mapped = mapRecommendation(detail);
+    setRecommendations((current) => current.map((item) => (item.id === id ? mapped : item)));
+    return mapped;
+  }, []);
+
+  const handleStatusChange = useCallback(async (id: string, status: RecommendationStatus) => {
+    setActionBusyId(id);
+    setError(null);
+    try {
+      await updateAdminRecommendationStatus(id, toApiStatus(status));
+      await refreshRecommendation(id);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Unable to update the recommendation status.');
+    } finally {
+      setActionBusyId(null);
+    }
+  }, [refreshRecommendation]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setError(null);
+    try {
+      await refreshAdminRecommendations();
+      await loadRecommendations();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Unable to refresh recommendations.');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadRecommendations]);
 
   const detailRecommendation = recommendations.find((item) => item.id === detailId) ?? null;
   const taskRecommendation = recommendations.find((item) => item.id === taskId) ?? null;
@@ -164,12 +125,12 @@ export function AdminRecommendations() {
     return recommendations.filter((item) => !isArchived(item.status));
   }, [activeTab, recommendations]);
 
-  const updateRecommendation = (
-    id: string,
-    updater: (current: RecommendationFeedItem) => RecommendationFeedItem
-  ) => {
-    setRecommendations((current) => current.map((item) => (item.id === id ? updater(item) : item)));
-  };
+  const tabBadges = useMemo(() => ({
+    active: recommendations.filter((item) => !isArchived(item.status)).length,
+    high: recommendations.filter((item) => item.severity === 'high' && !isArchived(item.status)).length,
+    inProgress: recommendations.filter((item) => item.status === 'accepted' || item.status === 'assigned').length,
+    archive: recommendations.filter((item) => isArchived(item.status)).length,
+  }), [recommendations]);
 
   return (
     <DashboardLayout
@@ -194,22 +155,34 @@ export function AdminRecommendations() {
                 </View>
                 <Text style={styles.heroTitle}>AI Operational Recommendations</Text>
                 <Text style={styles.heroSubtitle}>
-                  Predictive resource management based on real-time clinical data streams.
+                  Predictive resource management based on live hospital operations and nearby outbreak signals.
                 </Text>
               </View>
 
               <Button
-                label="Refresh Models"
+                label={refreshing ? 'Refreshing...' : 'Refresh Models'}
                 variant="secondary"
                 size="md"
-                leadingIcon={<Feather name="refresh-cw" size={14} color="#475569" />}
+                leadingIcon={
+                  refreshing
+                    ? <ActivityIndicator size="small" color="#475569" />
+                    : <Feather name="refresh-cw" size={14} color="#475569" />
+                }
                 style={styles.refreshButton}
+                onPress={() => void handleRefresh()}
               />
             </View>
 
+            {error ? (
+              <CardBase style={styles.errorCard}>
+                <Text style={styles.errorTitle}>Action needed</Text>
+                <Text style={styles.errorText}>{error}</Text>
+              </CardBase>
+            ) : null}
+
             <View style={styles.summaryRow}>
-              <SummaryTile label="Active Queue" value={String(recommendations.filter((item) => !isArchived(item.status)).length)} />
-              <SummaryTile label="In Progress" value={String(recommendations.filter((item) => item.status === 'accepted' || item.status === 'assigned').length)} />
+              <SummaryTile label="Active Queue" value={String(tabBadges.active)} />
+              <SummaryTile label="In Progress" value={String(tabBadges.inProgress)} />
               <SummaryTile label="Completed" value={String(recommendations.filter((item) => item.status === 'completed').length)} />
               <SummaryTile label="Rejected" value={String(recommendations.filter((item) => item.status === 'rejected').length)} />
             </View>
@@ -217,6 +190,7 @@ export function AdminRecommendations() {
             <View style={styles.tabsRow}>
               {tabs.map((tab) => {
                 const isActive = tab.value === activeTab;
+                const badgeValue = tabBadges[tab.value];
                 return (
                   <TouchableOpacity
                     key={tab.value}
@@ -225,40 +199,36 @@ export function AdminRecommendations() {
                     activeOpacity={0.75}
                   >
                     <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
-                    {tab.badge ? (
-                      <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
-                        <Text style={styles.tabBadgeText}>{tab.badge}</Text>
-                      </View>
-                    ) : null}
+                    <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
+                      <Text style={[styles.tabBadgeText, !isActive && styles.tabBadgeTextInactive]}>{badgeValue}</Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {visibleRecommendations.length > 0 ? (
+            {loadState === 'loading' && recommendations.length === 0 ? (
+              <CardBase style={styles.loadingCard}>
+                <ActivityIndicator color="#1718C7" />
+                <Text style={styles.loadingText}>Loading recommendation feed...</Text>
+              </CardBase>
+            ) : visibleRecommendations.length > 0 ? (
               <View style={styles.feed}>
                 {visibleRecommendations.map((item) => (
                   <AdminRecommendationCard
                     key={item.id}
                     item={item}
-                    isSelected={selectedRecommendationId === item.id}
-                    onOpenDetail={() => {
-                      setSelectedRecommendationId(item.id);
+                    isBusy={actionBusyId === item.id}
+                    onOpenDetail={async () => {
                       setDetailId(item.id);
+                      try {
+                        await refreshRecommendation(item.id);
+                      } catch {
+                        return;
+                      }
                     }}
-                    onSelectStatus={() => setSelectedRecommendationId(item.id)}
-                    onStatusChange={(status) =>
-                      updateRecommendation(item.id, (current) => ({
-                        ...current,
-                        status,
-                        auditTrail: [
-                          { timestamp: 'Now', label: `Administrator changed status to ${formatStatusLabel(status)}.` },
-                          ...current.auditTrail,
-                        ],
-                      }))
-                    }
+                    onStatusChange={(status) => void handleStatusChange(item.id, status)}
                     onAction={(actionLabel) => {
-                      setSelectedRecommendationId(item.id);
                       if (actionLabel === 'Assign task') setTaskId(item.id);
                       if (actionLabel === 'Notify staff') setNotifyId(item.id);
                       if (actionLabel === 'Order supplies') setSupplyId(item.id);
@@ -272,8 +242,8 @@ export function AdminRecommendations() {
                 <View style={styles.emptyIconWrap}>
                   <MaterialCommunityIcons name="progress-clock" size={22} color="#1718C7" />
                 </View>
-                <Text style={styles.emptyTitle}>No recommendations yet</Text>
-                <Text style={styles.emptySubtitle}>This section will show items here proximamente.</Text>
+                <Text style={styles.emptyTitle}>No recommendations found</Text>
+                <Text style={styles.emptySubtitle}>The current filter does not have any recommendation records yet.</Text>
               </CardBase>
             )}
           </View>
@@ -284,65 +254,81 @@ export function AdminRecommendations() {
           visible={taskRecommendation !== null}
           item={taskRecommendation}
           onClose={() => setTaskId(null)}
-          onSave={(payload) => {
+          onSave={async (payload) => {
             if (!taskRecommendation) return;
-            updateRecommendation(taskRecommendation.id, (current) => ({
-              ...current,
-              status: 'assigned',
-              assignee: payload.owner,
-              auditTrail: [
-                { timestamp: 'Now', label: `Assigned to ${payload.owner} for ${payload.area} with deadline ${payload.deadline}.` },
-                ...current.auditTrail,
-              ],
-            }));
-            setTaskId(null);
+            setActionBusyId(taskRecommendation.id);
+            setError(null);
+            try {
+              await createAdminRecommendationTask(taskRecommendation.id, {
+                ownerLabel: payload.owner,
+                departmentLabel: payload.area,
+                deadlineAt: toIsoDeadline(payload.deadline),
+                priority: payload.priority.toUpperCase(),
+                notes: payload.notes,
+              });
+              await refreshRecommendation(taskRecommendation.id);
+              setTaskId(null);
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : 'Unable to create the task.');
+            } finally {
+              setActionBusyId(null);
+            }
           }}
         />
         <RecommendationNotifyOverlay
           visible={notifyRecommendation !== null}
           item={notifyRecommendation}
           onClose={() => setNotifyId(null)}
-          onSend={(payload) => {
+          onSend={async (payload) => {
             if (!notifyRecommendation) return;
-            updateRecommendation(notifyRecommendation.id, (current) => ({
-              ...current,
-              status: current.status === 'new' ? 'accepted' : current.status,
-              auditTrail: [
-                { timestamp: 'Now', label: `Notice sent to ${payload.audience}.` },
-                ...current.auditTrail,
-              ],
-            }));
-            setNotifyId(null);
+            setActionBusyId(notifyRecommendation.id);
+            setError(null);
+            try {
+              await createAdminRecommendationNotification(notifyRecommendation.id, {
+                audienceLabel: payload.audience,
+                message: payload.message,
+              });
+              await refreshRecommendation(notifyRecommendation.id);
+              setNotifyId(null);
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : 'Unable to send the notification.');
+            } finally {
+              setActionBusyId(null);
+            }
           }}
         />
         <RecommendationSupplyOverlay
           visible={supplyRecommendation !== null}
           item={supplyRecommendation}
           onClose={() => setSupplyId(null)}
-          onSubmit={(payload) => {
+          onSubmit={async (payload) => {
             if (!supplyRecommendation) return;
-            updateRecommendation(supplyRecommendation.id, (current) => ({
-              ...current,
-              status: 'accepted',
-              auditTrail: [
-                { timestamp: 'Now', label: `Supply request created for ${payload.quantity} units of ${payload.supplyType} to ${payload.destination}.` },
-                ...current.auditTrail,
-              ],
-            }));
-            setSupplyId(null);
+            setActionBusyId(supplyRecommendation.id);
+            setError(null);
+            try {
+              await createAdminSupplyRequest(supplyRecommendation.id, {
+                supplyTypeLabel: payload.supplyType,
+                quantity: Number.parseInt(payload.quantity || '0', 10) || 0,
+                unit: 'units',
+                destination: payload.destination,
+                suggestedSupplier: payload.supplier,
+              });
+              await refreshRecommendation(supplyRecommendation.id);
+              setSupplyId(null);
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : 'Unable to create the supply request.');
+            } finally {
+              setActionBusyId(null);
+            }
           }}
         />
         <RecommendationDismissOverlay
           visible={dismissRecommendation !== null}
           item={dismissRecommendation}
           onClose={() => setDismissId(null)}
-          onConfirm={() => {
+          onConfirm={async () => {
             if (!dismissRecommendation) return;
-            updateRecommendation(dismissRecommendation.id, (current) => ({
-              ...current,
-              status: 'rejected',
-              auditTrail: [{ timestamp: 'Now', label: 'Recommendation rejected by administrator.' }, ...current.auditTrail],
-            }));
+            await handleStatusChange(dismissRecommendation.id, 'rejected');
             setDismissId(null);
           }}
         />
@@ -353,18 +339,16 @@ export function AdminRecommendations() {
 
 function AdminRecommendationCard({
   item,
-  isSelected,
+  isBusy,
   onOpenDetail,
   onAction,
   onStatusChange,
-  onSelectStatus,
 }: {
   item: RecommendationFeedItem;
-  isSelected: boolean;
+  isBusy: boolean;
   onOpenDetail: () => void;
   onAction: (actionLabel: string) => void;
   onStatusChange: (status: RecommendationStatus) => void;
-  onSelectStatus: () => void;
 }) {
   const isHigh = item.severity === 'high';
 
@@ -405,18 +389,14 @@ function AdminRecommendationCard({
             <Text style={styles.recommendationTitle}>{item.title}</Text>
           </View>
 
-          <TouchableOpacity
-            style={[styles.statusPill, isSelected && styles.statusPillSelected]}
-            onPress={onSelectStatus}
-            activeOpacity={0.8}
-          >
+          <View style={styles.statusPill}>
             <Text style={styles.statusPillLabel}>{formatStatusLabel(item.status)}</Text>
-          </TouchableOpacity>
+          </View>
         </View>
 
         <Text style={styles.recommendationDescription}>{item.description}</Text>
         <Text style={styles.insightLine}>
-          Confidence {item.confidenceScore}% · Impact: {item.expectedImpact} · Window: {item.urgencyWindow}
+          Confidence {item.confidenceScore}% | Impact: {item.expectedImpact} | Window: {item.urgencyWindow}
         </Text>
 
         <View style={styles.cardFooter}>
@@ -446,18 +426,20 @@ function AdminRecommendationCard({
         </View>
 
         <View style={styles.statusRow}>
-          {(['accepted', 'rejected', 'completed'] as RecommendationStatus[]).map((status) => (
+          {(['accepted', 'assigned', 'completed', 'rejected'] as RecommendationStatus[]).map((status) => (
             <TouchableOpacity
               key={status}
-              style={[styles.statusChip, item.status === status && styles.statusChipActive]}
+              style={[styles.statusChip, item.status === status && styles.statusChipActive, isBusy && styles.statusChipDisabled]}
               onPress={() => onStatusChange(status)}
               activeOpacity={0.75}
+              disabled={isBusy}
             >
               <Text style={[styles.statusChipText, item.status === status && styles.statusChipTextActive]}>
                 {formatStatusLabel(status)}
               </Text>
             </TouchableOpacity>
           ))}
+          {isBusy ? <ActivityIndicator size="small" color="#1718C7" style={styles.statusSpinner} /> : null}
         </View>
       </TouchableOpacity>
     </CardBase>
@@ -512,10 +494,109 @@ function RecommendationVisual({
         ))}
       </View>
       <View style={[styles.supplyBadge, severity === 'low' && styles.supplyBadgeLow]}>
-        <Text style={styles.supplyBadgeText}>LOW</Text>
+        <Text style={styles.supplyBadgeText}>{severity.toUpperCase()}</Text>
       </View>
     </View>
   );
+}
+
+function mapRecommendation(item: OperationalRecommendationResponse): RecommendationFeedItem {
+  const severity = mapSeverity(item.severity);
+  const status = mapStatus(item.status);
+  return {
+    id: item.id,
+    severity,
+    category: item.category || item.type.replace(/_/g, ' '),
+    title: item.title,
+    description: item.description,
+    metaItems: [
+      { label: formatRelativeDate(item.createdAt), icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
+      { label: item.type.replace(/_/g, ' '), icon: <Feather name="briefcase" size={13} color="#7C8CA4" /> },
+    ],
+    imageMode: mapImageMode(item.type, item.imageMode),
+    accentColor: severity === 'high' ? '#F7C9CC' : severity === 'medium' ? '#F2E5C1' : '#E3E8F0',
+    actions: buildActions(item.type, status),
+    confidenceScore: Math.round(Number(item.confidenceScore ?? 0)),
+    expectedImpact: item.expectedImpact,
+    urgencyWindow: item.urgencyWindow,
+    affectedDepartments: item.affectedDepartments ?? [],
+    affectedResources: item.affectedResources ?? [],
+    rationale: item.rationale ?? [],
+    recommendedActions: item.recommendedActions ?? [],
+    status,
+    assignee: item.tasks?.[0]?.ownerLabel ?? undefined,
+    auditTrail: (item.auditTrail ?? []).map((audit) => ({
+      timestamp: formatDateTime(audit.createdAt),
+      label: audit.eventLabel,
+    })),
+  };
+}
+
+function buildActions(type: string, status: RecommendationStatus): RecommendationFeedItem['actions'] {
+  const actions: RecommendationFeedItem['actions'] = [];
+  if (!isArchived(status)) {
+    actions.push({ label: 'Assign task', variant: 'primary' });
+    actions.push({ label: 'Notify staff', variant: 'secondary' });
+    if (type === 'SUPPLY' || type === 'BED_CAPACITY' || type === 'ISOLATION') {
+      actions.push({ label: 'Order supplies', variant: 'secondary' });
+    }
+    actions.push({ label: 'Dismiss', variant: 'secondary' });
+  }
+  return actions;
+}
+
+function mapSeverity(value: string): RecommendationFeedItem['severity'] {
+  if (value === 'HIGH') return 'high';
+  if (value === 'MEDIUM') return 'medium';
+  return 'low';
+}
+
+function mapStatus(value: string): RecommendationStatus {
+  if (value === 'ACCEPTED') return 'accepted';
+  if (value === 'ASSIGNED') return 'assigned';
+  if (value === 'COMPLETED') return 'completed';
+  if (value === 'REJECTED') return 'rejected';
+  return 'new';
+}
+
+function toApiStatus(status: RecommendationStatus): AdminRecommendationStatus {
+  if (status === 'accepted') return 'ACCEPTED';
+  if (status === 'assigned') return 'ASSIGNED';
+  if (status === 'completed') return 'COMPLETED';
+  if (status === 'rejected') return 'REJECTED';
+  return 'NEW';
+}
+
+function mapImageMode(type: string, backendMode?: string | null): RecommendationImageMode {
+  if (backendMode === 'heatmap' || backendMode === 'chart' || backendMode === 'supply') return backendMode;
+  if (type === 'SUPPLY') return 'supply';
+  if (type === 'STAFFING') return 'chart';
+  return 'heatmap';
+}
+
+function formatRelativeDate(value: string) {
+  const timestamp = new Date(value).getTime();
+  const diffMinutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
+  if (diffMinutes < 1) return 'Just now';
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours} hr ago`;
+  const diffDays = Math.round(diffHours / 24);
+  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function toIsoDeadline(value: string) {
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : new Date(parsed).toISOString();
 }
 
 function isArchived(status: RecommendationStatus) {
@@ -576,10 +657,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: '#64748B',
+    maxWidth: 620,
   },
   refreshButton: {
     minHeight: 40,
     paddingHorizontal: 16,
+  },
+  errorCard: {
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  errorTitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#991B1B',
+  },
+  errorText: {
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#B91C1C',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -649,6 +749,20 @@ const styles = StyleSheet.create({
     lineHeight: 12,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+  tabBadgeTextInactive: {
+    color: '#1718C7',
+  },
+  loadingCard: {
+    minHeight: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#526174',
   },
   feed: {
     gap: 18,
@@ -862,10 +976,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E7FF',
   },
-  statusPillSelected: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
-  },
   statusPillLabel: {
     fontSize: 12,
     lineHeight: 16,
@@ -889,6 +999,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     justifyContent: 'flex-end',
+    flexWrap: 'wrap',
   },
   cardActionButton: {
     minHeight: 40,
@@ -912,6 +1023,7 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
     marginTop: 14,
+    alignItems: 'center',
   },
   statusChip: {
     paddingHorizontal: 12,
@@ -925,6 +1037,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF1FF',
     borderColor: '#C9D1FF',
   },
+  statusChipDisabled: {
+    opacity: 0.65,
+  },
   statusChipText: {
     fontSize: 12,
     lineHeight: 16,
@@ -933,6 +1048,9 @@ const styles = StyleSheet.create({
   },
   statusChipTextActive: {
     color: '#1718C7',
+  },
+  statusSpinner: {
+    marginLeft: 4,
   },
 });
 
