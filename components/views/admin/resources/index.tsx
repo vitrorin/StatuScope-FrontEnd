@@ -39,12 +39,13 @@ import {
   updateAdminResourceStaffing,
   updateAdminResourceSummary,
 } from '@/lib/adminOperational';
+import { initialsFromName } from '@/lib/format';
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminResources() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, profile } = useAuth();
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,9 +148,9 @@ export function AdminResources() {
       active="resources"
       sectionLabel="Resources"
       searchPlaceholder="Search beds, inventory..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
+      userName={profile?.fullName ?? 'Hospital Admin'}
+      userId={profile?.email ?? undefined}
+      avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}

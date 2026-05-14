@@ -16,10 +16,10 @@ import { RecommendationSupplyOverlay } from '@/components/views/admin/recommenda
 import { RecommendationTaskOverlay } from '@/components/views/admin/recommendations/Sub-funcionalidades/RecommendationTaskOverlay';
 import {
   RecommendationFeedItem,
-  RecommendationImageMode,
   RecommendationStatus,
   RecommendationTab,
 } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
+import { initialsFromName } from '@/lib/format';
 import {
   AdminRecommendationStatus,
   createAdminRecommendationNotification,
@@ -43,7 +43,7 @@ type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminRecommendations() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, profile } = useAuth();
   const [activeTab, setActiveTab] = useState<RecommendationTab>('active');
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [refreshing, setRefreshing] = useState(false);
@@ -137,9 +137,9 @@ export function AdminRecommendations() {
       active="recommendations"
       sectionLabel="Recommendations"
       searchPlaceholder="Search models, alerts..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
+      userName={profile?.fullName ?? 'Hospital Admin'}
+      userId={profile?.email ?? undefined}
+      avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
@@ -155,7 +155,7 @@ export function AdminRecommendations() {
                 </View>
                 <Text style={styles.heroTitle}>AI Operational Recommendations</Text>
                 <Text style={styles.heroSubtitle}>
-                  Predictive resource management based on live hospital operations and nearby outbreak signals.
+                  Real-time guidance grounded in live epidemiological activity and current hospital resource capacity.
                 </Text>
               </View>
 
@@ -350,17 +350,8 @@ function AdminRecommendationCard({
   onAction: (actionLabel: string) => void;
   onStatusChange: (status: RecommendationStatus) => void;
 }) {
-  const isHigh = item.severity === 'high';
-
   return (
-    <CardBase style={[styles.recommendationCard, isHigh && styles.recommendationCardHigh]}>
-      <TouchableOpacity style={styles.recommendationMedia} activeOpacity={0.85} onPress={onOpenDetail}>
-        <RecommendationVisual mode={item.imageMode} severity={item.severity} />
-        <View style={styles.mediaBadge}>
-          <SeverityBadge label={item.severity.toUpperCase()} severity={item.severity} />
-        </View>
-      </TouchableOpacity>
-
+    <CardBase style={[styles.recommendationCard, item.severity === 'high' && styles.recommendationCardHigh]}>
       <TouchableOpacity style={styles.recommendationBody} activeOpacity={0.92} onPress={onOpenDetail}>
         <View style={styles.topRow}>
           <View style={styles.categoryWrap}>
@@ -389,8 +380,11 @@ function AdminRecommendationCard({
             <Text style={styles.recommendationTitle}>{item.title}</Text>
           </View>
 
-          <View style={styles.statusPill}>
-            <Text style={styles.statusPillLabel}>{formatStatusLabel(item.status)}</Text>
+          <View style={styles.headerIndicators}>
+            <SeverityBadge label={item.severity.toUpperCase()} severity={item.severity} />
+            <View style={styles.statusPill}>
+              <Text style={styles.statusPillLabel}>{formatStatusLabel(item.status)}</Text>
+            </View>
           </View>
         </View>
 
@@ -398,6 +392,7 @@ function AdminRecommendationCard({
         <Text style={styles.insightLine}>
           Confidence {item.confidenceScore}% | Impact: {item.expectedImpact} | Window: {item.urgencyWindow}
         </Text>
+        <Text style={styles.contextLine}>{formatRecommendationSource(item.createdByMode)}</Text>
 
         <View style={styles.cardFooter}>
           <MetaInfoRow items={item.metaItems} style={styles.metaRow} />
@@ -455,51 +450,6 @@ function SummaryTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RecommendationVisual({
-  mode,
-  severity,
-}: {
-  mode: RecommendationImageMode;
-  severity: 'high' | 'medium' | 'low';
-}) {
-  if (mode === 'heatmap') {
-    return (
-      <View style={[styles.visualFrame, styles.visualHeatmap]}>
-        <View style={styles.heatAuraOuter} />
-        <View style={styles.heatAuraMiddle} />
-        <View style={styles.heatFace} />
-      </View>
-    );
-  }
-
-  if (mode === 'chart') {
-    return (
-      <View style={[styles.visualFrame, styles.visualChart]}>
-        <View style={styles.chartGrid} />
-        <View style={styles.chartBars}>
-          {[18, 22, 30, 40, 52, 66, 78, 92].map((value, index) => (
-            <View key={index} style={[styles.chartBar, { height: value }]} />
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.visualFrame, styles.visualSupply]}>
-      <View style={styles.supplyCurve} />
-      <View style={styles.supplyBars}>
-        {[26, 34, 42, 56, 62, 78].map((value, index) => (
-          <View key={index} style={[styles.supplyBar, { height: value }]} />
-        ))}
-      </View>
-      <View style={[styles.supplyBadge, severity === 'low' && styles.supplyBadgeLow]}>
-        <Text style={styles.supplyBadgeText}>{severity.toUpperCase()}</Text>
-      </View>
-    </View>
-  );
-}
-
 function mapRecommendation(item: OperationalRecommendationResponse): RecommendationFeedItem {
   const severity = mapSeverity(item.severity);
   const status = mapStatus(item.status);
@@ -509,11 +459,11 @@ function mapRecommendation(item: OperationalRecommendationResponse): Recommendat
     category: item.category || item.type.replace(/_/g, ' '),
     title: item.title,
     description: item.description,
+    createdByMode: item.createdByMode,
     metaItems: [
       { label: formatRelativeDate(item.createdAt), icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
       { label: item.type.replace(/_/g, ' '), icon: <Feather name="briefcase" size={13} color="#7C8CA4" /> },
     ],
-    imageMode: mapImageMode(item.type, item.imageMode),
     accentColor: severity === 'high' ? '#F7C9CC' : severity === 'medium' ? '#F2E5C1' : '#E3E8F0',
     actions: buildActions(item.type, status),
     confidenceScore: Math.round(Number(item.confidenceScore ?? 0)),
@@ -567,13 +517,6 @@ function toApiStatus(status: RecommendationStatus): AdminRecommendationStatus {
   return 'NEW';
 }
 
-function mapImageMode(type: string, backendMode?: string | null): RecommendationImageMode {
-  if (backendMode === 'heatmap' || backendMode === 'chart' || backendMode === 'supply') return backendMode;
-  if (type === 'SUPPLY') return 'supply';
-  if (type === 'STAFFING') return 'chart';
-  return 'heatmap';
-}
-
 function formatRelativeDate(value: string) {
   const timestamp = new Date(value).getTime();
   const diffMinutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
@@ -616,6 +559,16 @@ function formatStatusLabel(status: RecommendationStatus) {
     case 'assigned':
       return 'Assigned';
   }
+}
+
+function formatRecommendationSource(createdByMode?: string) {
+  if (createdByMode === 'LLM_ASSISTED') {
+    return 'Grounded in live outbreaks and hospital resource signals.';
+  }
+  if (createdByMode === 'RULE_ENGINE') {
+    return 'Generated from live hospital and outbreak rules.';
+  }
+  return 'Generated from current operational context.';
 }
 
 const styles = StyleSheet.create({
@@ -797,8 +750,8 @@ const styles = StyleSheet.create({
     color: '#70839B',
   },
   recommendationCard: {
-    flexDirection: 'row',
-    padding: 0,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
     overflow: 'hidden',
     borderColor: '#E8EDF5',
     backgroundColor: '#FFFFFF',
@@ -806,125 +759,8 @@ const styles = StyleSheet.create({
   recommendationCardHigh: {
     borderColor: '#F5D3D5',
   },
-  recommendationMedia: {
-    width: 192,
-    padding: 16,
-    borderRightWidth: 1,
-    borderRightColor: '#EDF2F7',
-    backgroundColor: '#FAFCFF',
-  },
-  mediaBadge: {
-    position: 'absolute',
-    top: 14,
-    left: 14,
-  },
-  visualFrame: {
-    flex: 1,
-    borderRadius: 10,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#DDE6F2',
-  },
-  visualHeatmap: {
-    backgroundColor: '#8BE4E0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heatAuraOuter: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255, 221, 87, 0.55)',
-  },
-  heatAuraMiddle: {
-    position: 'absolute',
-    width: 116,
-    height: 116,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255, 107, 53, 0.58)',
-  },
-  heatFace: {
-    width: 62,
-    height: 92,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 72, 72, 0.64)',
-    borderWidth: 2,
-    borderColor: 'rgba(129, 25, 25, 0.22)',
-  },
-  visualChart: {
-    backgroundColor: '#0C1D18',
-    justifyContent: 'flex-end',
-    padding: 14,
-  },
-  chartGrid: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.12,
-    borderWidth: 1,
-    borderColor: '#B4C8D8',
-  },
-  chartBars: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 6,
-    height: 104,
-  },
-  chartBar: {
-    flex: 1,
-    borderRadius: 3,
-    backgroundColor: '#6AA1D8',
-  },
-  visualSupply: {
-    backgroundColor: '#FFFFFF',
-    padding: 14,
-    justifyContent: 'flex-end',
-  },
-  supplyCurve: {
-    position: 'absolute',
-    left: 18,
-    right: 18,
-    top: 46,
-    height: 44,
-    borderTopWidth: 5,
-    borderTopColor: '#8FB3D8',
-    borderRadius: 30,
-    transform: [{ rotate: '9deg' }],
-    opacity: 0.75,
-  },
-  supplyBars: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 6,
-    height: 92,
-  },
-  supplyBar: {
-    flex: 1,
-    borderRadius: 3,
-    backgroundColor: '#A8C4DB',
-  },
-  supplyBadge: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    borderRadius: 6,
-    backgroundColor: '#64748B',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  supplyBadgeLow: {
-    backgroundColor: '#64748B',
-  },
-  supplyBadgeText: {
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
   recommendationBody: {
     flex: 1,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
   },
   topRow: {
     flexDirection: 'row',
@@ -954,6 +790,10 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 8,
   },
+  headerIndicators: {
+    alignItems: 'flex-end',
+    gap: 10,
+  },
   recommendationDescription: {
     fontSize: 14,
     lineHeight: 24,
@@ -965,6 +805,12 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '700',
     color: '#526174',
+    marginBottom: 8,
+  },
+  contextLine: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#64748B',
     marginBottom: 16,
   },
   statusPill: {

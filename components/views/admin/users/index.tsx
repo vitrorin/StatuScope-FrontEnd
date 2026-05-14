@@ -21,6 +21,7 @@ import {
   UserRole,
   UserStatus,
 } from '@/components/views/admin/users/Sub-funcionalidades/types';
+import { initialsFromName } from '@/lib/format';
 
 const roleFilters: ('All' | UserRole)[] = [
   'All',
@@ -33,7 +34,7 @@ const ITEMS_PER_PAGE = 6;
 
 export function AdminUsers() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, profile } = useAuth();
   const [users, setUsers] = useState<AdminUserRecord[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeRoleFilter, setActiveRoleFilter] = useState<'All' | UserRole>('All');
@@ -86,9 +87,9 @@ export function AdminUsers() {
       active="users"
       sectionLabel="Users"
       searchPlaceholder="Search users, emails..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
+      userName={profile?.fullName ?? 'Hospital Admin'}
+      userId={profile?.email ?? undefined}
+      avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}

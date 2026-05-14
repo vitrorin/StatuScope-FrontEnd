@@ -25,6 +25,7 @@ import {
   AdminDashboardSummaryResponse,
   getAdminDashboardSummary,
 } from '@/lib/adminOperational';
+import { initialsFromName } from '@/lib/format';
 
 const MAP_IMAGE_URI = 'https://www.figma.com/api/mcp/asset/5bd3e67c-b2d1-4685-9db8-9c8033f3f9f3';
 
@@ -32,7 +33,7 @@ type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminDashboard() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, profile } = useAuth();
   const [gridWidth, setGridWidth] = useState(0);
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [dashboard, setDashboard] = useState<AdminDashboardSummaryResponse | null>(null);
@@ -79,9 +80,9 @@ export function AdminDashboard() {
       active="dashboard"
       sectionLabel="Dashboard"
       searchPlaceholder="Search hospital metrics..."
-      userName="Dr. Sarah Chen"
-      userId="ID: 442910"
-      avatarText="SC"
+      userName={profile?.fullName ?? 'Hospital Admin'}
+      userId={profile?.email ?? undefined}
+      avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
