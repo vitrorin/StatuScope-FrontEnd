@@ -16,32 +16,48 @@ import { DepartmentResourceItem } from '@/components/views/admin/resources/Sub-f
 interface DepartmentManageOverlayProps {
   visible: boolean;
   department: DepartmentResourceItem | null;
+  mode: 'create' | 'edit';
+  saving?: boolean;
+  deleting?: boolean;
   onClose: () => void;
   onSave: (department: DepartmentResourceItem) => void;
+  onDelete?: (department: DepartmentResourceItem) => void;
 }
+
+const EMPTY_DEPARTMENT: DepartmentResourceItem = {
+  id: '',
+  code: '',
+  name: '',
+  level: '',
+  totalBeds: '0',
+  occupiedBeds: '0',
+  status: 'Stable',
+  notes: '',
+};
 
 export function DepartmentManageOverlay({
   visible,
   department,
+  mode,
+  saving = false,
+  deleting = false,
   onClose,
   onSave,
+  onDelete,
 }: DepartmentManageOverlayProps) {
-  const [draft, setDraft] = useState<DepartmentResourceItem | null>(department);
+  const [draft, setDraft] = useState<DepartmentResourceItem>(department ?? EMPTY_DEPARTMENT);
 
   useEffect(() => {
     if (visible) {
-      setDraft(department);
+      setDraft(department ?? EMPTY_DEPARTMENT);
     }
   }, [department, visible]);
 
-  if (!draft) return null;
-
-  const updateField = (
-    key: keyof DepartmentResourceItem,
-    value: string
-  ) => {
-    setDraft((current) => (current ? { ...current, [key]: value } : current));
+  const updateField = (key: keyof DepartmentResourceItem, value: string) => {
+    setDraft((current) => ({ ...current, [key]: value }));
   };
+
+  const isCreate = mode === 'create';
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -51,8 +67,8 @@ export function DepartmentManageOverlay({
           <View style={styles.header}>
             <View>
               <Text style={styles.eyebrow}>Department Manager</Text>
-              <Text style={styles.title}>{draft.name}</Text>
-              <Text style={styles.subtitle}>Adjust beds, occupancy, status, and operational notes.</Text>
+              <Text style={styles.title}>{isCreate ? 'Add Department' : draft.name || 'Department'}</Text>
+              <Text style={styles.subtitle}>Manage the real department record stored for this hospital.</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
@@ -63,6 +79,33 @@ export function DepartmentManageOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
+                  label="Department Name"
+                  value={draft.name}
+                  onChangeText={(text) => updateField('name', text)}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+              <View style={styles.field}>
+                <InputField
+                  label="Department Code"
+                  value={draft.code}
+                  onChangeText={(text) => updateField('code', text.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.field}>
+                <InputField
+                  label="Level"
+                  value={draft.level}
+                  onChangeText={(text) => updateField('level', text)}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+              <View style={styles.field}>
+                <InputField
                   label="Total Beds"
                   type="number"
                   value={draft.totalBeds}
@@ -70,6 +113,9 @@ export function DepartmentManageOverlay({
                   inputContainerStyle={styles.inputContainer}
                 />
               </View>
+            </View>
+
+            <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
                   label="Occupied Beds"
@@ -107,12 +153,23 @@ export function DepartmentManageOverlay({
           </View>
 
           <View style={styles.footer}>
+            {!isCreate && onDelete ? (
+              <Button
+                label={deleting ? 'Deleting...' : 'Delete'}
+                variant="danger"
+                size="md"
+                style={styles.deleteButton}
+                disabled={saving || deleting}
+                onPress={() => onDelete(draft)}
+              />
+            ) : null}
             <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
             <Button
-              label="Save Department"
+              label={saving ? 'Saving...' : isCreate ? 'Create Department' : 'Save Department'}
               variant="primary"
               size="md"
               style={{ ...styles.footerButton, ...styles.primaryButton }}
+              disabled={saving || deleting || !draft.name.trim() || !draft.code.trim()}
               onPress={() => onSave(draft)}
             />
           </View>
@@ -135,7 +192,7 @@ const styles = StyleSheet.create({
   },
   dialog: {
     width: '100%',
-    maxWidth: 620,
+    maxWidth: 720,
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
@@ -237,6 +294,10 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderTopWidth: 1,
     borderTopColor: '#EEF2F7',
+  },
+  deleteButton: {
+    marginRight: 'auto',
+    minWidth: 120,
   },
   footerButton: {
     minWidth: 150,

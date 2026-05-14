@@ -53,6 +53,15 @@ export function RecommendationDetailOverlay({
             </View>
 
             <CardBase style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Generation Source</Text>
+              <Text style={styles.sectionValue}>
+                {item.createdByMode === 'LLM_ASSISTED'
+                  ? 'LLM-assisted recommendation grounded in real-time outbreaks and hospital resource capacity.'
+                  : 'Operational recommendation generated from live hospital and outbreak rules.'}
+              </Text>
+            </CardBase>
+
+            <CardBase style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>Affected Scope</Text>
               <Text style={styles.sectionLabel}>Departments</Text>
               <Text style={styles.sectionValue}>{item.affectedDepartments.join(', ')}</Text>

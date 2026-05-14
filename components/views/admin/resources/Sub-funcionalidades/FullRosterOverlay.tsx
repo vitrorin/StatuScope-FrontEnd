@@ -36,6 +36,15 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
           </View>
 
           <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+            {roster.length === 0 ? (
+              <CardBase style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>No live operational contacts available</Text>
+                <Text style={styles.emptyText}>
+                  This roster now only shows real contact records returned by the backend.
+                </Text>
+              </CardBase>
+            ) : null}
+
             {roster.map((member) => (
               <CardBase key={member.id} style={styles.rosterCard}>
                 <View style={styles.avatar}>
@@ -49,12 +58,23 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
                 </View>
                 <View style={styles.memberInfo}>
                   <Text style={styles.memberName}>{member.name}</Text>
-                  <Text style={styles.memberMeta}>{member.role} · {member.department}</Text>
+                  <Text style={styles.memberMeta}>{member.role} | {member.department}</Text>
                   <Text style={styles.memberMeta}>{member.shift}</Text>
+                  {member.contactChannel && member.contactValue ? (
+                    <Text style={styles.memberMeta}>{member.contactChannel}: {member.contactValue}</Text>
+                  ) : null}
                 </View>
                 <View style={styles.availabilityPill}>
                   <MaterialCommunityIcons
-                    name={member.availability === 'On Shift' ? 'check-decagram-outline' : member.availability === 'On Call' ? 'phone-outline' : 'clock-outline'}
+                    name={
+                      member.availability === 'On Shift'
+                        ? 'check-decagram-outline'
+                        : member.availability === 'On Call'
+                          ? 'phone-outline'
+                          : member.availability === 'Standby'
+                            ? 'clock-outline'
+                            : 'close-circle-outline'
+                    }
                     size={14}
                     color="#1718C7"
                   />
@@ -131,6 +151,24 @@ const styles = StyleSheet.create({
   list: {
     padding: 20,
     gap: 12,
+  },
+  emptyCard: {
+    borderRadius: 16,
+    padding: 18,
+    backgroundColor: '#F8FAFF',
+    borderColor: '#E0E7FF',
+  },
+  emptyTitle: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  emptyText: {
+    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#70839B',
   },
   rosterCard: {
     flexDirection: 'row',

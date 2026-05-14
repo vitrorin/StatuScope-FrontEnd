@@ -16,27 +16,57 @@ import { InventoryResourceItem } from '@/components/views/admin/resources/Sub-fu
 interface InventoryActionOverlayProps {
   visible: boolean;
   inventoryItem: InventoryResourceItem | null;
+  mode: 'create' | 'edit';
+  saving?: boolean;
+  deleting?: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onSave: (item: InventoryResourceItem) => void;
+  onDelete?: (item: InventoryResourceItem) => void;
 }
+
+const EMPTY_ITEM: InventoryResourceItem = {
+  id: '',
+  itemCode: '',
+  title: '',
+  category: '',
+  currentQuantity: '0',
+  capacityQuantity: '0',
+  unit: '',
+  criticalThreshold: '0',
+  targetQuantity: '0',
+  status: 'ADEQUATE',
+  valueText: '',
+  progress: 0,
+  tone: 'normal',
+  actionLabel: 'Manage Supply',
+  actionType: 'manage',
+  location: '',
+  targetLevel: '',
+};
 
 export function InventoryActionOverlay({
   visible,
   inventoryItem,
+  mode,
+  saving = false,
+  deleting = false,
   onClose,
-  onConfirm,
+  onSave,
+  onDelete,
 }: InventoryActionOverlayProps) {
-  const [quantity, setQuantity] = useState('20');
-  const [priority, setPriority] = useState('Normal');
+  const [draft, setDraft] = useState<InventoryResourceItem>(inventoryItem ?? EMPTY_ITEM);
 
   useEffect(() => {
     if (visible) {
-      setQuantity('20');
-      setPriority(inventoryItem?.tone === 'critical' ? 'Urgent' : 'Normal');
+      setDraft(inventoryItem ?? EMPTY_ITEM);
     }
   }, [inventoryItem, visible]);
 
-  if (!inventoryItem) return null;
+  const updateField = (key: keyof InventoryResourceItem, value: string) => {
+    setDraft((current) => ({ ...current, [key]: value }));
+  };
+
+  const isCreate = mode === 'create';
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -45,9 +75,9 @@ export function InventoryActionOverlay({
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Inventory Action</Text>
-              <Text style={styles.title}>{inventoryItem.actionLabel}</Text>
-              <Text style={styles.subtitle}>Prepare the next step for {inventoryItem.title.toLowerCase()}.</Text>
+              <Text style={styles.eyebrow}>Inventory Item</Text>
+              <Text style={styles.title}>{isCreate ? 'Add Inventory Item' : draft.title || 'Inventory Item'}</Text>
+              <Text style={styles.subtitle}>Manage the real inventory record for stock, capacity, thresholds, and location.</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
@@ -55,46 +85,125 @@ export function InventoryActionOverlay({
           </View>
 
           <View style={styles.content}>
-            <InputField
-              label="Requested Quantity"
-              type="number"
-              value={quantity}
-              onChangeText={(text) => setQuantity(text.replace(/[^0-9]/g, ''))}
-              inputContainerStyle={styles.inputContainer}
-            />
-
-            <View style={styles.priorityRow}>
-              {['Normal', 'High', 'Urgent'].map((level) => {
-                const isActive = priority === level;
-                return (
-                  <TouchableOpacity
-                    key={level}
-                    style={[styles.priorityChip, isActive && styles.priorityChipActive]}
-                    onPress={() => setPriority(level)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.priorityChipText, isActive && styles.priorityChipTextActive]}>{level}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={styles.row}>
+              <View style={styles.field}>
+                <InputField
+                  label="Item Name"
+                  value={draft.title}
+                  onChangeText={(text) => updateField('title', text)}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+              <View style={styles.field}>
+                <InputField
+                  label="Item Code"
+                  value={draft.itemCode}
+                  onChangeText={(text) => updateField('itemCode', text.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
             </View>
 
-            <CardBase style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Summary</Text>
-              <Text style={styles.summaryText}>Location: {inventoryItem.location}</Text>
-              <Text style={styles.summaryText}>Current level: {inventoryItem.valueText}</Text>
-              <Text style={styles.summaryText}>Target level: {inventoryItem.targetLevel}</Text>
-            </CardBase>
+            <View style={styles.row}>
+              <View style={styles.field}>
+                <InputField
+                  label="Category"
+                  value={draft.category}
+                  onChangeText={(text) => updateField('category', text)}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+              <View style={styles.field}>
+                <InputField
+                  label="Location"
+                  value={draft.location}
+                  onChangeText={(text) => updateField('location', text)}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.field}>
+                <InputField
+                  label="Current Quantity"
+                  type="number"
+                  value={draft.currentQuantity}
+                  onChangeText={(text) => updateField('currentQuantity', text.replace(/[^0-9]/g, ''))}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+              <View style={styles.field}>
+                <InputField
+                  label="Capacity"
+                  type="number"
+                  value={draft.capacityQuantity}
+                  onChangeText={(text) => updateField('capacityQuantity', text.replace(/[^0-9]/g, ''))}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.field}>
+                <InputField
+                  label="Critical Threshold"
+                  type="number"
+                  value={draft.criticalThreshold}
+                  onChangeText={(text) => updateField('criticalThreshold', text.replace(/[^0-9]/g, ''))}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+              <View style={styles.field}>
+                <InputField
+                  label="Target Quantity"
+                  type="number"
+                  value={draft.targetQuantity}
+                  onChangeText={(text) => updateField('targetQuantity', text.replace(/[^0-9]/g, ''))}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.field}>
+                <InputField
+                  label="Unit"
+                  value={draft.unit}
+                  onChangeText={(text) => updateField('unit', text)}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+              <View style={styles.field}>
+                <InputField
+                  label="Status"
+                  value={draft.status}
+                  onChangeText={(text) => updateField('status', text.toUpperCase().replace(/[^A-Z_]/g, '_'))}
+                  inputContainerStyle={styles.inputContainer}
+                />
+              </View>
+            </View>
           </View>
 
           <View style={styles.footer}>
+            {!isCreate && onDelete ? (
+              <Button
+                label={deleting ? 'Deleting...' : 'Delete'}
+                variant="danger"
+                size="md"
+                style={styles.deleteButton}
+                disabled={saving || deleting}
+                onPress={() => onDelete(draft)}
+              />
+            ) : null}
             <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
             <Button
-              label="Confirm Action"
+              label={saving ? 'Saving...' : isCreate ? 'Create Item' : 'Save Item'}
               variant="primary"
               size="md"
               style={{ ...styles.footerButton, ...styles.primaryButton }}
-              onPress={onConfirm}
+              disabled={saving || deleting || !draft.title.trim() || !draft.itemCode.trim()}
+              onPress={() => onSave(draft)}
             />
           </View>
         </CardBase>
@@ -116,7 +225,7 @@ const styles = StyleSheet.create({
   },
   dialog: {
     width: '100%',
-    maxWidth: 560,
+    maxWidth: 760,
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
@@ -165,55 +274,16 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 16,
   },
+  row: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  field: {
+    flex: 1,
+  },
   inputContainer: {
     height: 50,
     borderRadius: 12,
-  },
-  priorityRow: {
-    flexDirection: 'row',
-    gap: 10,
-    flexWrap: 'wrap',
-  },
-  priorityChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: '#F6F8FC',
-    borderWidth: 1,
-    borderColor: '#E8EDF5',
-  },
-  priorityChipActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
-  },
-  priorityChipText: {
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: '#70839B',
-  },
-  priorityChipTextActive: {
-    color: '#1718C7',
-  },
-  summaryCard: {
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: '#F8FAFF',
-    borderColor: '#E0E7FF',
-  },
-  summaryTitle: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: '#1718C7',
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 8,
-  },
-  summaryText: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: '#526174',
   },
   footer: {
     flexDirection: 'row',
@@ -224,6 +294,10 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderTopWidth: 1,
     borderTopColor: '#EEF2F7',
+  },
+  deleteButton: {
+    marginRight: 'auto',
+    minWidth: 120,
   },
   footerButton: {
     minWidth: 150,
