@@ -19,13 +19,22 @@ import { EditConfigurationOverlay } from '@/components/views/admin/resources/Sub
 import { FullRosterOverlay } from '@/components/views/admin/resources/Sub-funcionalidades/FullRosterOverlay';
 import { InventoryActionOverlay } from '@/components/views/admin/resources/Sub-funcionalidades/InventoryActionOverlay';
 import { InventoryMapOverlay } from '@/components/views/admin/resources/Sub-funcionalidades/InventoryMapOverlay';
+import { StaffingManageOverlay } from '@/components/views/admin/resources/Sub-funcionalidades/StaffingManageOverlay';
 import {
   DepartmentResourceItem,
   InventoryResourceItem,
   ResourceConfiguration,
   StaffRosterItem,
+  StaffingProfileItem,
 } from '@/components/views/admin/resources/Sub-funcionalidades/types';
 import {
+  createAdminResourceDepartment,
+  createAdminResourceInventory,
+  createAdminResourceStaffing,
+  deleteAdminResourceDepartment,
+  deleteAdminResourceInventory,
+  deleteAdminResourceStaffing,
+  getAdminOperationalRoster,
   getAdminResourceDepartments,
   getAdminResourceInventory,
   getAdminResourceStaffing,
@@ -34,6 +43,7 @@ import {
   HospitalInventoryItemResponse,
   HospitalResourceSummaryResponse,
   HospitalStaffingProfileResponse,
+  OperationalContactResponse,
   updateAdminResourceDepartment,
   updateAdminResourceInventory,
   updateAdminResourceStaffing,
@@ -48,31 +58,44 @@ export function AdminResources() {
   const { logout, profile } = useAuth();
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditConfigurationOpen, setIsEditConfigurationOpen] = useState(false);
   const [isRosterOpen, setIsRosterOpen] = useState(false);
+  const [isStaffingManageOpen, setIsStaffingManageOpen] = useState(false);
   const [isInventoryMapOpen, setIsInventoryMapOpen] = useState(false);
+  const [departmentMode, setDepartmentMode] = useState<'create' | 'edit'>('edit');
+  const [inventoryMode, setInventoryMode] = useState<'create' | 'edit'>('edit');
   const [selectedDepartment, setSelectedDepartment] = useState<DepartmentResourceItem | null>(null);
   const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryResourceItem | null>(null);
   const [summary, setSummary] = useState<HospitalResourceSummaryResponse | null>(null);
   const [departmentsRaw, setDepartmentsRaw] = useState<HospitalDepartmentResourceResponse[]>([]);
   const [staffingRaw, setStaffingRaw] = useState<HospitalStaffingProfileResponse[]>([]);
   const [inventoryRaw, setInventoryRaw] = useState<HospitalInventoryItemResponse[]>([]);
+  const [rosterRaw, setRosterRaw] = useState<OperationalContactResponse[]>([]);
 
   const loadResources = useCallback(async () => {
     setLoadState((current) => (current === 'success' ? 'success' : 'loading'));
     setError(null);
     try {
-      const [summaryResponse, departmentsResponse, staffingResponse, inventoryResponse] = await Promise.all([
+      const [
+        summaryResponse,
+        departmentsResponse,
+        staffingResponse,
+        inventoryResponse,
+        rosterResponse,
+      ] = await Promise.all([
         getAdminResourceSummary(),
         getAdminResourceDepartments(),
         getAdminResourceStaffing(),
         getAdminResourceInventory(),
+        getAdminOperationalRoster(),
       ]);
       setSummary(summaryResponse.data);
       setDepartmentsRaw(departmentsResponse.data);
       setStaffingRaw(staffingResponse.data);
       setInventoryRaw(inventoryResponse.data);
+      setRosterRaw(rosterResponse.data);
       setLoadState('success');
     } catch (nextError) {
       setLoadState('error');
@@ -85,8 +108,9 @@ export function AdminResources() {
   }, [loadResources]);
 
   const departments = useMemo(() => departmentsRaw.map(mapDepartment), [departmentsRaw]);
+  const staffingProfiles = useMemo(() => staffingRaw.map(mapStaffingProfile), [staffingRaw]);
   const inventoryItems = useMemo(() => inventoryRaw.map(mapInventoryItem), [inventoryRaw]);
-  const roster = useMemo(() => staffingRaw.flatMap(mapStaffingProfileToRoster), [staffingRaw]);
+  const roster = useMemo(() => rosterRaw.map(mapOperationalContactToRoster), [rosterRaw]);
   const resourceConfiguration = useMemo(
     () => buildResourceConfiguration(summary, staffingRaw, departmentsRaw),
     [summary, staffingRaw, departmentsRaw],
@@ -122,7 +146,7 @@ export function AdminResources() {
       department: (
         <View>
           <Text style={styles.departmentName}>{department.name}</Text>
-          <Text style={styles.departmentLevel}>{department.level}</Text>
+          <Text style={styles.departmentLevel}>{department.level || department.code}</Text>
         </View>
       ),
       total: department.totalBeds,
@@ -136,12 +160,31 @@ export function AdminResources() {
       ),
       status: <StatusBadge label={department.status} variant={mapDepartmentStatus(department.status)} />,
       action: (
-        <TouchableOpacity onPress={() => setSelectedDepartment(department)} activeOpacity={0.75}>
+        <TouchableOpacity
+          onPress={() => {
+            setDepartmentMode('edit');
+            setSelectedDepartment(department);
+          }}
+          activeOpacity={0.75}
+        >
           <Text style={styles.manageLink}>Manage</Text>
         </TouchableOpacity>
       ),
     };
   });
+
+  const staffingRows = staffingProfiles.map((profile) => ({
+    role: (
+      <View>
+        <Text style={styles.departmentName}>{profile.roleName}</Text>
+        <Text style={styles.departmentLevel}>{profile.roleCode}</Text>
+      </View>
+    ),
+    headcount: profile.headcount,
+    onShift: profile.onShiftCount,
+    onCall: profile.onCallCount,
+    standby: profile.standbyCount,
+  }));
 
   return (
     <DashboardLayout
@@ -153,15 +196,17 @@ export function AdminResources() {
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
-      onLogout={async () => { await logout(); router.replace('/login'); }}
+      onLogout={async () => {
+        await logout();
+        router.replace('/login');
+      }}
     >
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
-                <MaterialCommunityIcons name="bed-outline" size={18} color="#1718C7" />
-                <Text style={styles.sectionTitle}>Bed Capacity Status</Text>
+                <Text style={styles.sectionTitle}>Capacity Status</Text>
               </View>
               <Button
                 label={saving ? 'Saving...' : 'Edit Configuration'}
@@ -196,8 +241,8 @@ export function AdminResources() {
                     <Text style={styles.summaryTileValue}>{staffingRaw.length}</Text>
                   </CardBase>
                   <CardBase style={styles.summaryTile}>
-                    <Text style={styles.summaryTileLabel}>Total Personnel</Text>
-                    <Text style={styles.summaryTileValue}>{staffingRaw.reduce((sum, profile) => sum + profile.headcount, 0)}</Text>
+                    <Text style={styles.summaryTileLabel}>Operational Contacts</Text>
+                    <Text style={styles.summaryTileValue}>{roster.length}</Text>
                   </CardBase>
                 </View>
 
@@ -261,8 +306,11 @@ export function AdminResources() {
                         <MaterialCommunityIcons name="account-group-outline" size={18} color="#1718C7" />
                         <Text style={styles.panelTitle}>Staffing (Active Shift)</Text>
                       </View>
-                      <View style={styles.liveBadge}>
-                        <Text style={styles.liveBadgeText}>LIVE</Text>
+                      <View style={styles.tableActions}>
+                        <View style={styles.liveBadge}>
+                          <Text style={styles.liveBadgeText}>LIVE</Text>
+                        </View>
+                        <Button label="Manage" variant="ghost" size="sm" onPress={() => setIsStaffingManageOpen(true)} />
                       </View>
                     </View>
 
@@ -315,13 +363,25 @@ export function AdminResources() {
                         <MaterialCommunityIcons name="clipboard-pulse-outline" size={18} color="#1718C7" />
                         <Text style={styles.panelTitle}>Critical Inventory</Text>
                       </View>
-                      <Button
-                        label="View Inventory Map"
-                        variant="ghost"
-                        size="sm"
-                        labelStyle={styles.inventoryAction}
-                        onPress={() => setIsInventoryMapOpen(true)}
-                      />
+                      <View style={styles.tableActions}>
+                        <Button
+                          label="Add Item"
+                          variant="ghost"
+                          size="sm"
+                          labelStyle={styles.inventoryAction}
+                          onPress={() => {
+                            setInventoryMode('create');
+                            setSelectedInventoryItem(null);
+                          }}
+                        />
+                        <Button
+                          label="View Locations"
+                          variant="ghost"
+                          size="sm"
+                          labelStyle={styles.inventoryAction}
+                          onPress={() => setIsInventoryMapOpen(true)}
+                        />
+                      </View>
                     </View>
 
                     <View style={styles.inventoryList}>
@@ -335,23 +395,20 @@ export function AdminResources() {
                           variant={item.tone === 'critical' ? 'critical' : 'normal'}
                           icon={
                             <MaterialCommunityIcons
-                              name={
-                                item.id.includes('oxygen')
-                                  ? 'molecule'
-                                  : item.id.includes('vaccine')
-                                    ? 'needle'
-                                    : 'medical-bag'
-                              }
+                              name={item.category.toLowerCase().includes('oxygen') ? 'molecule' : item.category.toLowerCase().includes('vaccine') ? 'needle' : 'medical-bag'}
                               size={14}
-                              color={item.tone === 'critical' ? '#F04B4B' : item.id.includes('med') ? '#5B63E2' : '#1718C7'}
+                              color={item.tone === 'critical' ? '#F04B4B' : '#1718C7'}
                             />
                           }
-                          actionLabel={item.actionLabel}
+                          actionLabel="Manage Item"
                           actionPlacement="below"
-                          actionVariant={item.actionType === 'order' ? 'primary' : 'secondary'}
-                          progressFillColor={item.tone === 'critical' ? '#F04B4B' : item.id.includes('med') ? '#5B63E2' : '#1718C7'}
+                          actionVariant="secondary"
+                          progressFillColor={item.tone === 'critical' ? '#F04B4B' : '#1718C7'}
                           progressTrackColor={item.tone === 'critical' ? '#F9D8D8' : '#E8EDF5'}
-                          onAction={() => setSelectedInventoryItem(item)}
+                          onAction={() => {
+                            setInventoryMode('edit');
+                            setSelectedInventoryItem(item);
+                          }}
                           style={styles.inventoryItem}
                         />
                       ))}
@@ -364,6 +421,15 @@ export function AdminResources() {
                     <Text style={styles.tableTitle}>Bed Availability by Department</Text>
                     <View style={styles.tableActions}>
                       <Button
+                        label="Add Department"
+                        variant="ghost"
+                        size="sm"
+                        onPress={() => {
+                          setDepartmentMode('create');
+                          setSelectedDepartment(null);
+                        }}
+                      />
+                      <Button
                         variant="secondary"
                         size="icon"
                         leadingIcon={<Feather name="refresh-cw" size={14} color="#94A3B8" />}
@@ -374,6 +440,27 @@ export function AdminResources() {
                   </View>
 
                   <DataTable columns={columns} rows={rows} compact style={styles.table} />
+                </CardBase>
+
+                <CardBase style={styles.tablePanel}>
+                  <View style={styles.tableHeader}>
+                    <Text style={styles.tableTitle}>Staffing Profiles</Text>
+                    <View style={styles.tableActions}>
+                      <Button label="Manage Staffing" variant="ghost" size="sm" onPress={() => setIsStaffingManageOpen(true)} />
+                    </View>
+                  </View>
+                  <DataTable
+                    compact
+                    style={styles.table}
+                    columns={[
+                      { key: 'role', label: 'Role' },
+                      { key: 'headcount', label: 'Headcount', align: 'center' },
+                      { key: 'onShift', label: 'On Shift', align: 'center' },
+                      { key: 'onCall', label: 'On Call', align: 'center' },
+                      { key: 'standby', label: 'Standby', align: 'center' },
+                    ]}
+                    rows={staffingRows}
+                  />
                 </CardBase>
               </>
             )}
@@ -413,68 +500,172 @@ export function AdminResources() {
             }
           }}
         />
+
         <DepartmentManageOverlay
-          visible={selectedDepartment !== null}
+          visible={selectedDepartment !== null || departmentMode === 'create'}
           department={selectedDepartment}
-          onClose={() => setSelectedDepartment(null)}
+          mode={departmentMode}
+          saving={saving}
+          deleting={deleting}
+          onClose={() => {
+            setSelectedDepartment(null);
+            setDepartmentMode('edit');
+          }}
           onSave={async (nextDepartment) => {
             setSaving(true);
             setError(null);
             try {
-              await updateAdminResourceDepartment(nextDepartment.id, {
-                id: nextDepartment.id,
-                departmentCode: nextDepartment.name.toUpperCase().replace(/[^A-Z0-9]+/g, '_'),
-                departmentName: nextDepartment.name,
-                levelLabel: nextDepartment.level,
-                totalBeds: parseInteger(nextDepartment.totalBeds),
-                occupiedBeds: parseInteger(nextDepartment.occupiedBeds),
-                availableBeds: Math.max(parseInteger(nextDepartment.totalBeds) - parseInteger(nextDepartment.occupiedBeds), 0),
-                status: nextDepartment.status.toUpperCase().replace(/\s+/g, '_'),
-                notes: nextDepartment.notes,
-              });
+              if (departmentMode === 'create') {
+                await createAdminResourceDepartment({
+                  departmentCode: nextDepartment.code,
+                  departmentName: nextDepartment.name,
+                  levelLabel: nextDepartment.level,
+                  totalBeds: parseInteger(nextDepartment.totalBeds),
+                  occupiedBeds: parseInteger(nextDepartment.occupiedBeds),
+                  status: nextDepartment.status.toUpperCase().replace(/\s+/g, '_'),
+                  notes: nextDepartment.notes,
+                });
+              } else {
+                await updateAdminResourceDepartment(nextDepartment.id, {
+                  id: nextDepartment.id,
+                  departmentCode: nextDepartment.code,
+                  departmentName: nextDepartment.name,
+                  levelLabel: nextDepartment.level,
+                  totalBeds: parseInteger(nextDepartment.totalBeds),
+                  occupiedBeds: parseInteger(nextDepartment.occupiedBeds),
+                  availableBeds: Math.max(parseInteger(nextDepartment.totalBeds) - parseInteger(nextDepartment.occupiedBeds), 0),
+                  status: nextDepartment.status.toUpperCase().replace(/\s+/g, '_'),
+                  notes: nextDepartment.notes,
+                });
+              }
               await loadResources();
               setSelectedDepartment(null);
+              setDepartmentMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to update the department.');
+              setError(nextError instanceof Error ? nextError.message : 'Unable to save the department.');
             } finally {
               setSaving(false);
             }
           }}
+          onDelete={async (department) => {
+            setDeleting(true);
+            setError(null);
+            try {
+              await deleteAdminResourceDepartment(department.id);
+              await loadResources();
+              setSelectedDepartment(null);
+              setDepartmentMode('edit');
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the department.');
+            } finally {
+              setDeleting(false);
+            }
+          }}
         />
-        <FullRosterOverlay
-          visible={isRosterOpen}
-          roster={roster}
-          onClose={() => setIsRosterOpen(false)}
-        />
-        <InventoryMapOverlay
-          visible={isInventoryMapOpen}
-          inventory={inventoryItems}
-          onClose={() => setIsInventoryMapOpen(false)}
-        />
-        <InventoryActionOverlay
-          visible={selectedInventoryItem !== null}
-          inventoryItem={selectedInventoryItem}
-          onClose={() => setSelectedInventoryItem(null)}
-          onConfirm={async (payload) => {
-            if (!selectedInventoryItem) return;
-            const sourceItem = inventoryRaw.find((item) => item.id === selectedInventoryItem.id);
-            if (!sourceItem) return;
+
+        <StaffingManageOverlay
+          visible={isStaffingManageOpen}
+          profiles={staffingProfiles}
+          saving={saving}
+          deleting={deleting}
+          onClose={() => setIsStaffingManageOpen(false)}
+          onSave={async (profile, mode) => {
             setSaving(true);
             setError(null);
             try {
-              const requestedQuantity = Number.parseInt(payload.quantity || '0', 10) || 0;
-              const nextQuantity = Math.min(sourceItem.capacityQuantity, sourceItem.currentQuantity + requestedQuantity);
-              await updateAdminResourceInventory(sourceItem.id, {
-                ...sourceItem,
-                currentQuantity: nextQuantity,
-                status: nextQuantity <= sourceItem.criticalThreshold ? 'CRITICAL' : payload.priority.toUpperCase(),
-              });
+              const payload = {
+                roleCode: profile.roleCode,
+                roleName: profile.roleName,
+                headcount: parseInteger(profile.headcount),
+                onShiftCount: parseInteger(profile.onShiftCount),
+                onCallCount: parseInteger(profile.onCallCount),
+                standbyCount: parseInteger(profile.standbyCount),
+              };
+              if (mode === 'create') {
+                await createAdminResourceStaffing(payload);
+              } else {
+                await updateAdminResourceStaffing(profile.id, { id: profile.id, ...payload });
+              }
               await loadResources();
-              setSelectedInventoryItem(null);
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to update the inventory item.');
+              setError(nextError instanceof Error ? nextError.message : 'Unable to save the staffing profile.');
             } finally {
               setSaving(false);
+            }
+          }}
+          onDelete={async (profile) => {
+            setDeleting(true);
+            setError(null);
+            try {
+              await deleteAdminResourceStaffing(profile.id);
+              await loadResources();
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the staffing profile.');
+            } finally {
+              setDeleting(false);
+            }
+          }}
+        />
+
+        <FullRosterOverlay visible={isRosterOpen} roster={roster} onClose={() => setIsRosterOpen(false)} />
+
+        <InventoryMapOverlay visible={isInventoryMapOpen} inventory={inventoryItems} onClose={() => setIsInventoryMapOpen(false)} />
+
+        <InventoryActionOverlay
+          visible={selectedInventoryItem !== null || inventoryMode === 'create'}
+          inventoryItem={selectedInventoryItem}
+          mode={inventoryMode}
+          saving={saving}
+          deleting={deleting}
+          onClose={() => {
+            setSelectedInventoryItem(null);
+            setInventoryMode('edit');
+          }}
+          onSave={async (item) => {
+            setSaving(true);
+            setError(null);
+            try {
+              const payload = {
+                itemCode: item.itemCode,
+                itemName: item.title,
+                category: item.category,
+                location: item.location,
+                currentQuantity: parseInteger(item.currentQuantity),
+                capacityQuantity: parseInteger(item.capacityQuantity),
+                unit: item.unit,
+                criticalThreshold: parseInteger(item.criticalThreshold),
+                targetQuantity: parseInteger(item.targetQuantity),
+                status: item.status.toUpperCase().replace(/[^A-Z_]/g, '_'),
+              };
+              if (inventoryMode === 'create') {
+                await createAdminResourceInventory(payload);
+              } else {
+                await updateAdminResourceInventory(item.id, {
+                  id: item.id,
+                  ...payload,
+                });
+              }
+              await loadResources();
+              setSelectedInventoryItem(null);
+              setInventoryMode('edit');
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : 'Unable to save the inventory item.');
+            } finally {
+              setSaving(false);
+            }
+          }}
+          onDelete={async (item) => {
+            setDeleting(true);
+            setError(null);
+            try {
+              await deleteAdminResourceInventory(item.id);
+              await loadResources();
+              setSelectedInventoryItem(null);
+              setInventoryMode('edit');
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the inventory item.');
+            } finally {
+              setDeleting(false);
             }
           }}
         />
@@ -486,6 +677,7 @@ export function AdminResources() {
 function mapDepartment(item: HospitalDepartmentResourceResponse): DepartmentResourceItem {
   return {
     id: item.id,
+    code: item.departmentCode,
     name: item.departmentName,
     level: item.levelLabel,
     totalBeds: String(item.totalBeds),
@@ -495,12 +687,32 @@ function mapDepartment(item: HospitalDepartmentResourceResponse): DepartmentReso
   };
 }
 
+function mapStaffingProfile(item: HospitalStaffingProfileResponse): StaffingProfileItem {
+  return {
+    id: item.id,
+    roleCode: item.roleCode,
+    roleName: item.roleName,
+    headcount: String(item.headcount),
+    onShiftCount: String(item.onShiftCount),
+    onCallCount: String(item.onCallCount),
+    standbyCount: String(item.standbyCount),
+  };
+}
+
 function mapInventoryItem(item: HospitalInventoryItemResponse): InventoryResourceItem {
   const progress = item.capacityQuantity > 0 ? Math.round((item.currentQuantity / item.capacityQuantity) * 100) : 0;
   const critical = item.currentQuantity <= item.criticalThreshold || item.status.toUpperCase().includes('CRITICAL');
   return {
     id: item.id,
+    itemCode: item.itemCode,
     title: item.itemName,
+    category: item.category,
+    currentQuantity: String(item.currentQuantity),
+    capacityQuantity: String(item.capacityQuantity),
+    unit: item.unit,
+    criticalThreshold: String(item.criticalThreshold),
+    targetQuantity: String(item.targetQuantity),
+    status: item.status,
     valueText: `${item.currentQuantity}${item.unit ? ` ${item.unit}` : ''} / ${item.capacityQuantity}${item.unit ? ` ${item.unit}` : ''}`,
     progress,
     tone: critical ? 'critical' : 'normal',
@@ -511,39 +723,18 @@ function mapInventoryItem(item: HospitalInventoryItemResponse): InventoryResourc
   };
 }
 
-function mapStaffingProfileToRoster(profile: HospitalStaffingProfileResponse): StaffRosterItem[] {
-  const roster: StaffRosterItem[] = [];
-  for (let index = 0; index < profile.onShiftCount; index += 1) {
-    roster.push({
-      id: `${profile.id}-shift-${index}`,
-      name: `${profile.roleName} ${index + 1}`,
-      role: profile.roleName,
-      department: profile.roleCode.replace(/_/g, ' '),
-      shift: 'Active shift',
-      availability: 'On Shift',
-    });
-  }
-  for (let index = 0; index < profile.onCallCount; index += 1) {
-    roster.push({
-      id: `${profile.id}-call-${index}`,
-      name: `${profile.roleName} On Call ${index + 1}`,
-      role: profile.roleName,
-      department: profile.roleCode.replace(/_/g, ' '),
-      shift: 'On call',
-      availability: 'On Call',
-    });
-  }
-  for (let index = 0; index < profile.standbyCount; index += 1) {
-    roster.push({
-      id: `${profile.id}-standby-${index}`,
-      name: `${profile.roleName} Standby ${index + 1}`,
-      role: profile.roleName,
-      department: profile.roleCode.replace(/_/g, ' '),
-      shift: 'Standby',
-      availability: 'Standby',
-    });
-  }
-  return roster;
+function mapOperationalContactToRoster(contact: OperationalContactResponse): StaffRosterItem {
+  const availability = normalizeAvailability(contact.availabilityStatus);
+  return {
+    id: contact.id,
+    name: contact.displayName,
+    role: contact.roleLabel,
+    department: humanizeCode(contact.departmentCode ?? 'UNASSIGNED'),
+    shift: contact.updatedAt ? `Directory updated ${formatTimestamp(contact.updatedAt)}` : 'Directory availability record',
+    availability,
+    contactChannel: contact.contactChannel ?? undefined,
+    contactValue: contact.contactValue ?? undefined,
+  };
 }
 
 function buildResourceConfiguration(
@@ -598,6 +789,35 @@ function normalizeDepartmentStatus(status: string): DepartmentResourceItem['stat
   return 'Stable';
 }
 
+function normalizeAvailability(status: string): StaffRosterItem['availability'] {
+  const value = status.toUpperCase();
+  if (value.includes('SHIFT')) return 'On Shift';
+  if (value.includes('CALL')) return 'On Call';
+  if (value.includes('STANDBY')) return 'Standby';
+  return 'Unavailable';
+}
+
+function humanizeCode(value: string) {
+  return value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatTimestamp(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleString();
+}
+
+function mapDepartmentStatus(status: DepartmentResourceItem['status']) {
+  if (status === 'Critical') return 'critical' as const;
+  if (status === 'High Demand') return 'warning' as const;
+  return 'info' as const;
+}
+
 function parseInteger(value: string) {
   const parsedValue = Number.parseInt(value || '0', 10);
   return Number.isFinite(parsedValue) ? parsedValue : 0;
@@ -614,88 +834,18 @@ function UtilizationCell({
 }) {
   return (
     <View style={styles.utilizationCell}>
-      <ProgressBar value={progress} color={color} trackColor="#EEF2F7" style={styles.utilizationBar} />
+      <ProgressBar value={progress} color={color} trackColor="#E9EDF6" style={styles.utilizationBar} />
       <Text style={styles.utilizationValue}>{value}</Text>
     </View>
   );
 }
 
-function mapDepartmentStatus(status: DepartmentResourceItem['status']) {
-  switch (status) {
-    case 'Critical':
-      return 'critical' as const;
-    case 'Stable':
-      return 'success' as const;
-    default:
-      return 'warning' as const;
-  }
-}
-
 const styles = StyleSheet.create({
   contentContainer: {
-    paddingBottom: 32,
+    paddingBottom: 36,
   },
   container: {
-    padding: 26,
-    gap: 24,
-  },
-  loadingCard: {
-    minHeight: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#526174',
-  },
-  errorCard: {
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-  },
-  errorTitle: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '800',
-    color: '#991B1B',
-  },
-  errorText: {
-    marginTop: 6,
-    fontSize: 13,
-    lineHeight: 20,
-    color: '#B91C1C',
-  },
-  summaryStrip: {
-    flexDirection: 'row',
-    gap: 14,
-  },
-  summaryTile: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    backgroundColor: '#FCFDFF',
-  },
-  summaryTileLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: '#8A9AAF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 8,
-  },
-  summaryTileValue: {
-    fontSize: 28,
-    lineHeight: 32,
-    fontWeight: '900',
-    color: '#1718C7',
-  },
-  alertsColumn: {
-    gap: 12,
+    gap: 18,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -708,7 +858,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 17,
     lineHeight: 22,
     fontWeight: '800',
     color: '#0F172A',
@@ -719,51 +869,95 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1718C7',
   },
+  errorCard: {
+    borderColor: '#FDD2D2',
+    backgroundColor: '#FFF7F7',
+  },
+  errorTitle: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#991B1B',
+  },
+  errorText: {
+    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#B91C1C',
+  },
+  loadingCard: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 28,
+  },
+  loadingText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#526174',
+  },
+  summaryStrip: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  summaryTile: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 18,
+  },
+  summaryTileLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#70839B',
+  },
+  summaryTileValue: {
+    marginTop: 8,
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  alertsColumn: {
+    gap: 12,
+  },
   capacityRow: {
     flexDirection: 'row',
-    gap: 18,
+    gap: 16,
   },
   capacityCard: {
     flex: 1,
-    minHeight: 110,
-    borderRadius: 14,
   },
   availableCard: {
-    borderLeftWidth: 3,
-    borderLeftColor: '#1718C7',
-    paddingTop: 14,
+    padding: 20,
+    gap: 12,
   },
   capacityTitle: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: '#8A9AAF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 8,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   availableValueRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'flex-end',
+    gap: 6,
   },
   availableValue: {
-    fontSize: 40,
-    lineHeight: 44,
+    fontSize: 32,
+    lineHeight: 36,
     fontWeight: '900',
-    color: '#1718C7',
-    letterSpacing: -1,
+    color: '#0F172A',
   },
   availableUnits: {
-    marginLeft: 6,
-    fontSize: 16,
-    lineHeight: 20,
-    color: '#A0AEC0',
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#70839B',
+    marginBottom: 4,
   },
   availableProgressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 14,
+    gap: 12,
   },
   availableProgress: {
     flex: 1,
@@ -771,27 +965,24 @@ const styles = StyleSheet.create({
   availablePercent: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '700',
-    color: '#4A43D6',
+    fontWeight: '800',
+    color: '#1718C7',
   },
   middleRow: {
     flexDirection: 'row',
-    gap: 18,
+    gap: 16,
   },
   staffingPanel: {
     flex: 1,
     padding: 0,
     overflow: 'hidden',
-    minHeight: 332,
   },
   inventoryPanel: {
     flex: 1,
     padding: 0,
     overflow: 'hidden',
-    minHeight: 332,
   },
   panelHeader: {
-    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -826,7 +1017,6 @@ const styles = StyleSheet.create({
   panelBody: {
     padding: 18,
     flex: 1,
-    justifyContent: 'flex-start',
     gap: 12,
   },
   staffingItem: {
@@ -882,6 +1072,7 @@ const styles = StyleSheet.create({
   },
   tableActions: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   iconButton: {

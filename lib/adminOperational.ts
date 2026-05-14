@@ -195,10 +195,27 @@ export interface HospitalInventoryItemResponse {
   status: string;
 }
 
+export interface OperationalContactResponse {
+  id: string;
+  userId?: string | null;
+  displayName: string;
+  roleLabel: string;
+  departmentCode?: string | null;
+  contactChannel?: string | null;
+  contactValue?: string | null;
+  availabilityStatus: string;
+  assignable: boolean;
+  notifiable: boolean;
+  updatedAt?: string | null;
+}
+
 export interface UpdateHospitalResourceSummaryInput extends HospitalResourceSummaryResponse {}
 export interface UpdateHospitalDepartmentInput extends HospitalDepartmentResourceResponse {}
 export interface UpdateHospitalStaffingProfileInput extends HospitalStaffingProfileResponse {}
 export interface UpdateHospitalInventoryItemInput extends HospitalInventoryItemResponse {}
+export interface CreateHospitalDepartmentInput extends Omit<HospitalDepartmentResourceResponse, 'id' | 'availableBeds'> {}
+export interface CreateHospitalStaffingProfileInput extends Omit<HospitalStaffingProfileResponse, 'id'> {}
+export interface CreateHospitalInventoryItemInput extends Omit<HospitalInventoryItemResponse, 'id'> {}
 
 function recommendationQuery(params: { status?: string; severity?: string; type?: string }) {
   const query = new URLSearchParams();
@@ -271,6 +288,10 @@ export async function getAdminResourceInventory() {
   return api<ResourceResponse<HospitalInventoryItemResponse[]>>('/admin/resources/inventory');
 }
 
+export async function getAdminOperationalRoster() {
+  return api<ResourceResponse<OperationalContactResponse[]>>('/admin/resources/operational-roster');
+}
+
 export async function updateAdminResourceSummary(input: UpdateHospitalResourceSummaryInput) {
   return api<HospitalResourceSummaryResponse>('/admin/resources/summary', {
     method: 'PUT',
@@ -285,6 +306,19 @@ export async function updateAdminResourceDepartment(id: string, input: UpdateHos
   });
 }
 
+export async function createAdminResourceDepartment(input: CreateHospitalDepartmentInput) {
+  return api<HospitalDepartmentResourceResponse>('/admin/resources/departments', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteAdminResourceDepartment(id: string) {
+  return api<void>(`/admin/resources/departments/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function updateAdminResourceStaffing(id: string, input: UpdateHospitalStaffingProfileInput) {
   return api<HospitalStaffingProfileResponse>(`/admin/resources/staffing/${id}`, {
     method: 'PUT',
@@ -292,9 +326,35 @@ export async function updateAdminResourceStaffing(id: string, input: UpdateHospi
   });
 }
 
+export async function createAdminResourceStaffing(input: CreateHospitalStaffingProfileInput) {
+  return api<HospitalStaffingProfileResponse>('/admin/resources/staffing', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteAdminResourceStaffing(id: string) {
+  return api<void>(`/admin/resources/staffing/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function updateAdminResourceInventory(id: string, input: UpdateHospitalInventoryItemInput) {
   return api<HospitalInventoryItemResponse>(`/admin/resources/inventory/${id}`, {
     method: 'PUT',
     body: JSON.stringify(input),
+  });
+}
+
+export async function createAdminResourceInventory(input: CreateHospitalInventoryItemInput) {
+  return api<HospitalInventoryItemResponse>('/admin/resources/inventory', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteAdminResourceInventory(id: string) {
+  return api<void>(`/admin/resources/inventory/${id}`, {
+    method: 'DELETE',
   });
 }
