@@ -68,11 +68,6 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
                 </View>
               </View>
             ) : null}
-
-            <CardBase style={[styles.noteCard, { borderColor: `${accentColor(metric.status)}24` }]}>
-              <Text style={[styles.noteLabel, { color: accentColor(metric.status) }]}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
-              <Text style={styles.noteText}>{metric.recommendedAction}</Text>
-            </CardBase>
           </ScrollView>
         </CardBase>
       </View>
@@ -193,9 +188,6 @@ const styles = StyleSheet.create({
   insightMeta: { alignItems: 'flex-end', maxWidth: 150 },
   insightCases: { fontSize: 13, lineHeight: 18, fontWeight: '900' },
   insightSeverity: { marginTop: 4, fontSize: 11, lineHeight: 14, fontWeight: '700', color: '#64748B' },
-  noteCard: { borderRadius: 18, padding: 16, borderWidth: 1 },
-  noteLabel: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: '#1718C7', marginBottom: 8 },
-  noteText: { fontSize: 14, lineHeight: 22, color: '#526174' },
 });
 
 export default MetricDetailOverlay;

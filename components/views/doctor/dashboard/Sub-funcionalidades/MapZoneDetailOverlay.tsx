@@ -54,11 +54,6 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
               <MetricStat key={metric.label} label={metric.label} value={metric.value} accentColor={zone.borderColor} />
             ))}
           </View>
-
-          <CardBase style={[styles.noteCard, { borderColor: `${zone.borderColor}33` }]}>
-            <Text style={[styles.noteLabel, { color: zone.borderColor }]}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
-            <Text style={styles.noteText}>{zone.recommendedAction}</Text>
-          </CardBase>
         </CardBase>
       </View>
     </Modal>
@@ -161,9 +156,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
-  noteCard: { marginHorizontal: 24, marginBottom: 24, borderRadius: 18, padding: 16, borderWidth: 1 },
-  noteLabel: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: '#1718C7', marginBottom: 8 },
-  noteText: { fontSize: 14, lineHeight: 22, color: '#526174' },
 });
 
 export default MapZoneDetailOverlay;

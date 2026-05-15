@@ -37,7 +37,10 @@ export function DiseaseBreakdownCard({
 }: DiseaseBreakdownCardProps) {
   return (
     <View style={[styles.card, style]}>
-      <Text style={styles.title}>{title}</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>{title}</Text>
+        <View style={styles.titleRule} />
+      </View>
       
       <View style={styles.rowsContainer}>
         {rows.map((row, index) => {
@@ -109,7 +112,16 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 24,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  titleRule: {
+    width: 72,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 3, 184, 0.14)',
+    marginTop: 10,
   },
   rowsContainer: {
     marginBottom: 20,

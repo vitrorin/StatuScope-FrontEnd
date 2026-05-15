@@ -7,7 +7,11 @@
     "statuses": {
       "confirmed": "Confirmed",
       "suspected": "Suspected",
-      "active": "Active"
+      "active": "Active",
+      "noPriorityOutbreaks": "No priority outbreaks",
+      "noPriorityMunicipality": "No priority municipality",
+      "priorityMunicipality": "Priority municipality",
+      "priorityFocus": "Priority focus"
     },
     "units": {
       "cases": "{{count}} cases",
@@ -15,6 +19,9 @@
       "activeCases": "{{count}} active cases",
       "activeOutbreaks": "{{count}} active outbreaks",
       "activeOutbreak": "{{count}} active outbreak",
+      "priorityOutbreaks": "{{count}} priority outbreaks",
+      "priorityOutbreak": "{{count}} priority outbreak",
+      "priorityShort": "{{count}} priority",
       "beds": "{{count}} beds",
       "bed": "{{count}} bed",
       "kilometers": "{{count}} km",
@@ -456,7 +463,11 @@
         "casesColumn": "Cases",
         "statusColumn": "Status",
         "scopeColumn": "Scope",
-        "outbreaksColumn": "Outbreaks"
+        "outbreaksColumn": "Outbreaks",
+        "back": "Back",
+        "downloadReport": "Download report",
+        "previewSubtitle": "Review {{count}} outbreaks before accepting the download.",
+        "previewUnavailable": "Document preview is not available in this environment."
       },
       "overlays": {
         "clinicalMetric": "Clinical Metric",
@@ -511,12 +522,13 @@
           "insightCriteria": "Active outbreaks closest to the hospital.",
           "recommendedAction": "Review nearby outbreaks before evaluating compatible symptoms."
         },
-        "hospital-profile": {
-          "title": "Hospital Profile",
-          "subtitle": "Registered facility capacity",
-          "detailSummary": "This is configured hospital capacity, not live bed occupancy.",
-          "signalLabel": "Facility baseline",
-          "recommendedAction": "Connect bed occupancy and staffing shifts later for real operational capacity."
+        "priority-municipality": {
+          "title": "Priority Municipality",
+          "subtitle": "Highest concentration of priority outbreaks",
+          "detailSummary": "Groups high and moderate severity municipal outbreaks inside the selected radius.",
+          "signalLabel": "Priority concentration",
+          "insightCriteria": "Priority outbreaks in the municipality ranked by severity and cases.",
+          "recommendedAction": "Prioritize this municipality when reviewing compatible symptoms and nearby outbreak context."
         }
       }
     }

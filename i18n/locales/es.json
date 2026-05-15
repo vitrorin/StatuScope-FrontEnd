@@ -7,7 +7,11 @@
     "statuses": {
       "confirmed": "Confirmado",
       "suspected": "Sospechoso",
-      "active": "Activo"
+      "active": "Activo",
+      "noPriorityOutbreaks": "Sin brotes prioritarios",
+      "noPriorityMunicipality": "Sin municipio prioritario",
+      "priorityMunicipality": "Municipio prioritario",
+      "priorityFocus": "Foco prioritario"
     },
     "units": {
       "cases": "{{count}} casos",
@@ -15,6 +19,9 @@
       "activeCases": "{{count}} casos activos",
       "activeOutbreaks": "{{count}} brotes activos",
       "activeOutbreak": "{{count}} brote activo",
+      "priorityOutbreaks": "{{count}} brotes prioritarios",
+      "priorityOutbreak": "{{count}} brote prioritario",
+      "priorityShort": "{{count}} prioritarios",
       "beds": "{{count}} camas",
       "bed": "{{count}} cama",
       "kilometers": "{{count}} km",
@@ -456,7 +463,11 @@
         "casesColumn": "Casos",
         "statusColumn": "Estado",
         "scopeColumn": "Alcance",
-        "outbreaksColumn": "Brotes"
+        "outbreaksColumn": "Brotes",
+        "back": "Regresar",
+        "downloadReport": "Descargar reporte",
+        "previewSubtitle": "Revisa {{count}} brotes antes de aceptar la descarga.",
+        "previewUnavailable": "La vista previa del documento no está disponible en este entorno."
       },
       "overlays": {
         "clinicalMetric": "Metrica clinica",
@@ -511,12 +522,13 @@
           "insightCriteria": "Brotes activos mas cercanos al hospital.",
           "recommendedAction": "Revisar los brotes cercanos antes de evaluar sintomas compatibles."
         },
-        "hospital-profile": {
-          "title": "Perfil hospitalario",
-          "subtitle": "Capacidad registrada de la unidad",
-          "detailSummary": "Esta es la capacidad configurada del hospital, no la ocupacion real de camas.",
-          "signalLabel": "Linea base de la unidad",
-          "recommendedAction": "Conectar ocupacion de camas y turnos de personal mas adelante para capacidad operativa real."
+        "priority-municipality": {
+          "title": "Municipio prioritario",
+          "subtitle": "Mayor concentración de brotes prioritarios",
+          "detailSummary": "Agrupa los brotes municipales de severidad alta y moderada dentro del radio seleccionado.",
+          "signalLabel": "Concentración prioritaria",
+          "insightCriteria": "Brotes prioritarios del municipio ordenados por severidad y casos.",
+          "recommendedAction": "Priorizar este municipio al revisar síntomas compatibles y contexto epidemiológico cercano."
         }
       }
     }
