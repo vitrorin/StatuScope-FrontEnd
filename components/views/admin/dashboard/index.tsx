@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { ActivityIndicator, LayoutChangeEvent, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,7 +27,7 @@ import {
 } from '@/lib/adminOperational';
 import { initialsFromName } from '@/lib/format';
 
-const MAP_IMAGE_URI = 'https://www.figma.com/api/mcp/asset/5bd3e67c-b2d1-4685-9db8-9c8033f3f9f3';
+const VISIBLE_ALERTS_LIMIT = 3;
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -44,6 +44,8 @@ export function AdminDashboard() {
   const [selectedAlert, setSelectedAlert] = useState<AdminDashboardAlert | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<AdminDashboardMetric | null>(null);
   const [selectedZone, setSelectedZone] = useState<AdminDashboardZone | null>(null);
+  const [isMoreAlertsOpen, setIsMoreAlertsOpen] = useState(false);
+  const [isMapHovered, setIsMapHovered] = useState(false);
   const gridGap = 16;
   const topGap = 12;
   const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
@@ -72,7 +74,11 @@ export function AdminDashboard() {
     return dashboard.topCards.map((card) => mapMetric(card, dashboard));
   }, [dashboard]);
   const alerts = useMemo(() => (dashboard?.alerts ?? []).map(mapAlert), [dashboard]);
+  const visibleAlerts = useMemo(() => alerts.slice(0, VISIBLE_ALERTS_LIMIT), [alerts]);
+  const remainingAlerts = useMemo(() => alerts.slice(VISIBLE_ALERTS_LIMIT), [alerts]);
   const mapZones = useMemo(() => positionZones(dashboard?.mapZones ?? []), [dashboard]);
+  const mapCenter = useMemo(() => getAdminMapCenter(mapZones), [mapZones]);
+  const mapBounds = useMemo(() => getAdminMapBounds(mapCenter), [mapCenter]);
   const actionCards = useMemo(() => dashboard?.recommendedActions ?? [], [dashboard]);
 
   return (
@@ -87,7 +93,7 @@ export function AdminDashboard() {
       sidebarItems={adminSidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false} scrollEnabled={!isMapHovered}>
         <View style={styles.container}>
           <View style={styles.heroRow}>
             <View>
@@ -136,18 +142,26 @@ export function AdminDashboard() {
           ) : (
             <>
               <View style={styles.topCardsRow}>
-                {topCards.map((card) => (
-                  <OverviewMetricCard
-                    key={card.title}
-                    {...card}
-                    onPress={() => setSelectedMetric(card)}
-                    style={
-                      topCardWidth
-                        ? { width: topCardWidth, minHeight: 132, flex: undefined }
-                        : undefined
-                    }
-                  />
-                ))}
+                {topCards.length === 0 && loadState === 'success' ? (
+                  <CardBase style={styles.emptyStateCard}>
+                    <Feather name="bar-chart-2" size={24} color="#94A3B8" />
+                    <Text style={styles.emptyStateTitle}>No metrics available</Text>
+                    <Text style={styles.emptyStateSubtitle}>Operational metrics will appear once the dashboard is populated.</Text>
+                  </CardBase>
+                ) : (
+                  topCards.map((card) => (
+                    <OverviewMetricCard
+                      key={card.title}
+                      {...card}
+                      onPress={() => setSelectedMetric(card)}
+                      style={
+                        topCardWidth
+                          ? { width: topCardWidth, minHeight: 132, flex: undefined }
+                          : undefined
+                      }
+                    />
+                  ))
+                )}
               </View>
 
               <View
@@ -172,16 +186,26 @@ export function AdminDashboard() {
                       { label: 'Warning', color: '#F97316' },
                       { label: 'Stable', color: '#0003B8' },
                     ]}
+                    footerTextLeft="© OpenStreetMap contributors"
                     footerTextRight={
                       dashboard?.generatedAt
                         ? `Last Sync: ${new Date(dashboard.generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                         : 'Last Sync: Pending'
                     }
-                    mapImageUri={MAP_IMAGE_URI}
+                    mapCenterLatitude={mapCenter?.latitude}
+                    mapCenterLongitude={mapCenter?.longitude}
+                    mapZoom={10}
+                    minZoom={7}
+                    maxZoom={14}
+                    mapBounds={mapBounds}
+                    enablePan
+                    onMapHoverChange={setIsMapHovered}
                     pins={mapZones.map((zone) => ({
                       id: zone.id,
                       top: zone.top,
                       left: zone.left,
+                      latitude: zone.latitude,
+                      longitude: zone.longitude,
                       borderColor: zone.borderColor,
                       fillColor: '#FFFFFF',
                       icon:
@@ -202,20 +226,44 @@ export function AdminDashboard() {
                       <Text style={styles.alertsTitle}>Contextual Disease Alerts</Text>
                     </View>
                     <View style={styles.alertsList}>
-                      {alerts.map((alert) => (
-                        <TouchableOpacity
-                          key={alert.id}
-                          activeOpacity={0.8}
-                          onPress={() => setSelectedAlert(alert)}
-                        >
-                          <AlertCard
-                            title={alert.title}
-                            description={alert.description}
-                            variant={alert.variant}
-                            style={styles.alertCard}
-                          />
-                        </TouchableOpacity>
-                      ))}
+                      {alerts.length === 0 ? (
+                        <AlertCard
+                          title="No active alerts"
+                          description="All systems are operating within normal parameters. New alerts will appear here."
+                          variant="neutral"
+                          style={styles.alertCard}
+                        />
+                      ) : (
+                        <>
+                          {visibleAlerts.map((alert) => (
+                            <TouchableOpacity
+                              key={alert.id}
+                              activeOpacity={0.8}
+                              onPress={() => setSelectedAlert(alert)}
+                            >
+                              <AlertCard
+                                title={alert.title}
+                                description={alert.description}
+                                variant={alert.variant}
+                                style={styles.alertCard}
+                              />
+                            </TouchableOpacity>
+                          ))}
+                          {remainingAlerts.length > 0 ? (
+                            <TouchableOpacity
+                              style={styles.moreAlertsButton}
+                              activeOpacity={0.82}
+                              onPress={() => setIsMoreAlertsOpen(true)}
+                            >
+                              <Feather name="list" size={17} color="#0003B8" />
+                              <Text style={styles.moreAlertsText}>Show more alerts</Text>
+                              <View style={styles.moreAlertsBadge}>
+                                <Text style={styles.moreAlertsBadgeText}>{remainingAlerts.length}</Text>
+                              </View>
+                            </TouchableOpacity>
+                          ) : null}
+                        </>
+                      )}
                     </View>
                   </View>
 
@@ -223,6 +271,8 @@ export function AdminDashboard() {
                     actions={actionCards}
                     style={[styles.analyticsCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
                     onOpenReport={() => setIsReportOpen(true)}
+                    onLiveFeed={() => router.push('/admin/recommendations')}
+                    onActionPress={() => router.push('/admin/recommendations')}
                   />
                 </View>
               </View>
@@ -230,12 +280,32 @@ export function AdminDashboard() {
           )}
         </View>
       </ScrollView>
-      <ExportReportOverlay visible={isExportOpen} onClose={() => setIsExportOpen(false)} />
+      <ExportReportOverlay visible={isExportOpen} onClose={() => setIsExportOpen(false)} onExport={() => { router.push('/admin/recommendations'); }} />
       <AlertProtocolOverlay visible={isProtocolOpen} onClose={() => setIsProtocolOpen(false)} />
       <AlertDetailOverlay visible={selectedAlert !== null} alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
-      <EpidemiologicalReportOverlay visible={isReportOpen} onClose={() => setIsReportOpen(false)} />
+      <EpidemiologicalReportOverlay
+        visible={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        hospitalName={dashboard?.hospitalName}
+        municipalityName={dashboard?.municipalityName}
+        stateName={dashboard?.stateName}
+        generatedAt={dashboard?.generatedAt}
+        topCards={dashboard?.topCards}
+        alerts={dashboard?.alerts}
+        mapZones={dashboard?.mapZones}
+        recommendedActions={dashboard?.recommendedActions}
+      />
       <MetricDetailOverlay visible={selectedMetric !== null} metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
       <MapZoneDetailOverlay visible={selectedZone !== null} zone={selectedZone} onClose={() => setSelectedZone(null)} />
+      <MoreAlertsOverlay
+        visible={isMoreAlertsOpen}
+        alerts={remainingAlerts}
+        onClose={() => setIsMoreAlertsOpen(false)}
+        onSelectAlert={(alert) => {
+          setIsMoreAlertsOpen(false);
+          setSelectedAlert(alert);
+        }}
+      />
     </DashboardLayout>
   );
 }
@@ -302,10 +372,14 @@ function PriorityActionsCard({
   actions,
   style,
   onOpenReport,
+  onLiveFeed,
+  onActionPress,
 }: {
   actions: AdminDashboardSummaryResponse['recommendedActions'];
   style?: StyleProp<ViewStyle>;
   onOpenReport?: () => void;
+  onLiveFeed?: () => void;
+  onActionPress?: () => void;
 }) {
   return (
     <CardBase style={[styles.caseCard, style]}>
@@ -317,35 +391,44 @@ function PriorityActionsCard({
           variant="surface"
           style={styles.caseFilter}
           labelStyle={styles.caseFilterLabel}
+          onPress={onLiveFeed}
         />
       </View>
 
       <Text style={styles.caseSectionLabel}>Operational Queue</Text>
 
-      <View style={styles.caseMetrics}>
-        {actions.slice(0, 5).map((action) => (
-          <View key={action.id} style={styles.actionMetricRow}>
-            <View style={styles.actionMetricTopRow}>
-              <Text style={styles.caseMetricName}>{action.title}</Text>
-              <Text style={styles.caseMetricValue}>{action.status.replace(/_/g, ' ')}</Text>
-            </View>
-            <View style={styles.caseMetricTrack}>
-              <View
-                style={[
-                  styles.caseMetricFill,
-                  {
-                    width: `${severityToProgress(action.severity)}%`,
-                    backgroundColor: severityToColor(action.severity),
-                  },
-                ]}
-              />
-            </View>
-            <Text style={styles.actionMetricMeta}>
-              {action.type.replace(/_/g, ' ')} | {action.severity.toLowerCase()} priority
-            </Text>
-          </View>
-        ))}
-      </View>
+      {actions.length === 0 ? (
+        <View style={styles.emptyActionsContainer}>
+          <Feather name="check-circle" size={24} color="#94A3B8" />
+          <Text style={styles.emptyActionsTitle}>No pending actions</Text>
+          <Text style={styles.emptyActionsSubtitle}>The operational queue is clear. New recommendations will appear here when generated.</Text>
+        </View>
+      ) : (
+        <View style={styles.caseMetrics}>
+          {actions.slice(0, 5).map((action) => (
+            <TouchableOpacity key={action.id} activeOpacity={0.78} onPress={onActionPress} style={styles.actionMetricRow}>
+              <View style={styles.actionMetricTopRow}>
+                <Text style={styles.caseMetricName}>{action.title}</Text>
+                <Text style={styles.caseMetricValue}>{action.status.replace(/_/g, ' ')}</Text>
+              </View>
+              <View style={styles.caseMetricTrack}>
+                <View
+                  style={[
+                    styles.caseMetricFill,
+                    {
+                      width: `${severityToProgress(action.severity)}%`,
+                      backgroundColor: severityToColor(action.severity),
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={styles.actionMetricMeta}>
+                {action.type.replace(/_/g, ' ')} | {action.severity.toLowerCase()} priority
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       <Button
         label="View Full Epidemiological Report"
@@ -426,8 +509,33 @@ function positionZones(zones: AdminDashboardSummaryResponse['mapZones']): AdminD
       top: `${Math.max(12, Math.min(82, top))}%`,
       left: `${Math.max(12, Math.min(82, left))}%`,
       borderColor: zone.status.toUpperCase().includes('CRITICAL') ? '#EF4444' : zone.status.toUpperCase().includes('WARNING') ? '#F97316' : '#0003B8',
+      latitude: zone.latitude,
+      longitude: zone.longitude,
     };
   });
+}
+
+function getAdminMapCenter(zones: AdminDashboardZone[]) {
+  const geocodedZones = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (geocodedZones.length === 0) return null;
+  return {
+    latitude: geocodedZones.reduce((sum, zone) => sum + (zone.latitude as number), 0) / geocodedZones.length,
+    longitude: geocodedZones.reduce((sum, zone) => sum + (zone.longitude as number), 0) / geocodedZones.length,
+  };
+}
+
+function getAdminMapBounds(center: { latitude: number; longitude: number } | null) {
+  if (!center) return undefined;
+  const latitudePadding = 0.8;
+  const longitudePadding = 0.8;
+  return {
+    minLatitude: center.latitude - latitudePadding,
+    maxLatitude: center.latitude + latitudePadding,
+    minLongitude: center.longitude - longitudePadding,
+    maxLongitude: center.longitude + longitudePadding,
+  };
 }
 
 function buildMapOverlayItems(zones: AdminDashboardZone[]) {
@@ -464,6 +572,49 @@ function severityToProgress(value: string) {
   if (value === 'HIGH') return 92;
   if (value === 'MEDIUM') return 64;
   return 38;
+}
+
+function MoreAlertsOverlay({
+  visible,
+  alerts,
+  onClose,
+  onSelectAlert,
+}: {
+  visible: boolean;
+  alerts: AdminDashboardAlert[];
+  onClose: () => void;
+  onSelectAlert: (alert: AdminDashboardAlert) => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.moreAlertsOverlay}>
+        <Pressable style={styles.moreAlertsBackdrop} onPress={onClose} />
+        <View style={styles.moreAlertsCard}>
+          <View style={styles.moreAlertsHeader}>
+            <View>
+              <Text style={styles.moreAlertsEyebrow}>ALERTS</Text>
+              <Text style={styles.moreAlertsTitle}>All Disease Alerts</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
+              <Feather name="x" size={18} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
+            {alerts.map((alert) => (
+              <TouchableOpacity key={alert.id} activeOpacity={0.82} onPress={() => onSelectAlert(alert)}>
+                <AlertCard
+                  title={alert.title}
+                  description={alert.description}
+                  variant={alert.variant}
+                  style={styles.alertCard}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -758,6 +909,144 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     fontWeight: '700',
     color: '#243347',
+  },
+  emptyStateCard: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 8,
+    minHeight: 132,
+    borderRadius: 12,
+  },
+  emptyStateTitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: '#475569',
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#94A3B8',
+    textAlign: 'center',
+  },
+  emptyActionsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    gap: 8,
+    marginBottom: 24,
+  },
+  emptyActionsTitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: '#475569',
+    textAlign: 'center',
+  },
+  emptyActionsSubtitle: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#94A3B8',
+    textAlign: 'center',
+  },
+  moreAlertsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: '#EEF1FF',
+    borderWidth: 1,
+    borderColor: '#C9D1FF',
+  },
+  moreAlertsText: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#0003B8',
+  },
+  moreAlertsBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#0003B8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 5,
+  },
+  moreAlertsBadgeText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  moreAlertsOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 28,
+  },
+  moreAlertsBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.74)',
+  },
+  moreAlertsCard: {
+    width: '100%',
+    maxWidth: 520,
+    maxHeight: '80%',
+    borderRadius: 20,
+    backgroundColor: '#FCFDFE',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 32,
+    elevation: 6,
+  },
+  moreAlertsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  moreAlertsEyebrow: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    color: '#1718C7',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  moreAlertsTitle: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  moreAlertsList: {
+    padding: 24,
+    gap: 14,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
 });
 
