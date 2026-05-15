@@ -127,7 +127,7 @@ export function PatientEvaluationForm({
               options={providedSexOptions}
               value={sexValue}
               onChange={onSexChange}
-              style={styles.fieldBlock}
+              style={[styles.fieldBlock, styles.sexFieldBlock]}
             />
           </View>
         </View>
@@ -187,10 +187,12 @@ export function PatientEvaluationForm({
 const styles = StyleSheet.create({
   container: {
     padding: 0,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   header: {
     backgroundColor: '#FAFCFF',
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
     borderTopWidth: 4,
     borderTopColor: '#0003B8',
     borderBottomWidth: 1,
@@ -234,6 +236,9 @@ const styles = StyleSheet.create({
   },
   fieldBlock: {
     marginBottom: 0,
+  },
+  sexFieldBlock: {
+    marginTop: 18,
   },
   fieldInputContainer: {
     height: 42,

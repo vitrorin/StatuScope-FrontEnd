@@ -7,6 +7,8 @@ export interface AssistantSuggestionsListProps {
   heading?: string;
   primaryLabel?: string;
   localityRiskLabel?: string;
+  formatRiskLevel?: (riskLevel: string | null | undefined) => string;
+  formatDiseaseName?: (name: string | null | undefined) => string;
   style?: ViewStyle;
 }
 
@@ -29,6 +31,8 @@ export function AssistantSuggestionsList({
   heading = 'Differential suggestions',
   primaryLabel = 'primary',
   localityRiskLabel = 'Locality risk',
+  formatRiskLevel,
+  formatDiseaseName,
   style,
 }: AssistantSuggestionsListProps) {
   if (!suggestions.length) {
@@ -52,7 +56,7 @@ export function AssistantSuggestionsList({
                 <Text style={styles.rankPillText}>{suggestion.rankOrder}</Text>
               </View>
               <Text style={styles.displayName} numberOfLines={2}>
-                {suggestion.displayName}
+                {formatDiseaseName ? formatDiseaseName(suggestion.displayName) : suggestion.displayName}
                 {suggestion.primary ? <Text style={styles.primaryTag}>  · {primaryLabel}</Text> : null}
               </Text>
               {confidenceLabel ? <Text style={styles.confidence}>{confidenceLabel}</Text> : null}
@@ -61,7 +65,7 @@ export function AssistantSuggestionsList({
             {suggestion.localityRiskLevel ? (
               <View style={[styles.riskBadge, { backgroundColor: riskColors.background }]}>
                 <Text style={[styles.riskBadgeText, { color: riskColors.text }]}>
-                  {localityRiskLabel}: {suggestion.localityRiskLevel}
+                  {localityRiskLabel}: {formatRiskLevel ? formatRiskLevel(suggestion.localityRiskLevel) : suggestion.localityRiskLevel}
                 </Text>
               </View>
             ) : null}

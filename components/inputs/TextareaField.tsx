@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     minHeight: 120,
   },
   textareaFocused: {
-    borderWidth: 2,
+    borderColor: '#0003B8',
   },
   textareaDisabled: {
     backgroundColor: '#F9FAFB',

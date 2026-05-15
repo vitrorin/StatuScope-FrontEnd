@@ -322,7 +322,7 @@
         "insight": "AI Differential Insight",
         "consulting": "Consulting diagnosis assistant...",
         "translating": "Translating response...",
-        "inputPlaceholder": "Ask AI for further differential diagnosis...",
+        "inputPlaceholder": "Continue the conversation...",
         "analysisPrompt": "Evaluate this patient and suggest differential diagnoses, risk factors, and next diagnostic steps.",
         "analysisPromptWithSymptoms": "Evaluate this patient and suggest differential diagnoses, risk factors, and next diagnostic steps. Symptoms: {{symptoms}}"
       },
@@ -336,10 +336,24 @@
         "highestActivity": "Highest activity: {{diseases}}."
       },
       "suggestions": {
-        "heading": "Differential suggestions",
+        "heading": "Possible related local alerts",
         "primary": "primary",
-        "localityRisk": "Locality risk",
+        "localityRisk": "Risk",
         "unknown": "Unknown"
+      },
+      "riskLevels": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low",
+        "none": "No signal"
+      },
+      "localAlerts": {
+        "caseSummary": "{{count}} related cases across {{municipalities}} nearby municipalities.",
+        "totalCases": "Related cases",
+        "stateDetailTitle": "State-level outbreaks",
+        "detailTitle": "Top 5 nearby municipalities",
+        "cases": "{{count}} cases",
+        "stateOnly": "The available signal is statewide; no nearby municipality breakdown is available for this alert."
       },
       "tests": {
         "title": "Recommended Tests"
@@ -348,16 +362,20 @@
         "title": "Finalize Diagnosis",
         "subtitle": "Select a catalog disease, then confirm or override the assistant.",
         "currentRecommendation": "Current AI recommendation",
+        "selectAnotherDisease": "Select another disease",
         "searchPlaceholder": "Search disease catalog...",
         "selectedDisease": "Selected disease",
         "notesPlaceholder": "Optional note about why this diagnosis was confirmed or overridden...",
-        "confirmAi": "Confirm AI Diagnosis",
+        "confirmAi": "Confirm diagnosis",
         "overrideAi": "Override AI Diagnosis",
-        "saveFinal": "Save Final Diagnosis"
+        "saveFinal": "Save Final Diagnosis",
+        "otherDisease": "Other disease",
+        "otherDiseasePlaceholder": "Type the disease"
       },
       "feedback": {
         "saving": "Saving diagnosis feedback...",
         "selectDiseaseError": "Select a normalized disease from the database before finalizing.",
+        "otherDiseaseRequired": "Type the other disease before finalizing.",
         "status": {
           "confirmed": "AI diagnosis confirmed",
           "overridden": "AI diagnosis overridden",

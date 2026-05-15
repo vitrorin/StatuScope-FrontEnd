@@ -322,7 +322,7 @@
         "insight": "Insight diferencial de IA",
         "consulting": "Consultando al asistente de diagnóstico...",
         "translating": "Traduciendo respuesta...",
-        "inputPlaceholder": "Pregunta a la IA por más diagnóstico diferencial...",
+        "inputPlaceholder": "Continúa con la conversación...",
         "analysisPrompt": "Evalúa este paciente y sugiere diagnósticos diferenciales, factores de riesgo y siguientes pasos diagnósticos.",
         "analysisPromptWithSymptoms": "Evalúa este paciente y sugiere diagnósticos diferenciales, factores de riesgo y siguientes pasos diagnósticos. Síntomas: {{symptoms}}"
       },
@@ -336,10 +336,24 @@
         "highestActivity": "Mayor actividad: {{diseases}}."
       },
       "suggestions": {
-        "heading": "Sugerencias diferenciales",
+        "heading": "Posibles alertas locales relacionadas",
         "primary": "principal",
-        "localityRisk": "Riesgo local",
+        "localityRisk": "Riesgo",
         "unknown": "Desconocido"
+      },
+      "riskLevels": {
+        "high": "Alto",
+        "medium": "Medio",
+        "low": "Bajo",
+        "none": "Sin señal"
+      },
+      "localAlerts": {
+        "caseSummary": "{{count}} casos relacionados en {{municipalities}} municipios cercanos.",
+        "totalCases": "Casos relacionados",
+        "stateDetailTitle": "Brotes a nivel estatal",
+        "detailTitle": "Top 5 municipios cercanos",
+        "cases": "{{count}} casos",
+        "stateOnly": "La señal disponible es estatal; no hay desglose municipal cercano para esta alerta."
       },
       "tests": {
         "title": "Pruebas recomendadas"
@@ -348,16 +362,20 @@
         "title": "Finalizar diagnóstico",
         "subtitle": "Selecciona una enfermedad del catálogo y confirma o reemplaza al asistente.",
         "currentRecommendation": "Recomendación actual de IA",
+        "selectAnotherDisease": "Seleccionar otra enfermedad",
         "searchPlaceholder": "Buscar en catálogo de enfermedades...",
         "selectedDisease": "Enfermedad seleccionada",
         "notesPlaceholder": "Nota opcional sobre por qué se confirmó o reemplazó este diagnóstico...",
-        "confirmAi": "Confirmar diagnóstico IA",
+        "confirmAi": "Confirmar diagnóstico",
         "overrideAi": "Reemplazar diagnóstico IA",
-        "saveFinal": "Guardar diagnóstico final"
+        "saveFinal": "Guardar diagnóstico final",
+        "otherDisease": "Otra enfermedad",
+        "otherDiseasePlaceholder": "Escribe la enfermedad"
       },
       "feedback": {
         "saving": "Guardando retroalimentación diagnóstica...",
         "selectDiseaseError": "Selecciona una enfermedad normalizada de la base de datos antes de finalizar.",
+        "otherDiseaseRequired": "Escribe el nombre de la otra enfermedad antes de finalizar.",
         "status": {
           "confirmed": "Diagnóstico IA confirmado",
           "overridden": "Diagnóstico IA reemplazado",
