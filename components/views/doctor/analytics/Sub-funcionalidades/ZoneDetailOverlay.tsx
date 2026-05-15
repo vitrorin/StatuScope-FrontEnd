@@ -2,6 +2,7 @@ import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
+import { useTranslation } from '@/i18n';
 
 export interface AnalyticsZoneDetail {
   id: string;
@@ -21,6 +22,7 @@ interface ZoneDetailOverlayProps {
 }
 
 export function ZoneDetailOverlay({ visible, zone, onClose }: ZoneDetailOverlayProps) {
+  const { t } = useTranslation();
   if (!zone) return null;
 
   return (
@@ -30,7 +32,7 @@ export function ZoneDetailOverlay({ visible, zone, onClose }: ZoneDetailOverlayP
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Zone Detail</Text>
+              <Text style={styles.eyebrow}>{t('common.analytics.overlays.zoneDetail')}</Text>
               <Text style={styles.title}>{zone.name}</Text>
               <Text style={styles.subtitle}>{zone.note}</Text>
             </View>
@@ -40,14 +42,14 @@ export function ZoneDetailOverlay({ visible, zone, onClose }: ZoneDetailOverlayP
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricCard label="Risk Level" value={zone.risk} />
-            <MetricCard label="Primary Disease" value={zone.disease} />
-            <MetricCard label="Radius" value={zone.radius} />
-            <MetricCard label="Priority" value={zone.priority} />
+            <MetricCard label={t('common.analytics.overlays.riskLevel')} value={zone.risk} />
+            <MetricCard label={t('common.analytics.overlays.primaryDisease')} value={zone.disease} />
+            <MetricCard label={t('common.analytics.overlays.radius')} value={zone.radius} />
+            <MetricCard label={t('common.analytics.overlays.priority')} value={zone.priority} />
           </View>
 
           <CardBase style={styles.noteCard}>
-            <Text style={styles.noteTitle}>Observed Trend</Text>
+            <Text style={styles.noteTitle}>{t('common.analytics.overlays.observedTrend')}</Text>
             <Text style={styles.noteText}>{zone.trend}</Text>
           </CardBase>
         </CardBase>

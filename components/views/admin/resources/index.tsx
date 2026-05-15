@@ -194,7 +194,7 @@ export function AdminResources() {
                   <ProgressBar
                     value={availableBedPercentage}
                     color="#1718C7"
-                    trackColor="#E9EDF6"
+                    trackColor="'#E9EDF6'"
                     style={styles.availableProgress}
                   />
                   <Text style={styles.availablePercent}>{availableBedPercentage}%</Text>
@@ -206,8 +206,8 @@ export function AdminResources() {
                 unitText="units"
                 statusText="High demand in ICU"
                 variant="critical"
-                valueColorOverride="#0F172A"
-                statusColorOverride="#F04B4B"
+                valueColorOverride="'#0F172A'"
+                statusColorOverride="'#F04B4B'"
                 style={styles.capacityCard}
               />
             </View>
@@ -230,9 +230,9 @@ export function AdminResources() {
                     subtitle={`${resourceConfiguration.doctors} total doctors configured`}
                     value={resourceConfiguration.doctors || '0'}
                     variant="doctor"
-                    valueColor="#0F172A"
+                    valueColor="'#0F172A'"
                     icon={<MaterialCommunityIcons name="stethoscope" size={16} color="#4B7BFF" />}
-                    iconBackgroundColor="#EAF1FF"
+                    iconBackgroundColor="'#EAF1FF'"
                     style={styles.staffingItem}
                   />
                   <StaffingStatusCard
@@ -240,9 +240,9 @@ export function AdminResources() {
                     subtitle={`${resourceConfiguration.nurses} nursing staff configured`}
                     value={resourceConfiguration.nurses || '0'}
                     variant="nurse"
-                    valueColor="#0F172A"
+                    valueColor="'#0F172A'"
                     icon={<MaterialCommunityIcons name="medical-bag" size={16} color="#35C86B" />}
-                    iconBackgroundColor="#E8FBEE"
+                    iconBackgroundColor="'#E8FBEE'"
                     style={styles.staffingItem}
                   />
                   <StaffingStatusCard
@@ -250,10 +250,10 @@ export function AdminResources() {
                     subtitle={`${resourceConfiguration.neurologists} neurologists + hospital specialties`}
                     value={String(totalSpecialists).padStart(2, '0')}
                     variant="specialist"
-                    highlightColor="#FACC15"
-                    valueColor="#0F172A"
+                    highlightColor="'#FACC15'"
+                    valueColor="'#0F172A'"
                     icon={<MaterialCommunityIcons name="sprout" size={16} color="#F2B300" />}
-                    iconBackgroundColor="#FFF6D9"
+                    iconBackgroundColor="'#FFF6D9'"
                     style={styles.staffingItem}
                   />
                 </View>
@@ -423,7 +423,7 @@ function UtilizationCell({
 }) {
   return (
     <View style={styles.utilizationCell}>
-      <ProgressBar value={progress} color={color} trackColor="#EEF2F7" style={styles.utilizationBar} />
+      <ProgressBar value={progress} color={color} trackColor="'#EEF2F7'" style={styles.utilizationBar} />
       <Text style={styles.utilizationValue}>{value}</Text>
     </View>
   );

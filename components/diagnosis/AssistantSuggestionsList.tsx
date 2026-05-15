@@ -4,6 +4,9 @@ import { AssistantSuggestion } from '@/lib/diagnosisAssistant';
 
 export interface AssistantSuggestionsListProps {
   suggestions: AssistantSuggestion[];
+  heading?: string;
+  primaryLabel?: string;
+  localityRiskLabel?: string;
   style?: ViewStyle;
 }
 
@@ -21,7 +24,13 @@ function formatConfidence(confidence?: number | null): string | null {
   return `${Math.round(confidence * 100)}%`;
 }
 
-export function AssistantSuggestionsList({ suggestions, style }: AssistantSuggestionsListProps) {
+export function AssistantSuggestionsList({
+  suggestions,
+  heading = 'Differential suggestions',
+  primaryLabel = 'primary',
+  localityRiskLabel = 'Locality risk',
+  style,
+}: AssistantSuggestionsListProps) {
   if (!suggestions.length) {
     return null;
   }
@@ -30,7 +39,7 @@ export function AssistantSuggestionsList({ suggestions, style }: AssistantSugges
 
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.heading}>Differential suggestions</Text>
+      <Text style={styles.heading}>{heading}</Text>
       {ordered.map((suggestion) => {
         const confidenceLabel = formatConfidence(suggestion.confidence);
         const riskKey = (suggestion.localityRiskLevel ?? 'NONE') as keyof typeof RISK_COLORS;
@@ -44,7 +53,7 @@ export function AssistantSuggestionsList({ suggestions, style }: AssistantSugges
               </View>
               <Text style={styles.displayName} numberOfLines={2}>
                 {suggestion.displayName}
-                {suggestion.primary ? <Text style={styles.primaryTag}>  · primary</Text> : null}
+                {suggestion.primary ? <Text style={styles.primaryTag}>  · {primaryLabel}</Text> : null}
               </Text>
               {confidenceLabel ? <Text style={styles.confidence}>{confidenceLabel}</Text> : null}
             </View>
@@ -52,7 +61,7 @@ export function AssistantSuggestionsList({ suggestions, style }: AssistantSugges
             {suggestion.localityRiskLevel ? (
               <View style={[styles.riskBadge, { backgroundColor: riskColors.background }]}>
                 <Text style={[styles.riskBadgeText, { color: riskColors.text }]}>
-                  Locality risk: {suggestion.localityRiskLevel}
+                  {localityRiskLabel}: {suggestion.localityRiskLevel}
                 </Text>
               </View>
             ) : null}

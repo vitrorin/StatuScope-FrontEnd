@@ -25,7 +25,7 @@ export function ProgressMetricRow({
         <Text style={styles.label}>{label}</Text>
         <Text style={styles.valueText}>{valueText}</Text>
       </View>
-      <ProgressBar value={progress} color={barColor} height={barHeight} trackColor="#EEF2F7" />
+      <ProgressBar value={progress} color={barColor} height={barHeight} trackColor="'#EEF2F7'" />
     </View>
   );
 }

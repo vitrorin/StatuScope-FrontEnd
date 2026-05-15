@@ -37,8 +37,7 @@ export function ExpandedMapOverlay({
 
   return (
     <Modal
-      visible={visible}
-      transparent
+      visible={visible} transparent
       animationType="fade"
       onRequestClose={() => {
         setZoom(1);

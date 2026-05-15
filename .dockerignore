@@ -1,0 +1,10 @@
+node_modules
+dist
+.expo
+.git
+.gitignore
+README.md
+npm-debug.log
+yarn-error.log
+coverage
+storybook-static

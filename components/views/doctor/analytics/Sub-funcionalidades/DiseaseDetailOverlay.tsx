@@ -2,6 +2,7 @@ import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
+import { useTranslation } from '@/i18n';
 
 export interface AnalyticsDiseaseDetail {
   id: string;
@@ -20,6 +21,7 @@ interface DiseaseDetailOverlayProps {
 }
 
 export function DiseaseDetailOverlay({ visible, disease, onClose }: DiseaseDetailOverlayProps) {
+  const { t } = useTranslation();
   if (!disease) return null;
 
   return (
@@ -29,7 +31,7 @@ export function DiseaseDetailOverlay({ visible, disease, onClose }: DiseaseDetai
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Disease Detail</Text>
+              <Text style={styles.eyebrow}>{t('common.analytics.overlays.diseaseDetail')}</Text>
               <Text style={styles.title}>{disease.name}</Text>
               <Text style={styles.subtitle}>{disease.trend}</Text>
             </View>
@@ -39,10 +41,10 @@ export function DiseaseDetailOverlay({ visible, disease, onClose }: DiseaseDetai
           </View>
 
           <View style={styles.metricsRow}>
-            <MetricCard label="Current Cases" value={disease.cases} />
-            <MetricCard label="Weekly Growth" value={disease.weeklyGrowth} />
-            <MetricCard label="Risk Level" value={disease.riskLevel} />
-            <MetricCard label="Affected Zones" value={disease.affectedZones} />
+            <MetricCard label={t('common.analytics.overlays.currentCases')} value={disease.cases} />
+            <MetricCard label={t('common.analytics.overlays.weeklyGrowth')} value={disease.weeklyGrowth} />
+            <MetricCard label={t('common.analytics.overlays.riskLevel')} value={disease.riskLevel} />
+            <MetricCard label={t('common.analytics.overlays.affectedZones')} value={disease.affectedZones} />
           </View>
         </CardBase>
       </View>

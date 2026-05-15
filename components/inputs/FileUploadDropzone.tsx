@@ -9,6 +9,8 @@ export interface FileUploadDropzoneProps {
   description?: string;
   supportedFormats?: string;
   maxSizeText?: string;
+  browseLabel?: string;
+  upToLabel?: string;
   state?: FileUploadState;
   fileName?: string;
   error?: string;
@@ -21,6 +23,8 @@ export function FileUploadDropzone({
   description = 'Drag and drop files or',
   supportedFormats = 'PDF, JPG, PNG',
   maxSizeText = '10MB',
+  browseLabel = 'browse',
+  upToLabel = 'up to',
   state = 'empty',
   fileName,
   error,
@@ -57,11 +61,11 @@ export function FileUploadDropzone({
             <View style={styles.browseRow}>
               <Text style={styles.description}>{description} </Text>
               <TouchableOpacity onPress={onBrowsePress} activeOpacity={0.75}>
-                <Text style={styles.browseLink}>browse</Text>
+                <Text style={styles.browseLink}>{browseLabel}</Text>
               </TouchableOpacity>
             </View>
             <Text style={styles.formatText}>
-              {supportedFormats} up to {maxSizeText}
+              {supportedFormats} {upToLabel} {maxSizeText}
             </Text>
           </>
         )}
