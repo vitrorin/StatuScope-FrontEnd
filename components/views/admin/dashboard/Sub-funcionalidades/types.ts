@@ -38,4 +38,6 @@ export interface AdminDashboardZone {
   left: string;
   borderColor: string;
   fillColor?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }

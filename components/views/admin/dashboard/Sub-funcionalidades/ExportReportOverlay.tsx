@@ -7,12 +7,23 @@ import { CardBase } from '@/components/patterns/CardBase';
 interface ExportReportOverlayProps {
   visible: boolean;
   onClose: () => void;
+  onExport?: (reportType: string) => void;
 }
 
 const reportTypes = ['Executive Summary', 'Hospital Overview', 'Epidemiological Snapshot'];
 
-export function ExportReportOverlay({ visible, onClose }: ExportReportOverlayProps) {
+export function ExportReportOverlay({ visible, onClose, onExport }: ExportReportOverlayProps) {
   const [selectedReport, setSelectedReport] = useState(reportTypes[0]);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleGenerate = () => {
+    if (onExport) {
+      setIsExporting(true);
+      onExport(selectedReport);
+      setIsExporting(false);
+    }
+    onClose();
+  };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -40,7 +51,23 @@ export function ExportReportOverlay({ visible, onClose }: ExportReportOverlayPro
                   onPress={() => setSelectedReport(report)}
                   activeOpacity={0.75}
                 >
-                  <Text style={[styles.optionText, active && styles.optionTextActive]}>{report}</Text>
+                  <View style={styles.optionIcon}>
+                    <Feather
+                      name={report === 'Executive Summary' ? 'file-text' : report === 'Hospital Overview' ? 'home' : 'activity'}
+                      size={16}
+                      color={active ? '#1718C7' : '#64748B'}
+                    />
+                  </View>
+                  <View style={styles.optionCopy}>
+                    <Text style={[styles.optionTitle, active && styles.optionTitleActive]}>{report}</Text>
+                    <Text style={styles.optionDescription}>
+                      {report === 'Executive Summary'
+                        ? 'High-level overview of key metrics and alerts.'
+                        : report === 'Hospital Overview'
+                          ? 'Detailed capacity and resource status.'
+                          : 'Disease breakdown and epidemiological trends.'}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -48,7 +75,13 @@ export function ExportReportOverlay({ visible, onClose }: ExportReportOverlayPro
 
           <View style={styles.footer}>
             <Button label="Close" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
-            <Button label="Generate Export" variant="primary" size="md" style={styles.primaryButton} onPress={onClose} />
+            <Button
+              label={isExporting ? 'Generating...' : 'Generate Export'}
+              variant="primary"
+              size="md"
+              style={styles.primaryButton}
+              onPress={handleGenerate}
+            />
           </View>
         </CardBase>
       </View>
@@ -76,6 +109,9 @@ const styles = StyleSheet.create({
   closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
   options: { padding: 24, gap: 12 },
   option: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 14,
@@ -87,8 +123,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF1FF',
     borderColor: '#C9D1FF',
   },
-  optionText: { fontSize: 14, lineHeight: 20, fontWeight: '700', color: '#526174' },
-  optionTextActive: { color: '#1718C7' },
+  optionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F6F8FC',
+    marginTop: 2,
+  },
+  optionCopy: { flex: 1 },
+  optionTitle: { fontSize: 14, lineHeight: 20, fontWeight: '700', color: '#526174' },
+  optionTitleActive: { color: '#1718C7' },
+  optionDescription: { fontSize: 12, lineHeight: 16, color: '#94A3B8', marginTop: 2 },
   footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingHorizontal: 24, paddingTop: 18, paddingBottom: 24, borderTopWidth: 1, borderTopColor: '#EEF2F7' },
   footerButton: { minWidth: 120 },
   primaryButton: { minWidth: 160, backgroundColor: '#1718C7', borderColor: '#1718C7' },
