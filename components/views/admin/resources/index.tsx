@@ -206,7 +206,13 @@ export function AdminResources() {
           <View style={styles.container}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Capacity Status</Text>
+                <View style={styles.sectionIconWrap}>
+                  <MaterialCommunityIcons name="hospital-building" size={18} color="#1718C7" />
+                </View>
+                <View>
+                  <Text style={styles.sectionTitle}>Capacity Status</Text>
+                  <Text style={styles.sectionSubtitle}>Beds, staffing and inventory signals in one operational view.</Text>
+                </View>
               </View>
               <Button
                 label={saving ? 'Saving...' : 'Edit Configuration'}
@@ -845,23 +851,40 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   container: {
-    gap: 18,
+    padding: 28,
+    gap: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 18,
   },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
+    flex: 1,
+  },
+  sectionIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF1FF',
   },
   sectionTitle: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '900',
     color: '#0F172A',
+  },
+  sectionSubtitle: {
+    marginTop: 3,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#70839B',
   },
   sectionAction: {
     fontSize: 12,
@@ -898,12 +921,15 @@ const styles = StyleSheet.create({
   summaryStrip: {
     flexDirection: 'row',
     gap: 14,
+    flexWrap: 'wrap',
   },
   summaryTile: {
     flex: 1,
+    minWidth: 220,
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
   },
   summaryTileLabel: {
     fontSize: 12,
@@ -923,9 +949,11 @@ const styles = StyleSheet.create({
   capacityRow: {
     flexDirection: 'row',
     gap: 16,
+    flexWrap: 'wrap',
   },
   capacityCard: {
     flex: 1,
+    minWidth: 240,
   },
   availableCard: {
     padding: 20,
@@ -971,23 +999,38 @@ const styles = StyleSheet.create({
   middleRow: {
     flexDirection: 'row',
     gap: 16,
+    flexWrap: 'wrap',
   },
   staffingPanel: {
     flex: 1,
+    minWidth: 360,
     padding: 0,
     overflow: 'hidden',
+    borderRadius: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.05,
+    shadowRadius: 28,
+    elevation: 3,
   },
   inventoryPanel: {
     flex: 1,
+    minWidth: 360,
     padding: 0,
     overflow: 'hidden',
+    borderRadius: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.05,
+    shadowRadius: 28,
+    elevation: 3,
   },
   panelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#EDF2F7',
   },
@@ -1055,14 +1098,21 @@ const styles = StyleSheet.create({
   tablePanel: {
     padding: 0,
     overflow: 'hidden',
+    borderRadius: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.04,
+    shadowRadius: 24,
+    elevation: 2,
   },
   tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 14,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
   },
   tableTitle: {
     fontSize: 14,

@@ -27,8 +27,11 @@ import {
 } from '@/lib/adminOperational';
 import { initialsFromName } from '@/lib/format';
 
+<<<<<<< Updated upstream
 const VISIBLE_ALERTS_LIMIT = 3;
 
+=======
+>>>>>>> Stashed changes
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminDashboard() {
@@ -41,6 +44,7 @@ export function AdminDashboard() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isProtocolOpen, setIsProtocolOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<AdminDashboardAlert | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<AdminDashboardMetric | null>(null);
   const [selectedZone, setSelectedZone] = useState<AdminDashboardZone | null>(null);
@@ -50,7 +54,7 @@ export function AdminDashboard() {
   const topGap = 12;
   const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
   const mapWidth = metricWidth ? metricWidth * 2 + gridGap : undefined;
-  const topCardWidth = gridWidth > 0 ? (gridWidth - topGap * 5) / 6 : undefined;
+  const topCardWidth = gridWidth > 0 ? (gridWidth - topGap * 3) / 4 : undefined;
 
   const loadDashboard = useCallback(async () => {
     setLoadState((current) => (current === 'success' ? 'success' : 'loading'));
@@ -74,11 +78,19 @@ export function AdminDashboard() {
     return dashboard.topCards.map((card) => mapMetric(card, dashboard));
   }, [dashboard]);
   const alerts = useMemo(() => (dashboard?.alerts ?? []).map(mapAlert), [dashboard]);
+<<<<<<< Updated upstream
   const visibleAlerts = useMemo(() => alerts.slice(0, VISIBLE_ALERTS_LIMIT), [alerts]);
   const remainingAlerts = useMemo(() => alerts.slice(VISIBLE_ALERTS_LIMIT), [alerts]);
   const mapZones = useMemo(() => positionZones(dashboard?.mapZones ?? []), [dashboard]);
   const mapCenter = useMemo(() => getAdminMapCenter(mapZones), [mapZones]);
   const mapBounds = useMemo(() => getAdminMapBounds(mapCenter), [mapCenter]);
+=======
+  const visibleAlerts = useMemo(() => (showAllAlerts ? alerts : alerts.slice(0, 3)), [alerts, showAllAlerts]);
+  const hiddenAlertsCount = Math.max(0, alerts.length - visibleAlerts.length);
+  const mapZones = useMemo(() => positionZones(dashboard?.mapZones ?? []), [dashboard]);
+  const mapCenter = useMemo(() => getMapCenter(mapZones), [mapZones]);
+  const mapBounds = useMemo(() => getMapBounds(mapZones), [mapZones]);
+>>>>>>> Stashed changes
   const actionCards = useMemo(() => dashboard?.recommendedActions ?? [], [dashboard]);
 
   return (
@@ -181,6 +193,7 @@ export function AdminDashboard() {
                     overlayBadgeLabel="SECURE"
                     overlayItems={buildMapOverlayItems(mapZones)}
                     showControls
+                    mapHeight={470}
                     legendItems={[
                       { label: 'Critical', color: '#EF4444' },
                       { label: 'Warning', color: '#F97316' },
@@ -195,11 +208,18 @@ export function AdminDashboard() {
                     mapCenterLatitude={mapCenter?.latitude}
                     mapCenterLongitude={mapCenter?.longitude}
                     mapZoom={10}
+<<<<<<< Updated upstream
                     minZoom={7}
                     maxZoom={14}
                     mapBounds={mapBounds}
                     enablePan
                     onMapHoverChange={setIsMapHovered}
+=======
+                    minZoom={9}
+                    maxZoom={14}
+                    mapBounds={mapBounds}
+                    enablePan
+>>>>>>> Stashed changes
                     pins={mapZones.map((zone) => ({
                       id: zone.id,
                       top: zone.top,
@@ -226,6 +246,7 @@ export function AdminDashboard() {
                       <Text style={styles.alertsTitle}>Contextual Disease Alerts</Text>
                     </View>
                     <View style={styles.alertsList}>
+<<<<<<< Updated upstream
                       {alerts.length === 0 ? (
                         <AlertCard
                           title="No active alerts"
@@ -264,6 +285,34 @@ export function AdminDashboard() {
                           ) : null}
                         </>
                       )}
+=======
+                      {visibleAlerts.map((alert) => (
+                        <TouchableOpacity
+                          key={alert.id}
+                          activeOpacity={0.8}
+                          onPress={() => setSelectedAlert(alert)}
+                        >
+                          <AlertCard
+                            title={alert.title}
+                            description={alert.description}
+                            variant={alert.variant}
+                            style={styles.alertCard}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                      {alerts.length > 3 ? (
+                        <TouchableOpacity
+                          style={styles.moreAlertsButton}
+                          activeOpacity={0.82}
+                          onPress={() => setShowAllAlerts((current) => !current)}
+                        >
+                          <Feather name={showAllAlerts ? 'chevron-up' : 'chevron-down'} size={16} color="#0003B8" />
+                          <Text style={styles.moreAlertsText}>
+                            {showAllAlerts ? 'Show fewer alerts' : `Show ${hiddenAlertsCount} more alerts`}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+>>>>>>> Stashed changes
                     </View>
                   </View>
 
@@ -506,6 +555,8 @@ function positionZones(zones: AdminDashboardSummaryResponse['mapZones']): AdminD
       priority: zone.status.toUpperCase().includes('CRITICAL') ? 'Immediate' : zone.status.toUpperCase().includes('WARNING') ? 'High' : 'Monitor',
       note: `${zone.municipalityName} is being tracked as part of the hospital alert perimeter.`,
       recommendedAction: `Coordinate intake planning against the ${zone.outbreakCount} outbreak signal(s) in ${zone.municipalityName}.`,
+      latitude: zone.latitude,
+      longitude: zone.longitude,
       top: `${Math.max(12, Math.min(82, top))}%`,
       left: `${Math.max(12, Math.min(82, left))}%`,
       borderColor: zone.status.toUpperCase().includes('CRITICAL') ? '#EF4444' : zone.status.toUpperCase().includes('WARNING') ? '#F97316' : '#0003B8',
@@ -515,17 +566,26 @@ function positionZones(zones: AdminDashboardSummaryResponse['mapZones']): AdminD
   });
 }
 
+<<<<<<< Updated upstream
 function getAdminMapCenter(zones: AdminDashboardZone[]) {
+=======
+function getMapCenter(zones: AdminDashboardZone[]) {
+>>>>>>> Stashed changes
   const geocodedZones = zones.filter(
     (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
   );
   if (geocodedZones.length === 0) return null;
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
   return {
     latitude: geocodedZones.reduce((sum, zone) => sum + (zone.latitude as number), 0) / geocodedZones.length,
     longitude: geocodedZones.reduce((sum, zone) => sum + (zone.longitude as number), 0) / geocodedZones.length,
   };
 }
 
+<<<<<<< Updated upstream
 function getAdminMapBounds(center: { latitude: number; longitude: number } | null) {
   if (!center) return undefined;
   const latitudePadding = 0.8;
@@ -535,6 +595,24 @@ function getAdminMapBounds(center: { latitude: number; longitude: number } | nul
     maxLatitude: center.latitude + latitudePadding,
     minLongitude: center.longitude - longitudePadding,
     maxLongitude: center.longitude + longitudePadding,
+=======
+function getMapBounds(zones: AdminDashboardZone[]) {
+  const geocodedZones = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (geocodedZones.length === 0) return undefined;
+
+  const latitudes = geocodedZones.map((zone) => zone.latitude as number);
+  const longitudes = geocodedZones.map((zone) => zone.longitude as number);
+  const latitudePadding = Math.max(0.18, (Math.max(...latitudes) - Math.min(...latitudes)) * 0.2);
+  const longitudePadding = Math.max(0.18, (Math.max(...longitudes) - Math.min(...longitudes)) * 0.2);
+
+  return {
+    minLatitude: Math.min(...latitudes) - latitudePadding,
+    maxLatitude: Math.max(...latitudes) + latitudePadding,
+    minLongitude: Math.min(...longitudes) - longitudePadding,
+    maxLongitude: Math.max(...longitudes) + longitudePadding,
+>>>>>>> Stashed changes
   };
 }
 
@@ -622,8 +700,8 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   container: {
-    padding: 32,
-    gap: 24,
+    padding: 28,
+    gap: 22,
   },
   heroRow: {
     flexDirection: 'row',
@@ -689,10 +767,11 @@ const styles = StyleSheet.create({
   topCardsRow: {
     flexDirection: 'row',
     gap: 12,
+    flexWrap: 'wrap',
   },
   metricCard: {
     flex: 1,
-    minHeight: 132,
+    minHeight: 124,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 12,
@@ -768,6 +847,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 16,
     alignItems: 'flex-start',
+    flexWrap: 'wrap',
   },
   mapCard: {
     flexShrink: 0,
@@ -788,8 +868,8 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   alertsHeader: {
-    paddingHorizontal: 24,
-    paddingVertical: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -800,21 +880,38 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   alertsList: {
-    padding: 24,
-    gap: 16,
+    padding: 18,
+    gap: 12,
     flexDirection: 'column',
   },
   alertCard: {
     width: '100%',
     minHeight: 0,
   },
+  moreAlertsButton: {
+    minHeight: 42,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#DCE3F5',
+    backgroundColor: '#F8FAFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  moreAlertsText: {
+    fontSize: 13,
+    lineHeight: 17,
+    fontWeight: '800',
+    color: '#0003B8',
+  },
   analyticsCard: {
     flexShrink: 0,
-    minHeight: 540,
+    minHeight: 470,
   },
   caseCard: {
     flexShrink: 0,
-    minHeight: 540,
+    minHeight: 470,
     paddingHorizontal: 16,
     paddingVertical: 18,
     borderRadius: 14,

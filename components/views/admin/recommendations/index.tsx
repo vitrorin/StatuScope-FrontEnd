@@ -181,10 +181,10 @@ export function AdminRecommendations() {
             ) : null}
 
             <View style={styles.summaryRow}>
-              <SummaryTile label="Active Queue" value={String(tabBadges.active)} />
-              <SummaryTile label="In Progress" value={String(tabBadges.inProgress)} />
-              <SummaryTile label="Completed" value={String(recommendations.filter((item) => item.status === 'completed').length)} />
-              <SummaryTile label="Rejected" value={String(recommendations.filter((item) => item.status === 'rejected').length)} />
+              <SummaryTile label="Active Queue" value={String(tabBadges.active)} icon="zap" tone="active" />
+              <SummaryTile label="High Urgency" value={String(tabBadges.high)} icon="alert-triangle" tone="critical" />
+              <SummaryTile label="In Progress" value={String(tabBadges.inProgress)} icon="loader" tone="progress" />
+              <SummaryTile label="Archived" value={String(tabBadges.archive)} icon="archive" tone="neutral" />
             </View>
 
             <View style={styles.tabsRow}>
@@ -441,11 +441,27 @@ function AdminRecommendationCard({
   );
 }
 
-function SummaryTile({ label, value }: { label: string; value: string }) {
+function SummaryTile({
+  label,
+  value,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
+  tone: 'active' | 'critical' | 'progress' | 'neutral';
+}) {
+  const color = tone === 'critical' ? '#EF4444' : tone === 'progress' ? '#F59E0B' : tone === 'neutral' ? '#64748B' : '#1718C7';
   return (
-    <CardBase style={styles.summaryTile}>
-      <Text style={styles.summaryLabel}>{label}</Text>
-      <Text style={styles.summaryValue}>{value}</Text>
+    <CardBase style={[styles.summaryTile, tone === 'critical' && styles.summaryTileCritical]}>
+      <View style={[styles.summaryIcon, { backgroundColor: `${color}14` }]}>
+        <Feather name={icon} size={16} color={color} />
+      </View>
+      <View>
+        <Text style={styles.summaryLabel}>{label}</Text>
+        <Text style={[styles.summaryValue, { color }]}>{value}</Text>
+      </View>
     </CardBase>
   );
 }
@@ -576,8 +592,8 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   container: {
-    padding: 26,
-    gap: 24,
+    padding: 28,
+    gap: 22,
   },
   heroRow: {
     flexDirection: 'row',
@@ -636,12 +652,29 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     flexDirection: 'row',
-    gap: 14,
+    gap: 12,
+    flexWrap: 'wrap',
   },
   summaryTile: {
     flex: 1,
-    borderRadius: 16,
-    padding: 14,
+    minWidth: 180,
+    borderRadius: 18,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  summaryTileCritical: {
+    borderColor: '#FECACA',
+    backgroundColor: '#FFF8F8',
+  },
+  summaryIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   summaryLabel: {
     fontSize: 12,
@@ -650,31 +683,37 @@ const styles = StyleSheet.create({
     color: '#8A9AAF',
     textTransform: 'uppercase',
     letterSpacing: 0.7,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   summaryValue: {
-    fontSize: 28,
-    lineHeight: 32,
+    fontSize: 30,
+    lineHeight: 34,
     fontWeight: '900',
-    color: '#1718C7',
   },
   tabsRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5EAF3',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+    padding: 6,
+    borderRadius: 18,
+    backgroundColor: '#EEF2F8',
   },
   tabItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingBottom: 12,
-    borderBottomWidth: 3,
-    borderBottomColor: 'transparent',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
   },
   tabItemActive: {
-    borderBottomColor: '#1718C7',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 2,
   },
   tabLabel: {
     fontSize: 14,
@@ -718,7 +757,7 @@ const styles = StyleSheet.create({
     color: '#526174',
   },
   feed: {
-    gap: 18,
+    gap: 14,
   },
   emptyCard: {
     minHeight: 220,
@@ -750,14 +789,21 @@ const styles = StyleSheet.create({
     color: '#70839B',
   },
   recommendationCard: {
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    paddingHorizontal: 22,
+    paddingVertical: 20,
     overflow: 'hidden',
     borderColor: '#E8EDF5',
     backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 3,
   },
   recommendationCardHigh: {
     borderColor: '#F5D3D5',
+    backgroundColor: '#FFFDFD',
   },
   recommendationBody: {
     flex: 1,
@@ -784,8 +830,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   recommendationTitle: {
-    fontSize: 18,
-    lineHeight: 28,
+    fontSize: 19,
+    lineHeight: 27,
     fontWeight: '900',
     color: '#1F2937',
     marginBottom: 8,
@@ -831,7 +877,7 @@ const styles = StyleSheet.create({
   cardFooter: {
     borderTopWidth: 1,
     borderTopColor: '#EDF2F7',
-    paddingTop: 14,
+    paddingTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -843,7 +889,7 @@ const styles = StyleSheet.create({
   },
   cardActions: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     justifyContent: 'flex-end',
     flexWrap: 'wrap',
   },

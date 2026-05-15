@@ -115,6 +115,30 @@ export function AdminUsers() {
               />
             </View>
 
+            <View style={styles.summaryRow}>
+              <SummaryCountCard
+                title="Administrators"
+                value={String(administratorCount)}
+                variant="info"
+                icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color="#1718C7" />}
+                style={styles.summaryCard}
+              />
+              <SummaryCountCard
+                title="Medical Staff"
+                value={String(medicalStaffCount)}
+                variant="info"
+                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color="#5B63E2" />}
+                style={styles.summaryCard}
+              />
+              <SummaryCountCard
+                title="Inactive/Suspended"
+                value={String(inactiveSuspendedCount)}
+                variant="neutral"
+                icon={<MaterialCommunityIcons name="account-off-outline" size={15} color="#94A3B8" />}
+                style={styles.summaryCard}
+              />
+            </View>
+
             <CardBase style={styles.filterCard}>
               <View style={styles.searchRow}>
                 <InputField
@@ -257,29 +281,6 @@ export function AdminUsers() {
               </View>
             </CardBase>
 
-            <View style={styles.summaryRow}>
-              <SummaryCountCard
-                title="Administrators"
-                value={String(administratorCount)}
-                variant="info"
-                icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color="#1718C7" />}
-                style={styles.summaryCard}
-              />
-              <SummaryCountCard
-                title="Medical Staff"
-                value={String(medicalStaffCount)}
-                variant="info"
-                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color="#5B63E2" />}
-                style={styles.summaryCard}
-              />
-              <SummaryCountCard
-                title="Inactive/Suspended"
-                value={String(inactiveSuspendedCount)}
-                variant="neutral"
-                icon={<MaterialCommunityIcons name="account-off-outline" size={15} color="#94A3B8" />}
-                style={styles.summaryCard}
-              />
-            </View>
           </View>
         </ScrollView>
 
@@ -326,7 +327,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 28,
-    gap: 26,
+    gap: 20,
   },
   heroRow: {
     flexDirection: 'row',
@@ -354,9 +355,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   filterCard: {
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 20,
+    padding: 16,
     gap: 14,
+    backgroundColor: '#FFFFFF',
   },
   searchRow: {
     flexDirection: 'row',
@@ -418,14 +420,21 @@ const styles = StyleSheet.create({
     padding: 0,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.05,
+    shadowRadius: 28,
+    elevation: 3,
   },
   tableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: '#E3EAF4',
+    backgroundColor: '#F8FAFD',
   },
   headerCell: {
     fontSize: 12,
@@ -439,7 +448,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#EEF2F7',
   },
@@ -448,6 +457,7 @@ const styles = StyleSheet.create({
   },
   tableRowDisabled: {
     opacity: 0.82,
+    backgroundColor: '#FBFCFE',
   },
   bodyCell: {},
   nameCol: {
@@ -533,7 +543,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#EEF2F7',
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingVertical: 16,
+    backgroundColor: '#FAFCFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -545,12 +556,14 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     flexDirection: 'row',
-    gap: 18,
+    gap: 14,
+    flexWrap: 'wrap',
   },
   summaryCard: {
     flex: 1,
+    minWidth: 220,
     minHeight: 86,
-    borderRadius: 16,
+    borderRadius: 18,
   },
 });
 
