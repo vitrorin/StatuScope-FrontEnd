@@ -34,10 +34,6 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# opencode
-opencode.json
-opencode.jsonc
-
 # local env files
 .env
 .env.*
