@@ -2,7 +2,6 @@ import React from 'react';
 import { SeverityLevel } from '@/components/recommendations/SeverityBadge';
 
 export type RecommendationTab = 'active' | 'high' | 'inProgress' | 'archive';
-export type RecommendationImageMode = 'heatmap' | 'chart' | 'supply';
 export type RecommendationStatus =
   | 'new'
   | 'accepted'
@@ -16,8 +15,8 @@ export interface RecommendationFeedItem {
   category: string;
   title: string;
   description: string;
+  createdByMode?: string;
   metaItems: { label: string; icon?: React.ReactNode }[];
-  imageMode: RecommendationImageMode;
   accentColor: string;
   actions: { label: string; variant: 'primary' | 'secondary' | 'ghost' }[];
   confidenceScore: number;
