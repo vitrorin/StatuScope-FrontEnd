@@ -14,6 +14,18 @@ export type FileUploadState = 'empty' | 'dragging' | 'uploaded' | 'error';
 export interface PatientEvaluationFormProps {
   title?: string;
   caseMeta?: string;
+  patientNameLabel?: string;
+  patientNamePlaceholder?: string;
+  birthDateLabel?: string;
+  sexLabel?: string;
+  sexPlaceholder?: string;
+  symptomsLabel?: string;
+  symptomsPlaceholder?: string;
+  filesLabel?: string;
+  fileDescription?: string;
+  fileBrowseLabel?: string;
+  fileUpToLabel?: string;
+  sexOptions?: Array<{ label: string; value: string }>;
   patientNameValue?: string;
   birthDateValue?: string;
   sexValue?: string;
@@ -44,6 +56,18 @@ const sexOptions = [
 export function PatientEvaluationForm({
   title = 'Patient Evaluation',
   caseMeta,
+  patientNameLabel = 'Patient Name',
+  patientNamePlaceholder = 'Patient full name',
+  birthDateLabel = 'Birth Date',
+  sexLabel = 'Sex',
+  sexPlaceholder = 'Select',
+  symptomsLabel = 'Symptoms Descriptor',
+  symptomsPlaceholder = 'Describe patient symptoms, duration, severity...',
+  filesLabel = 'Lab Results & Imaging',
+  fileDescription = 'Drag and drop files or',
+  fileBrowseLabel = 'browse',
+  fileUpToLabel = 'up to',
+  sexOptions: providedSexOptions = sexOptions,
   patientNameValue,
   birthDateValue,
   sexValue,
@@ -73,9 +97,9 @@ export function PatientEvaluationForm({
 
       <View style={styles.fields}>
         <View>
-          <Text style={styles.fieldLabel}>Patient Name</Text>
+          <Text style={styles.fieldLabel}>{patientNameLabel}</Text>
           <InputField
-            placeholder="Patient full name"
+            placeholder={patientNamePlaceholder}
             value={patientNameValue}
             onChangeText={onPatientNameChange}
             style={styles.fieldBlock}
@@ -85,7 +109,7 @@ export function PatientEvaluationForm({
 
         <View style={styles.row}>
           <View style={styles.halfField}>
-            <Text style={styles.fieldLabel}>Birth Date</Text>
+            <Text style={styles.fieldLabel}>{birthDateLabel}</Text>
             <InputField
               placeholder="YYYY-MM-DD"
               value={birthDateValue}
@@ -97,21 +121,21 @@ export function PatientEvaluationForm({
           </View>
 
           <View style={styles.halfField}>
-            <Text style={styles.fieldLabel}>Sex</Text>
+            <Text style={styles.fieldLabel}>{sexLabel}</Text>
             <SelectField
-              placeholder="Select"
-              options={sexOptions}
+              placeholder={sexPlaceholder}
+              options={providedSexOptions}
               value={sexValue}
               onChange={onSexChange}
-              style={styles.fieldBlock}
+              style={[styles.fieldBlock, styles.sexFieldBlock]}
             />
           </View>
         </View>
 
         <View>
-          <Text style={styles.fieldLabel}>Symptoms Descriptor</Text>
+          <Text style={styles.fieldLabel}>{symptomsLabel}</Text>
           <TextareaField
-            placeholder="Describe patient symptoms, duration, severity..."
+            placeholder={symptomsPlaceholder}
             value={symptomsValue}
             onChangeText={onSymptomsChange}
             numberOfLines={3}
@@ -120,11 +144,13 @@ export function PatientEvaluationForm({
         </View>
 
         <View>
-          <Text style={styles.fieldLabel}>Lab Results & Imaging</Text>
+          <Text style={styles.fieldLabel}>{filesLabel}</Text>
           <FileUploadDropzone
-            description="Drag and drop files or"
+            description={fileDescription}
             supportedFormats="PDF, JPG, DICOM"
             maxSizeText="20MB"
+            browseLabel={fileBrowseLabel}
+            upToLabel={fileUpToLabel}
             state={dropzoneState}
             fileName={uploadedFileName}
             error={dropzoneError}
@@ -161,10 +187,12 @@ export function PatientEvaluationForm({
 const styles = StyleSheet.create({
   container: {
     padding: 0,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   header: {
     backgroundColor: '#FAFCFF',
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
     borderTopWidth: 4,
     borderTopColor: '#0003B8',
     borderBottomWidth: 1,
@@ -208,6 +236,9 @@ const styles = StyleSheet.create({
   },
   fieldBlock: {
     marginBottom: 0,
+  },
+  sexFieldBlock: {
+    marginTop: 18,
   },
   fieldInputContainer: {
     height: 42,

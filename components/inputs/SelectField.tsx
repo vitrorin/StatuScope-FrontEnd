@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Modal, Pressable, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 export interface SelectOption {
   label: string;
@@ -15,7 +15,7 @@ export interface SelectFieldProps {
   error?: string;
   disabled?: boolean;
   onChange?: (value: string) => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function SelectField({
@@ -28,15 +28,24 @@ export function SelectField({
   onChange,
   style,
 }: SelectFieldProps) {
+  const selectRef = useRef<View>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownFrame, setDropdownFrame] = useState({ top: 0, left: 0, width: 0 });
 
   const selectedOption = options.find((option) => option.value === value);
+  const openDropdown = () => {
+    selectRef.current?.measureInWindow((left, top, width, height) => {
+      setDropdownFrame({ left, top: top + height + 4, width });
+      setIsOpen(true);
+    });
+  };
 
   return (
     <View style={[styles.container, style]}>
       {label ? <Text style={[styles.label, disabled && styles.labelDisabled]}>{label}</Text> : null}
 
       <View
+        ref={selectRef}
         style={[
           styles.selectContainer,
           isOpen && styles.selectOpen,
@@ -46,7 +55,14 @@ export function SelectField({
       >
         <TouchableOpacity
           style={styles.selectButton}
-          onPress={() => !disabled && setIsOpen((current) => !current)}
+          onPress={() => {
+            if (disabled) return;
+            if (isOpen) {
+              setIsOpen(false);
+            } else {
+              openDropdown();
+            }
+          }}
           disabled={disabled}
           activeOpacity={0.75}
         >
@@ -64,29 +80,41 @@ export function SelectField({
       </View>
 
       {isOpen && !disabled ? (
-        <View style={styles.dropdown}>
-          {options.map((option, index) => (
-            <TouchableOpacity
-              key={option.value}
-              style={[
-                styles.option,
-                index < options.length - 1 && styles.optionBorder,
-                option.value === value && styles.optionSelected,
-              ]}
-              onPress={() => {
-                onChange?.(option.value);
-                setIsOpen(false);
-              }}
-              activeOpacity={0.75}
-            >
-              <Text
-                style={[styles.optionText, option.value === value && styles.optionTextSelected]}
+        <Modal transparent visible={isOpen} animationType="none" onRequestClose={() => setIsOpen(false)}>
+          <Pressable style={styles.dropdownBackdrop} onPress={() => setIsOpen(false)} />
+          <View
+            style={[
+              styles.dropdown,
+              {
+                left: dropdownFrame.left,
+                top: dropdownFrame.top,
+                width: dropdownFrame.width,
+              },
+            ]}
+          >
+            {options.map((option, index) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.option,
+                  index < options.length - 1 && styles.optionBorder,
+                  option.value === value && styles.optionSelected,
+                ]}
+                onPress={() => {
+                  onChange?.(option.value);
+                  setIsOpen(false);
+                }}
+                activeOpacity={0.75}
               >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+                <Text
+                  style={[styles.optionText, option.value === value && styles.optionTextSelected]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Modal>
       ) : null}
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -144,7 +172,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   dropdown: {
-    marginTop: 4,
+    position: 'absolute',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 12,
@@ -155,6 +183,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
+    zIndex: 100,
+  },
+  dropdownBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
   },
   option: {
     paddingHorizontal: 14,

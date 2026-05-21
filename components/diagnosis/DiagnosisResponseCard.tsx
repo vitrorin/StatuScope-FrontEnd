@@ -8,6 +8,7 @@ export interface DiagnosisResponseCardProps {
   highlightText?: string;
   warningMessage?: string;
   showWarning?: boolean;
+  insightLabel?: string;
   leadingIcon?: React.ReactNode;
   style?: ViewStyle;
 }
@@ -18,6 +19,7 @@ export function DiagnosisResponseCard({
   highlightText,
   warningMessage,
   showWarning = false,
+  insightLabel = 'AI Differential Insight',
   leadingIcon,
   style,
 }: DiagnosisResponseCardProps) {
@@ -46,7 +48,7 @@ export function DiagnosisResponseCard({
         </View>
       ) : (
         <View style={styles.insightPill}>
-          <Text style={styles.insightPillText}>AI Differential Insight</Text>
+          <Text style={styles.insightPillText}>{insightLabel}</Text>
         </View>
       )}
 

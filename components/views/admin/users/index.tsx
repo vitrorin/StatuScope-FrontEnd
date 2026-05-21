@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
@@ -15,13 +15,13 @@ import { UserAvatarBadge } from '@/components/users/UserAvatarBadge';
 import { UserEditorOverlay } from '@/components/views/admin/users/Sub-funcionalidades/UserEditorOverlay';
 import {
   AdminUserRecord,
-  initialUsers,
   mapRoleTone,
   mapStatusVariant,
   UserRole,
   UserStatus,
 } from '@/components/views/admin/users/Sub-funcionalidades/types';
 import { initialsFromName } from '@/lib/format';
+import { AdminUserResponse, createAdminUser, disableAdminUser, listAdminUsers } from '@/lib/adminUsers';
 
 const roleFilters: ('All' | UserRole)[] = [
   'All',
@@ -29,13 +29,31 @@ const roleFilters: ('All' | UserRole)[] = [
   'Doctor',
 ];
 
-const statusFilters: ('All' | UserStatus)[] = ['All', 'Active', 'Inactive', 'Suspended'];
+const statusFilters: ('All' | UserStatus)[] = ['All', 'Active', 'Inactive'];
 const ITEMS_PER_PAGE = 6;
+
+function mapApiUserToRecord(user: AdminUserResponse): AdminUserRecord {
+  const primaryRole = user.roleCodes.includes('HOSPITAL_ADMIN') ? 'Hospital Administrator' : 'Doctor';
+  const status: UserStatus = user.status === 'ACTIVE' ? 'Active' : 'Inactive';
+  return {
+    id: user.id,
+    initials: initialsFromName(user.fullName),
+    name: user.fullName,
+    email: user.email,
+    role: primaryRole,
+    roleTone: mapRoleTone(primaryRole),
+    status,
+    statusVariant: mapStatusVariant(status),
+  };
+}
 
 export function AdminUsers() {
   const router = useRouter();
   const { logout, profile } = useAuth();
-  const [users, setUsers] = useState<AdminUserRecord[]>(initialUsers);
+  const [users, setUsers] = useState<AdminUserRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeRoleFilter, setActiveRoleFilter] = useState<'All' | UserRole>('All');
   const [activeStatusFilter, setActiveStatusFilter] = useState<'All' | UserStatus>('All');
@@ -44,6 +62,23 @@ export function AdminUsers() {
   const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create');
   const [selectedUser, setSelectedUser] = useState<AdminUserRecord | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await listAdminUsers();
+      setUsers(response.map(mapApiUserToRecord));
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Unable to load users.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -54,8 +89,7 @@ export function AdminUsers() {
       const matchesSearch =
         normalizedQuery.length === 0 ||
         user.name.toLowerCase().includes(normalizedQuery) ||
-        user.email.toLowerCase().includes(normalizedQuery) ||
-        user.pcId.toLowerCase().includes(normalizedQuery);
+        user.email.toLowerCase().includes(normalizedQuery);
 
       return matchesRole && matchesStatus && matchesSearch;
     });
@@ -66,9 +100,7 @@ export function AdminUsers() {
 
   const administratorCount = users.filter((user) => user.role === 'Hospital Administrator').length;
   const medicalStaffCount = users.filter((user) => user.role !== 'Hospital Administrator').length;
-  const inactiveSuspendedCount = users.filter(
-    (user) => user.status === 'Inactive' || user.status === 'Suspended'
-  ).length;
+  const inactiveUsersCount = users.filter((user) => user.status === 'Inactive').length;
 
   const openCreate = () => {
     setEditorMode('create');
@@ -118,7 +150,7 @@ export function AdminUsers() {
             <CardBase style={styles.filterCard}>
               <View style={styles.searchRow}>
                 <InputField
-                  placeholder="Search by name, email or PC ID"
+                  placeholder="Search by name or email"
                   value={searchQuery}
                   onChangeText={(text) => {
                     setSearchQuery(text);
@@ -187,12 +219,26 @@ export function AdminUsers() {
               ) : null}
             </CardBase>
 
+            {error ? (
+              <CardBase style={styles.errorCard}>
+                <Text style={styles.errorTitle}>Users unavailable</Text>
+                <Text style={styles.errorText}>{error}</Text>
+                <Button label="Retry" variant="secondary" size="sm" onPress={() => { void loadUsers(); }} />
+              </CardBase>
+            ) : null}
+
+            {loading ? (
+              <CardBase style={styles.loadingCard}>
+                <ActivityIndicator color="#1718C7" />
+                <Text style={styles.loadingText}>Loading users...</Text>
+              </CardBase>
+            ) : null}
+
             <CardBase style={styles.tableCard}>
               <View style={styles.tableHeader}>
                 <Text style={[styles.headerCell, styles.nameCol]}>Name</Text>
                 <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
                 <Text style={[styles.headerCell, styles.roleCol]}>Role</Text>
-                <Text style={[styles.headerCell, styles.pcCol]}>PC ID</Text>
                 <Text style={[styles.headerCell, styles.statusCol]}>Status</Text>
               </View>
 
@@ -230,7 +276,6 @@ export function AdminUsers() {
                       </Text>
                     </View>
                   </View>
-                  <Text style={[styles.bodyCell, styles.pcCol, styles.pcIdText]}>{user.pcId}</Text>
                   <View style={[styles.bodyCell, styles.statusCol]}>
                     <StatusBadge label={user.status} variant={user.statusVariant} />
                   </View>
@@ -273,8 +318,8 @@ export function AdminUsers() {
                 style={styles.summaryCard}
               />
               <SummaryCountCard
-                title="Inactive/Suspended"
-                value={String(inactiveSuspendedCount)}
+                title="Inactive Users"
+                value={String(inactiveUsersCount)}
                 variant="neutral"
                 icon={<MaterialCommunityIcons name="account-off-outline" size={15} color="#94A3B8" />}
                 style={styles.summaryCard}
@@ -288,31 +333,31 @@ export function AdminUsers() {
           mode={editorMode}
           user={selectedUser}
           onClose={() => setIsEditorOpen(false)}
-          onSave={(nextUser) => {
-            setUsers((current) => {
+          saving={saving}
+          onSave={async (nextUser, password) => {
+            setSaving(true);
+            setError(null);
+            try {
               if (editorMode === 'create') {
-                const nextPcId = String(
-                  Math.max(...current.map((user) => Number.parseInt(user.pcId, 10)), 0) + 1
-                ).padStart(5, '0');
-
-                return [
-                  {
-                    ...nextUser,
-                    pcId: nextPcId,
-                    roleTone: mapRoleTone(nextUser.role),
-                    statusVariant: mapStatusVariant(nextUser.status),
-                  },
-                  ...current,
-                ];
+                if (!password || password.trim().length < 8) {
+                  throw new Error('Password must be at least 8 characters.');
+                }
+                await createAdminUser({
+                  fullName: nextUser.name,
+                  email: nextUser.email,
+                  password,
+                  roleCode: nextUser.role === 'Hospital Administrator' ? 'HOSPITAL_ADMIN' : 'DOCTOR',
+                });
+              } else if (nextUser.status === 'Inactive') {
+                await disableAdminUser(nextUser.id);
               }
-
-              return current.map((user) =>
-                user.id === nextUser.id
-                  ? { ...nextUser, roleTone: mapRoleTone(nextUser.role), statusVariant: mapStatusVariant(nextUser.status) }
-                  : user
-              );
-            });
-            setIsEditorOpen(false);
+              await loadUsers();
+              setIsEditorOpen(false);
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : 'Unable to save user changes.');
+            } finally {
+              setSaving(false);
+            }
           }}
         />
       </>
@@ -414,6 +459,35 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: '#1718C7',
   },
+  errorCard: {
+    borderRadius: 14,
+    padding: 16,
+    gap: 10,
+  },
+  errorTitle: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '800',
+    color: '#B91C1C',
+  },
+  errorText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#7F1D1D',
+  },
+  loadingCard: {
+    borderRadius: 14,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  loadingText: {
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#334155',
+    fontWeight: '600',
+  },
   tableCard: {
     padding: 0,
     overflow: 'hidden',
@@ -459,9 +533,6 @@ const styles = StyleSheet.create({
   roleCol: {
     flex: 1.25,
   },
-  pcCol: {
-    flex: 0.9,
-  },
   statusCol: {
     flex: 0.95,
   },
@@ -503,11 +574,6 @@ const styles = StyleSheet.create({
   },
   roleBadgeTextInfo: {
     color: '#6A68F5',
-  },
-  pcIdText: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: '#64748B',
   },
   emptyState: {
     alignItems: 'center',

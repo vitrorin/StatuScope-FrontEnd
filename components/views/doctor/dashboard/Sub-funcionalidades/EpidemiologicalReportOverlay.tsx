@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
@@ -39,60 +39,124 @@ export function EpidemiologicalReportOverlay({
 }: EpidemiologicalReportOverlayProps) {
   const { t } = useTranslation();
   const [exportingScope, setExportingScope] = useState<DoctorDashboardReportScope | null>(null);
+  const [previewReport, setPreviewReport] = useState<DoctorDashboardReportResponse | null>(null);
+  const [previewPdf, setPreviewPdf] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewFilename, setPreviewFilename] = useState<string | null>(null);
 
-  const handleExport = async (scope: DoctorDashboardReportScope) => {
+  useEffect(() => {
+    if (!visible) {
+      setPreviewReport(null);
+      setPreviewPdf(null);
+      setPreviewUrl(null);
+      setPreviewFilename(null);
+      setExportingScope(null);
+    }
+  }, [visible]);
+
+  useEffect(() => () => {
+    revokePdfUrl(previewUrl);
+  }, [previewUrl]);
+
+  const handlePreview = async (scope: DoctorDashboardReportScope) => {
     setExportingScope(scope);
     try {
       const report = await getDoctorDashboardReport(scope, radiusKm);
-      exportReportPdf({ report, t });
-      onClose();
+      const { pdf, filename } = buildReportPdf({ report, t });
+      setPreviewReport(report);
+      setPreviewPdf(pdf);
+      setPreviewFilename(filename);
+      setPreviewUrl(createPdfUrl(pdf));
     } finally {
       setExportingScope(null);
     }
   };
 
+  const handleDownload = () => {
+    if (!previewPdf || !previewFilename) return;
+    savePdfDocument(previewPdf, previewFilename);
+    onClose();
+  };
+
+  const handleBack = () => {
+    setPreviewReport(null);
+    setPreviewPdf(null);
+    setPreviewUrl(null);
+    setPreviewFilename(null);
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <CardBase style={styles.dialog}>
+        <Pressable style={[styles.backdrop, previewReport ? styles.previewBackdrop : styles.selectionBackdrop]} onPress={onClose} />
+        <CardBase style={[styles.dialog, previewReport ? styles.previewDialog : styles.selectionDialog]}>
           <View style={styles.header}>
+            {previewReport ? (
+              <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.75}>
+                <Feather name="arrow-left" size={18} color="#0003B8" />
+                <Text style={styles.backText}>{t('doctor.dashboard.reports.back')}</Text>
+              </TouchableOpacity>
+            ) : null}
             <View style={styles.headerCopy}>
               <Text style={styles.eyebrow}>{t('doctor.dashboard.overlays.reportPreview')}</Text>
-              <Text style={styles.title}>{t('doctor.dashboard.overlays.reportTitle')}</Text>
-              <Text style={styles.subtitle}>{t('doctor.dashboard.overlays.reportSubtitle')}</Text>
+              <Text style={styles.title}>
+                {previewReport ? scopeLabel(previewReport.scope, t) : t('doctor.dashboard.overlays.reportTitle')}
+              </Text>
+              <Text style={styles.subtitle}>
+                {previewReport
+                  ? t('doctor.dashboard.reports.previewSubtitle', { count: previewReport.outbreaks.length })
+                  : t('doctor.dashboard.overlays.reportSubtitle')}
+              </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.options}>
-            <ReportOption
-              icon="map-pin"
-              title={t('doctor.dashboard.reports.localOptionTitle')}
-              description={localSection.contextValue}
-              disabled={exportingScope !== null}
-              isLoading={exportingScope === 'local'}
-              onPress={() => { void handleExport('local'); }}
-            />
-            <ReportOption
-              icon="map"
-              title={t('doctor.dashboard.reports.stateOptionTitle')}
-              description={stateSection.contextValue}
-              disabled={exportingScope !== null}
-              isLoading={exportingScope === 'state'}
-              onPress={() => { void handleExport('state'); }}
-            />
-            <ReportOption
-              icon="layers"
-              title={t('doctor.dashboard.reports.bothOptionTitle')}
-              description={t('doctor.dashboard.reports.bothOptionDescription')}
-              disabled={exportingScope !== null}
-              isLoading={exportingScope === 'both'}
-              onPress={() => { void handleExport('both'); }}
-            />
-          </View>
+          {previewReport ? (
+            <View style={styles.previewBody}>
+              {previewUrl ? (
+                <PdfPreviewFrame url={previewUrl} title={t('doctor.dashboard.overlays.reportPreview')} />
+              ) : (
+                <View style={styles.previewFallback}>
+                  <Feather name="file-text" size={24} color="#0003B8" />
+                  <Text style={styles.previewFallbackText}>{t('doctor.dashboard.reports.previewUnavailable')}</Text>
+                </View>
+              )}
+
+              <TouchableOpacity style={styles.downloadButton} activeOpacity={0.82} onPress={handleDownload}>
+                <Feather name="download" size={18} color="#FFFFFF" />
+                <Text style={styles.downloadButtonText}>{t('doctor.dashboard.reports.downloadReport')}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.options}>
+              <ReportOption
+                icon="map-pin"
+                title={t('doctor.dashboard.reports.localOptionTitle')}
+                description={localSection.contextValue}
+                disabled={exportingScope !== null}
+                isLoading={exportingScope === 'local'}
+                onPress={() => { void handlePreview('local'); }}
+              />
+              <ReportOption
+                icon="map"
+                title={t('doctor.dashboard.reports.stateOptionTitle')}
+                description={stateSection.contextValue}
+                disabled={exportingScope !== null}
+                isLoading={exportingScope === 'state'}
+                onPress={() => { void handlePreview('state'); }}
+              />
+              <ReportOption
+                icon="layers"
+                title={t('doctor.dashboard.reports.bothOptionTitle')}
+                description={t('doctor.dashboard.reports.bothOptionDescription')}
+                disabled={exportingScope !== null}
+                isLoading={exportingScope === 'both'}
+                onPress={() => { void handlePreview('both'); }}
+              />
+            </View>
+          )}
         </CardBase>
       </View>
     </Modal>
@@ -128,7 +192,20 @@ function ReportOption({
   );
 }
 
-function exportReportPdf({
+function PdfPreviewFrame({ url, title }: { url: string; title: string }) {
+  return React.createElement('iframe', {
+    src: url,
+    title,
+    style: {
+      width: '100%',
+      height: '100%',
+      border: '0',
+      backgroundColor: '#FFFFFF',
+    },
+  });
+}
+
+function buildReportPdf({
   report,
   t,
 }: {
@@ -174,7 +251,18 @@ function exportReportPdf({
   });
 
   const filename = `statuscope-${report.scope}-outbreak-report-${new Date().toISOString().slice(0, 10)}.pdf`;
-  pdf.save(filename);
+  return { pdf: pdf.output(), filename };
+}
+
+function exportReportPdf({
+  report,
+  t,
+}: {
+  report: DoctorDashboardReportResponse;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
+  const { pdf, filename } = buildReportPdf({ report, t });
+  savePdfDocument(pdf, filename);
 }
 
 function drawStatusSection(
@@ -233,6 +321,7 @@ type PdfColor = [number, number, number];
 interface SimplePdf {
   text: (value: string, x: number, y: number, size?: number, bold?: boolean, color?: PdfColor) => void;
   ensureSpace: (y: number, minSpace: number) => number;
+  output: () => string;
   save: (filename: string) => void;
 }
 
@@ -257,25 +346,48 @@ function createSimplePdf(): SimplePdf {
       addPage();
       return 54;
     },
+    output() {
+      return buildPdfDocument(pages, pageWidth, pageHeight);
+    },
     save(filename) {
-      const pdf = buildPdfDocument(pages, pageWidth, pageHeight);
-      const webGlobal = globalThis as typeof globalThis & {
-        Blob?: typeof Blob;
-        URL?: typeof URL;
-        document?: Document;
-      };
-      if (!webGlobal.Blob || !webGlobal.URL || !webGlobal.document) {
-        return;
-      }
-      const blob = new webGlobal.Blob([pdf], { type: 'application/pdf' });
-      const url = webGlobal.URL.createObjectURL(blob);
-      const link = webGlobal.document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.click();
-      webGlobal.URL.revokeObjectURL(url);
+      savePdfDocument(buildPdfDocument(pages, pageWidth, pageHeight), filename);
     },
   };
+}
+
+function createPdfUrl(pdf: string) {
+  const webGlobal = globalThis as typeof globalThis & {
+    Blob?: typeof Blob;
+    URL?: typeof URL;
+  };
+  if (!webGlobal.Blob || !webGlobal.URL) return null;
+  const blob = new webGlobal.Blob([pdf], { type: 'application/pdf' });
+  return webGlobal.URL.createObjectURL(blob);
+}
+
+function revokePdfUrl(url: string | null) {
+  const webGlobal = globalThis as typeof globalThis & { URL?: typeof URL };
+  if (url && webGlobal.URL) {
+    webGlobal.URL.revokeObjectURL(url);
+  }
+}
+
+function savePdfDocument(pdf: string, filename: string) {
+  const webGlobal = globalThis as typeof globalThis & {
+    Blob?: typeof Blob;
+    URL?: typeof URL;
+    document?: Document;
+  };
+  if (!webGlobal.Blob || !webGlobal.URL || !webGlobal.document) {
+    return;
+  }
+  const url = createPdfUrl(pdf);
+  if (!url) return;
+  const link = webGlobal.document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  webGlobal.URL.revokeObjectURL(url);
 }
 
 function buildPdfDocument(pages: string[][], pageWidth: number, pageHeight: number) {
@@ -347,14 +459,30 @@ function wrapText(value: string, maxChars: number) {
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.74)' },
-  dialog: { width: '100%', maxWidth: 700, borderRadius: 24, padding: 0, overflow: 'hidden' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: '#EEF2F7' },
+  backdrop: { ...StyleSheet.absoluteFillObject },
+  selectionBackdrop: { backgroundColor: 'rgba(255,255,255,0.74)' },
+  previewBackdrop: { backgroundColor: 'rgba(15, 23, 42, 0.38)' },
+  dialog: { width: '100%', padding: 0, overflow: 'hidden' },
+  selectionDialog: { maxWidth: 700, maxHeight: '86%', borderRadius: 24 },
+  previewDialog: { flex: 1, borderRadius: 18 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 18, paddingHorizontal: 22, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EEF2F7', minHeight: 76 },
   headerCopy: { flex: 1 },
   eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#1718C7', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
   title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
   subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
   closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  backButton: {
+    height: 40,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.14)',
+    backgroundColor: '#F8FAFC',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  backText: { fontSize: 13, lineHeight: 16, fontWeight: '800', color: '#0003B8' },
   options: { padding: 24, gap: 12 },
   optionCard: {
     minHeight: 78,
@@ -372,6 +500,80 @@ const styles = StyleSheet.create({
   optionCopy: { flex: 1 },
   optionTitle: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#0F172A' },
   optionDescription: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
+  previewBody: { flex: 1, padding: 18, gap: 14 },
+  previewFallback: {
+    flex: 1,
+    minHeight: 520,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  previewFallbackText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  previewStats: { flexDirection: 'row', gap: 12 },
+  previewStat: {
+    flex: 1,
+    minHeight: 76,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    padding: 14,
+    justifyContent: 'center',
+  },
+  previewStatLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  previewStatValue: { marginTop: 6, fontSize: 18, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
+  previewScroll: {
+    maxHeight: 300,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  previewList: { padding: 12, gap: 10 },
+  previewRow: {
+    minHeight: 72,
+    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#EEF2F7',
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  previewRowCopy: { flex: 1, minWidth: 0 },
+  previewDisease: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
+  previewLocation: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
+  previewMeta: { alignItems: 'flex-end', maxWidth: 140 },
+  previewCases: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#0003B8' },
+  previewStatus: { marginTop: 4, fontSize: 11, lineHeight: 14, fontWeight: '800', color: '#64748B' },
+  downloadButton: {
+    minHeight: 52,
+    borderRadius: 14,
+    backgroundColor: '#0003B8',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  downloadButtonText: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#FFFFFF' },
 });
 
 export default EpidemiologicalReportOverlay;

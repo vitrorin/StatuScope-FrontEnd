@@ -31,6 +31,8 @@ export function AssistantInputBar({
         onChangeText={onChangeText}
         editable={!disabled}
         multiline
+        scrollEnabled
+        textAlignVertical="center"
       />
       {showSendButton ? (
         <TouchableOpacity
@@ -55,7 +57,7 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     paddingRight: 8,
     paddingVertical: 8,
-    minHeight: 52,
+    height: 52,
   },
   containerDisabled: {
     backgroundColor: '#F8FAFC',
@@ -66,7 +68,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#0F172A',
     paddingVertical: 0,
-    maxHeight: 96,
+    height: 36,
   },
   sendButton: {
     width: 32,

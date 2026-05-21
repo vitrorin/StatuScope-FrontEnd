@@ -45,6 +45,12 @@ const navigationLinks = {
 } as const;
 
 const outbreakRadiusOptions = [35, 75, 150] as const;
+const dashboardMetricIds = [
+  'active-cases-nearby',
+  'highest-case-disease',
+  'local-risk-level',
+  'priority-municipality',
+] as const;
 
 type SectionStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -179,6 +185,28 @@ function toMetric(
       meta: insight.meta ? translateDashboardValue(t, insight.meta) : insight.meta,
     })),
   };
+}
+
+function placeholderMetrics(
+  t: (key: string, params?: Record<string, string | number>) => string,
+  hospitalName?: string | null,
+): DoctorDashboardMetric[] {
+  return dashboardMetricIds.map((id) => {
+    const title = t(`doctor.dashboard.metrics.${id}.title`);
+
+    return {
+      id,
+      title,
+      value: '',
+      badge: '',
+      status: 'neutral',
+      subtitle: t(`doctor.dashboard.metrics.${id}.subtitle`),
+      detailTitle: title,
+      detailSummary: t(`doctor.dashboard.metrics.${id}.detailSummary`),
+      signalLabel: t(`doctor.dashboard.metrics.${id}.signalLabel`),
+      recommendedAction: t(`doctor.dashboard.metrics.${id}.recommendedAction`),
+    };
+  });
 }
 
 function formatSurroundingsLabel(
@@ -345,16 +373,16 @@ function metricAccentColor(status?: DoctorDashboardMetric['status']) {
   return '#64748B';
 }
 
-function metricIcon(metric: DoctorDashboardMetric) {
-  const color = metricAccentColor(metric.status);
+function metricIcon(metric: DoctorDashboardMetric, isLoading = false) {
+  const color = isLoading ? metricAccentColor('neutral') : metricAccentColor(metric.status);
   const iconName = metric.id === 'active-cases-nearby'
     ? 'activity'
     : metric.id === 'highest-case-disease'
       ? 'trending-up'
       : metric.id === 'local-risk-level'
         ? 'alert-triangle'
-        : metric.id === 'hospital-profile'
-          ? 'briefcase'
+        : metric.id === 'priority-municipality'
+          ? 'map-pin'
           : 'bar-chart-2';
 
   return <Feather name={iconName} size={18} color={color} />;
@@ -381,41 +409,16 @@ function RetryOverlay({
   );
 }
 
-function MetricSkeleton({ width }: { width?: number }) {
-  return (
-    <View style={[styles.metricSkeleton, width ? { width } : styles.metricTouchable]}>
-      <View style={styles.skeletonHeader}>
-        <SkeletonLine width="42%" />
-        <SkeletonLine width={48} height={22} />
-      </View>
-      <SkeletonLine width="62%" height={34} />
-      <SkeletonLine width="78%" height={12} style={styles.skeletonSpaced} />
-    </View>
-  );
-}
-
 function MapSkeleton({ width }: { width?: number }) {
-  return (
-    <View style={[styles.mapSkeleton, width ? { width, flex: undefined } : null]}>
-      <View style={styles.skeletonMapOverlay}>
-        <SkeletonLine width={130} height={18} />
-        <SkeletonLine width={70} height={22} />
-      </View>
-      <View style={styles.skeletonPinLarge} />
-      <View style={styles.skeletonPinSmall} />
-      <View style={styles.skeletonMapFooter}>
-        <SkeletonLine width={160} />
-        <SkeletonLine width={130} />
-      </View>
-    </View>
-  );
+  return <View style={[styles.mapSkeleton, width ? { width, flex: undefined } : null]} />;
 }
 
-function AlertsSkeleton({ width }: { width?: number }) {
+function AlertsSkeleton({ width, title }: { width?: number; title: string }) {
   return (
     <View style={[styles.alertsPanel, width ? { width } : null]}>
       <View style={styles.alertsHeader}>
-        <SkeletonLine width={230} height={20} />
+        <Text style={styles.alertsTitle}>{title}</Text>
+        <View style={styles.sectionHeaderRule} />
       </View>
       <View style={styles.alertsList}>
         {[0, 1, 2].map((item) => (
@@ -430,10 +433,13 @@ function AlertsSkeleton({ width }: { width?: number }) {
   );
 }
 
-function BreakdownSkeleton() {
+function BreakdownSkeleton({ title, buttonLabel }: { title: string; buttonLabel: string }) {
   return (
     <View style={[styles.breakdownCard, styles.breakdownSkeleton]}>
-      <SkeletonLine width={230} height={20} />
+      <View style={styles.breakdownSkeletonHeader}>
+        <Text style={styles.breakdownSkeletonTitle}>{title}</Text>
+        <View style={styles.sectionHeaderRule} />
+      </View>
       <View style={styles.breakdownSkeletonRows}>
         {[0, 1, 2, 3, 4].map((item) => (
           <View key={item} style={styles.breakdownSkeletonRow}>
@@ -449,7 +455,9 @@ function BreakdownSkeleton() {
         <SkeletonLine width="100%" />
         <SkeletonLine width="82%" />
       </View>
-      <SkeletonLine width="100%" height={52} />
+      <View style={styles.breakdownSkeletonButton}>
+        <Text style={styles.breakdownSkeletonButtonText}>{buttonLabel}</Text>
+      </View>
     </View>
   );
 }
@@ -598,9 +606,15 @@ export function DoctorDashboard() {
 
   const hospitalName = metricsState.data?.hospitalName ?? profile?.hospitalName ?? profile?.email;
   const topMetrics = useMemo(
-    () => metricsState.data?.metrics.map((metric) => toMetric(metric, t, hospitalName)) ?? [],
+    () => {
+      const metrics = metricsState.data?.metrics ?? [];
+      return metrics.length > 0
+        ? metrics.map((metric) => toMetric(metric, t, hospitalName))
+        : placeholderMetrics(t, hospitalName);
+    },
     [hospitalName, metricsState.data?.metrics, t],
   );
+  const isMetricsLoading = metricsState.status === 'loading' || metricsState.status === 'idle';
   const alerts = useMemo(
     () => (alertsState.data?.alerts ?? []).map((alert) => describeAlert(alert, t)),
     [alertsState.data?.alerts, t],
@@ -737,25 +751,31 @@ export function DoctorDashboard() {
             }
           }}
         >
-          {metricsState.status === 'loading' || metricsState.status === 'idle' ? (
-            [0, 1, 2, 3].map((item) => (
-              <MetricSkeleton key={item} width={metricWidth} />
-            ))
-          ) : metricsState.status === 'error' ? (
-            [0, 1, 2, 3].map((item) => (
+          {metricsState.status === 'error' ? (
+            topMetrics.map((metric) => (
               <View
-                key={item}
+                key={metric.id}
                 style={[styles.retryHost, metricWidth ? { width: metricWidth } : styles.metricTouchable]}
               >
-                <MetricSkeleton />
+                <StatCard
+                  title={metric.title}
+                  value={metric.value}
+                  badge={metric.badge}
+                  status={metric.status}
+                  subtitle={metric.subtitle}
+                  style={[styles.metricCard, metricWidth ? { width: undefined, flex: undefined } : null]}
+                  icon={metricIcon(metric, !metricsState.data)}
+                  isLoading={!metricsState.data}
+                />
                 <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadMetrics} />
               </View>
             ))
           ) : topMetrics.map((metric) => (
             <TouchableOpacity
-              key={metric.title}
+              key={metric.id}
               activeOpacity={0.84}
               onPress={() => setSelectedMetric(metric)}
+              disabled={isMetricsLoading}
               style={metricWidth ? { width: metricWidth } : styles.metricTouchable}
             >
               <StatCard
@@ -765,7 +785,8 @@ export function DoctorDashboard() {
                 status={metric.status}
                 subtitle={metric.subtitle}
                 style={[styles.metricCard, metricWidth ? { width: undefined, flex: undefined } : null]}
-                icon={metricIcon(metric)}
+                icon={metricIcon(metric, isMetricsLoading)}
+                isLoading={isMetricsLoading}
               />
             </TouchableOpacity>
           ))}
@@ -835,10 +856,10 @@ export function DoctorDashboard() {
           )}
 
           {alertsState.status === 'loading' || alertsState.status === 'idle' ? (
-            <AlertsSkeleton width={mapWidth} />
+            <AlertsSkeleton width={mapWidth} title={t('doctor.dashboard.alerts.title')} />
           ) : alertsState.status === 'error' ? (
             <View style={[styles.retryHost, mapWidth ? { width: mapWidth } : null]}>
-              <AlertsSkeleton />
+              <AlertsSkeleton title={t('doctor.dashboard.alerts.title')} />
               <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadAlerts} />
             </View>
           ) : (
@@ -847,6 +868,7 @@ export function DoctorDashboard() {
             >
               <View style={styles.alertsHeader}>
                 <Text style={styles.alertsTitle}>{t('doctor.dashboard.alerts.title')}</Text>
+                <View style={styles.sectionHeaderRule} />
               </View>
               <View style={styles.alertsList}>
                 {alerts.length === 0 ? (
@@ -895,10 +917,16 @@ export function DoctorDashboard() {
 
         <View style={styles.breakdownGrid}>
           {localBreakdownState.status === 'loading' || localBreakdownState.status === 'idle' ? (
-            <BreakdownSkeleton />
+            <BreakdownSkeleton
+              title={t('doctor.dashboard.diseaseBreakdown.localTitle')}
+              buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
+            />
           ) : localBreakdownState.status === 'error' ? (
             <View style={[styles.retryHost, styles.breakdownRetryHost]}>
-              <BreakdownSkeleton />
+              <BreakdownSkeleton
+                title={t('doctor.dashboard.diseaseBreakdown.localTitle')}
+                buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
+              />
               <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadLocalBreakdown} />
             </View>
           ) : (
@@ -916,10 +944,16 @@ export function DoctorDashboard() {
           )}
 
           {stateBreakdownState.status === 'loading' || stateBreakdownState.status === 'idle' ? (
-            <BreakdownSkeleton />
+            <BreakdownSkeleton
+              title={t('doctor.dashboard.diseaseBreakdown.stateTitle')}
+              buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
+            />
           ) : stateBreakdownState.status === 'error' ? (
             <View style={[styles.retryHost, styles.breakdownRetryHost]}>
-              <BreakdownSkeleton />
+              <BreakdownSkeleton
+                title={t('doctor.dashboard.diseaseBreakdown.stateTitle')}
+                buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
+              />
               <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadStateBreakdown} />
             </View>
           ) : (
@@ -1362,9 +1396,31 @@ const styles = StyleSheet.create({
     left: 24,
     width: 214,
     padding: 16,
-    gap: 14,
+    gap: 12,
     borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.86)',
+  },
+  skeletonMapOverlayHeader: {
+    gap: 10,
+  },
+  skeletonMapOverlayTitle: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  skeletonMapOverlayBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 3, 184, 0.08)',
+  },
+  skeletonMapOverlayBadgeText: {
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '800',
+    color: '#0003B8',
   },
   skeletonPinLarge: {
     position: 'absolute',
@@ -1410,8 +1466,23 @@ const styles = StyleSheet.create({
   breakdownSkeleton: {
     backgroundColor: '#FFFFFF',
   },
+  breakdownSkeletonHeader: {
+    marginBottom: 16,
+  },
+  breakdownSkeletonTitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  sectionHeaderRule: {
+    width: 72,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 3, 184, 0.14)',
+    marginTop: 10,
+  },
   breakdownSkeletonRows: {
-    marginTop: 28,
     marginBottom: 24,
     gap: 22,
   },
@@ -1429,6 +1500,20 @@ const styles = StyleSheet.create({
     borderTopColor: '#F1F5F9',
     marginBottom: 18,
     gap: 14,
+  },
+  breakdownSkeletonButton: {
+    minHeight: 52,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 3, 184, 0.10)',
+  },
+  breakdownSkeletonButtonText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: '#0003B8',
   },
   loadingBanner: {
     flexDirection: 'row',
@@ -1492,7 +1577,8 @@ const styles = StyleSheet.create({
   },
   alertsHeader: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 20,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -1503,7 +1589,9 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   alertsList: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
     gap: 16,
     flexDirection: 'column',
   },

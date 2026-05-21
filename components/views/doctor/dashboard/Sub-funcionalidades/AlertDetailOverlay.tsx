@@ -78,11 +78,6 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
                 ))}
               </View>
             </View>
-
-            <CardBase style={[styles.noteCard, { borderColor: `${accent}33` }]}>
-              <Text style={[styles.noteLabel, { color: accent }]}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
-              <Text style={styles.noteText}>{alert.recommendedAction}</Text>
-            </CardBase>
           </View>
         </CardBase>
       </View>
@@ -197,9 +192,6 @@ const styles = StyleSheet.create({
   insightCopy: { flex: 1, minWidth: 0 },
   insightTitle: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 },
   insightLocation: { marginTop: 5, fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#0F172A' },
-  noteCard: { borderRadius: 18, padding: 16, borderWidth: 1 },
-  noteLabel: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: '#1718C7', marginBottom: 8 },
-  noteText: { fontSize: 14, lineHeight: 22, color: '#526174' },
 });
 
 export default AlertDetailOverlay;

@@ -24,6 +24,8 @@ export interface InputFieldProps {
   disabled?: boolean;
   required?: boolean;
   onChangeText?: (text: string) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   style?: ViewStyle;
   inputContainerStyle?: ViewStyle;
   inputStyle?: TextStyle;
@@ -45,6 +47,8 @@ export function InputField({
   disabled = false,
   required = false,
   onChangeText,
+  onFocus,
+  onBlur,
   style,
   inputContainerStyle,
   inputStyle,
@@ -120,8 +124,14 @@ export function InputField({
           placeholderTextColor={placeholderTextColor ?? (disabled ? '#D1D5DB' : '#94A3B8')}
           value={value}
           onChangeText={onChangeText}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={() => {
+            setIsFocused(true);
+            onFocus?.();
+          }}
+          onBlur={() => {
+            setIsFocused(false);
+            onBlur?.();
+          }}
           secureTextEntry={type === 'password' && !isPasswordVisible}
           keyboardType={
             type === 'email' ? 'email-address' : type === 'number' ? 'numeric' : 'default'
@@ -177,7 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   inputFocused: {
-    borderWidth: 2,
+    borderColor: '#0003B8',
   },
   inputDisabled: {
     backgroundColor: '#F9FAFB',

@@ -18,7 +18,8 @@ interface UserEditorOverlayProps {
   mode: 'create' | 'edit';
   user: AdminUserRecord | null;
   onClose: () => void;
-  onSave: (user: AdminUserRecord) => void;
+  saving?: boolean;
+  onSave: (user: AdminUserRecord, password?: string) => Promise<void>;
 }
 
 const roleOptions: UserRole[] = [
@@ -26,9 +27,9 @@ const roleOptions: UserRole[] = [
   'Doctor',
 ];
 
-const statusOptions: UserStatus[] = ['Active', 'Inactive', 'Suspended'];
+const statusOptions: UserStatus[] = ['Active', 'Inactive'];
 
-export function UserEditorOverlay({ visible, mode, user, onClose, onSave }: UserEditorOverlayProps) {
+export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving = false }: UserEditorOverlayProps) {
   const [draft, setDraft] = useState<AdminUserRecord>({
     id: '',
     initials: '',
@@ -36,16 +37,17 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave }: User
     email: '',
     role: 'Doctor',
     roleTone: 'info',
-    pcId: '',
     status: 'Active',
     statusVariant: 'success',
   });
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     if (!visible) return;
 
     if (mode === 'edit' && user) {
       setDraft(user);
+      setPassword('');
       return;
     }
 
@@ -56,10 +58,10 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave }: User
         email: '',
       role: 'Doctor',
       roleTone: 'info',
-      pcId: '',
       status: 'Active',
       statusVariant: 'success',
     });
+    setPassword('');
   }, [mode, user, visible]);
 
   const setField = <K extends keyof AdminUserRecord>(key: K, value: AdminUserRecord[K]) => {
@@ -90,7 +92,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave }: User
               <Text style={styles.subtitle}>
                 {mode === 'create'
                   ? 'Add a new platform user with role and status.'
-                  : 'Update role, email, ID, and account status.'}
+                  : 'Update role and account status.'}
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
@@ -119,10 +121,20 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave }: User
               </View>
             </View>
 
-            <CardBase style={styles.readOnlyCard}>
-              <Text style={styles.readOnlyLabel}>System Assigned ID</Text>
-              <Text style={styles.readOnlyValue}>{draft.pcId || 'Will be generated automatically'}</Text>
-            </CardBase>
+            {mode === 'create' ? (
+              <View style={styles.row}>
+                <View style={styles.field}>
+                  <InputField
+                    label="Password"
+                    type="password"
+                    value={password}
+                    onChangeText={setPassword}
+                    inputContainerStyle={styles.inputContainer}
+                  />
+                </View>
+                <View style={styles.field} />
+              </View>
+            ) : null}
 
             <View style={styles.selectorBlock}>
               <Text style={styles.selectorLabel}>Role</Text>
@@ -165,12 +177,13 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave }: User
 
           <View style={styles.footer}>
             <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
-            <Button
-              label={mode === 'create' ? 'Create User' : 'Save Changes'}
+              <Button
+              label={saving ? 'Saving...' : mode === 'create' ? 'Create User' : 'Save Changes'}
               variant="primary"
               size="md"
               style={{ ...styles.footerButton, ...styles.primaryButton }}
-              onPress={() => onSave(draft)}
+              onPress={() => { void onSave(draft, password); }}
+              disabled={saving}
             />
           </View>
         </CardBase>

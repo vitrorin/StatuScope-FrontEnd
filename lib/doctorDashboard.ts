@@ -104,6 +104,16 @@ export interface DoctorDashboardStateMapResponse {
   states: DoctorDashboardStateMapItem[];
 }
 
+export interface DoctorDashboardDiseaseCatalogItem {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export interface DoctorDashboardDiseaseCatalogResponse {
+  diseases: DoctorDashboardDiseaseCatalogItem[];
+}
+
 export interface DoctorDashboardAlertsResponse {
   alerts: DoctorDashboardAlertResponse[];
 }
@@ -151,6 +161,10 @@ export async function getDoctorDashboardStateMap(): Promise<DoctorDashboardState
   return api<DoctorDashboardStateMapResponse>('/doctor/dashboard/map/states');
 }
 
+export async function getDoctorDashboardDiseaseCatalog(): Promise<DoctorDashboardDiseaseCatalogResponse> {
+  return api<DoctorDashboardDiseaseCatalogResponse>('/doctor/dashboard/diseases');
+}
+
 export async function getDoctorDashboardStateOutbreakMap(stateId: string): Promise<DoctorDashboardMapResponse> {
   return api<DoctorDashboardMapResponse>(`/doctor/dashboard/map/states/${stateId}/outbreaks`);
 }
@@ -169,4 +183,8 @@ export async function getDoctorDashboardStateBreakdown(radiusKm?: number): Promi
 
 export async function getDoctorDashboardReport(scope: DoctorDashboardReportScope, radiusKm?: number): Promise<DoctorDashboardReportResponse> {
   return api<DoctorDashboardReportResponse>(`/doctor/dashboard/reports/${scope}${radiusQuery(radiusKm)}`);
+}
+
+export async function getDoctorDashboardStateReport(stateId: string): Promise<DoctorDashboardReportResponse> {
+  return api<DoctorDashboardReportResponse>(`/doctor/dashboard/reports/states/${encodeURIComponent(stateId)}`);
 }

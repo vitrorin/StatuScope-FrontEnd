@@ -29,7 +29,7 @@ export function ConfidenceBar({
         <Text style={styles.label}>{label}</Text>
         <Text style={[styles.value, { color: valueColor }]}>{displayValue}</Text>
       </View>
-      <ProgressBar value={percentage} color={color} trackColor="#F1F5F9" />
+      <ProgressBar value={percentage} color={color} trackColor="'#F1F5F9'" />
     </CardBase>
   );
 }

@@ -18,6 +18,7 @@ export interface StatCardProps {
   progressColor?: string;
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  isLoading?: boolean;
 }
 
 export function StatCard({
@@ -32,14 +33,16 @@ export function StatCard({
   progressColor = '#1D4ED8',
   icon,
   style,
+  isLoading = false,
 }: StatCardProps) {
-  const statusStyle = statusStyles[status];
+  const effectiveStatus = isLoading ? 'neutral' : status;
+  const statusStyle = statusStyles[effectiveStatus];
   const tone =
-    status === 'positive'
+    effectiveStatus === 'positive'
       ? 'success'
-      : status === 'danger'
+      : effectiveStatus === 'danger'
         ? 'critical'
-        : status === 'warning'
+        : effectiveStatus === 'warning'
           ? 'warning'
           : 'neutral';
 
@@ -47,10 +50,10 @@ export function StatCard({
     <CardBase style={[styles.card, { borderColor: statusStyle.border }, style]}>
       <View style={[styles.accentBar, { backgroundColor: statusStyle.accent }]} />
       <View style={styles.header}>
-        <View>
+        <View style={styles.titleContainer}>
           <Text style={styles.title}>{title}</Text>
         </View>
-        {badge ? <Badge label={badge} tone={tone} style={styles.badge} /> : null}
+        {isLoading ? <View style={styles.skeletonBadge} /> : badge ? <Badge label={badge} tone={tone} style={styles.badge} /> : null}
       </View>
       <View style={styles.valueRow}>
         {icon ? (
@@ -58,11 +61,21 @@ export function StatCard({
             {icon}
           </View>
         ) : null}
-        <Text style={styles.value}>{value}</Text>
+        {isLoading ? (
+          <View style={styles.skeletonValueBlock}>
+            <View style={styles.skeletonValue} />
+            <View style={[styles.skeletonValue, styles.skeletonValueShort]} />
+          </View>
+        ) : <Text style={styles.value}>{value}</Text>}
       </View>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-      {trendText ? <Text style={styles.trendText}>{trendText}</Text> : null}
-      {showProgress ? (
+      {isLoading ? (
+        <View style={styles.skeletonSubtitleBlock}>
+          <View style={styles.skeletonSubtitle} />
+          <View style={[styles.skeletonSubtitle, styles.skeletonSubtitleShort]} />
+        </View>
+      ) : subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      {!isLoading && trendText ? <Text style={styles.trendText}>{trendText}</Text> : null}
+      {showProgress && !isLoading ? (
         <View style={styles.progressContainer}>
           <ProgressBar value={progressValue} color={progressColor} />
         </View>
@@ -133,9 +146,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#64748B',
   },
+  titleContainer: {
+    flex: 1,
+    minWidth: 0,
+  },
   badge: {
+    flexShrink: 0,
     paddingHorizontal: 9,
     paddingVertical: 5,
+  },
+  skeletonBadge: {
+    width: 48,
+    height: 22,
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
   },
   valueRow: {
     flexDirection: 'row',
@@ -157,11 +181,36 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#0F172A',
   },
+  skeletonValueBlock: {
+    gap: 6,
+  },
+  skeletonValue: {
+    width: '62%',
+    height: 34,
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
+  },
+  skeletonValueShort: {
+    width: '48%',
+  },
   subtitle: {
     marginTop: 14,
     fontSize: 12,
     lineHeight: 17,
     color: '#64748B',
+  },
+  skeletonSubtitleBlock: {
+    marginTop: 14,
+    gap: 5,
+  },
+  skeletonSubtitle: {
+    width: '78%',
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
+  },
+  skeletonSubtitleShort: {
+    width: '58%',
   },
   trendText: {
     marginTop: 6,

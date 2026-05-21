@@ -8,6 +8,7 @@ export function AdminAnalytics() {
       active="analytics"
       sectionLabel="Analytics"
       searchPlaceholder="Search hospital metrics..."
+      persona="admin"
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
     />
