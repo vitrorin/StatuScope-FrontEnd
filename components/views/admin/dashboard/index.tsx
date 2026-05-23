@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { ActivityIndicator, LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle, useWindowDimensions } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,6 +34,7 @@ type LoadState = 'idle' | 'loading' | 'success' | 'error';
 export function AdminDashboard() {
   const router = useRouter();
   const { logout, profile } = useAuth();
+  const { width: viewportWidth } = useWindowDimensions();
   const [gridWidth, setGridWidth] = useState(0);
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [dashboard, setDashboard] = useState<AdminDashboardSummaryResponse | null>(null);
@@ -46,9 +47,14 @@ export function AdminDashboard() {
   const [selectedZone, setSelectedZone] = useState<AdminDashboardZone | null>(null);
   const gridGap = 16;
   const topGap = 12;
-  const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
-  const mapWidth = metricWidth ? metricWidth * 2 + gridGap : undefined;
-  const topCardWidth = gridWidth > 0 ? (gridWidth - topGap * 5) / 6 : undefined;
+  const isCompact = viewportWidth < 1220;
+  const isNarrow = viewportWidth < 860;
+  const actionWidth = !isCompact && gridWidth > 0 ? (gridWidth - gridGap) * 0.28 : undefined;
+  const mapWidth = !isCompact && gridWidth > 0 && actionWidth ? gridWidth - actionWidth - gridGap : undefined;
+  const topCardColumns = isNarrow ? 1 : isCompact ? 2 : 4;
+  const topCardWidth = gridWidth > 0
+    ? (gridWidth - topGap * Math.max(0, topCardColumns - 1)) / topCardColumns
+    : undefined;
 
   const loadDashboard = useCallback(async () => {
     setLoadState((current) => (current === 'success' ? 'success' : 'loading'));
@@ -73,6 +79,7 @@ export function AdminDashboard() {
   }, [dashboard]);
   const alerts = useMemo(() => (dashboard?.alerts ?? []).map(mapAlert), [dashboard]);
   const mapZones = useMemo(() => positionZones(dashboard?.mapZones ?? []), [dashboard]);
+  const mapViewport = useMemo(() => deriveMapViewport(dashboard?.mapZones ?? []), [dashboard]);
   const actionCards = useMemo(() => dashboard?.recommendedActions ?? [], [dashboard]);
 
   return (
@@ -89,7 +96,7 @@ export function AdminDashboard() {
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
-          <View style={styles.heroRow}>
+          <View style={[styles.heroRow, isCompact && styles.heroRowCompact]}>
             <View>
               <Text style={styles.heroTitle}>
                 {dashboard?.hospitalName ? `${dashboard.hospitalName} Radar Overview` : 'Hospital Radar Overview'}
@@ -101,7 +108,7 @@ export function AdminDashboard() {
               </Text>
             </View>
 
-            <View style={styles.heroActions}>
+            <View style={[styles.heroActions, isNarrow && styles.heroActionsNarrow]}>
               <Button
                 label="Export Report"
                 size="sm"
@@ -135,21 +142,6 @@ export function AdminDashboard() {
             </CardBase>
           ) : (
             <>
-              <View style={styles.topCardsRow}>
-                {topCards.map((card) => (
-                  <OverviewMetricCard
-                    key={card.title}
-                    {...card}
-                    onPress={() => setSelectedMetric(card)}
-                    style={
-                      topCardWidth
-                        ? { width: topCardWidth, minHeight: 132, flex: undefined }
-                        : undefined
-                    }
-                  />
-                ))}
-              </View>
-
               <View
                 style={styles.dashboardSection}
                 onLayout={(event: LayoutChangeEvent) => {
@@ -159,7 +151,7 @@ export function AdminDashboard() {
                   }
                 }}
               >
-                <View style={styles.mainGrid}>
+                <View style={[styles.mainGrid, isCompact && styles.mainGridCompact]}>
                   <RadarMapCard
                     title="Live Heatmap"
                     showOverlayPanel
@@ -178,10 +170,20 @@ export function AdminDashboard() {
                         : 'Last Sync: Pending'
                     }
                     mapImageUri={MAP_IMAGE_URI}
+                    mapHeight={isNarrow ? 360 : 430}
+                    mapCenterLatitude={mapViewport.centerLatitude}
+                    mapCenterLongitude={mapViewport.centerLongitude}
+                    mapZoom={mapViewport.zoom}
+                    minZoom={mapViewport.minZoom}
+                    maxZoom={16}
+                    mapBounds={mapViewport.bounds}
+                    enablePan
                     pins={mapZones.map((zone) => ({
                       id: zone.id,
                       top: zone.top,
                       left: zone.left,
+                      latitude: zone.latitude,
+                      longitude: zone.longitude,
                       borderColor: zone.borderColor,
                       fillColor: '#FFFFFF',
                       icon:
@@ -194,36 +196,64 @@ export function AdminDashboard() {
                         ),
                       onPress: () => setSelectedZone(zone),
                     }))}
-                    style={[styles.mapCard, mapWidth ? { width: mapWidth, flex: undefined } : null]}
+                    style={[
+                      styles.mapCard,
+                      isCompact ? styles.mapCardCompact : null,
+                      mapWidth ? { width: mapWidth, flex: undefined } : null,
+                    ]}
                   />
-
-                  <View style={[styles.alertsPanel, metricWidth ? { width: metricWidth } : null]}>
-                    <View style={styles.alertsHeader}>
-                      <Text style={styles.alertsTitle}>Contextual Disease Alerts</Text>
-                    </View>
-                    <View style={styles.alertsList}>
-                      {alerts.map((alert) => (
-                        <TouchableOpacity
-                          key={alert.id}
-                          activeOpacity={0.8}
-                          onPress={() => setSelectedAlert(alert)}
-                        >
-                          <AlertCard
-                            title={alert.title}
-                            description={alert.description}
-                            variant={alert.variant}
-                            style={styles.alertCard}
-                          />
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
 
                   <PriorityActionsCard
                     actions={actionCards}
-                    style={[styles.analyticsCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
+                    style={[
+                      styles.analyticsCard,
+                      isCompact && styles.stackCard,
+                      actionWidth ? { width: actionWidth, flex: undefined } : null,
+                    ]}
                     onOpenReport={() => setIsReportOpen(true)}
                   />
+                </View>
+
+                <View style={[styles.topCardsRow, isCompact && styles.topCardsRowCompact]}>
+                  {topCards.map((card) => (
+                    <OverviewMetricCard
+                      key={card.title}
+                      {...card}
+                      onPress={() => setSelectedMetric(card)}
+                      style={
+                        topCardWidth
+                          ? { width: topCardWidth, minHeight: 132, flex: undefined }
+                          : undefined
+                      }
+                    />
+                  ))}
+                </View>
+
+                <View style={[styles.alertsPanel, styles.alertsPanelHorizontal]}>
+                  <View style={styles.alertsHeader}>
+                    <Text style={styles.alertsTitle}>Contextual Disease Alerts</Text>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.alertsListHorizontal}
+                  >
+                    {alerts.map((alert) => (
+                      <TouchableOpacity
+                        key={alert.id}
+                        activeOpacity={0.8}
+                        onPress={() => setSelectedAlert(alert)}
+                        style={styles.alertHorizontalItem}
+                      >
+                        <AlertCard
+                          title={alert.title}
+                          description={alert.description}
+                          variant={alert.variant}
+                          style={styles.alertCard}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               </View>
             </>
@@ -425,9 +455,53 @@ function positionZones(zones: AdminDashboardSummaryResponse['mapZones']): AdminD
       recommendedAction: `Coordinate intake planning against the ${zone.outbreakCount} outbreak signal(s) in ${zone.municipalityName}.`,
       top: `${Math.max(12, Math.min(82, top))}%`,
       left: `${Math.max(12, Math.min(82, left))}%`,
+      latitude: zone.latitude,
+      longitude: zone.longitude,
       borderColor: zone.status.toUpperCase().includes('CRITICAL') ? '#EF4444' : zone.status.toUpperCase().includes('WARNING') ? '#F97316' : '#0003B8',
     };
   });
+}
+
+function deriveMapViewport(zones: AdminDashboardSummaryResponse['mapZones']) {
+  const withCoordinates = zones.filter((zone) => Number.isFinite(zone.latitude) && Number.isFinite(zone.longitude));
+  if (withCoordinates.length === 0) {
+    return {
+      centerLatitude: 19.4326,
+      centerLongitude: -99.1332,
+      zoom: 10,
+      minZoom: 8,
+      bounds: undefined,
+    };
+  }
+
+  const latitudes = withCoordinates.map((zone) => zone.latitude);
+  const longitudes = withCoordinates.map((zone) => zone.longitude);
+  const minLatitude = Math.min(...latitudes);
+  const maxLatitude = Math.max(...latitudes);
+  const minLongitude = Math.min(...longitudes);
+  const maxLongitude = Math.max(...longitudes);
+  const centerLatitude = (minLatitude + maxLatitude) / 2;
+  const centerLongitude = (minLongitude + maxLongitude) / 2;
+  const span = Math.max(maxLatitude - minLatitude, maxLongitude - minLongitude);
+
+  let zoom = 11;
+  if (span > 2.1) zoom = 7;
+  else if (span > 1.2) zoom = 8;
+  else if (span > 0.65) zoom = 9;
+  else if (span > 0.3) zoom = 10;
+
+  return {
+    centerLatitude,
+    centerLongitude,
+    zoom,
+    minZoom: Math.max(6, zoom - 2),
+    bounds: {
+      minLatitude: minLatitude - 0.25,
+      maxLatitude: maxLatitude + 0.25,
+      minLongitude: minLongitude - 0.25,
+      maxLongitude: maxLongitude + 0.25,
+    },
+  };
 }
 
 function buildMapOverlayItems(zones: AdminDashboardZone[]) {
@@ -471,7 +545,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   container: {
-    padding: 32,
+    padding: 24,
     gap: 24,
   },
   heroRow: {
@@ -479,6 +553,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 20,
+  },
+  heroRowCompact: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   heroTitle: {
     fontSize: 20,
@@ -495,6 +573,10 @@ const styles = StyleSheet.create({
   heroActions: {
     flexDirection: 'row',
     gap: 10,
+  },
+  heroActionsNarrow: {
+    width: '100%',
+    flexDirection: 'column',
   },
   secondaryAction: {
     borderRadius: 8,
@@ -538,6 +620,10 @@ const styles = StyleSheet.create({
   topCardsRow: {
     flexDirection: 'row',
     gap: 12,
+    flexWrap: 'wrap',
+  },
+  topCardsRowCompact: {
+    gap: 10,
   },
   metricCard: {
     flex: 1,
@@ -618,9 +704,15 @@ const styles = StyleSheet.create({
     gap: 16,
     alignItems: 'flex-start',
   },
+  mainGridCompact: {
+    flexDirection: 'column',
+  },
   mapCard: {
     flexShrink: 0,
     alignSelf: 'stretch',
+  },
+  mapCardCompact: {
+    width: '100%',
   },
   alertsPanel: {
     flexShrink: 0,
@@ -635,6 +727,9 @@ const styles = StyleSheet.create({
     shadowRadius: 26,
     elevation: 3,
     alignSelf: 'stretch',
+  },
+  alertsPanelHorizontal: {
+    minHeight: 226,
   },
   alertsHeader: {
     paddingHorizontal: 24,
@@ -653,6 +748,14 @@ const styles = StyleSheet.create({
     gap: 16,
     flexDirection: 'column',
   },
+  alertsListHorizontal: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    gap: 14,
+  },
+  alertHorizontalItem: {
+    width: 320,
+  },
   alertCard: {
     width: '100%',
     minHeight: 0,
@@ -660,6 +763,10 @@ const styles = StyleSheet.create({
   analyticsCard: {
     flexShrink: 0,
     minHeight: 540,
+  },
+  stackCard: {
+    width: '100%',
+    minHeight: 360,
   },
   caseCard: {
     flexShrink: 0,
