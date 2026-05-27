@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
@@ -48,7 +48,7 @@ export function RecommendationTaskOverlay({ visible, item, onClose, onSave }: Re
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField label="Responsible Owner" value={owner} onChangeText={setOwner} inputContainerStyle={styles.inputContainer} />
@@ -71,7 +71,7 @@ export function RecommendationTaskOverlay({ visible, item, onClose, onSave }: Re
               onChangeText={setNotes}
               inputContainerStyle={styles.inputContainer}
             />
-          </View>
+          </ScrollView>
 
           <View style={styles.footer}>
             <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
@@ -92,7 +92,7 @@ export function RecommendationTaskOverlay({ visible, item, onClose, onSave }: Re
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.74)' },
-  dialog: { width: '100%', maxWidth: 700, borderRadius: 24, padding: 0, overflow: 'hidden' },
+  dialog: { width: '100%', maxWidth: 700, maxHeight: '90%', borderRadius: 24, padding: 0, overflow: 'hidden' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
@@ -98,7 +98,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave }: User
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
@@ -161,7 +161,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave }: User
                 })}
               </View>
             </View>
-          </View>
+          </ScrollView>
 
           <View style={styles.footer}>
             <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
   dialog: {
     width: '100%',
     maxWidth: 760,
+    maxHeight: '90%',
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
