@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -75,7 +76,7 @@ export function DepartmentManageOverlay({
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
@@ -150,7 +151,7 @@ export function DepartmentManageOverlay({
               inputContainerStyle={styles.notesInputContainer}
               inputStyle={styles.notesInput}
             />
-          </View>
+          </ScrollView>
 
           <View style={styles.footer}>
             {!isCreate && onDelete ? (
@@ -193,6 +194,7 @@ const styles = StyleSheet.create({
   dialog: {
     width: '100%',
     maxWidth: 720,
+    maxHeight: '90%',
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
