@@ -410,6 +410,11 @@
     "dashboard": {
       "sectionLabel": "Dashboard",
       "screenSummary": "Operational summary of outbreaks, alerts, and hospital capacity.",
+      "hero": {
+        "eyebrow": "Operational Dashboard",
+        "title": "Outbreak surveillance & hospital monitoring",
+        "description": "Real-time monitoring of disease outbreaks, active alerts, and hospital metrics within your surveillance radius."
+      },
       "searchPlaceholder": "Search medical records...",
       "loading": "Loading doctor dashboard data...",
       "errorTitle": "Dashboard data unavailable",

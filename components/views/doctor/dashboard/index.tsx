@@ -714,12 +714,11 @@ export function DoctorDashboard() {
         scrollEnabled={!isMapHovered}
       >
         <View style={styles.container}>
-        <View style={styles.dashboardToolbar}>
-          <View style={styles.dashboardToolbarContext}>
-            <View>
-              <Text style={styles.toolbarEyebrow}>Dashboard</Text>
-              <View style={styles.dashboardTitleUnderline} />
-            </View>
+        <View style={styles.heroStrip}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroEyebrow}>{t('doctor.dashboard.hero.eyebrow')}</Text>
+            <Text style={styles.heroTitle}>{t('doctor.dashboard.hero.title')}</Text>
+            <Text style={styles.heroDescription}>{t('doctor.dashboard.hero.description')}</Text>
           </View>
           <View style={styles.radiusControlGroup}>
             <Text style={styles.radiusControlLabel}>{t('doctor.dashboard.radiusControl.label')}</Text>
@@ -1237,31 +1236,51 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   container: {
-    padding: 32,
-    gap: 32,
+    padding: 24,
+    gap: 24,
   },
-  dashboardToolbar: {
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 18,
+    justifyContent: 'space-between',
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
   },
-  dashboardToolbarContext: {
-    minWidth: 0,
+  heroCopy: {
     flex: 1,
+    paddingRight: 24,
   },
-  toolbarEyebrow: {
-    fontSize: 40,
-    lineHeight: 48,
-    fontWeight: '900',
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#0003B8',
+    marginBottom: 8,
+  },
+  heroTitle: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
   },
-  dashboardTitleUnderline: {
-    width: 214,
-    height: 3,
-    borderRadius: 999,
-    backgroundColor: '#0F172A',
-    marginTop: 8,
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
   },
   radiusControlGroup: {
     flexDirection: 'row',

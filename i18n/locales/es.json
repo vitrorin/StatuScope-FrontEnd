@@ -410,6 +410,11 @@
     "dashboard": {
       "sectionLabel": "Panel",
       "screenSummary": "Resumen operativo de brotes, alertas y capacidad hospitalaria.",
+      "hero": {
+        "eyebrow": "Panel Operativo",
+        "title": "Vigilancia de brotes y monitoreo hospitalario",
+        "description": "Monitoreo en tiempo real de brotes de enfermedades, alertas activas y métricas hospitalarias dentro de tu radio de vigilancia."
+      },
       "searchPlaceholder": "Buscar expedientes clinicos...",
       "loading": "Cargando datos del panel medico...",
       "errorTitle": "Datos del panel no disponibles",
