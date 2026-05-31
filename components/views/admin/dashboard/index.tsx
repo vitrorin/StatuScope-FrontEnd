@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import React, { useMemo, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LayoutChangeEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
+import { DiseaseBreakdownCard } from '@/components/dashboard/DiseaseBreakdownCard';
+import { StatCard, StatCardStatus } from '@/components/dashboard/StatCard';
 import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { AlertCard } from '@/components/feedback/AlertCard';
 import { Button } from '@/components/foundation/Button';
-import { ProgressBar } from '@/components/foundation/ProgressBar';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { CardBase } from '@/components/patterns/CardBase';
 import { AlertDetailOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/AlertDetailOverlay';
 import { AlertProtocolOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/AlertProtocolOverlay';
 import { EpidemiologicalReportOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/EpidemiologicalReportOverlay';
@@ -21,84 +21,273 @@ import {
   AdminDashboardMetric,
   AdminDashboardZone,
 } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
-import {
-  AdminDashboardSummaryResponse,
-  getAdminDashboardSummary,
-} from '@/lib/adminOperational';
 import { initialsFromName } from '@/lib/format';
 
-const MAP_IMAGE_URI = 'https://www.figma.com/api/mcp/asset/5bd3e67c-b2d1-4685-9db8-9c8033f3f9f3';
+const overviewMetrics: AdminDashboardMetric[] = [
+  {
+    id: 'bed-availability',
+    title: 'Bed Availability',
+    value: '85%',
+    badge: 'Stable',
+    status: 'positive',
+    subtitle: '124 open beds across monitored floors',
+    progressValue: 85,
+    progressColor: '#22C55E',
+    detailTitle: 'Bed Availability',
+    detailSummary: 'Current inpatient bed availability across high-pressure care areas and overflow units.',
+    signalLabel: 'Healthy buffer',
+    recommendedAction: 'Keep surge beds ready in observation and maintain discharge pacing for the evening shift.',
+    iconKey: 'bed',
+  },
+  {
+    id: 'icu-capacity',
+    title: 'ICU Capacity',
+    value: '12 / 20',
+    badge: 'Tight',
+    status: 'warning',
+    subtitle: 'Critical care utilization is trending upward',
+    progressValue: 60,
+    progressColor: '#F59E0B',
+    detailTitle: 'ICU Capacity',
+    detailSummary: 'Occupied versus available intensive care beds based on the latest operational snapshot.',
+    signalLabel: 'Escalation watch',
+    recommendedAction: 'Review transfer candidates and prepare step-down coordination before the next intake cycle.',
+    iconKey: 'activity',
+  },
+  {
+    id: 'staffing-coverage',
+    title: 'Staffing Coverage',
+    value: '92%',
+    badge: '-1%',
+    status: 'neutral',
+    subtitle: 'Float coverage holding, night shift still exposed',
+    progressValue: 92,
+    progressColor: '#0003B8',
+    detailTitle: 'Staffing Coverage',
+    detailSummary: 'Coverage level against target staffing for the active operational cycle.',
+    signalLabel: 'Near target',
+    recommendedAction: 'Pre-alert respiratory-capable float staff and protect current nurse-to-patient ratios.',
+    iconKey: 'users',
+  },
+  {
+    id: 'oxygen-supply',
+    title: 'Oxygen Reserve',
+    value: 'Optimal',
+    badge: '48 hrs',
+    status: 'positive',
+    subtitle: 'Mainline reserve and refill window are both on track',
+    progressValue: 78,
+    progressColor: '#22C55E',
+    detailTitle: 'Oxygen Supply Resilience',
+    detailSummary: 'Mainline oxygen reserve, refill continuity, and contingency readiness for respiratory-heavy scenarios.',
+    signalLabel: 'Stable reserve',
+    recommendedAction: 'Maintain reserve policy and confirm emergency refill lead times with supply operations.',
+    iconKey: 'shield',
+  },
+];
 
-type LoadState = 'idle' | 'loading' | 'success' | 'error';
+const alerts: AdminDashboardAlert[] = [
+  {
+    id: 'influenza-a-spike',
+    title: 'Influenza A Spike',
+    description: 'Confirmed 45% increase in pediatric admissions over the last 6 hours.',
+    variant: 'critical',
+    department: 'Pediatric Ward',
+    priority: 'Immediate',
+    recommendedAction: 'Escalate respiratory observation capacity and deploy additional monitoring staff in pediatric care.',
+  },
+  {
+    id: 'dengue-risk-alert',
+    title: 'Dengue Risk Alert',
+    description: '7 suspected dengue cases reported within the municipal catchment today.',
+    variant: 'warning',
+    department: 'Emergency Department',
+    priority: 'High',
+    recommendedAction: 'Prepare vector-borne case triage protocol and verify hydration treatment stock availability.',
+  },
+  {
+    id: 'cold-chain-update',
+    title: 'Cold Chain Update',
+    description: 'Pharmacy unit B confirmed vaccine storage stability after the latest resupply.',
+    variant: 'info',
+    department: 'Pharmacy Unit B',
+    priority: 'Routine',
+    recommendedAction: 'Rebalance booster allocation across outpatient and inpatient immunization areas.',
+  },
+  {
+    id: 'fever-pattern-review',
+    title: 'Fever Pattern Review',
+    description: 'A new cluster of pediatric fever presentations has been flagged for review.',
+    variant: 'neutral',
+    department: 'General Pediatrics',
+    priority: 'Review',
+    recommendedAction: 'Open a clinical review on the fever cluster and compare with regional trend signals.',
+  },
+];
+
+const mapZones: AdminDashboardZone[] = [
+  {
+    id: 'central-hospital-node',
+    name: 'Hospital Command Node',
+    risk: 'Monitored',
+    disease: 'Mixed intake pressure',
+    cases: '42 tracked admissions',
+    radius: 'Hospital core',
+    priority: 'Operational review',
+    note: 'This node concentrates referral pressure and serves as the coordination center for nearby districts.',
+    recommendedAction: 'Keep transfer routing active and maintain live coordination with ICU and emergency bed managers.',
+    latitude: 25.6866,
+    longitude: -100.3161,
+    borderColor: '#0003B8',
+  },
+  {
+    id: 'west-respiratory-cluster',
+    name: 'West Respiratory Cluster',
+    risk: 'High',
+    disease: 'Influenza-like illness',
+    cases: '14 active signals',
+    radius: '3.2 km',
+    priority: 'Immediate',
+    note: 'The west district is showing the strongest spike in respiratory pressure during the latest reporting window.',
+    recommendedAction: 'Shift respiratory-ready beds to the west intake corridor and increase oxygen cart coverage nearby.',
+    latitude: 25.6928,
+    longitude: -100.3485,
+    borderColor: '#EF4444',
+  },
+  {
+    id: 'south-east-pediatric-zone',
+    name: 'South-East Pediatric Zone',
+    risk: 'Moderate',
+    disease: 'Pediatric fever cluster',
+    cases: '9 monitored cases',
+    radius: '2.4 km',
+    priority: 'Early action',
+    note: 'Early case grouping is appearing in the south-east corridor with growing pediatric symptom similarity.',
+    recommendedAction: 'Prepare pediatric observation capacity and sustain rapid triage for fever-compatible presentations.',
+    latitude: 25.6631,
+    longitude: -100.2878,
+    borderColor: '#F97316',
+  },
+  {
+    id: 'north-vaccine-corridor',
+    name: 'North Vaccine Corridor',
+    risk: 'Controlled',
+    disease: 'Vaccination coverage catch-up',
+    cases: '3 supply requests',
+    radius: '4.1 km',
+    priority: 'Routine',
+    note: 'The northern corridor remains clinically stable but depends on timely redistribution of vaccines and PPE.',
+    recommendedAction: 'Keep pharmacy dispatch synchronized with outpatient campaign schedules and avoid local stock pockets.',
+    latitude: 25.7184,
+    longitude: -100.3096,
+    borderColor: '#22C55E',
+  },
+];
+
+const readinessRows = [
+  { id: 'respiratory', label: 'RESPIRATORY / VIRAL', valueText: '2,140 cases', progress: 72, barColor: '#1718C7' },
+  { id: 'gastro', label: 'GASTROINTESTINAL', valueText: '842 cases', progress: 34, barColor: '#63A8FF' },
+  { id: 'cardio', label: 'CARDIOVASCULAR', valueText: '612 cases', progress: 24, barColor: '#B6C3D7' },
+  { id: 'vector', label: 'VECTOR-BORNE', valueText: '288 cases', progress: 18, barColor: '#F97316' },
+];
+
+const resourceRows = [
+  { id: 'icu', label: 'ICU READINESS', valueText: '12 beds available', progress: 60, barColor: '#F59E0B' },
+  { id: 'isolation', label: 'ISOLATION ROOMS', valueText: '18 rooms open', progress: 58, barColor: '#1718C7' },
+  { id: 'oxygen', label: 'OXYGEN DISTRIBUTION', valueText: '48 hr reserve', progress: 78, barColor: '#22C55E' },
+  { id: 'staff', label: 'FLEX STAFF COVERAGE', valueText: '92% staffed', progress: 92, barColor: '#0F766E' },
+];
+
+function formatSyncTime() {
+  return `Last Sync: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+function getMapBounds(zones: AdminDashboardZone[]) {
+  const geocodedZones = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (geocodedZones.length === 0) return undefined;
+
+  const latitudes = geocodedZones.map((zone) => zone.latitude as number);
+  const longitudes = geocodedZones.map((zone) => zone.longitude as number);
+  const latitudePadding = Math.max(0.02, (Math.max(...latitudes) - Math.min(...latitudes)) * 0.35);
+  const longitudePadding = Math.max(0.02, (Math.max(...longitudes) - Math.min(...longitudes)) * 0.35);
+
+  return {
+    minLatitude: Math.min(...latitudes) - latitudePadding,
+    maxLatitude: Math.max(...latitudes) + latitudePadding,
+    minLongitude: Math.min(...longitudes) - longitudePadding,
+    maxLongitude: Math.max(...longitudes) + longitudePadding,
+  };
+}
+
+function getMapCenter(zones: AdminDashboardZone[]) {
+  const geocodedZones = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (geocodedZones.length === 0) return null;
+
+  return {
+    latitude: geocodedZones.reduce((sum, zone) => sum + (zone.latitude as number), 0) / geocodedZones.length,
+    longitude: geocodedZones.reduce((sum, zone) => sum + (zone.longitude as number), 0) / geocodedZones.length,
+  };
+}
+
+function metricIcon(metric: AdminDashboardMetric) {
+  const colorByStatus: Record<StatCardStatus, string> = {
+    positive: '#22C55E',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    neutral: '#64748B',
+  };
+  const color = colorByStatus[metric.status ?? 'neutral'];
+
+  if (metric.iconKey === 'bed') return <MaterialCommunityIcons name="bed-outline" size={18} color={color} />;
+  if (metric.iconKey === 'users') return <Feather name="users" size={18} color={color} />;
+  if (metric.iconKey === 'shield') return <Feather name="shield" size={18} color={color} />;
+  return <Feather name="activity" size={18} color={color} />;
+}
 
 export function AdminDashboard() {
   const router = useRouter();
   const { logout, profile } = useAuth();
   const [gridWidth, setGridWidth] = useState(0);
-  const [loadState, setLoadState] = useState<LoadState>('idle');
-  const [dashboard, setDashboard] = useState<AdminDashboardSummaryResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isProtocolOpen, setIsProtocolOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<AdminDashboardAlert | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<AdminDashboardMetric | null>(null);
   const [selectedZone, setSelectedZone] = useState<AdminDashboardZone | null>(null);
+  const [isMapHovered, setIsMapHovered] = useState(false);
   const gridGap = 16;
-  const topGap = 12;
   const metricWidth = gridWidth > 0 ? (gridWidth - gridGap * 3) / 4 : undefined;
   const mapWidth = metricWidth ? metricWidth * 2 + gridGap : undefined;
-  const topCardWidth = gridWidth > 0 ? (gridWidth - topGap * 5) / 6 : undefined;
-
-  const loadDashboard = useCallback(async () => {
-    setLoadState((current) => (current === 'success' ? 'success' : 'loading'));
-    setError(null);
-    try {
-      const data = await getAdminDashboardSummary();
-      setDashboard(data);
-      setLoadState('success');
-    } catch (nextError) {
-      setLoadState('error');
-      setError(nextError instanceof Error ? nextError.message : 'Unable to load the admin dashboard.');
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadDashboard();
-  }, [loadDashboard]);
-
-  const topCards = useMemo(() => {
-    if (!dashboard) return [];
-    return dashboard.topCards.map((card) => mapMetric(card, dashboard));
-  }, [dashboard]);
-  const alerts = useMemo(() => (dashboard?.alerts ?? []).map(mapAlert), [dashboard]);
-  const mapZones = useMemo(() => positionZones(dashboard?.mapZones ?? []), [dashboard]);
-  const actionCards = useMemo(() => dashboard?.recommendedActions ?? [], [dashboard]);
+  const hospitalName = profile?.hospitalName ?? 'Hospital Administrator';
+  const userName = profile?.fullName ?? 'Hospital Administrator';
+  const userId = profile?.id ? `ID: ${profile.id}` : undefined;
+  const alertPreview = alerts.slice(0, 3);
+  const remainingAlerts = Math.max(0, alerts.length - alertPreview.length);
+  const mapCenter = useMemo(() => getMapCenter(mapZones), []);
+  const mapBounds = useMemo(() => getMapBounds(mapZones), []);
 
   return (
     <DashboardLayout
       active="dashboard"
       sectionLabel="Dashboard"
       searchPlaceholder="Search hospital metrics..."
-      userName={profile?.fullName ?? 'Hospital Admin'}
-      userId={profile?.email ?? undefined}
-      avatarText={initialsFromName(profile?.fullName)}
+      userName={userName}
+      userId={userId}
+      avatarText={initialsFromName(userName)}
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
-          <View style={styles.heroRow}>
-            <View>
-              <Text style={styles.heroTitle}>
-                {dashboard?.hospitalName ? `${dashboard.hospitalName} Radar Overview` : 'Hospital Radar Overview'}
-              </Text>
-              <Text style={styles.heroSubtitle}>
-                {dashboard?.municipalityName && dashboard?.stateName
-                  ? `Live operations for ${dashboard.municipalityName}, ${dashboard.stateName}.`
-                  : 'Real-time epidemiological monitoring and facility status tracking.'}
-              </Text>
+          <View style={styles.dashboardToolbar}>
+            <View style={styles.dashboardToolbarContext}>
+              <Text style={styles.toolbarEyebrow}>{hospitalName}</Text>
+              <View style={styles.dashboardTitleUnderline} />
             </View>
 
             <View style={styles.heroActions}>
@@ -121,115 +310,145 @@ export function AdminDashboard() {
             </View>
           </View>
 
-          {error ? (
-            <CardBase style={styles.errorCard}>
-              <Text style={styles.errorTitle}>Dashboard unavailable</Text>
-              <Text style={styles.errorText}>{error}</Text>
-            </CardBase>
-          ) : null}
-
-          {loadState === 'loading' && !dashboard ? (
-            <CardBase style={styles.loadingCard}>
-              <ActivityIndicator color="#0003B8" />
-              <Text style={styles.loadingText}>Loading operational dashboard...</Text>
-            </CardBase>
-          ) : (
-            <>
-              <View style={styles.topCardsRow}>
-                {topCards.map((card) => (
-                  <OverviewMetricCard
-                    key={card.title}
-                    {...card}
-                    onPress={() => setSelectedMetric(card)}
-                    style={
-                      topCardWidth
-                        ? { width: topCardWidth, minHeight: 132, flex: undefined }
-                        : undefined
-                    }
-                  />
-                ))}
-              </View>
-
-              <View
-                style={styles.dashboardSection}
-                onLayout={(event: LayoutChangeEvent) => {
-                  const nextWidth = event.nativeEvent.layout.width;
-                  if (Math.abs(nextWidth - gridWidth) > 1) {
-                    setGridWidth(nextWidth);
-                  }
-                }}
+          <View
+            style={styles.metricsRow}
+            onLayout={(event: LayoutChangeEvent) => {
+              const nextWidth = event.nativeEvent.layout.width;
+              if (Math.abs(nextWidth - gridWidth) > 1) {
+                setGridWidth(nextWidth);
+              }
+            }}
+          >
+            {overviewMetrics.map((metric) => (
+              <TouchableOpacity
+                key={metric.id}
+                style={[styles.metricTouchable, metricWidth ? { width: metricWidth, flex: undefined } : styles.metricCard]}
+                activeOpacity={0.86}
+                onPress={() => setSelectedMetric(metric)}
               >
-                <View style={styles.mainGrid}>
-                  <RadarMapCard
-                    title="Live Heatmap"
-                    showOverlayPanel
-                    overlayTitle="LIVE HEATMAP"
-                    overlayBadgeLabel="SECURE"
-                    overlayItems={buildMapOverlayItems(mapZones)}
-                    showControls
-                    legendItems={[
-                      { label: 'Critical', color: '#EF4444' },
-                      { label: 'Warning', color: '#F97316' },
-                      { label: 'Stable', color: '#0003B8' },
-                    ]}
-                    footerTextRight={
-                      dashboard?.generatedAt
-                        ? `Last Sync: ${new Date(dashboard.generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                        : 'Last Sync: Pending'
-                    }
-                    mapImageUri={MAP_IMAGE_URI}
-                    pins={mapZones.map((zone) => ({
-                      id: zone.id,
-                      top: zone.top,
-                      left: zone.left,
-                      borderColor: zone.borderColor,
-                      fillColor: '#FFFFFF',
-                      icon:
-                        zone.borderColor === '#0003B8' ? (
-                          <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
-                        ) : zone.borderColor === '#F97316' ? (
-                          <MaterialCommunityIcons name="virus-outline" size={14} color="#F97316" />
-                        ) : (
-                          <MaterialCommunityIcons name="alert" size={16} color="#EF4444" />
-                        ),
-                      onPress: () => setSelectedZone(zone),
-                    }))}
-                    style={[styles.mapCard, mapWidth ? { width: mapWidth, flex: undefined } : null]}
-                  />
+                <StatCard
+                  title={metric.title}
+                  value={metric.value}
+                  badge={metric.badge}
+                  status={metric.status}
+                  subtitle={metric.subtitle}
+                  showProgress={typeof metric.progressValue === 'number'}
+                  progressValue={metric.progressValue}
+                  progressColor={metric.progressColor}
+                  icon={metricIcon(metric)}
+                  style={styles.metricCard}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
 
-                  <View style={[styles.alertsPanel, metricWidth ? { width: metricWidth } : null]}>
-                    <View style={styles.alertsHeader}>
-                      <Text style={styles.alertsTitle}>Contextual Disease Alerts</Text>
-                    </View>
-                    <View style={styles.alertsList}>
-                      {alerts.map((alert) => (
-                        <TouchableOpacity
-                          key={alert.id}
-                          activeOpacity={0.8}
-                          onPress={() => setSelectedAlert(alert)}
-                        >
-                          <AlertCard
-                            title={alert.title}
-                            description={alert.description}
-                            variant={alert.variant}
-                            style={styles.alertCard}
-                          />
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
+          <View style={styles.mainGrid}>
+            <RadarMapCard
+              title="Hospital Impact Map"
+              showOverlayPanel
+              overlayTitle="LIVE OPERATIONS MAP"
+              overlayBadgeLabel="SECURE"
+              overlayItems={[
+                { label: 'Cluster alerts', value: '4', color: '#EF4444' },
+                { label: 'Referral nodes', value: '2', color: '#0003B8' },
+                { label: 'Stable corridors', value: '1', color: '#22C55E' },
+              ]}
+              showControls
+              showFooter
+              footerTextLeft="© OpenStreetMap contributors"
+              footerTextRight={isMapHovered ? 'Scroll to zoom, drag to pan' : formatSyncTime()}
+              mapHeight={560}
+              mapCenterLatitude={mapCenter?.latitude}
+              mapCenterLongitude={mapCenter?.longitude}
+              mapZoom={12}
+              minZoom={10}
+              maxZoom={16}
+              mapBounds={mapBounds}
+              enablePan
+              onMapHoverChange={setIsMapHovered}
+              bottomRightActionLabel="Expand map"
+              pins={mapZones.map((zone) => ({
+                id: zone.id,
+                latitude: zone.latitude,
+                longitude: zone.longitude,
+                borderColor: zone.borderColor,
+                fillColor: '#FFFFFF',
+                icon: zone.borderColor === '#22C55E'
+                  ? <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
+                  : zone.borderColor === '#F97316'
+                    ? <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
+                    : zone.borderColor === '#0003B8'
+                      ? <MaterialCommunityIcons name="hospital-box-outline" size={12} color={zone.borderColor} />
+                      : <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />,
+                onPress: () => setSelectedZone(zone),
+              }))}
+              style={[styles.mapCard, mapWidth ? { width: mapWidth, flex: undefined } : null]}
+            />
 
-                  <PriorityActionsCard
-                    actions={actionCards}
-                    style={[styles.analyticsCard, metricWidth ? { width: metricWidth, flex: undefined } : null]}
-                    onOpenReport={() => setIsReportOpen(true)}
-                  />
-                </View>
+            <View style={[styles.alertsPanel, metricWidth ? { width: metricWidth } : null]}>
+              <View style={styles.alertsHeader}>
+                <Text style={styles.alertsTitle}>Operational Disease Alerts</Text>
+                <View style={styles.sectionHeaderRule} />
               </View>
-            </>
-          )}
+              <View style={styles.alertsList}>
+                {alertPreview.map((alert) => (
+                  <TouchableOpacity
+                    key={alert.id}
+                    activeOpacity={0.82}
+                    onPress={() => setSelectedAlert(alert)}
+                  >
+                    <AlertCard
+                      title={alert.title}
+                      description={alert.description}
+                      variant={alert.variant}
+                      style={styles.alertCard}
+                    />
+                  </TouchableOpacity>
+                ))}
+
+                {remainingAlerts > 0 ? (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.moreAlertsButton}
+                    onPress={() => setSelectedAlert(alerts[alertPreview.length])}
+                  >
+                    <Text style={styles.moreAlertsText}>Review next alert</Text>
+                    <View style={styles.moreAlertsBadge}>
+                      <Text style={styles.moreAlertsBadgeText}>+{remainingAlerts}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.breakdownGrid}>
+            <DiseaseBreakdownCard
+              title="Regional Disease Pressure"
+              rows={readinessRows}
+              summaryItems={[
+                { label: '7-day trend', value: '+12%', valueColor: '#DC2626' },
+                { label: 'Dominant pattern', value: 'Respiratory / viral' },
+              ]}
+              buttonLabel="View Full Epidemiological Report"
+              onButtonPress={() => setIsReportOpen(true)}
+              style={styles.breakdownCard}
+            />
+            <DiseaseBreakdownCard
+              title="Facility Readiness"
+              rows={resourceRows}
+              summaryItems={[
+                { label: 'Escalation level', value: 'Level 2 monitoring', valueColor: '#B45309' },
+                { label: 'Next review', value: '18:00 local' },
+              ]}
+              buttonLabel="Open Alert Protocol"
+              onButtonPress={() => setIsProtocolOpen(true)}
+              style={styles.breakdownCard}
+            />
+          </View>
         </View>
       </ScrollView>
+
       <ExportReportOverlay visible={isExportOpen} onClose={() => setIsExportOpen(false)} />
       <AlertProtocolOverlay visible={isProtocolOpen} onClose={() => setIsProtocolOpen(false)} />
       <AlertDetailOverlay visible={selectedAlert !== null} alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
@@ -240,378 +459,62 @@ export function AdminDashboard() {
   );
 }
 
-interface OverviewMetricCardProps extends AdminDashboardMetric {
-  style?: StyleProp<ViewStyle>;
-  onPress?: () => void;
-}
-
-function OverviewMetricCard({
-  title,
-  value,
-  badge,
-  badgeColor = '#94A3B8',
-  subtitle,
-  progressValue,
-  progressColor = '#22C55E',
-  segmented = false,
-  tone = 'default',
-  style,
-  onPress,
-}: OverviewMetricCardProps) {
-  const isCritical = tone === 'critical';
-
-  return (
-    <TouchableOpacity activeOpacity={0.84} onPress={onPress} disabled={!onPress}>
-      <CardBase style={[styles.metricCard, isCritical && styles.metricCardCritical, style]}>
-        <View style={styles.metricHeader}>
-          <Text style={[styles.metricTitle, isCritical && styles.metricTitleCritical]}>{title}</Text>
-          {badge ? <Text style={[styles.metricBadge, { color: badgeColor }]}>{badge}</Text> : null}
-          {isCritical ? (
-            <Feather name="alert-triangle" size={14} color="#EF4444" style={styles.metricIcon} />
-          ) : null}
-        </View>
-
-        <Text style={[styles.metricValue, isCritical && styles.metricValueCritical]}>{value}</Text>
-
-        {subtitle ? (
-          <Text style={[styles.metricSubtitle, isCritical && styles.metricSubtitleCritical]}>
-            {subtitle}
-          </Text>
-        ) : null}
-
-        {segmented ? (
-          <View style={styles.segmentedBar}>
-            <View style={[styles.segmentedFill, { backgroundColor: '#0003B8' }]} />
-            <View style={[styles.segmentedFill, { backgroundColor: '#0003B8' }]} />
-            <View style={[styles.segmentedFill, { backgroundColor: '#CBD5E1' }]} />
-          </View>
-        ) : progressValue !== undefined ? (
-          <ProgressBar
-            value={progressValue}
-            color={progressColor}
-            trackColor={isCritical ? '#FEE2E2' : '#E2E8F0'}
-            style={styles.metricProgress}
-          />
-        ) : null}
-      </CardBase>
-    </TouchableOpacity>
-  );
-}
-
-function PriorityActionsCard({
-  actions,
-  style,
-  onOpenReport,
-}: {
-  actions: AdminDashboardSummaryResponse['recommendedActions'];
-  style?: StyleProp<ViewStyle>;
-  onOpenReport?: () => void;
-}) {
-  return (
-    <CardBase style={[styles.caseCard, style]}>
-      <View style={styles.caseHeader}>
-        <Text style={styles.caseTitle}>Priority Actions</Text>
-        <Button
-          label="Live Feed"
-          size="sm"
-          variant="surface"
-          style={styles.caseFilter}
-          labelStyle={styles.caseFilterLabel}
-        />
-      </View>
-
-      <Text style={styles.caseSectionLabel}>Operational Queue</Text>
-
-      <View style={styles.caseMetrics}>
-        {actions.slice(0, 5).map((action) => (
-          <View key={action.id} style={styles.actionMetricRow}>
-            <View style={styles.actionMetricTopRow}>
-              <Text style={styles.caseMetricName}>{action.title}</Text>
-              <Text style={styles.caseMetricValue}>{action.status.replace(/_/g, ' ')}</Text>
-            </View>
-            <View style={styles.caseMetricTrack}>
-              <View
-                style={[
-                  styles.caseMetricFill,
-                  {
-                    width: `${severityToProgress(action.severity)}%`,
-                    backgroundColor: severityToColor(action.severity),
-                  },
-                ]}
-              />
-            </View>
-            <Text style={styles.actionMetricMeta}>
-              {action.type.replace(/_/g, ' ')} | {action.severity.toLowerCase()} priority
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      <Button
-        label="View Full Epidemiological Report"
-        variant="secondary"
-        size="sm"
-        style={styles.caseAction}
-        labelStyle={styles.caseActionLabel}
-        onPress={onOpenReport}
-      />
-    </CardBase>
-  );
-}
-
-function mapMetric(
-  metric: AdminDashboardSummaryResponse['topCards'][number],
-  summary: AdminDashboardSummaryResponse,
-): AdminDashboardMetric {
-  const title = metric.title;
-  const status = (metric.status ?? '').toUpperCase();
-  const recommendedAction =
-    summary.recommendedActions.find((action) => action.type === metric.id?.toUpperCase())?.title
-    ?? `Review ${title.toLowerCase()} and keep the operational team aligned.`;
-
-  return {
-    title,
-    value: metric.value,
-    badge: metric.badge ?? undefined,
-    badgeColor: status.includes('CRITICAL') ? '#EF4444' : status.includes('WARNING') ? '#F59E0B' : '#22C55E',
-    subtitle: metric.subtitle ?? undefined,
-    progressValue: deriveProgress(metric.value, metric.status),
-    progressColor: status.includes('CRITICAL') ? '#EF4444' : status.includes('WARNING') ? '#F59E0B' : '#22C55E',
-    segmented: title.toUpperCase().includes('OXYGEN'),
-    tone: status.includes('CRITICAL') ? 'critical' : 'default',
-    detailTitle: title,
-    detailSummary: metric.subtitle ?? `Live operational signal for ${title.toLowerCase()}.`,
-    signalLabel: metric.status ?? 'Stable',
-    recommendedAction,
-  };
-}
-
-function mapAlert(alert: AdminDashboardSummaryResponse['alerts'][number]): AdminDashboardAlert {
-  return {
-    id: alert.id,
-    title: `${alert.disease} alert`,
-    description: `${alert.message} (${alert.caseCount} active cases).`,
-    variant: alert.severity === 'HIGH' ? 'critical' : alert.severity === 'MEDIUM' ? 'warning' : 'info',
-    department: alert.location,
-    priority: alert.severity,
-    recommendedAction: `Review containment measures for ${alert.location} and adjust staffing if case pressure rises.`,
-  };
-}
-
-function positionZones(zones: AdminDashboardSummaryResponse['mapZones']): AdminDashboardZone[] {
-  if (zones.length === 0) return [];
-  const latitudes = zones.map((zone) => zone.latitude);
-  const longitudes = zones.map((zone) => zone.longitude);
-  const minLat = Math.min(...latitudes);
-  const maxLat = Math.max(...latitudes);
-  const minLon = Math.min(...longitudes);
-  const maxLon = Math.max(...longitudes);
-  const latRange = Math.max(maxLat - minLat, 0.01);
-  const lonRange = Math.max(maxLon - minLon, 0.01);
-
-  return zones.map((zone) => {
-    const top = 18 + ((maxLat - zone.latitude) / latRange) * 64;
-    const left = 18 + ((zone.longitude - minLon) / lonRange) * 64;
-    const risk = zone.status.replace(/_/g, ' ');
-    return {
-      id: zone.municipalityId,
-      name: zone.municipalityName,
-      risk,
-      disease: zone.outbreakCount === 1 ? '1 outbreak signal' : `${zone.outbreakCount} outbreak signals`,
-      cases: `${zone.outbreakCount} active cluster${zone.outbreakCount === 1 ? '' : 's'}`,
-      radius: 'Regional monitoring',
-      priority: zone.status.toUpperCase().includes('CRITICAL') ? 'Immediate' : zone.status.toUpperCase().includes('WARNING') ? 'High' : 'Monitor',
-      note: `${zone.municipalityName} is being tracked as part of the hospital alert perimeter.`,
-      recommendedAction: `Coordinate intake planning against the ${zone.outbreakCount} outbreak signal(s) in ${zone.municipalityName}.`,
-      top: `${Math.max(12, Math.min(82, top))}%`,
-      left: `${Math.max(12, Math.min(82, left))}%`,
-      borderColor: zone.status.toUpperCase().includes('CRITICAL') ? '#EF4444' : zone.status.toUpperCase().includes('WARNING') ? '#F97316' : '#0003B8',
-    };
-  });
-}
-
-function buildMapOverlayItems(zones: AdminDashboardZone[]) {
-  const critical = zones.filter((zone) => zone.borderColor === '#EF4444').length;
-  const warning = zones.filter((zone) => zone.borderColor === '#F97316').length;
-  return [
-    { label: 'Critical zones', value: String(critical), color: '#EF4444' },
-    { label: 'Warning zones', value: String(warning), color: '#F97316' },
-    { label: 'Tracked municipalities', value: String(zones.length), color: '#0003B8' },
-  ];
-}
-
-function deriveProgress(value: string, status?: string | null) {
-  const ratioMatch = value.match(/(\d+)\s*\/\s*(\d+)/);
-  if (ratioMatch) {
-    const current = Number.parseInt(ratioMatch[1], 10);
-    const total = Number.parseInt(ratioMatch[2], 10);
-    if (total > 0) return Math.round((current / total) * 100);
-  }
-  const percentMatch = value.match(/(\d+)%/);
-  if (percentMatch) return Number.parseInt(percentMatch[1], 10);
-  if ((status ?? '').toUpperCase().includes('CRITICAL')) return 92;
-  if ((status ?? '').toUpperCase().includes('WARNING')) return 68;
-  return 48;
-}
-
-function severityToColor(value: string) {
-  if (value === 'HIGH') return '#EF4444';
-  if (value === 'MEDIUM') return '#F59E0B';
-  return '#1215C9';
-}
-
-function severityToProgress(value: string) {
-  if (value === 'HIGH') return 92;
-  if (value === 'MEDIUM') return 64;
-  return 38;
-}
-
 const styles = StyleSheet.create({
   contentContainer: {
     paddingBottom: 32,
   },
   container: {
     padding: 32,
-    gap: 24,
+    gap: 32,
   },
-  heroRow: {
+  dashboardToolbar: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 20,
   },
-  heroTitle: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: '800',
+  dashboardToolbarContext: {
+    flex: 1,
+    minWidth: 0,
+  },
+  toolbarEyebrow: {
+    fontSize: 40,
+    lineHeight: 48,
+    fontWeight: '900',
     color: '#0F172A',
   },
-  heroSubtitle: {
-    marginTop: 4,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#64748B',
+  dashboardTitleUnderline: {
+    width: 214,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: '#0F172A',
+    marginTop: 8,
   },
   heroActions: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
   secondaryAction: {
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 14,
   },
   primaryAction: {
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 14,
     backgroundColor: '#0003B8',
     borderColor: '#0003B8',
   },
-  errorCard: {
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-  },
-  errorTitle: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '800',
-    color: '#991B1B',
-  },
-  errorText: {
-    marginTop: 6,
-    fontSize: 13,
-    lineHeight: 20,
-    color: '#B91C1C',
-  },
-  loadingCard: {
-    minHeight: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#526174',
-  },
-  topCardsRow: {
+  metricsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
+  },
+  metricTouchable: {
+    flex: 1,
   },
   metricCard: {
     flex: 1,
-    minHeight: 132,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-  },
-  metricCardCritical: {
-    backgroundColor: '#FFF7F7',
-    borderColor: '#FECACA',
-  },
-  metricHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 14,
-    gap: 8,
-  },
-  metricTitle: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '800',
-    letterSpacing: 0.9,
-    color: '#7A8CA5',
-  },
-  metricTitleCritical: {
-    color: '#EF4444',
-  },
-  metricBadge: {
-    fontSize: 12,
-    lineHeight: 14,
-    fontWeight: '800',
-  },
-  metricIcon: {
-    marginTop: 1,
-  },
-  metricValue: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: -0.8,
-  },
-  metricValueCritical: {
-    color: '#DC2626',
-  },
-  metricSubtitle: {
-    marginTop: 6,
-    fontSize: 11,
-    lineHeight: 15,
-    color: '#94A3B8',
-  },
-  metricSubtitleCritical: {
-    color: '#EF4444',
-  },
-  metricProgress: {
-    marginTop: 10,
-  },
-  segmentedBar: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 10,
-  },
-  segmentedFill: {
-    flex: 1,
-    height: 5,
-    borderRadius: 999,
-  },
-  dashboardSection: {
-    gap: 16,
+    minWidth: 0,
   },
   mainGrid: {
     flexDirection: 'row',
@@ -624,6 +527,7 @@ const styles = StyleSheet.create({
   },
   alertsPanel: {
     flexShrink: 0,
+    alignSelf: 'stretch',
     backgroundColor: '#FCFDFE',
     borderRadius: 14,
     borderWidth: 1,
@@ -634,11 +538,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 26,
     elevation: 3,
-    alignSelf: 'stretch',
   },
   alertsHeader: {
-    paddingHorizontal: 24,
-    paddingVertical: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
@@ -648,116 +552,64 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0F172A',
   },
+  sectionHeaderRule: {
+    width: 72,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0, 3, 184, 0.14)',
+    marginTop: 10,
+  },
   alertsList: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
     gap: 16,
-    flexDirection: 'column',
   },
   alertCard: {
     width: '100%',
     minHeight: 0,
   },
-  analyticsCard: {
-    flexShrink: 0,
-    minHeight: 540,
-  },
-  caseCard: {
-    flexShrink: 0,
-    minHeight: 540,
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-  },
-  caseHeader: {
+  moreAlertsButton: {
+    minHeight: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.16)',
+    backgroundColor: '#EEF2FF',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-    gap: 8,
+    justifyContent: 'center',
+    gap: 10,
   },
-  caseTitle: {
-    fontSize: 18,
-    lineHeight: 24,
+  moreAlertsText: {
+    fontSize: 14,
+    lineHeight: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#0003B8',
   },
-  caseFilter: {
-    minHeight: 28,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+  moreAlertsBadge: {
+    minWidth: 26,
+    height: 24,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
-  caseFilterLabel: {
-    fontSize: 11,
+  moreAlertsBadgeText: {
+    fontSize: 12,
     lineHeight: 14,
-    fontWeight: '700',
-    color: '#475569',
+    fontWeight: '900',
+    color: '#0003B8',
   },
-  caseSectionLabel: {
-    marginBottom: 12,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: '#7387A5',
-    letterSpacing: 0.9,
-    textTransform: 'uppercase',
-  },
-  caseMetrics: {
-    gap: 14,
-    marginBottom: 24,
-  },
-  actionMetricRow: {
-    gap: 7,
-  },
-  actionMetricTopRow: {
+  breakdownGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
+    gap: 16,
+    alignItems: 'stretch',
   },
-  actionMetricMeta: {
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#70839B',
-  },
-  caseMetricName: {
+  breakdownCard: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 17,
-    fontWeight: '600',
-    color: '#243347',
-  },
-  caseMetricValue: {
-    fontSize: 13,
-    lineHeight: 17,
-    fontWeight: '800',
-    color: '#243347',
-  },
-  caseMetricTrack: {
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: '#E8EDF5',
-    overflow: 'hidden',
-  },
-  caseMetricFill: {
-    height: '100%',
-    borderRadius: 999,
-  },
-  caseAction: {
-    marginTop: 'auto',
-    minHeight: 40,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-  },
-  caseActionLabel: {
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: '#243347',
+    width: undefined,
+    minHeight: 540,
   },
 });
 

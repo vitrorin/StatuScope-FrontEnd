@@ -9,19 +9,19 @@ export interface AdminDashboardAlert {
 }
 
 export interface AdminDashboardMetric {
+  id: string;
   title: string;
   value: string;
   badge?: string;
-  badgeColor?: string;
+  status?: 'positive' | 'danger' | 'warning' | 'neutral';
   subtitle?: string;
   progressValue?: number;
   progressColor?: string;
-  segmented?: boolean;
-  tone?: 'default' | 'critical';
   detailTitle: string;
   detailSummary: string;
   signalLabel: string;
   recommendedAction: string;
+  iconKey?: 'bed' | 'activity' | 'users' | 'shield';
 }
 
 export interface AdminDashboardZone {
@@ -34,8 +34,8 @@ export interface AdminDashboardZone {
   priority: string;
   note: string;
   recommendedAction: string;
-  top: string;
-  left: string;
+  latitude?: number;
+  longitude?: number;
   borderColor: string;
   fillColor?: string;
 }

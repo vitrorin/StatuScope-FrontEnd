@@ -8,6 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build:web:security": "expo export --platform web --output-dir dist",
+    "serve:web:security": "node ./scripts/serve-web-security-scan.js",
     "lint": "expo lint",
     "storybook-generate": "sb-rn-get-stories",
     "storybook": "storybook dev -p 6006",
