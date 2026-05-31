@@ -280,7 +280,7 @@ export function RadarMapCard({
           </View>
           {overlayItems?.map((item, index) => (
             <View key={index} style={styles.overlayItem}>
-              <View style={[styles.overlayDot, { backgroundColor: item.color || '#1D4ED8' }]} />
+              <View style={[styles.overlayDot, { backgroundColor: item.color || '#0003B8' }]} />
               <Text style={styles.overlayLabel}>{item.label}</Text>
               <Text style={styles.overlayValue}>{item.value}</Text>
             </View>

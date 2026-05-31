@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#1D4ED8',
+    color: '#0003B8',
   },
   pcIdText: {
     fontSize: 13,

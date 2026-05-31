@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   pageButtonActive: {
-    backgroundColor: '#1D4ED8',
+    backgroundColor: '#0003B8',
   },
   pageText: {
     fontSize: 14,

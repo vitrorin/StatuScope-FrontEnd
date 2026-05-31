@@ -22,7 +22,7 @@ export interface BedCapacitySummaryCardProps {
 const variantStyles = {
   default: {
     valueColor: '#111827',
-    accentColor: '#1D4ED8',
+    accentColor: '#0003B8',
   },
   warning: {
     valueColor: '#D97706',
@@ -34,7 +34,7 @@ const variantStyles = {
   },
   highlighted: {
     valueColor: '#1E40AF',
-    accentColor: '#1D4ED8',
+    accentColor: '#0003B8',
   },
 };
 

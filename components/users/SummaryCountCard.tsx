@@ -15,8 +15,8 @@ export interface SummaryCountCardProps {
 
 const variantStyles = {
   default: {
-    iconBg: '#DBEAFE',
-    iconColor: '#1D4ED8',
+    iconBg: 'rgba(0, 3, 184, 0.08)',
+    iconColor: '#0003B8',
     valueColor: '#111827',
   },
   info: {

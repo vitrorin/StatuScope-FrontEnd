@@ -371,8 +371,8 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   container: {
-    padding: 28,
-    gap: 26,
+    padding: 24,
+    gap: 24,
   },
   heroStrip: {
     paddingHorizontal: 24,

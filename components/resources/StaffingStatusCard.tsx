@@ -19,7 +19,7 @@ const variantColors = {
   doctor: '#3B82F6',
   nurse: '#22C55E',
   specialist: '#8B5CF6',
-  default: '#1D4ED8',
+  default: '#0003B8',
 };
 
 export function StaffingStatusCard({

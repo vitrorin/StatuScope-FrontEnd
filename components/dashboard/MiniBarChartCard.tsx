@@ -60,7 +60,7 @@ export function MiniBarChartCard({
                     styles.bar,
                     {
                       height: `${heightPercent}%`,
-                      backgroundColor: isActive ? '#1D4ED8' : '#E2E8F0',
+                      backgroundColor: isActive ? '#0003B8' : '#E2E8F0',
                     },
                   ]}
                 />
