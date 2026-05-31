@@ -129,10 +129,11 @@ export function AdminUsers() {
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
-            <View style={styles.heroRow}>
-              <View>
+            <View style={styles.heroStrip}>
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroEyebrow}>Access Control</Text>
                 <Text style={styles.heroTitle}>User Management</Text>
-                <Text style={styles.heroSubtitle}>
+                <Text style={styles.heroDescription}>
                   Manage platform access, assign roles, and monitor user status across all hospitals.
                 </Text>
               </View>
@@ -373,23 +374,48 @@ const styles = StyleSheet.create({
     padding: 28,
     gap: 26,
   },
-  heroRow: {
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 20,
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
+  },
+  heroCopy: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#0003B8',
+    marginBottom: 8,
   },
   heroTitle: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: '900',
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
   },
-  heroSubtitle: {
-    marginTop: 6,
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#70839B',
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
   },
   createButton: {
     minHeight: 40,
@@ -621,3 +647,4 @@ const styles = StyleSheet.create({
 });
 
 export default AdminUsers;
+export const heroStripStylesForTesting = styles;

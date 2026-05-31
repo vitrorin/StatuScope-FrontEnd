@@ -96,12 +96,13 @@ export function AdminDashboard() {
     >
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.container}>
-          <View style={[styles.heroRow, isCompact && styles.heroRowCompact]}>
-            <View>
+          <View style={styles.heroStrip}>
+            <View style={styles.heroCopy}>
+              <Text style={styles.heroEyebrow}>Hospital Operations</Text>
               <Text style={styles.heroTitle}>
                 {dashboard?.hospitalName ? `${dashboard.hospitalName} Radar Overview` : 'Hospital Radar Overview'}
               </Text>
-              <Text style={styles.heroSubtitle}>
+              <Text style={styles.heroDescription}>
                 {dashboard?.municipalityName && dashboard?.stateName
                   ? `Live operations for ${dashboard.municipalityName}, ${dashboard.stateName}.`
                   : 'Real-time epidemiological monitoring and facility status tracking.'}
@@ -548,27 +549,48 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 24,
   },
-  heroRow: {
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 20,
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
   },
-  heroRowCompact: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+  heroCopy: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#0003B8',
+    marginBottom: 8,
   },
   heroTitle: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
   },
-  heroSubtitle: {
-    marginTop: 4,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#64748B',
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
   },
   heroActions: {
     flexDirection: 'row',
@@ -869,3 +891,4 @@ const styles = StyleSheet.create({
 });
 
 export default AdminDashboard;
+export const heroStripStylesForTesting = styles;

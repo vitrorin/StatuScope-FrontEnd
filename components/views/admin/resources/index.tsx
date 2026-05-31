@@ -204,17 +204,26 @@ export function AdminResources() {
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
+            <View style={styles.heroStrip}>
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroEyebrow}>Hospital Operations</Text>
+                <Text style={styles.heroTitle}>Resource Management</Text>
+                <Text style={styles.heroDescription}>
+                  Monitor and manage hospital capacity, staffing, and inventory status.
+                </Text>
+              </View>
+              <Button
+                label={saving ? 'Saving...' : 'Edit Configuration'}
+                variant="secondary"
+                size="sm"
+                onPress={() => setIsEditConfigurationOpen(true)}
+              />
+            </View>
+
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitle}>Capacity Status</Text>
               </View>
-              <Button
-                label={saving ? 'Saving...' : 'Edit Configuration'}
-                variant="ghost"
-                size="sm"
-                labelStyle={styles.sectionAction}
-                onPress={() => setIsEditConfigurationOpen(true)}
-              />
             </View>
 
             {error ? (
@@ -845,7 +854,51 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   container: {
-    gap: 18,
+    padding: 24,
+    gap: 24,
+  },
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
+  },
+  heroCopy: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#0003B8',
+    marginBottom: 8,
+  },
+  heroTitle: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
+  },
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -1123,3 +1176,4 @@ const styles = StyleSheet.create({
 });
 
 export default AdminResources;
+export const heroStripStylesForTesting = styles;

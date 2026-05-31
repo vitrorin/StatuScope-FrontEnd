@@ -147,14 +147,11 @@ export function AdminRecommendations() {
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
-            <View style={styles.heroRow}>
-              <View>
-                <View style={styles.eyebrowRow}>
-                  <MaterialCommunityIcons name="brain" size={15} color="#1718C7" />
-                  <Text style={styles.eyebrow}>Intelligence Core</Text>
-                </View>
+            <View style={styles.heroStrip}>
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroEyebrow}>Intelligence Core</Text>
                 <Text style={styles.heroTitle}>AI Operational Recommendations</Text>
-                <Text style={styles.heroSubtitle}>
+                <Text style={styles.heroDescription}>
                   Real-time guidance grounded in live epidemiological activity and current hospital resource capacity.
                 </Text>
               </View>
@@ -579,38 +576,48 @@ const styles = StyleSheet.create({
     padding: 26,
     gap: 24,
   },
-  heroRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 20,
-  },
-  eyebrowRow: {
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
   },
-  eyebrow: {
-    fontSize: 14,
+  heroCopy: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
     lineHeight: 18,
-    fontWeight: '800',
+    fontWeight: '700',
+    letterSpacing: 1,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    color: '#1718C7',
+    color: '#0003B8',
+    marginBottom: 8,
   },
   heroTitle: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: '900',
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
   },
-  heroSubtitle: {
-    marginTop: 6,
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#64748B',
-    maxWidth: 620,
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
   },
   refreshButton: {
     minHeight: 40,
@@ -901,3 +908,4 @@ const styles = StyleSheet.create({
 });
 
 export default AdminRecommendations;
+export const heroStripStylesForTesting = styles;
