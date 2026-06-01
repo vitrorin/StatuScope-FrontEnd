@@ -118,7 +118,6 @@ export function AdminUsers() {
     <DashboardLayout
       active="users"
       sectionLabel="Users"
-      searchPlaceholder="Search users, emails..."
       userName={profile?.fullName ?? 'Hospital Admin'}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
@@ -419,13 +418,13 @@ const styles = StyleSheet.create({
   },
   createButton: {
     minHeight: 40,
-    borderRadius: 999,
+    borderRadius: 12,
     backgroundColor: '#1718C7',
     borderColor: '#1718C7',
     paddingHorizontal: 18,
   },
   filterCard: {
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 18,
     gap: 14,
   },

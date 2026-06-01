@@ -367,9 +367,9 @@ function getRadiusBounds(
 }
 
 function metricAccentColor(status?: DoctorDashboardMetric['status']) {
-  if (status === 'danger') return '#EF4444';
-  if (status === 'warning') return '#F59E0B';
-  if (status === 'positive') return '#22C55E';
+  if (status === 'danger') return '#1E40AF';
+  if (status === 'warning') return '#3B82F6';
+  if (status === 'positive') return '#93C5FD';
   return '#64748B';
 }
 
@@ -701,7 +701,6 @@ export function DoctorDashboard() {
     <DashboardLayout
       active="dashboard"
       sectionLabel={t('doctor.dashboard.sectionLabel')}
-      searchPlaceholder={t('doctor.dashboard.searchPlaceholder')}
       userName={profile?.fullName ?? 'Doctor'}
       userId={hospitalName}
       avatarText={initialsFromName(profile?.fullName)}
@@ -808,13 +807,13 @@ export function DoctorDashboard() {
               overlayItems={(mapState.data?.diseaseBreakdown ?? []).slice(0, 3).map((disease, index) => ({
                 label: translateDiseaseName(t, disease.diseaseName),
                 value: formatNumber(disease.caseCount),
-                color: index === 0 ? '#EF4444' : index === 1 ? '#F97316' : '#0003B8',
+                color: index === 0 ? '#1E40AF' : index === 1 ? '#3B82F6' : '#0003B8',
               }))}
               showControls
               legendItems={[
-                { label: t('doctor.dashboard.map.highRisk'), color: '#EF4444' },
-                { label: t('doctor.dashboard.map.emerging'), color: '#FB923C' },
-                { label: t('doctor.dashboard.map.lowRisk'), color: '#22C55E' },
+                { label: t('doctor.dashboard.map.highRisk'), color: '#1E40AF' },
+                { label: t('doctor.dashboard.map.emerging'), color: '#3B82F6' },
+                { label: t('doctor.dashboard.map.lowRisk'), color: '#93C5FD' },
                 { label: t('doctor.dashboard.map.hospitalNode'), color: '#0003B8' },
               ]}
               footerTextLeft="© OpenStreetMap contributors"
@@ -1303,7 +1302,7 @@ const styles = StyleSheet.create({
   radiusSegment: {
     height: 48,
     minWidth: 90,
-    borderRadius: 9,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(0, 3, 184, 0.18)',
     backgroundColor: '#FFFFFF',
@@ -1555,21 +1554,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: '#BFDBFE',
   },
   errorTitle: {
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#991B1B',
+    color: '#1E3A8A',
   },
   errorText: {
     marginTop: 4,
     fontSize: 13,
     lineHeight: 20,
-    color: '#B91C1C',
+    color: '#1D4ED8',
   },
   mainGrid: {
     flexDirection: 'row',

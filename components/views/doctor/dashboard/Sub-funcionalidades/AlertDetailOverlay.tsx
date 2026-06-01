@@ -96,23 +96,23 @@ function MetricStat({ label, value, accentColor }: { label: string; value: strin
 }
 
 function accentColor(variant: DoctorDashboardAlert['variant']) {
-  if (variant === 'critical') return '#EF4444';
-  if (variant === 'warning') return '#F59E0B';
-  if (variant === 'success') return '#22C55E';
+  if (variant === 'critical') return '#1E40AF';
+  if (variant === 'warning') return '#3B82F6';
+  if (variant === 'success') return '#93C5FD';
   if (variant === 'neutral') return '#64748B';
   return '#0003B8';
 }
 
 function statusAccent(variant: DoctorDashboardAlert['variant']) {
-  if (variant === 'critical') return '#EF4444';
-  if (variant === 'warning') return '#F59E0B';
-  return '#22C55E';
+  if (variant === 'critical') return '#1E40AF';
+  if (variant === 'warning') return '#3B82F6';
+  return '#93C5FD';
 }
 
 function priorityAccent(variant: DoctorDashboardAlert['variant']) {
-  if (variant === 'critical') return '#DC2626';
-  if (variant === 'warning') return '#F97316';
-  return '#14B8A6';
+  if (variant === 'critical') return '#1E3A8A';
+  if (variant === 'warning') return '#3B82F6';
+  return '#93C5FD';
 }
 
 function diseaseFromTitle(title: string) {

@@ -136,7 +136,6 @@ export function AdminRecommendations() {
     <DashboardLayout
       active="recommendations"
       sectionLabel="Recommendations"
-      searchPlaceholder="Search models, alerts..."
       userName={profile?.fullName ?? 'Hospital Admin'}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
@@ -695,7 +694,7 @@ const styles = StyleSheet.create({
   tabBadge: {
     minWidth: 20,
     height: 20,
-    borderRadius: 6,
+    borderRadius: 8,
     paddingHorizontal: 5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -856,7 +855,7 @@ const styles = StyleSheet.create({
   },
   cardActionButton: {
     minHeight: 40,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 16,
   },
   cardActionPrimary: {

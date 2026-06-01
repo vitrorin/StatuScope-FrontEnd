@@ -86,7 +86,6 @@ export function AdminDashboard() {
     <DashboardLayout
       active="dashboard"
       sectionLabel="Dashboard"
-      searchPlaceholder="Search hospital metrics..."
       userName={profile?.fullName ?? 'Hospital Admin'}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
@@ -283,7 +282,7 @@ function OverviewMetricCard({
   badgeColor = '#94A3B8',
   subtitle,
   progressValue,
-  progressColor = '#22C55E',
+  progressColor = '#93C5FD',
   segmented = false,
   tone = 'default',
   style,
@@ -298,7 +297,7 @@ function OverviewMetricCard({
           <Text style={[styles.metricTitle, isCritical && styles.metricTitleCritical]}>{title}</Text>
           {badge ? <Text style={[styles.metricBadge, { color: badgeColor }]}>{badge}</Text> : null}
           {isCritical ? (
-            <Feather name="alert-triangle" size={14} color="#EF4444" style={styles.metricIcon} />
+            <Feather name="alert-triangle" size={14} color="#1E40AF" style={styles.metricIcon} />
           ) : null}
         </View>
 
@@ -320,7 +319,7 @@ function OverviewMetricCard({
           <ProgressBar
             value={progressValue}
             color={progressColor}
-            trackColor={isCritical ? '#FEE2E2' : '#E2E8F0'}
+            trackColor={isCritical ? '#BFDBFE' : '#E2E8F0'}
             style={styles.metricProgress}
           />
         ) : null}
@@ -404,10 +403,10 @@ function mapMetric(
     title,
     value: metric.value,
     badge: metric.badge ?? undefined,
-    badgeColor: status.includes('CRITICAL') ? '#EF4444' : status.includes('WARNING') ? '#F59E0B' : '#22C55E',
+    badgeColor: status.includes('CRITICAL') ? '#1E40AF' : status.includes('WARNING') ? '#3B82F6' : '#93C5FD',
     subtitle: metric.subtitle ?? undefined,
     progressValue: deriveProgress(metric.value, metric.status),
-    progressColor: status.includes('CRITICAL') ? '#EF4444' : status.includes('WARNING') ? '#F59E0B' : '#22C55E',
+    progressColor: status.includes('CRITICAL') ? '#1E40AF' : status.includes('WARNING') ? '#3B82F6' : '#93C5FD',
     segmented: title.toUpperCase().includes('OXYGEN'),
     tone: status.includes('CRITICAL') ? 'critical' : 'default',
     detailTitle: title,
@@ -530,9 +529,9 @@ function deriveProgress(value: string, status?: string | null) {
 }
 
 function severityToColor(value: string) {
-  if (value === 'HIGH') return '#EF4444';
-  if (value === 'MEDIUM') return '#F59E0B';
-  return '#1215C9';
+  if (value === 'HIGH') return '#1E40AF';
+  if (value === 'MEDIUM') return '#3B82F6';
+  return '#93C5FD';
 }
 
 function severityToProgress(value: string) {
@@ -601,11 +600,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   secondaryAction: {
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 14,
   },
   primaryAction: {
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 14,
     backgroundColor: '#0003B8',
     borderColor: '#0003B8',
@@ -613,20 +612,20 @@ const styles = StyleSheet.create({
   errorCard: {
     borderRadius: 16,
     padding: 16,
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
   },
   errorTitle: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#991B1B',
+    color: '#1E3A8A',
   },
   errorText: {
     marginTop: 6,
     fontSize: 13,
     lineHeight: 20,
-    color: '#B91C1C',
+    color: '#1D4ED8',
   },
   loadingCard: {
     minHeight: 220,
@@ -658,8 +657,8 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
   metricCardCritical: {
-    backgroundColor: '#FFF7F7',
-    borderColor: '#FECACA',
+    backgroundColor: '#F0F7FF',
+    borderColor: '#BFDBFE',
   },
   metricHeader: {
     flexDirection: 'row',
@@ -676,7 +675,7 @@ const styles = StyleSheet.create({
     color: '#7A8CA5',
   },
   metricTitleCritical: {
-    color: '#EF4444',
+    color: '#1E40AF',
   },
   metricBadge: {
     fontSize: 12,
@@ -694,7 +693,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.8,
   },
   metricValueCritical: {
-    color: '#DC2626',
+    color: '#1E3A8A',
   },
   metricSubtitle: {
     marginTop: 6,
@@ -703,7 +702,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   metricSubtitleCritical: {
-    color: '#EF4444',
+    color: '#1E40AF',
   },
   metricProgress: {
     marginTop: 10,
@@ -815,7 +814,7 @@ const styles = StyleSheet.create({
     minHeight: 28,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: 12,
     backgroundColor: '#F8FAFC',
     borderColor: '#E2E8F0',
   },
@@ -878,7 +877,7 @@ const styles = StyleSheet.create({
   caseAction: {
     marginTop: 'auto',
     minHeight: 40,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderColor: '#E2E8F0',
   },

@@ -81,7 +81,6 @@ interface DiseaseAnalytics {
 export interface AnalyticsScreenProps {
   active?: SidebarItemKey;
   sectionLabel?: string;
-  searchPlaceholder?: string;
   userName?: string;
   userId?: string;
   avatarText?: string;
@@ -543,7 +542,6 @@ function isAdminPersona(propsPersona: AnalyticsPersona | undefined, sidebarItems
 export function AnalyticsScreen({
   active = 'analytics',
   sectionLabel = 'Analytics',
-  searchPlaceholder = 'Search medical records...',
   userName,
   userId,
   avatarText,
@@ -822,7 +820,6 @@ export function AnalyticsScreen({
     <DashboardLayout
       active={active}
       sectionLabel={sectionLabel}
-      searchPlaceholder={searchPlaceholder}
       userName={userName ?? profile?.fullName ?? 'Doctor'}
       userId={userId ?? (profile?.hospitalName ? profile.hospitalName : profile?.email)}
       avatarText={avatarText ?? initialsFromName(profile?.fullName)}
@@ -1641,11 +1638,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   narrativeCard: {
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 20,
   },
   methodologyCard: {
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(23, 24, 199, 0.10)',
@@ -1743,7 +1740,7 @@ const styles = StyleSheet.create({
     color: '#526174',
   },
   selectorCard: {
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 20,
     zIndex: 20,
     elevation: 20,
@@ -1864,7 +1861,7 @@ const styles = StyleSheet.create({
   infoModalCard: {
     width: '100%',
     maxWidth: 460,
-    borderRadius: 22,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
     padding: 20,
     shadowColor: '#0F172A',
@@ -2021,7 +2018,7 @@ const styles = StyleSheet.create({
   panelCard: {
     flex: 1,
     minWidth: 0,
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 20,
   },
   diseaseSummaryCard: {

@@ -190,7 +190,6 @@ export function AdminResources() {
     <DashboardLayout
       active="resources"
       sectionLabel="Resources"
-      searchPlaceholder="Search beds, inventory..."
       userName={profile?.fullName ?? 'Hospital Admin'}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
@@ -956,7 +955,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: 16,
   },
   summaryTileLabel: {
     fontSize: 12,
@@ -1056,7 +1055,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   liveBadge: {
-    borderRadius: 6,
+    borderRadius: 8,
     backgroundColor: '#E9EAFE',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -1132,13 +1131,13 @@ const styles = StyleSheet.create({
     width: 32,
     minWidth: 32,
     minHeight: 32,
-    borderRadius: 8,
+    borderRadius: 10,
   },
   table: {
     borderWidth: 0,
     shadowOpacity: 0,
     elevation: 0,
-    borderRadius: 0,
+    borderRadius: 12,
   },
   departmentName: {
     fontSize: 13,
