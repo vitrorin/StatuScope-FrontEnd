@@ -4,6 +4,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View 
 import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
+import { useTranslation } from '@/i18n';
+import { getAdminUserRoleLabel, getAdminUserStatusLabel, isSpanish } from '@/components/views/admin/localization';
 import {
   AdminUserRecord,
   getInitials,
@@ -30,6 +32,7 @@ const roleOptions: UserRole[] = [
 const statusOptions: UserStatus[] = ['Active', 'Inactive'];
 
 export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving = false }: UserEditorOverlayProps) {
+  const { language } = useTranslation();
   const [draft, setDraft] = useState<AdminUserRecord>({
     id: '',
     initials: '',
@@ -87,12 +90,12 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>User Management</Text>
-              <Text style={styles.title}>{mode === 'create' ? 'Create New User' : 'Edit User'}</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Gestion de usuarios' : 'User Management'}</Text>
+              <Text style={styles.title}>{mode === 'create' ? (isSpanish(language) ? 'Crear usuario' : 'Create New User') : (isSpanish(language) ? 'Editar usuario' : 'Edit User')}</Text>
               <Text style={styles.subtitle}>
                 {mode === 'create'
-                  ? 'Add a new platform user with role and status.'
-                  : 'Update role and account status.'}
+                  ? (isSpanish(language) ? 'Agrega un nuevo usuario de la plataforma con rol y estado.' : 'Add a new platform user with role and status.')
+                  : (isSpanish(language) ? 'Actualiza el rol y el estado de la cuenta.' : 'Update role and account status.')}
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
@@ -104,7 +107,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Full Name"
+                  label={isSpanish(language) ? 'Nombre completo' : 'Full Name'}
                   value={draft.name}
                   onChangeText={(text) => setField('name', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -125,7 +128,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
               <View style={styles.row}>
                 <View style={styles.field}>
                   <InputField
-                    label="Password"
+                    label={isSpanish(language) ? 'Contrasena' : 'Password'}
                     type="password"
                     value={password}
                     onChangeText={setPassword}
@@ -137,7 +140,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
             ) : null}
 
             <View style={styles.selectorBlock}>
-              <Text style={styles.selectorLabel}>Role</Text>
+              <Text style={styles.selectorLabel}>{isSpanish(language) ? 'Rol' : 'Role'}</Text>
               <View style={styles.chipsRow}>
                 {roleOptions.map((option) => {
                   const isActive = draft.role === option;
@@ -148,7 +151,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
                       onPress={() => setField('role', option)}
                       activeOpacity={0.75}
                     >
-                      <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{option}</Text>
+                      <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{getAdminUserRoleLabel(option, language)}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -156,7 +159,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
             </View>
 
             <View style={styles.selectorBlock}>
-              <Text style={styles.selectorLabel}>Status</Text>
+              <Text style={styles.selectorLabel}>{isSpanish(language) ? 'Estado' : 'Status'}</Text>
               <View style={styles.chipsRow}>
                 {statusOptions.map((option) => {
                   const isActive = draft.status === option;
@@ -167,7 +170,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
                       onPress={() => setField('status', option)}
                       activeOpacity={0.75}
                     >
-                      <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{option}</Text>
+                      <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{getAdminUserStatusLabel(option, language)}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -176,9 +179,9 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
           </ScrollView>
 
           <View style={styles.footer}>
-            <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
+            <Button label={isSpanish(language) ? 'Cancelar' : 'Cancel'} variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
               <Button
-              label={saving ? 'Saving...' : mode === 'create' ? 'Create User' : 'Save Changes'}
+              label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : mode === 'create' ? (isSpanish(language) ? 'Crear usuario' : 'Create User') : (isSpanish(language) ? 'Guardar cambios' : 'Save Changes')}
               variant="primary"
               size="md"
               style={{ ...styles.footerButton, ...styles.primaryButton }}

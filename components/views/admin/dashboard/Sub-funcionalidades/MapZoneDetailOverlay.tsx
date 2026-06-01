@@ -3,6 +3,8 @@ import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardZone } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface MapZoneDetailOverlayProps {
   visible: boolean;
@@ -11,6 +13,7 @@ interface MapZoneDetailOverlayProps {
 }
 
 export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOverlayProps) {
+  const { language } = useTranslation();
   if (!zone) return null;
 
   return (
@@ -20,7 +23,7 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>Zone Overview</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Resumen de zona' : 'Zone Overview'}</Text>
               <Text style={styles.title}>{zone.name}</Text>
               <Text style={styles.subtitle}>{zone.note}</Text>
             </View>
@@ -30,15 +33,15 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricStat label="Risk Level" value={zone.risk} />
-            <MetricStat label="Primary Disease" value={zone.disease} />
-            <MetricStat label="Cases" value={zone.cases} />
-            <MetricStat label="Radius" value={zone.radius} />
-            <MetricStat label="Priority" value={zone.priority} />
+            <MetricStat label={isSpanish(language) ? 'Nivel de riesgo' : 'Risk Level'} value={zone.risk} />
+            <MetricStat label={isSpanish(language) ? 'Enfermedad principal' : 'Primary Disease'} value={zone.disease} />
+            <MetricStat label={isSpanish(language) ? 'Casos' : 'Cases'} value={zone.cases} />
+            <MetricStat label={isSpanish(language) ? 'Radio' : 'Radius'} value={zone.radius} />
+            <MetricStat label={isSpanish(language) ? 'Prioridad' : 'Priority'} value={zone.priority} />
           </View>
 
           <CardBase style={styles.noteCard}>
-            <Text style={styles.noteLabel}>Recommended Action</Text>
+            <Text style={styles.noteLabel}>{isSpanish(language) ? 'Accion recomendada' : 'Recommended Action'}</Text>
             <Text style={styles.noteText}>{zone.recommendedAction}</Text>
           </CardBase>
         </CardBase>

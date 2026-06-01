@@ -31,6 +31,14 @@ import {
   refreshAdminRecommendations,
   updateAdminRecommendationStatus,
 } from '@/lib/adminOperational';
+import { useTranslation } from '@/i18n';
+import {
+  formatRelativeDate,
+  getHospitalAdminLabel,
+  getRecommendationSourceLabel,
+  getRecommendationStatusLabel,
+  isSpanish,
+} from '@/components/views/admin/localization';
 
 const tabs: { label: string; value: RecommendationTab }[] = [
   { label: 'Active Alerts', value: 'active' },
@@ -44,6 +52,7 @@ type LoadState = 'idle' | 'loading' | 'success' | 'error';
 export function AdminRecommendations() {
   const router = useRouter();
   const { logout, profile } = useAuth();
+  const { language } = useTranslation();
   const [activeTab, setActiveTab] = useState<RecommendationTab>('active');
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [refreshing, setRefreshing] = useState(false);
@@ -61,13 +70,13 @@ export function AdminRecommendations() {
     setError(null);
     try {
       const data = await listAdminRecommendations();
-      setRecommendations(data.map(mapRecommendation));
+      setRecommendations(data.map((item) => mapRecommendation(item, language)));
       setLoadState('success');
     } catch (nextError) {
       setLoadState('error');
-      setError(nextError instanceof Error ? nextError.message : 'Unable to load recommendations.');
+      setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudieron cargar las recomendaciones.' : 'Unable to load recommendations.');
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     void loadRecommendations();
@@ -75,10 +84,10 @@ export function AdminRecommendations() {
 
   const refreshRecommendation = useCallback(async (id: string) => {
     const detail = await getAdminRecommendationDetail(id);
-    const mapped = mapRecommendation(detail);
+    const mapped = mapRecommendation(detail, language);
     setRecommendations((current) => current.map((item) => (item.id === id ? mapped : item)));
     return mapped;
-  }, []);
+  }, [language]);
 
   const handleStatusChange = useCallback(async (id: string, status: RecommendationStatus) => {
     setActionBusyId(id);
@@ -87,7 +96,7 @@ export function AdminRecommendations() {
       await updateAdminRecommendationStatus(id, toApiStatus(status));
       await refreshRecommendation(id);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Unable to update the recommendation status.');
+      setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo actualizar el estado de la recomendacion.' : 'Unable to update the recommendation status.');
     } finally {
       setActionBusyId(null);
     }
@@ -100,7 +109,7 @@ export function AdminRecommendations() {
       await refreshAdminRecommendations();
       await loadRecommendations();
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Unable to refresh recommendations.');
+      setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudieron actualizar las recomendaciones.' : 'Unable to refresh recommendations.');
     } finally {
       setRefreshing(false);
     }
@@ -135,8 +144,8 @@ export function AdminRecommendations() {
   return (
     <DashboardLayout
       active="recommendations"
-      sectionLabel="Recommendations"
-      userName={profile?.fullName ?? 'Hospital Admin'}
+      sectionLabel={isSpanish(language) ? 'Recomendaciones' : 'Recommendations'}
+      userName={profile?.fullName ?? getHospitalAdminLabel(language)}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
@@ -148,15 +157,17 @@ export function AdminRecommendations() {
           <View style={styles.container}>
             <View style={styles.heroStrip}>
               <View style={styles.heroCopy}>
-                <Text style={styles.heroEyebrow}>Intelligence Core</Text>
-                <Text style={styles.heroTitle}>AI Operational Recommendations</Text>
+                <Text style={styles.heroEyebrow}>{isSpanish(language) ? 'Nucleo de inteligencia' : 'Intelligence Core'}</Text>
+                <Text style={styles.heroTitle}>{isSpanish(language) ? 'Recomendaciones operativas de IA' : 'AI Operational Recommendations'}</Text>
                 <Text style={styles.heroDescription}>
-                  Real-time guidance grounded in live epidemiological activity and current hospital resource capacity.
+                  {isSpanish(language)
+                    ? 'Orientacion en tiempo real basada en la actividad epidemiologica en vivo y la capacidad actual de recursos hospitalarios.'
+                    : 'Real-time guidance grounded in live epidemiological activity and current hospital resource capacity.'}
                 </Text>
               </View>
 
               <Button
-                label={refreshing ? 'Refreshing...' : 'Refresh Models'}
+                label={refreshing ? (isSpanish(language) ? 'Actualizando...' : 'Refreshing...') : (isSpanish(language) ? 'Actualizar modelos' : 'Refresh Models')}
                 variant="secondary"
                 size="md"
                 leadingIcon={
@@ -171,16 +182,16 @@ export function AdminRecommendations() {
 
             {error ? (
               <CardBase style={styles.errorCard}>
-                <Text style={styles.errorTitle}>Action needed</Text>
+                <Text style={styles.errorTitle}>{isSpanish(language) ? 'Accion requerida' : 'Action needed'}</Text>
                 <Text style={styles.errorText}>{error}</Text>
               </CardBase>
             ) : null}
 
             <View style={styles.summaryRow}>
-              <SummaryTile label="Active Queue" value={String(tabBadges.active)} />
-              <SummaryTile label="In Progress" value={String(tabBadges.inProgress)} />
-              <SummaryTile label="Completed" value={String(recommendations.filter((item) => item.status === 'completed').length)} />
-              <SummaryTile label="Rejected" value={String(recommendations.filter((item) => item.status === 'rejected').length)} />
+              <SummaryTile label={isSpanish(language) ? 'Cola activa' : 'Active Queue'} value={String(tabBadges.active)} />
+              <SummaryTile label={isSpanish(language) ? 'En progreso' : 'In Progress'} value={String(tabBadges.inProgress)} />
+              <SummaryTile label={isSpanish(language) ? 'Completadas' : 'Completed'} value={String(recommendations.filter((item) => item.status === 'completed').length)} />
+              <SummaryTile label={isSpanish(language) ? 'Descartadas' : 'Rejected'} value={String(recommendations.filter((item) => item.status === 'rejected').length)} />
             </View>
 
             <View style={styles.tabsRow}>
@@ -194,7 +205,7 @@ export function AdminRecommendations() {
                     onPress={() => setActiveTab(tab.value)}
                     activeOpacity={0.75}
                   >
-                    <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
+                    <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{localizeTabLabel(tab.value, language)}</Text>
                     <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
                       <Text style={[styles.tabBadgeText, !isActive && styles.tabBadgeTextInactive]}>{badgeValue}</Text>
                     </View>
@@ -206,7 +217,7 @@ export function AdminRecommendations() {
             {loadState === 'loading' && recommendations.length === 0 ? (
               <CardBase style={styles.loadingCard}>
                 <ActivityIndicator color="#1718C7" />
-                <Text style={styles.loadingText}>Loading recommendation feed...</Text>
+                <Text style={styles.loadingText}>{isSpanish(language) ? 'Cargando recomendaciones...' : 'Loading recommendation feed...'}</Text>
               </CardBase>
             ) : visibleRecommendations.length > 0 ? (
               <View style={styles.feed}>
@@ -214,6 +225,7 @@ export function AdminRecommendations() {
                   <AdminRecommendationCard
                     key={item.id}
                     item={item}
+                    language={language}
                     isBusy={actionBusyId === item.id}
                     onOpenDetail={async () => {
                       setDetailId(item.id);
@@ -225,10 +237,10 @@ export function AdminRecommendations() {
                     }}
                     onStatusChange={(status) => void handleStatusChange(item.id, status)}
                     onAction={(actionLabel) => {
-                      if (actionLabel === 'Assign task') setTaskId(item.id);
-                      if (actionLabel === 'Notify staff') setNotifyId(item.id);
-                      if (actionLabel === 'Order supplies') setSupplyId(item.id);
-                      if (actionLabel === 'Dismiss') setDismissId(item.id);
+                      if (actionLabel === (isSpanish(language) ? 'Asignar tarea' : 'Assign task')) setTaskId(item.id);
+                      if (actionLabel === (isSpanish(language) ? 'Notificar personal' : 'Notify staff')) setNotifyId(item.id);
+                      if (actionLabel === (isSpanish(language) ? 'Pedir insumos' : 'Order supplies')) setSupplyId(item.id);
+                      if (actionLabel === (isSpanish(language) ? 'Descartar' : 'Dismiss')) setDismissId(item.id);
                     }}
                   />
                 ))}
@@ -238,8 +250,8 @@ export function AdminRecommendations() {
                 <View style={styles.emptyIconWrap}>
                   <MaterialCommunityIcons name="progress-clock" size={22} color="#1718C7" />
                 </View>
-                <Text style={styles.emptyTitle}>No recommendations found</Text>
-                <Text style={styles.emptySubtitle}>The current filter does not have any recommendation records yet.</Text>
+                <Text style={styles.emptyTitle}>{isSpanish(language) ? 'No se encontraron recomendaciones' : 'No recommendations found'}</Text>
+                <Text style={styles.emptySubtitle}>{isSpanish(language) ? 'El filtro actual todavia no tiene registros de recomendaciones.' : 'The current filter does not have any recommendation records yet.'}</Text>
               </CardBase>
             )}
           </View>
@@ -335,12 +347,14 @@ export function AdminRecommendations() {
 
 function AdminRecommendationCard({
   item,
+  language,
   isBusy,
   onOpenDetail,
   onAction,
   onStatusChange,
 }: {
   item: RecommendationFeedItem;
+  language: 'en' | 'es';
   isBusy: boolean;
   onOpenDetail: () => void;
   onAction: (actionLabel: string) => void;
@@ -379,16 +393,16 @@ function AdminRecommendationCard({
           <View style={styles.headerIndicators}>
             <SeverityBadge label={item.severity.toUpperCase()} severity={item.severity} />
             <View style={styles.statusPill}>
-              <Text style={styles.statusPillLabel}>{formatStatusLabel(item.status)}</Text>
+              <Text style={styles.statusPillLabel}>{getRecommendationStatusLabel(item.status, language)}</Text>
             </View>
           </View>
         </View>
 
         <Text style={styles.recommendationDescription}>{item.description}</Text>
         <Text style={styles.insightLine}>
-          Confidence {item.confidenceScore}% | Impact: {item.expectedImpact} | Window: {item.urgencyWindow}
+          {language === 'es' ? 'Confianza' : 'Confidence'} {item.confidenceScore}% | {language === 'es' ? 'Impacto' : 'Impact'}: {item.expectedImpact} | {language === 'es' ? 'Ventana' : 'Window'}: {item.urgencyWindow}
         </Text>
-        <Text style={styles.contextLine}>{formatRecommendationSource(item.createdByMode)}</Text>
+        <Text style={styles.contextLine}>{getRecommendationSourceLabel(item.createdByMode, language)}</Text>
 
         <View style={styles.cardFooter}>
           <MetaInfoRow items={item.metaItems} style={styles.metaRow} />
@@ -426,7 +440,7 @@ function AdminRecommendationCard({
               disabled={isBusy}
             >
               <Text style={[styles.statusChipText, item.status === status && styles.statusChipTextActive]}>
-                {formatStatusLabel(status)}
+                {getRecommendationStatusLabel(status, language)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -446,7 +460,7 @@ function SummaryTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-function mapRecommendation(item: OperationalRecommendationResponse): RecommendationFeedItem {
+function mapRecommendation(item: OperationalRecommendationResponse, language: 'en' | 'es'): RecommendationFeedItem {
   const severity = mapSeverity(item.severity);
   const status = mapStatus(item.status);
   return {
@@ -457,11 +471,11 @@ function mapRecommendation(item: OperationalRecommendationResponse): Recommendat
     description: item.description,
     createdByMode: item.createdByMode,
     metaItems: [
-      { label: formatRelativeDate(item.createdAt), icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
+      { label: formatRelativeDate(item.createdAt, language), icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
       { label: item.type.replace(/_/g, ' '), icon: <Feather name="briefcase" size={13} color="#7C8CA4" /> },
     ],
     accentColor: severity === 'high' ? '#F7C9CC' : severity === 'medium' ? '#F2E5C1' : '#E3E8F0',
-    actions: buildActions(item.type, status),
+    actions: buildActions(item.type, status, language),
     confidenceScore: Math.round(Number(item.confidenceScore ?? 0)),
     expectedImpact: item.expectedImpact,
     urgencyWindow: item.urgencyWindow,
@@ -478,15 +492,15 @@ function mapRecommendation(item: OperationalRecommendationResponse): Recommendat
   };
 }
 
-function buildActions(type: string, status: RecommendationStatus): RecommendationFeedItem['actions'] {
+function buildActions(type: string, status: RecommendationStatus, language: 'en' | 'es'): RecommendationFeedItem['actions'] {
   const actions: RecommendationFeedItem['actions'] = [];
   if (!isArchived(status)) {
-    actions.push({ label: 'Assign task', variant: 'primary' });
-    actions.push({ label: 'Notify staff', variant: 'secondary' });
+    actions.push({ label: language === 'es' ? 'Asignar tarea' : 'Assign task', variant: 'primary' });
+    actions.push({ label: language === 'es' ? 'Notificar personal' : 'Notify staff', variant: 'secondary' });
     if (type === 'SUPPLY' || type === 'BED_CAPACITY' || type === 'ISOLATION') {
-      actions.push({ label: 'Order supplies', variant: 'secondary' });
+      actions.push({ label: language === 'es' ? 'Pedir insumos' : 'Order supplies', variant: 'secondary' });
     }
-    actions.push({ label: 'Dismiss', variant: 'secondary' });
+    actions.push({ label: language === 'es' ? 'Descartar' : 'Dismiss', variant: 'secondary' });
   }
   return actions;
 }
@@ -513,17 +527,6 @@ function toApiStatus(status: RecommendationStatus): AdminRecommendationStatus {
   return 'NEW';
 }
 
-function formatRelativeDate(value: string) {
-  const timestamp = new Date(value).getTime();
-  const diffMinutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
-  if (diffMinutes < 1) return 'Just now';
-  if (diffMinutes < 60) return `${diffMinutes} min ago`;
-  const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours} hr ago`;
-  const diffDays = Math.round(diffHours / 24);
-  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-}
-
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString([], {
     month: 'short',
@@ -542,29 +545,17 @@ function isArchived(status: RecommendationStatus) {
   return status === 'completed' || status === 'rejected';
 }
 
-function formatStatusLabel(status: RecommendationStatus) {
-  switch (status) {
-    case 'new':
-      return 'New';
-    case 'accepted':
-      return 'Accepted';
-    case 'rejected':
-      return 'Rejected';
-    case 'completed':
-      return 'Completed';
-    case 'assigned':
-      return 'Assigned';
+function localizeTabLabel(tab: RecommendationTab, language: 'en' | 'es') {
+  if (language === 'es') {
+    if (tab === 'active') return 'Alertas activas';
+    if (tab === 'high') return 'Alta urgencia';
+    if (tab === 'inProgress') return 'En progreso';
+    return 'Archivo';
   }
-}
-
-function formatRecommendationSource(createdByMode?: string) {
-  if (createdByMode === 'LLM_ASSISTED') {
-    return 'Grounded in live outbreaks and hospital resource signals.';
-  }
-  if (createdByMode === 'RULE_ENGINE') {
-    return 'Generated from live hospital and outbreak rules.';
-  }
-  return 'Generated from current operational context.';
+  if (tab === 'active') return 'Active Alerts';
+  if (tab === 'high') return 'High Urgency';
+  if (tab === 'inProgress') return 'In Progress';
+  return 'Archive';
 }
 
 const styles = StyleSheet.create({

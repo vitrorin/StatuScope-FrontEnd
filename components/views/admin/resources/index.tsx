@@ -50,12 +50,15 @@ import {
   updateAdminResourceSummary,
 } from '@/lib/adminOperational';
 import { initialsFromName } from '@/lib/format';
+import { useTranslation } from '@/i18n';
+import { getHospitalAdminLabel, isSpanish } from '@/components/views/admin/localization';
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminResources() {
   const router = useRouter();
   const { logout, profile } = useAuth();
+  const { language } = useTranslation();
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -99,9 +102,9 @@ export function AdminResources() {
       setLoadState('success');
     } catch (nextError) {
       setLoadState('error');
-      setError(nextError instanceof Error ? nextError.message : 'Unable to load hospital resources.');
+      setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudieron cargar los recursos hospitalarios.' : 'Unable to load hospital resources.');
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     void loadResources();
@@ -189,8 +192,8 @@ export function AdminResources() {
   return (
     <DashboardLayout
       active="resources"
-      sectionLabel="Resources"
-      userName={profile?.fullName ?? 'Hospital Admin'}
+      sectionLabel={isSpanish(language) ? 'Recursos' : 'Resources'}
+      userName={profile?.fullName ?? getHospitalAdminLabel(language)}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
@@ -205,14 +208,16 @@ export function AdminResources() {
           <View style={styles.container}>
             <View style={styles.heroStrip}>
               <View style={styles.heroCopy}>
-                <Text style={styles.heroEyebrow}>Hospital Operations</Text>
-                <Text style={styles.heroTitle}>Resource Management</Text>
+                <Text style={styles.heroEyebrow}>{isSpanish(language) ? 'Operaciones hospitalarias' : 'Hospital Operations'}</Text>
+                <Text style={styles.heroTitle}>{isSpanish(language) ? 'Gestion de recursos' : 'Resource Management'}</Text>
                 <Text style={styles.heroDescription}>
-                  Monitor and manage hospital capacity, staffing, and inventory status.
+                  {isSpanish(language)
+                    ? 'Monitorea y administra la capacidad hospitalaria, el personal y el estado del inventario.'
+                    : 'Monitor and manage hospital capacity, staffing, and inventory status.'}
                 </Text>
               </View>
               <Button
-                label={saving ? 'Saving...' : 'Edit Configuration'}
+                label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : (isSpanish(language) ? 'Editar configuracion' : 'Edit Configuration')}
                 variant="secondary"
                 size="sm"
                 onPress={() => setIsEditConfigurationOpen(true)}
@@ -221,13 +226,13 @@ export function AdminResources() {
 
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Capacity Status</Text>
+                <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Estado de capacidad' : 'Capacity Status'}</Text>
               </View>
             </View>
 
             {error ? (
               <CardBase style={styles.errorCard}>
-                <Text style={styles.errorTitle}>Resource service issue</Text>
+                <Text style={styles.errorTitle}>{isSpanish(language) ? 'Problema del servicio de recursos' : 'Resource service issue'}</Text>
                 <Text style={styles.errorText}>{error}</Text>
               </CardBase>
             ) : null}
@@ -235,21 +240,21 @@ export function AdminResources() {
             {loadState === 'loading' && !summary ? (
               <CardBase style={styles.loadingCard}>
                 <ActivityIndicator color="#1718C7" />
-                <Text style={styles.loadingText}>Loading operational resources...</Text>
+                <Text style={styles.loadingText}>{isSpanish(language) ? 'Cargando recursos operativos...' : 'Loading operational resources...'}</Text>
               </CardBase>
             ) : (
               <>
                 <View style={styles.summaryStrip}>
                   <CardBase style={styles.summaryTile}>
-                    <Text style={styles.summaryTileLabel}>Monitored Departments</Text>
+                    <Text style={styles.summaryTileLabel}>{isSpanish(language) ? 'Departamentos monitoreados' : 'Monitored Departments'}</Text>
                     <Text style={styles.summaryTileValue}>{departments.length}</Text>
                   </CardBase>
                   <CardBase style={styles.summaryTile}>
-                    <Text style={styles.summaryTileLabel}>Specialist Categories</Text>
+                    <Text style={styles.summaryTileLabel}>{isSpanish(language) ? 'Categorias de especialistas' : 'Specialist Categories'}</Text>
                     <Text style={styles.summaryTileValue}>{staffingRaw.length}</Text>
                   </CardBase>
                   <CardBase style={styles.summaryTile}>
-                    <Text style={styles.summaryTileLabel}>Operational Contacts</Text>
+                    <Text style={styles.summaryTileLabel}>{isSpanish(language) ? 'Contactos operativos' : 'Operational Contacts'}</Text>
                     <Text style={styles.summaryTileValue}>{roster.length}</Text>
                   </CardBase>
                 </View>
@@ -258,32 +263,36 @@ export function AdminResources() {
                   {availableBedPercentage < 25 ? (
                     <InlineWarningBanner
                       variant="critical"
-                      title="Capacity alert"
-                      message={`Only ${availableBeds} beds remain available across the hospital. Consider opening overflow capacity.`}
+                      title={isSpanish(language) ? 'Alerta de capacidad' : 'Capacity alert'}
+                      message={isSpanish(language)
+                        ? `Solo quedan ${availableBeds} camas disponibles en el hospital. Considera abrir capacidad de desborde.`
+                        : `Only ${availableBeds} beds remain available across the hospital. Consider opening overflow capacity.`}
                     />
                   ) : null}
                   {criticalInventoryCount > 0 || criticalDepartmentsCount > 0 ? (
                     <InlineWarningBanner
                       variant="warning"
-                      title="Automatic monitoring active"
-                      message={`${criticalDepartmentsCount} critical department(s) and ${criticalInventoryCount} critical inventory item(s) currently need attention.`}
+                      title={isSpanish(language) ? 'Monitoreo automatico activo' : 'Automatic monitoring active'}
+                      message={isSpanish(language)
+                        ? `${criticalDepartmentsCount} departamento(s) critico(s) y ${criticalInventoryCount} articulo(s) critico(s) de inventario requieren atencion.`
+                        : `${criticalDepartmentsCount} critical department(s) and ${criticalInventoryCount} critical inventory item(s) currently need attention.`}
                     />
                   ) : null}
                 </View>
 
                 <View style={styles.capacityRow}>
                   <BedCapacitySummaryCard
-                    title="Total Beds"
+                    title={isSpanish(language) ? 'Camas totales' : 'Total Beds'}
                     value={String(totalBeds)}
-                    unitText="units"
-                    trendText={`Snapshot ${summary?.source ?? 'MANUAL'}`}
+                    unitText={isSpanish(language) ? 'unidades' : 'units'}
+                    trendText={isSpanish(language) ? `Corte ${summary?.source ?? 'MANUAL'}` : `Snapshot ${summary?.source ?? 'MANUAL'}`}
                     style={styles.capacityCard}
                   />
                   <CardBase style={[styles.capacityCard, styles.availableCard]}>
-                    <Text style={styles.capacityTitle}>Available Beds</Text>
+                    <Text style={styles.capacityTitle}>{isSpanish(language) ? 'Camas disponibles' : 'Available Beds'}</Text>
                     <View style={styles.availableValueRow}>
                       <Text style={styles.availableValue}>{availableBeds}</Text>
-                      <Text style={styles.availableUnits}>units</Text>
+                      <Text style={styles.availableUnits}>{isSpanish(language) ? 'unidades' : 'units'}</Text>
                     </View>
                     <View style={styles.availableProgressRow}>
                       <ProgressBar
@@ -296,10 +305,12 @@ export function AdminResources() {
                     </View>
                   </CardBase>
                   <BedCapacitySummaryCard
-                    title="Occupied Beds"
+                    title={isSpanish(language) ? 'Camas ocupadas' : 'Occupied Beds'}
                     value={String(occupiedBeds)}
-                    unitText="units"
-                    statusText={criticalDepartmentsCount > 0 ? 'High demand in critical areas' : 'Within expected range'}
+                    unitText={isSpanish(language) ? 'unidades' : 'units'}
+                    statusText={criticalDepartmentsCount > 0
+                      ? (isSpanish(language) ? 'Alta demanda en areas criticas' : 'High demand in critical areas')
+                      : (isSpanish(language) ? 'Dentro del rango esperado' : 'Within expected range')}
                     variant={criticalDepartmentsCount > 0 ? 'critical' : 'default'}
                     valueColorOverride="#0F172A"
                     statusColorOverride={criticalDepartmentsCount > 0 ? '#F04B4B' : '#526174'}
@@ -316,7 +327,7 @@ export function AdminResources() {
                       </View>
                       <View style={styles.tableActions}>
                         <View style={styles.liveBadge}>
-                          <Text style={styles.liveBadgeText}>LIVE</Text>
+                        <Text style={styles.liveBadgeText}>LIVE</Text>
                         </View>
                         <Button label="Manage" variant="ghost" size="sm" onPress={() => setIsStaffingManageOpen(true)} />
                       </View>
@@ -502,7 +513,7 @@ export function AdminResources() {
               await loadResources();
               setIsEditConfigurationOpen(false);
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save the resource configuration.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar la configuracion de recursos.' : 'Unable to save the resource configuration.');
             } finally {
               setSaving(false);
             }
@@ -550,7 +561,7 @@ export function AdminResources() {
               setSelectedDepartment(null);
               setDepartmentMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save the department.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar el departamento.' : 'Unable to save the department.');
             } finally {
               setSaving(false);
             }
@@ -564,7 +575,7 @@ export function AdminResources() {
               setSelectedDepartment(null);
               setDepartmentMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the department.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo eliminar el departamento.' : 'Unable to delete the department.');
             } finally {
               setDeleting(false);
             }
@@ -596,7 +607,7 @@ export function AdminResources() {
               }
               await loadResources();
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save the staffing profile.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar el perfil de personal.' : 'Unable to save the staffing profile.');
             } finally {
               setSaving(false);
             }
@@ -608,7 +619,7 @@ export function AdminResources() {
               await deleteAdminResourceStaffing(profile.id);
               await loadResources();
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the staffing profile.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo eliminar el perfil de personal.' : 'Unable to delete the staffing profile.');
             } finally {
               setDeleting(false);
             }
@@ -657,7 +668,7 @@ export function AdminResources() {
               setSelectedInventoryItem(null);
               setInventoryMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save the inventory item.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar el articulo de inventario.' : 'Unable to save the inventory item.');
             } finally {
               setSaving(false);
             }
@@ -671,7 +682,7 @@ export function AdminResources() {
               setSelectedInventoryItem(null);
               setInventoryMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the inventory item.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo eliminar el articulo de inventario.' : 'Unable to delete the inventory item.');
             } finally {
               setDeleting(false);
             }

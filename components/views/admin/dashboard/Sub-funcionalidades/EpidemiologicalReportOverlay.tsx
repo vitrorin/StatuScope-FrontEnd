@@ -2,6 +2,8 @@ import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface EpidemiologicalReportOverlayProps {
   visible: boolean;
@@ -9,6 +11,7 @@ interface EpidemiologicalReportOverlayProps {
 }
 
 export function EpidemiologicalReportOverlay({ visible, onClose }: EpidemiologicalReportOverlayProps) {
+  const { language } = useTranslation();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -16,9 +19,13 @@ export function EpidemiologicalReportOverlay({ visible, onClose }: Epidemiologic
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Report Preview</Text>
-              <Text style={styles.title}>Epidemiological Summary</Text>
-              <Text style={styles.subtitle}>Regional respiratory and hospital load overview for the last 7 days.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Vista previa del reporte' : 'Report Preview'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Resumen epidemiologico' : 'Epidemiological Summary'}</Text>
+              <Text style={styles.subtitle}>
+                {isSpanish(language)
+                  ? 'Resumen regional de carga respiratoria y hospitalaria para los ultimos 7 dias.'
+                  : 'Regional respiratory and hospital load overview for the last 7 days.'}
+              </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
@@ -27,16 +34,28 @@ export function EpidemiologicalReportOverlay({ visible, onClose }: Epidemiologic
 
           <View style={styles.sections}>
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Top Signal</Text>
-              <Text style={styles.sectionText}>Influenza-like illness continues to be the leading pressure source across monitored districts.</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Senal principal' : 'Top Signal'}</Text>
+              <Text style={styles.sectionText}>
+                {isSpanish(language)
+                  ? 'La enfermedad tipo influenza sigue siendo la principal fuente de presion en los distritos monitoreados.'
+                  : 'Influenza-like illness continues to be the leading pressure source across monitored districts.'}
+              </Text>
             </CardBase>
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Hospital Impact</Text>
-              <Text style={styles.sectionText}>ICU and emergency response capacity require close monitoring over the next 24 hours.</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Impacto hospitalario' : 'Hospital Impact'}</Text>
+              <Text style={styles.sectionText}>
+                {isSpanish(language)
+                  ? 'La capacidad de UCI y respuesta de emergencia requiere monitoreo cercano durante las proximas 24 horas.'
+                  : 'ICU and emergency response capacity require close monitoring over the next 24 hours.'}
+              </Text>
             </CardBase>
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Operational Recommendation</Text>
-              <Text style={styles.sectionText}>Prioritize respiratory staffing and maintain overflow readiness in high-pressure wards.</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Recomendacion operativa' : 'Operational Recommendation'}</Text>
+              <Text style={styles.sectionText}>
+                {isSpanish(language)
+                  ? 'Prioriza el personal respiratorio y mantén la capacidad de desborde en las areas de mayor presion.'
+                  : 'Prioritize respiratory staffing and maintain overflow readiness in high-pressure wards.'}
+              </Text>
             </CardBase>
           </View>
         </CardBase>

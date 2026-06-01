@@ -26,6 +26,9 @@ import {
   getAdminDashboardSummary,
 } from '@/lib/adminOperational';
 import { initialsFromName } from '@/lib/format';
+import { useTranslation } from '@/i18n';
+import { getHospitalAdminLabel, isSpanish } from '@/components/views/admin/localization';
+import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboardLocalization';
 
 const MAP_IMAGE_URI = 'https://www.figma.com/api/mcp/asset/5bd3e67c-b2d1-4685-9db8-9c8033f3f9f3';
 
@@ -34,6 +37,7 @@ type LoadState = 'idle' | 'loading' | 'success' | 'error';
 export function AdminDashboard() {
   const router = useRouter();
   const { logout, profile } = useAuth();
+  const { language, t } = useTranslation();
   const { width: viewportWidth } = useWindowDimensions();
   const [gridWidth, setGridWidth] = useState(0);
   const [loadState, setLoadState] = useState<LoadState>('idle');
@@ -65,9 +69,9 @@ export function AdminDashboard() {
       setLoadState('success');
     } catch (nextError) {
       setLoadState('error');
-      setError(nextError instanceof Error ? nextError.message : 'Unable to load the admin dashboard.');
+      setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo cargar el panel administrativo.' : 'Unable to load the admin dashboard.');
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     void loadDashboard();
@@ -75,18 +79,18 @@ export function AdminDashboard() {
 
   const topCards = useMemo(() => {
     if (!dashboard) return [];
-    return dashboard.topCards.map((card) => mapMetric(card, dashboard));
-  }, [dashboard]);
-  const alerts = useMemo(() => (dashboard?.alerts ?? []).map(mapAlert), [dashboard]);
-  const mapZones = useMemo(() => positionZones(dashboard?.mapZones ?? []), [dashboard]);
+    return dashboard.topCards.map((card) => mapMetric(card, dashboard, language, t));
+  }, [dashboard, language, t]);
+  const alerts = useMemo(() => (dashboard?.alerts ?? []).map((alert) => mapAlert(alert, language, t)), [dashboard, language, t]);
+  const mapZones = useMemo(() => positionZones(dashboard?.mapZones ?? [], language, t), [dashboard, language, t]);
   const mapViewport = useMemo(() => deriveMapViewport(dashboard?.mapZones ?? []), [dashboard]);
   const actionCards = useMemo(() => dashboard?.recommendedActions ?? [], [dashboard]);
 
   return (
     <DashboardLayout
       active="dashboard"
-      sectionLabel="Dashboard"
-      userName={profile?.fullName ?? 'Hospital Admin'}
+      sectionLabel={isSpanish(language) ? 'Panel' : 'Dashboard'}
+      userName={profile?.fullName ?? getHospitalAdminLabel(language)}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
@@ -97,20 +101,30 @@ export function AdminDashboard() {
         <View style={styles.container}>
           <View style={styles.heroStrip}>
             <View style={styles.heroCopy}>
-              <Text style={styles.heroEyebrow}>Hospital Operations</Text>
+              <Text style={styles.heroEyebrow}>{isSpanish(language) ? 'Operaciones hospitalarias' : 'Hospital Operations'}</Text>
               <Text style={styles.heroTitle}>
-                {dashboard?.hospitalName ? `${dashboard.hospitalName} Radar Overview` : 'Hospital Radar Overview'}
+                {dashboard?.hospitalName
+                  ? isSpanish(language)
+                    ? `Resumen radar de ${dashboard.hospitalName}`
+                    : `${dashboard.hospitalName} Radar Overview`
+                  : isSpanish(language)
+                    ? 'Resumen radar del hospital'
+                    : 'Hospital Radar Overview'}
               </Text>
               <Text style={styles.heroDescription}>
                 {dashboard?.municipalityName && dashboard?.stateName
-                  ? `Live operations for ${dashboard.municipalityName}, ${dashboard.stateName}.`
-                  : 'Real-time epidemiological monitoring and facility status tracking.'}
+                  ? isSpanish(language)
+                    ? `Operaciones en vivo para ${dashboard.municipalityName}, ${dashboard.stateName}.`
+                    : `Live operations for ${dashboard.municipalityName}, ${dashboard.stateName}.`
+                  : isSpanish(language)
+                    ? 'Monitoreo epidemiologico en tiempo real y seguimiento del estado de la instalacion.'
+                    : 'Real-time epidemiological monitoring and facility status tracking.'}
               </Text>
             </View>
 
             <View style={[styles.heroActions, isNarrow && styles.heroActionsNarrow]}>
               <Button
-                label="Export Report"
+                label={isSpanish(language) ? 'Exportar reporte' : 'Export Report'}
                 size="sm"
                 variant="secondary"
                 leadingIcon={<Feather name="download" size={12} color="#334155" />}
@@ -118,7 +132,7 @@ export function AdminDashboard() {
                 onPress={() => setIsExportOpen(true)}
               />
               <Button
-                label="Alert Protocol"
+                label={isSpanish(language) ? 'Protocolo de alerta' : 'Alert Protocol'}
                 size="sm"
                 variant="primary"
                 leadingIcon={<Feather name="star" size={12} color="#FFFFFF" />}
@@ -130,7 +144,7 @@ export function AdminDashboard() {
 
           {error ? (
             <CardBase style={styles.errorCard}>
-              <Text style={styles.errorTitle}>Dashboard unavailable</Text>
+              <Text style={styles.errorTitle}>{isSpanish(language) ? 'Panel no disponible' : 'Dashboard unavailable'}</Text>
               <Text style={styles.errorText}>{error}</Text>
             </CardBase>
           ) : null}
@@ -138,7 +152,7 @@ export function AdminDashboard() {
           {loadState === 'loading' && !dashboard ? (
             <CardBase style={styles.loadingCard}>
               <ActivityIndicator color="#0003B8" />
-              <Text style={styles.loadingText}>Loading operational dashboard...</Text>
+              <Text style={styles.loadingText}>{isSpanish(language) ? 'Cargando panel operativo...' : 'Loading operational dashboard...'}</Text>
             </CardBase>
           ) : (
             <>
@@ -153,21 +167,21 @@ export function AdminDashboard() {
               >
                 <View style={[styles.mainGrid, isCompact && styles.mainGridCompact]}>
                   <RadarMapCard
-                    title="Live Heatmap"
+                    title={isSpanish(language) ? 'Mapa de calor en vivo' : 'Live Heatmap'}
                     showOverlayPanel
-                    overlayTitle="LIVE HEATMAP"
-                    overlayBadgeLabel="SECURE"
-                    overlayItems={buildMapOverlayItems(mapZones)}
+                    overlayTitle={isSpanish(language) ? 'MAPA DE CALOR EN VIVO' : 'LIVE HEATMAP'}
+                    overlayBadgeLabel={isSpanish(language) ? 'SEGURO' : 'SECURE'}
+                    overlayItems={buildMapOverlayItems(mapZones, language)}
                     showControls
                     legendItems={[
-                      { label: 'Critical', color: '#EF4444' },
-                      { label: 'Warning', color: '#F97316' },
-                      { label: 'Stable', color: '#0003B8' },
+                      { label: isSpanish(language) ? 'Critico' : 'Critical', color: '#EF4444' },
+                      { label: isSpanish(language) ? 'Advertencia' : 'Warning', color: '#F97316' },
+                      { label: isSpanish(language) ? 'Estable' : 'Stable', color: '#0003B8' },
                     ]}
                     footerTextRight={
                       dashboard?.generatedAt
-                        ? `Last Sync: ${new Date(dashboard.generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                        : 'Last Sync: Pending'
+                        ? `${isSpanish(language) ? 'Ultima sincronizacion' : 'Last Sync'}: ${new Date(dashboard.generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                        : isSpanish(language) ? 'Ultima sincronizacion: pendiente' : 'Last Sync: Pending'
                     }
                     mapImageUri={MAP_IMAGE_URI}
                     mapHeight={isNarrow ? 360 : 430}
@@ -205,6 +219,7 @@ export function AdminDashboard() {
 
                   <PriorityActionsCard
                     actions={actionCards}
+                    language={language}
                     style={[
                       styles.analyticsCard,
                       isCompact && styles.stackCard,
@@ -231,7 +246,7 @@ export function AdminDashboard() {
 
                 <View style={[styles.alertsPanel, styles.alertsPanelHorizontal]}>
                   <View style={styles.alertsHeader}>
-                    <Text style={styles.alertsTitle}>Contextual Disease Alerts</Text>
+                    <Text style={styles.alertsTitle}>{isSpanish(language) ? 'Alertas contextuales de enfermedad' : 'Contextual Disease Alerts'}</Text>
                   </View>
                   <ScrollView
                     horizontal
@@ -330,19 +345,21 @@ function OverviewMetricCard({
 
 function PriorityActionsCard({
   actions,
+  language,
   style,
   onOpenReport,
 }: {
   actions: AdminDashboardSummaryResponse['recommendedActions'];
+  language: 'en' | 'es';
   style?: StyleProp<ViewStyle>;
   onOpenReport?: () => void;
 }) {
   return (
     <CardBase style={[styles.caseCard, style]}>
       <View style={styles.caseHeader}>
-        <Text style={styles.caseTitle}>Priority Actions</Text>
+        <Text style={styles.caseTitle}>{language === 'es' ? 'Acciones prioritarias' : 'Priority Actions'}</Text>
         <Button
-          label="Live Feed"
+          label={language === 'es' ? 'En vivo' : 'Live Feed'}
           size="sm"
           variant="surface"
           style={styles.caseFilter}
@@ -350,7 +367,7 @@ function PriorityActionsCard({
         />
       </View>
 
-      <Text style={styles.caseSectionLabel}>Operational Queue</Text>
+      <Text style={styles.caseSectionLabel}>{language === 'es' ? 'Cola operativa' : 'Operational Queue'}</Text>
 
       <View style={styles.caseMetrics}>
         {actions.slice(0, 5).map((action) => (
@@ -371,14 +388,14 @@ function PriorityActionsCard({
               />
             </View>
             <Text style={styles.actionMetricMeta}>
-              {action.type.replace(/_/g, ' ')} | {action.severity.toLowerCase()} priority
+              {action.type.replace(/_/g, ' ')} | {action.severity.toLowerCase()} {language === 'es' ? 'prioridad' : 'priority'}
             </Text>
           </View>
         ))}
       </View>
 
       <Button
-        label="View Full Epidemiological Report"
+        label={language === 'es' ? 'Ver reporte epidemiologico completo' : 'View Full Epidemiological Report'}
         variant="secondary"
         size="sm"
         style={styles.caseAction}
@@ -392,43 +409,63 @@ function PriorityActionsCard({
 function mapMetric(
   metric: AdminDashboardSummaryResponse['topCards'][number],
   summary: AdminDashboardSummaryResponse,
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
 ): AdminDashboardMetric {
-  const title = metric.title;
+  const title = localizeAdminMetricTitle(metric.title, language);
   const status = (metric.status ?? '').toUpperCase();
   const recommendedAction =
     summary.recommendedActions.find((action) => action.type === metric.id?.toUpperCase())?.title
-    ?? `Review ${title.toLowerCase()} and keep the operational team aligned.`;
+    ?? (language === 'es'
+      ? `Revisa ${title.toLowerCase()} y manten alineado al equipo operativo.`
+      : `Review ${title.toLowerCase()} and keep the operational team aligned.`);
 
   return {
     title,
-    value: metric.value,
-    badge: metric.badge ?? undefined,
+    value: translateDashboardValue(t, metric.value),
+    badge: translateDashboardBadge(t, metric.badge ?? undefined),
     badgeColor: status.includes('CRITICAL') ? '#1E40AF' : status.includes('WARNING') ? '#3B82F6' : '#93C5FD',
-    subtitle: metric.subtitle ?? undefined,
+    subtitle: metric.subtitle ? localizeAdminMetricSubtitle(metric.subtitle, language) : undefined,
     progressValue: deriveProgress(metric.value, metric.status),
     progressColor: status.includes('CRITICAL') ? '#1E40AF' : status.includes('WARNING') ? '#3B82F6' : '#93C5FD',
     segmented: title.toUpperCase().includes('OXYGEN'),
     tone: status.includes('CRITICAL') ? 'critical' : 'default',
     detailTitle: title,
-    detailSummary: metric.subtitle ?? `Live operational signal for ${title.toLowerCase()}.`,
-    signalLabel: metric.status ?? 'Stable',
+    detailSummary: metric.subtitle
+      ? localizeAdminMetricSubtitle(metric.subtitle, language)
+      : language === 'es'
+        ? `Senal operativa en vivo para ${title.toLowerCase()}.`
+        : `Live operational signal for ${title.toLowerCase()}.`,
+    signalLabel: translateDashboardValue(t, metric.status ?? 'Stable'),
     recommendedAction,
   };
 }
 
-function mapAlert(alert: AdminDashboardSummaryResponse['alerts'][number]): AdminDashboardAlert {
+function mapAlert(
+  alert: AdminDashboardSummaryResponse['alerts'][number],
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
+): AdminDashboardAlert {
   return {
     id: alert.id,
-    title: `${alert.disease} alert`,
-    description: `${alert.message} (${alert.caseCount} active cases).`,
+    title: language === 'es' ? `Alerta de ${translateDashboardValue(t, alert.disease)}` : `${translateDashboardValue(t, alert.disease)} alert`,
+    description: language === 'es'
+      ? `${alert.message} (${alert.caseCount} casos activos).`
+      : `${alert.message} (${alert.caseCount} active cases).`,
     variant: alert.severity === 'HIGH' ? 'critical' : alert.severity === 'MEDIUM' ? 'warning' : 'info',
     department: alert.location,
-    priority: alert.severity,
-    recommendedAction: `Review containment measures for ${alert.location} and adjust staffing if case pressure rises.`,
+    priority: translateDashboardValue(t, alert.severity),
+    recommendedAction: language === 'es'
+      ? `Revisa las medidas de contencion en ${alert.location} y ajusta el personal si aumenta la presion de casos.`
+      : `Review containment measures for ${alert.location} and adjust staffing if case pressure rises.`,
   };
 }
 
-function positionZones(zones: AdminDashboardSummaryResponse['mapZones']): AdminDashboardZone[] {
+function positionZones(
+  zones: AdminDashboardSummaryResponse['mapZones'],
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
+): AdminDashboardZone[] {
   if (zones.length === 0) return [];
   const latitudes = zones.map((zone) => zone.latitude);
   const longitudes = zones.map((zone) => zone.longitude);
@@ -442,17 +479,29 @@ function positionZones(zones: AdminDashboardSummaryResponse['mapZones']): AdminD
   return zones.map((zone) => {
     const top = 18 + ((maxLat - zone.latitude) / latRange) * 64;
     const left = 18 + ((zone.longitude - minLon) / lonRange) * 64;
-    const risk = zone.status.replace(/_/g, ' ');
+    const risk = translateDashboardValue(t, zone.status.replace(/_/g, ' '));
     return {
       id: zone.municipalityId,
       name: zone.municipalityName,
       risk,
-      disease: zone.outbreakCount === 1 ? '1 outbreak signal' : `${zone.outbreakCount} outbreak signals`,
-      cases: `${zone.outbreakCount} active cluster${zone.outbreakCount === 1 ? '' : 's'}`,
-      radius: 'Regional monitoring',
-      priority: zone.status.toUpperCase().includes('CRITICAL') ? 'Immediate' : zone.status.toUpperCase().includes('WARNING') ? 'High' : 'Monitor',
-      note: `${zone.municipalityName} is being tracked as part of the hospital alert perimeter.`,
-      recommendedAction: `Coordinate intake planning against the ${zone.outbreakCount} outbreak signal(s) in ${zone.municipalityName}.`,
+      disease: language === 'es'
+        ? zone.outbreakCount === 1 ? '1 senal de brote' : `${zone.outbreakCount} senales de brote`
+        : zone.outbreakCount === 1 ? '1 outbreak signal' : `${zone.outbreakCount} outbreak signals`,
+      cases: language === 'es'
+        ? `${zone.outbreakCount} cluster${zone.outbreakCount === 1 ? '' : 'es'} activos`
+        : `${zone.outbreakCount} active cluster${zone.outbreakCount === 1 ? '' : 's'}`,
+      radius: translateDashboardValue(t, language === 'es' ? 'Monitoreo regional' : 'Regional monitoring'),
+      priority: zone.status.toUpperCase().includes('CRITICAL')
+        ? (language === 'es' ? 'Inmediata' : 'Immediate')
+        : zone.status.toUpperCase().includes('WARNING')
+          ? (language === 'es' ? 'Alta' : 'High')
+          : (language === 'es' ? 'Monitorear' : 'Monitor'),
+      note: language === 'es'
+        ? `${zone.municipalityName} esta bajo seguimiento dentro del perimetro de alerta del hospital.`
+        : `${zone.municipalityName} is being tracked as part of the hospital alert perimeter.`,
+      recommendedAction: language === 'es'
+        ? `Coordina la planeacion de ingresos frente a las ${zone.outbreakCount} senales de brote en ${zone.municipalityName}.`
+        : `Coordinate intake planning against the ${zone.outbreakCount} outbreak signal(s) in ${zone.municipalityName}.`,
       top: `${Math.max(12, Math.min(82, top))}%`,
       left: `${Math.max(12, Math.min(82, left))}%`,
       latitude: zone.latitude,
@@ -504,14 +553,37 @@ function deriveMapViewport(zones: AdminDashboardSummaryResponse['mapZones']) {
   };
 }
 
-function buildMapOverlayItems(zones: AdminDashboardZone[]) {
+function buildMapOverlayItems(zones: AdminDashboardZone[], language: 'en' | 'es') {
   const critical = zones.filter((zone) => zone.borderColor === '#EF4444').length;
   const warning = zones.filter((zone) => zone.borderColor === '#F97316').length;
   return [
-    { label: 'Critical zones', value: String(critical), color: '#EF4444' },
-    { label: 'Warning zones', value: String(warning), color: '#F97316' },
-    { label: 'Tracked municipalities', value: String(zones.length), color: '#0003B8' },
+    { label: language === 'es' ? 'Zonas criticas' : 'Critical zones', value: String(critical), color: '#EF4444' },
+    { label: language === 'es' ? 'Zonas de advertencia' : 'Warning zones', value: String(warning), color: '#F97316' },
+    { label: language === 'es' ? 'Municipios monitoreados' : 'Tracked municipalities', value: String(zones.length), color: '#0003B8' },
   ];
+}
+
+function localizeAdminMetricTitle(title: string, language: 'en' | 'es') {
+  if (language !== 'es') return title;
+  const normalized = title.trim().toLowerCase();
+  const dictionary: Record<string, string> = {
+    'available beds': 'Camas disponibles',
+    'occupied beds': 'Camas ocupadas',
+    'oxygen capacity': 'Capacidad de oxigeno',
+    'oxygen availability': 'Disponibilidad de oxigeno',
+    'icu occupancy': 'Ocupacion UCI',
+    'triage pressure': 'Presion de triaje',
+    'emergency load': 'Carga de emergencias',
+  };
+  return dictionary[normalized] ?? title;
+}
+
+function localizeAdminMetricSubtitle(subtitle: string, language: 'en' | 'es') {
+  if (language !== 'es') return subtitle;
+  return subtitle
+    .replace(/^Live operational signal for /i, 'Senal operativa en vivo para ')
+    .replace(/^Snapshot /i, 'Corte ')
+    .replace(/^Updated /i, 'Actualizado ');
 }
 
 function deriveProgress(value: string, status?: string | null) {
