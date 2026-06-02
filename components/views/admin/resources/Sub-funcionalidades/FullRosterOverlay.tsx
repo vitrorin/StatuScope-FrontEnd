@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
 import { StaffRosterItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface FullRosterOverlayProps {
   visible: boolean;
@@ -19,6 +21,18 @@ interface FullRosterOverlayProps {
 }
 
 export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverlayProps) {
+  const { language } = useTranslation();
+
+  const availabilityLabel = (availability: StaffRosterItem['availability']): string => {
+    const map: Record<string, string> = {
+      'On Shift': isSpanish(language) ? 'En turno' : 'On Shift',
+      'On Call': isSpanish(language) ? 'En guardia' : 'On Call',
+      'Standby': isSpanish(language) ? 'En reserva' : 'Standby',
+      'Unavailable': isSpanish(language) ? 'No disponible' : 'Unavailable',
+    };
+    return map[availability] ?? availability;
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -26,9 +40,9 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Staffing Overview</Text>
-              <Text style={styles.title}>Full Active Roster</Text>
-              <Text style={styles.subtitle}>Live roster across departments, shifts, and availability states.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Vista de personal' : 'Staffing Overview'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Roster activo completo' : 'Full Active Roster'}</Text>
+              <Text style={styles.subtitle}>{isSpanish(language) ? 'Roster en vivo por departamentos, turnos y estados de disponibilidad.' : 'Live roster across departments, shifts, and availability states.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
@@ -38,9 +52,11 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
           <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
             {roster.length === 0 ? (
               <CardBase style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>No live operational contacts available</Text>
+                <Text style={styles.emptyTitle}>{isSpanish(language) ? 'No hay contactos operativos disponibles' : 'No live operational contacts available'}</Text>
                 <Text style={styles.emptyText}>
-                  This roster now only shows real contact records returned by the backend.
+                  {isSpanish(language)
+                    ? 'Este roster ahora solo muestra registros de contactos reales devueltos por el backend.'
+                    : 'This roster now only shows real contact records returned by the backend.'}
                 </Text>
               </CardBase>
             ) : null}
@@ -78,7 +94,7 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
                     size={14}
                     color="#1718C7"
                   />
-                  <Text style={styles.availabilityText}>{member.availability}</Text>
+                  <Text style={styles.availabilityText}>{availabilityLabel(member.availability)}</Text>
                 </View>
               </CardBase>
             ))}
