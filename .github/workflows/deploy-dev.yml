@@ -26,7 +26,7 @@ jobs:
       - run: npm ci
 
       - name: Lint
-        run: npx eslint app components --max-warnings=-1
+        run: npx eslint app components --max-warnings=-1 --config eslint.config.mjs
 
       - name: Unit tests
         run: npx vitest run --project unit
