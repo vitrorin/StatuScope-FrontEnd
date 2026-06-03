@@ -76,6 +76,21 @@ export function translateDashboardBadge(t: Translate, badge: string | undefined)
     });
   }
 
+  const open = badge.match(/^([\d,]+) open$/i);
+  if (open) {
+    return t('common.units.open', { count: open[1] });
+  }
+
+  const free = badge.match(/^([\d,]+) free$/i);
+  if (free) {
+    return t('common.units.free', { count: free[1] });
+  }
+
+  const doctors = badge.match(/^([\d,]+) doctors?$/i);
+  if (doctors) {
+    return t(doctors[1] === '1' ? 'common.units.doctor' : 'common.units.doctors', { count: doctors[1] });
+  }
+
   const cases = badge.match(/^([\d,]+) cases?$/i);
   if (cases) {
     const count = cases[1];

@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { adminNavigationLinks, getAdminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { InputField } from '@/components/inputs/InputField';
@@ -12,6 +12,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { PaginationControl } from '@/components/users/PaginationControl';
 import { SummaryCountCard } from '@/components/users/SummaryCountCard';
 import { UserAvatarBadge } from '@/components/users/UserAvatarBadge';
+import { OperationalContactEditorOverlay } from '@/components/views/admin/users/Sub-funcionalidades/OperationalContactEditorOverlay';
 import { UserEditorOverlay } from '@/components/views/admin/users/Sub-funcionalidades/UserEditorOverlay';
 import { useTranslation } from '@/i18n';
 import {
@@ -29,6 +30,15 @@ import {
 } from '@/components/views/admin/users/Sub-funcionalidades/types';
 import { initialsFromName } from '@/lib/format';
 import { AdminUserResponse, createAdminUser, disableAdminUser, listAdminUsers } from '@/lib/adminUsers';
+import {
+  createOperationalContact,
+  getAdminResourceDepartments,
+  HospitalDepartmentResourceResponse,
+  listOperationalContacts,
+  OperationalContactInput,
+  OperationalContactResponse,
+  updateOperationalContact,
+} from '@/lib/adminOperational';
 
 const roleFilters: ('All' | UserRole)[] = [
   'All',
@@ -59,9 +69,14 @@ export function AdminUsers() {
   const { logout, profile } = useAuth();
   const { language } = useTranslation();
   const [users, setUsers] = useState<AdminUserRecord[]>([]);
+  const [contacts, setContacts] = useState<OperationalContactResponse[]>([]);
+  const [departments, setDepartments] = useState<HospitalDepartmentResourceResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contactsLoading, setContactsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [contactSaving, setContactSaving] = useState(false);
+  const [activeSection, setActiveSection] = useState<'users' | 'directory'>('users');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeRoleFilter, setActiveRoleFilter] = useState<'All' | UserRole>('All');
   const [activeStatusFilter, setActiveStatusFilter] = useState<'All' | UserStatus>('All');
@@ -70,6 +85,8 @@ export function AdminUsers() {
   const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create');
   const [selectedUser, setSelectedUser] = useState<AdminUserRecord | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<OperationalContactResponse | null>(null);
+  const [isContactEditorOpen, setIsContactEditorOpen] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -84,9 +101,33 @@ export function AdminUsers() {
     }
   }, []);
 
+  const loadContacts = useCallback(async () => {
+    setContactsLoading(true);
+    setError(null);
+    try {
+      const response = await listOperationalContacts();
+      setContacts(response);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Unable to load operational directory.');
+    } finally {
+      setContactsLoading(false);
+    }
+  }, []);
+
+  const loadDepartments = useCallback(async () => {
+    try {
+      const response = await getAdminResourceDepartments();
+      setDepartments(response.data ?? []);
+    } catch {
+      setDepartments([]);
+    }
+  }, []);
+
   useEffect(() => {
     void loadUsers();
-  }, [loadUsers]);
+    void loadContacts();
+    void loadDepartments();
+  }, [loadContacts, loadDepartments, loadUsers]);
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -103,21 +144,51 @@ export function AdminUsers() {
     });
   }, [activeRoleFilter, activeStatusFilter, searchQuery, users]);
 
+  const filteredContacts = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return contacts.filter((contact) => {
+      if (normalizedQuery.length === 0) return true;
+      return (
+        contact.displayName.toLowerCase().includes(normalizedQuery) ||
+        contact.roleLabel.toLowerCase().includes(normalizedQuery) ||
+        (contact.contactValue ?? '').toLowerCase().includes(normalizedQuery) ||
+        (contact.departmentCode ?? '').toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [contacts, searchQuery]);
+
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
   const visibleUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const visibleContacts = filteredContacts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const administratorCount = users.filter((user) => user.role === 'Hospital Administrator').length;
   const medicalStaffCount = users.filter((user) => user.role !== 'Hospital Administrator').length;
   const inactiveUsersCount = users.filter((user) => user.status === 'Inactive').length;
+  const assignableContactCount = contacts.filter((contact) => contact.assignable && contact.availabilityStatus !== 'INACTIVE').length;
+  const notifiableContactCount = contacts.filter((contact) => contact.notifiable && contact.availabilityStatus !== 'INACTIVE').length;
+  const inactiveContactCount = contacts.filter((contact) => contact.availabilityStatus !== 'ACTIVE').length;
   const hospitalAdminLabel = getHospitalAdminLabel(language);
   const roleLabel = (role: 'All' | UserRole) => getAdminUserRoleLabel(role, language);
   const statusLabel = (status: 'All' | UserStatus) => getAdminUserStatusLabel(status, language);
+  const sidebarItems = useMemo(() => getAdminSidebarItems(language), [language]);
 
   const openCreate = () => {
     setEditorMode('create');
     setSelectedUser(null);
     setIsEditorOpen(true);
   };
+
+  const openCreateContact = () => {
+    setSelectedContact(null);
+    setIsContactEditorOpen(true);
+  };
+
+  const openEditContact = (contact: OperationalContactResponse) => {
+    setSelectedContact(contact);
+    setIsContactEditorOpen(true);
+  };
+
+  const primaryAction = activeSection === 'users' ? openCreate : openCreateContact;
 
   const openEdit = (user: AdminUserRecord) => {
     setEditorMode('edit');
@@ -133,7 +204,7 @@ export function AdminUsers() {
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
-      sidebarItems={adminSidebarItems}
+      sidebarItems={sidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <>
@@ -151,19 +222,49 @@ export function AdminUsers() {
               </View>
 
               <Button
-                label={isSpanish(language) ? 'Crear usuario' : 'Create New User'}
+                label={activeSection === 'users'
+                  ? (isSpanish(language) ? 'Crear usuario' : 'Create New User')
+                  : (isSpanish(language) ? 'Agregar contacto' : 'Add Contact')}
                 variant="primary"
                 size="lg"
-                leadingIcon={<Feather name="user-plus" size={15} color="#FFFFFF" />}
+                leadingIcon={<Feather name={activeSection === 'users' ? 'user-plus' : 'mail'} size={15} color="#FFFFFF" />}
                 style={styles.createButton}
-                onPress={openCreate}
+                onPress={primaryAction}
               />
             </View>
 
             <CardBase style={styles.filterCard}>
+              <View style={styles.sectionSwitch}>
+                <TouchableOpacity
+                  style={[styles.sectionSwitchButton, activeSection === 'users' && styles.sectionSwitchButtonActive]}
+                  onPress={() => {
+                    setActiveSection('users');
+                    setCurrentPage(1);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.sectionSwitchText, activeSection === 'users' && styles.sectionSwitchTextActive]}>
+                    {isSpanish(language) ? 'Usuarios' : 'Users'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.sectionSwitchButton, activeSection === 'directory' && styles.sectionSwitchButtonActive]}
+                  onPress={() => {
+                    setActiveSection('directory');
+                    setCurrentPage(1);
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.sectionSwitchText, activeSection === 'directory' && styles.sectionSwitchTextActive]}>
+                    {isSpanish(language) ? 'Directorio operativo' : 'Operational Directory'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.searchRow}>
                 <InputField
-                  placeholder={isSpanish(language) ? 'Buscar por nombre o correo' : 'Search by name or email'}
+                  placeholder={activeSection === 'users'
+                    ? (isSpanish(language) ? 'Buscar por nombre o correo' : 'Search by name or email')
+                    : (isSpanish(language) ? 'Buscar contacto, cargo, correo o departamento' : 'Search contact, role, email or department')}
                   value={searchQuery}
                   onChangeText={(text) => {
                     setSearchQuery(text);
@@ -180,10 +281,11 @@ export function AdminUsers() {
                   leadingIcon={<Feather name="sliders" size={15} color="#64748B" />}
                   style={styles.filterToggleButton}
                   onPress={() => setIsFiltersOpen((current) => !current)}
+                  disabled={activeSection !== 'users'}
                 />
               </View>
 
-              {isFiltersOpen ? (
+              {isFiltersOpen && activeSection === 'users' ? (
                 <>
                   <View style={styles.filterSection}>
                     <Text style={styles.filterLabel}>{isSpanish(language) ? 'Rol' : 'Role'}</Text>
@@ -240,14 +342,16 @@ export function AdminUsers() {
               </CardBase>
             ) : null}
 
-            {loading ? (
-              <CardBase style={styles.loadingCard}>
-                <ActivityIndicator color="#1718C7" />
-                <Text style={styles.loadingText}>{isSpanish(language) ? 'Cargando usuarios...' : 'Loading users...'}</Text>
-              </CardBase>
+            {activeSection === 'users' && loading ? (
+              <UsersTableSkeleton mode="users" />
             ) : null}
 
-            <CardBase style={styles.tableCard}>
+            {activeSection === 'directory' && contactsLoading ? (
+              <UsersTableSkeleton mode="directory" />
+            ) : null}
+
+            {activeSection === 'users' && !loading ? (
+              <CardBase style={styles.tableCard}>
               <View style={styles.tableHeader}>
                 <Text style={[styles.headerCell, styles.nameCol]}>{isSpanish(language) ? 'Nombre' : 'Name'}</Text>
                 <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
@@ -319,30 +423,118 @@ export function AdminUsers() {
                   onPageChange={setCurrentPage}
                 />
               </View>
-            </CardBase>
+              </CardBase>
+            ) : activeSection === 'directory' && !contactsLoading ? (
+              <CardBase style={styles.tableCard}>
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.headerCell, styles.nameCol]}>{isSpanish(language) ? 'Contacto' : 'Contact'}</Text>
+                  <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
+                  <Text style={[styles.headerCell, styles.roleCol]}>{isSpanish(language) ? 'Departamento' : 'Department'}</Text>
+                  <Text style={[styles.headerCell, styles.statusCol]}>{isSpanish(language) ? 'Estado' : 'Status'}</Text>
+                </View>
+
+                {visibleContacts.map((contact, index) => (
+                  <TouchableOpacity
+                    key={contact.id}
+                    style={[styles.tableRow, index === visibleContacts.length - 1 && styles.tableRowLast]}
+                    activeOpacity={0.78}
+                    onPress={() => openEditContact(contact)}
+                  >
+                    <View style={[styles.bodyCell, styles.nameCol, styles.nameCell]}>
+                      <UserAvatarBadge initials={initialsFromName(contact.displayName)} variant="default" />
+                      <View>
+                        <Text style={styles.userName}>{contact.displayName}</Text>
+                        <Text style={styles.contactMeta}>{contact.roleLabel}</Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.bodyCell, styles.emailCol, styles.emailText]}>{contact.contactValue}</Text>
+                    <Text style={[styles.bodyCell, styles.roleCol, styles.emailText]}>{contact.departmentCode ?? '-'}</Text>
+                    <View style={[styles.bodyCell, styles.statusCol]}>
+                      <StatusBadge
+                        label={contact.availabilityStatus === 'INACTIVE' ? (isSpanish(language) ? 'Inactivo' : 'Inactive') : (isSpanish(language) ? 'Activo' : 'Active')}
+                        variant={contact.availabilityStatus === 'INACTIVE' ? 'neutral' : 'success'}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+
+                {visibleContacts.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateTitle}>{isSpanish(language) ? 'No hay contactos' : 'No contacts found'}</Text>
+                    <Text style={styles.emptyStateSubtitle}>
+                      {isSpanish(language) ? 'Agrega contactos para asignar tareas y enviar avisos reales por correo.' : 'Add contacts to assign tasks and send real email notices.'}
+                    </Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.tableFooter}>
+                  <Text style={styles.tableFooterText}>
+                    {isSpanish(language) ? 'Mostrando ' : 'Showing '}
+                    {filteredContacts.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                    {Math.min(currentPage * ITEMS_PER_PAGE, filteredContacts.length)}
+                    {isSpanish(language) ? ' de ' : ' of '}
+                    {filteredContacts.length}
+                    {isSpanish(language) ? ' contactos' : ' contacts'}
+                  </Text>
+                  <PaginationControl
+                    currentPage={currentPage}
+                    totalPages={Math.max(1, Math.ceil(filteredContacts.length / ITEMS_PER_PAGE))}
+                    onPageChange={setCurrentPage}
+                  />
+                </View>
+              </CardBase>
+            ) : null}
 
             <View style={styles.summaryRow}>
-              <SummaryCountCard
+              {activeSection === 'users' ? (
+                <>
+                  <SummaryCountCard
                 title={isSpanish(language) ? 'Administradores' : 'Administrators'}
                 value={String(administratorCount)}
                 variant="info"
                 icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color="#1718C7" />}
                 style={styles.summaryCard}
-              />
-              <SummaryCountCard
+                  />
+                  <SummaryCountCard
                 title={isSpanish(language) ? 'Personal medico' : 'Medical Staff'}
                 value={String(medicalStaffCount)}
                 variant="info"
                 icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color="#5B63E2" />}
                 style={styles.summaryCard}
-              />
-              <SummaryCountCard
+                  />
+                  <SummaryCountCard
                 title={isSpanish(language) ? 'Usuarios inactivos' : 'Inactive Users'}
                 value={String(inactiveUsersCount)}
                 variant="neutral"
                 icon={<MaterialCommunityIcons name="account-off-outline" size={15} color="#94A3B8" />}
                 style={styles.summaryCard}
-              />
+                  />
+                </>
+              ) : (
+                <>
+                  <SummaryCountCard
+                    title={isSpanish(language) ? 'Asignables' : 'Assignable'}
+                    value={String(assignableContactCount)}
+                    variant="info"
+                    icon={<MaterialCommunityIcons name="clipboard-account-outline" size={15} color="#1718C7" />}
+                    style={styles.summaryCard}
+                  />
+                  <SummaryCountCard
+                    title={isSpanish(language) ? 'Notificables' : 'Notifiable'}
+                    value={String(notifiableContactCount)}
+                    variant="info"
+                    icon={<MaterialCommunityIcons name="email-outline" size={15} color="#5B63E2" />}
+                    style={styles.summaryCard}
+                  />
+                  <SummaryCountCard
+                    title={isSpanish(language) ? 'Contactos inactivos' : 'Inactive Contacts'}
+                    value={String(inactiveContactCount)}
+                    variant="neutral"
+                    icon={<MaterialCommunityIcons name="account-cancel-outline" size={15} color="#94A3B8" />}
+                    style={styles.summaryCard}
+                  />
+                </>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -379,8 +571,73 @@ export function AdminUsers() {
             }
           }}
         />
+
+        <OperationalContactEditorOverlay
+          visible={isContactEditorOpen}
+          contact={selectedContact}
+          departments={departments}
+          saving={contactSaving}
+          onClose={() => setIsContactEditorOpen(false)}
+          onSave={async (input: OperationalContactInput) => {
+            setContactSaving(true);
+            setError(null);
+            try {
+              if (selectedContact) {
+                await updateOperationalContact(selectedContact.id, input);
+              } else {
+                await createOperationalContact(input);
+              }
+              await loadContacts();
+              setIsContactEditorOpen(false);
+            } catch (nextError) {
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar el contacto.' : 'Unable to save contact.');
+            } finally {
+              setContactSaving(false);
+            }
+          }}
+        />
       </>
     </DashboardLayout>
+  );
+}
+
+function UsersTableSkeleton({ mode }: { mode: 'users' | 'directory' }) {
+  return (
+    <CardBase style={styles.tableCard}>
+      <View style={styles.tableHeader}>
+        <View style={[styles.usersSkeletonLine, styles.nameCol, { height: 12 }]} />
+        <View style={[styles.usersSkeletonLine, styles.emailCol, { height: 12 }]} />
+        <View style={[styles.usersSkeletonLine, styles.roleCol, { height: 12 }]} />
+        <View style={[styles.usersSkeletonLine, styles.statusCol, { height: 12 }]} />
+      </View>
+      {[0, 1, 2, 3, 4].map((item) => (
+        <View key={item} style={[styles.tableRow, item === 4 && styles.tableRowLast]}>
+          <View style={[styles.bodyCell, styles.nameCol, styles.nameCell]}>
+            <View style={styles.usersSkeletonAvatar} />
+            <View style={styles.usersSkeletonNameStack}>
+              <View style={[styles.usersSkeletonLine, { width: item === 1 ? 116 : 148, height: 14 }]} />
+              {mode === 'directory' ? <View style={[styles.usersSkeletonLine, { width: 88, height: 10 }]} /> : null}
+            </View>
+          </View>
+          <View style={[styles.bodyCell, styles.emailCol]}>
+            <View style={[styles.usersSkeletonLine, { width: item === 2 ? 154 : 190 }]} />
+          </View>
+          <View style={[styles.bodyCell, styles.roleCol]}>
+            <View style={styles.usersSkeletonBadge} />
+          </View>
+          <View style={[styles.bodyCell, styles.statusCol]}>
+            <View style={[styles.usersSkeletonBadge, styles.usersSkeletonStatus]} />
+          </View>
+        </View>
+      ))}
+      <View style={styles.tableFooter}>
+        <View style={[styles.usersSkeletonLine, { width: 160 }]} />
+        <View style={styles.usersSkeletonPager}>
+          <View style={styles.usersSkeletonPagerButton} />
+          <View style={styles.usersSkeletonPagerButton} />
+        </View>
+      </View>
+    </CardBase>
   );
 }
 
@@ -446,6 +703,37 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     gap: 14,
+  },
+  sectionSwitch: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    padding: 4,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  sectionSwitchButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  sectionSwitchButtonActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 2,
+  },
+  sectionSwitchText: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  sectionSwitchTextActive: {
+    color: '#1718C7',
   },
   searchRow: {
     flexDirection: 'row',
@@ -591,6 +879,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1F2937',
   },
+  contactMeta: {
+    marginTop: 2,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#70839B',
+  },
   emailText: {
     fontSize: 14,
     lineHeight: 18,
@@ -652,6 +946,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     color: '#70839B',
+  },
+  usersSkeletonLine: {
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
+  },
+  usersSkeletonAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    backgroundColor: '#EEF2FF',
+  },
+  usersSkeletonNameStack: {
+    gap: 7,
+  },
+  usersSkeletonBadge: {
+    width: 128,
+    height: 28,
+    borderRadius: 999,
+    backgroundColor: '#EEF2F7',
+  },
+  usersSkeletonStatus: {
+    width: 82,
+  },
+  usersSkeletonPager: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  usersSkeletonPagerButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: '#E8EEF6',
   },
   summaryRow: {
     flexDirection: 'row',

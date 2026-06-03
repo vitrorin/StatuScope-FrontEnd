@@ -19,7 +19,10 @@ export const unstable_settings = {
 const AUTH_ROUTES = new Set(['login', 'register']);
 
 function dashboardForProfile(profile: UserProfile): string {
-  if (profile.roles.includes('SYSTEM_ADMIN') || profile.roles.includes('HOSPITAL_ADMIN')) {
+  if (profile.roles.includes('SYSTEM_ADMIN')) {
+    return '/system/dashboard';
+  }
+  if (profile.roles.includes('HOSPITAL_ADMIN')) {
     return '/dashboard/administrator';
   }
   return '/dashboard/doctor';

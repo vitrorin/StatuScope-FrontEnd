@@ -28,14 +28,14 @@ export function getRecommendationStatusLabel(
   language: AppLanguage,
 ) {
   const es = {
-    new: 'Nuevo',
+    new: 'Sin asignar',
     accepted: 'Aceptado',
     assigned: 'Asignado',
     completed: 'Completado',
     rejected: 'Descartado',
   } as const;
   const en = {
-    new: 'New',
+    new: 'Unassigned',
     accepted: 'Accepted',
     assigned: 'Assigned',
     completed: 'Completed',

@@ -35,5 +35,6 @@ export async function createAdminUser(input: CreateAdminUserInput) {
 export async function disableAdminUser(userId: string) {
   return api<void>(`/admin/users/${userId}/status`, {
     method: 'PATCH',
+    body: JSON.stringify({ status: 'DISABLED' }),
   });
 }

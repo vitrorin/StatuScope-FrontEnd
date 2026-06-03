@@ -10,7 +10,8 @@ export type SidebarItemKey =
   | 'analytics'
   | 'resources'
   | 'recommendations'
-  | 'users';
+  | 'users'
+  | 'hospitals';
 
 export type SidebarActive = SidebarItemKey;
 

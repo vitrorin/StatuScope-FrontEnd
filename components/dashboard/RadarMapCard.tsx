@@ -58,6 +58,7 @@ export interface RadarMapCardProps {
   showHeader?: boolean;
   showFooter?: boolean;
   mapHeight?: number;
+  fitMapToCard?: boolean;
   mapCenterLatitude?: number;
   mapCenterLongitude?: number;
   mapZoom?: number;
@@ -104,6 +105,7 @@ export function RadarMapCard({
   showHeader = false,
   showFooter = true,
   mapHeight = 520,
+  fitMapToCard = false,
   mapCenterLatitude,
   mapCenterLongitude,
   mapZoom = 10,
@@ -120,7 +122,10 @@ export function RadarMapCard({
 }: RadarMapCardProps) {
   const mapPins = pins ?? defaultPins;
   const mapPolygons = polygons ?? [];
-  const [mapWidths, setMapWidths] = useState({ inline: 0, fullscreen: 0 });
+  const [mapSizes, setMapSizes] = useState({
+    inline: { width: 0, height: 0 },
+    fullscreen: { width: 0, height: 0 },
+  });
   const [currentZoom, setCurrentZoom] = useState(mapZoom);
   const [currentCenter, setCurrentCenter] = useState(() => ({
     latitude: mapCenterLatitude,
@@ -202,17 +207,24 @@ export function RadarMapCard({
 
   const mapSurface = (height: number, fullscreen = false) => {
     const surfaceKey = fullscreen ? 'fullscreen' : 'inline';
-    const surfaceWidth = mapWidths[surfaceKey];
+    const shouldFitMapToCard = fitMapToCard && !fullscreen;
+    const surfaceSize = mapSizes[surfaceKey];
+    const surfaceWidth = surfaceSize.width;
+    const surfaceHeight = shouldFitMapToCard ? surfaceSize.height : height;
+    const surfaceReady = !shouldFitMapToCard || (surfaceWidth > 0 && surfaceHeight > 0);
     const pinSpreadOffsets = buildPinSpreadOffsets(mapPins);
 
     return (
     <MapSurfaceFrame
       height={height}
+      fillAvailableHeight={shouldFitMapToCard}
       onLayout={(event) => {
         const nextWidth = event.nativeEvent.layout.width;
-        setMapWidths((current) => (
-          Math.abs(current[surfaceKey] - nextWidth) > 1
-            ? { ...current, [surfaceKey]: nextWidth }
+        const nextHeight = event.nativeEvent.layout.height;
+        setMapSizes((current) => (
+          Math.abs(current[surfaceKey].width - nextWidth) > 1
+            || Math.abs(current[surfaceKey].height - nextHeight) > 1
+            ? { ...current, [surfaceKey]: { width: nextWidth, height: nextHeight } }
             : current
         ));
       }}
@@ -221,7 +233,11 @@ export function RadarMapCard({
       panHandlers={enablePan ? panResponder.panHandlers : undefined}
     >
       {(() => {
-        const surfaceTiles = buildTileLayout(currentCenter.latitude, currentCenter.longitude, currentZoom, surfaceWidth, height);
+        if (!surfaceReady) {
+          return <MapLoadingSkeleton />;
+        }
+
+        const surfaceTiles = buildTileLayout(currentCenter.latitude, currentCenter.longitude, currentZoom, surfaceWidth, surfaceHeight);
         const hasSurfaceMap = surfaceTiles.length > 0;
 
         return hasSurfaceMap ? (
@@ -243,11 +259,11 @@ export function RadarMapCard({
         );
       })()}
 
-      {mapPolygons.length > 0
+      {surfaceReady && mapPolygons.length > 0
         && typeof currentCenter.latitude === 'number'
         && typeof currentCenter.longitude === 'number'
         && surfaceWidth > 0 ? (
-          <Svg style={styles.polygonLayer} width={surfaceWidth} height={height}>
+              <Svg style={styles.polygonLayer} width={surfaceWidth} height={surfaceHeight}>
             {mapPolygons.map((polygon) => (
               <Path
                 key={polygon.id}
@@ -257,7 +273,7 @@ export function RadarMapCard({
                   currentCenter.longitude as number,
                   currentZoom,
                   surfaceWidth,
-                  height,
+                  surfaceHeight,
                 )}
                 fill={polygon.fillColor ?? 'rgba(0, 3, 184, 0.08)'}
                 stroke={polygon.strokeColor ?? 'rgba(0, 3, 184, 0.5)'}
@@ -288,7 +304,7 @@ export function RadarMapCard({
         </View>
       ) : null}
 
-      {typeof surveillanceRadiusKm === 'number'
+      {surfaceReady && typeof surveillanceRadiusKm === 'number'
         && typeof mapCenterLatitude === 'number'
         && typeof mapCenterLongitude === 'number'
         && typeof currentCenter.latitude === 'number'
@@ -306,19 +322,19 @@ export function RadarMapCard({
                 currentCenter.longitude,
                 currentZoom,
                 surfaceWidth,
-                height,
+                surfaceHeight,
               ),
             ]}
           />
         ) : null}
 
-      {mapPins.map((pin, index) => {
+      {surfaceReady ? mapPins.map((pin, index) => {
         const key = pin.id ?? index;
         const projected = typeof currentCenter.latitude === 'number'
           && typeof currentCenter.longitude === 'number'
           && typeof pin.latitude === 'number'
           && typeof pin.longitude === 'number'
-          ? projectPin(pin.latitude, pin.longitude, currentCenter.latitude, currentCenter.longitude, currentZoom, surfaceWidth, height)
+          ? projectPin(pin.latitude, pin.longitude, currentCenter.latitude, currentCenter.longitude, currentZoom, surfaceWidth, surfaceHeight)
           : null;
         const spreadOffset = projected ? pinSpreadOffsets.get(index) : undefined;
         const pinPosition = projected
@@ -331,7 +347,7 @@ export function RadarMapCard({
           projected.left < -48
           || projected.left > surfaceWidth + 48
           || projected.top < -48
-          || projected.top > height + 48
+          || projected.top > surfaceHeight + 48
         )) {
           return null;
         }
@@ -370,7 +386,7 @@ export function RadarMapCard({
             )}
           </View>
         );
-      })}
+      }) : null}
 
       {showControls ? (
         <View style={styles.controlsContainer}>
@@ -416,9 +432,9 @@ export function RadarMapCard({
           {legendItems && legendItems.length > 0 && !showHeader ? (
             <MapLegend items={legendItems} orientation="horizontal" style={styles.footerLegend} />
           ) : (
-            <Text style={styles.footerText}>{footerTextLeft}</Text>
+            footerTextLeft ? <Text style={styles.footerText}>{footerTextLeft}</Text> : <View />
           )}
-          <Text style={styles.footerText}>{footerTextRight}</Text>
+          {footerTextRight ? <Text style={styles.footerText}>{footerTextRight}</Text> : null}
         </View>
       ) : null}
 
@@ -446,6 +462,7 @@ export function RadarMapCard({
 function MapSurfaceFrame({
   children,
   height,
+  fillAvailableHeight,
   onLayout,
   onWheel,
   onHoverChange,
@@ -453,6 +470,7 @@ function MapSurfaceFrame({
 }: {
   children: React.ReactNode;
   height: number;
+  fillAvailableHeight?: boolean;
   onLayout: (event: LayoutChangeEvent) => void;
   onWheel: (event: { preventDefault?: () => void; stopPropagation?: () => void; deltaY?: number }) => void;
   onHoverChange?: (isHovering: boolean) => void;
@@ -460,7 +478,7 @@ function MapSurfaceFrame({
 }) {
   return (
     <View
-      style={[styles.mapContainer, { height }]}
+      style={[styles.mapContainer, fillAvailableHeight ? styles.mapContainerFill : { height }]}
       onLayout={onLayout}
       {...(panHandlers ?? {})}
       {...({
@@ -470,6 +488,22 @@ function MapSurfaceFrame({
       } as object)}
     >
       {children}
+    </View>
+  );
+}
+
+function MapLoadingSkeleton() {
+  return (
+    <View style={styles.mapLoadingSkeleton}>
+      <View style={styles.mapLoadingPanel}>
+        <View style={styles.mapLoadingTitle} />
+        <View style={styles.mapLoadingLine} />
+        <View style={[styles.mapLoadingLine, styles.mapLoadingLineShort]} />
+      </View>
+      <View style={[styles.mapLoadingPin, styles.mapLoadingPinLarge, { top: '30%', left: '39%' }]} />
+      <View style={[styles.mapLoadingPin, { top: '42%', left: '54%' }]} />
+      <View style={[styles.mapLoadingPin, { top: '58%', left: '47%' }]} />
+      <View style={[styles.mapLoadingPin, styles.mapLoadingPinLarge, { top: '50%', left: '64%' }]} />
     </View>
   );
 }
@@ -705,6 +739,52 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     cursor: 'grab' as never,
     userSelect: 'none' as never,
+  },
+  mapContainerFill: {
+    flex: 1,
+  },
+  mapLoadingSkeleton: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#E2E8F0',
+  },
+  mapLoadingPanel: {
+    position: 'absolute',
+    top: 24,
+    left: 24,
+    width: 214,
+    borderRadius: 14,
+    padding: 16,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+  },
+  mapLoadingTitle: {
+    width: 112,
+    height: 14,
+    borderRadius: 999,
+    backgroundColor: '#CBD5E1',
+    marginBottom: 16,
+  },
+  mapLoadingLine: {
+    width: 156,
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: '#E2E8F0',
+    marginTop: 10,
+  },
+  mapLoadingLineShort: {
+    width: 118,
+  },
+  mapLoadingPin: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+  },
+  mapLoadingPinLarge: {
+    width: 34,
+    height: 34,
   },
   mapImage: {
     position: 'absolute',

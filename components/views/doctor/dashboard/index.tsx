@@ -36,6 +36,7 @@ import {
 import { useTranslation } from '@/i18n';
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboardLocalization';
+import { aggregateOutbreakColor, diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
 import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
 
 const navigationLinks = {
@@ -86,7 +87,7 @@ function positionZones(zones: DoctorDashboardMapResponse['zones']): DoctorDashbo
       ...zone,
       top: `${32 + index * 8}%`,
       left: `${44 + index * 6}%`,
-      borderColor: zone.borderColor || (index === 0 ? '#0003B8' : '#F97316'),
+      borderColor: zoneSeverityColor(zone),
     }));
   }
 
@@ -99,7 +100,7 @@ function positionZones(zones: DoctorDashboardMapResponse['zones']): DoctorDashbo
   const latRange = Math.max(maxLat - minLat, 0.01);
   const lonRange = Math.max(maxLon - minLon, 0.01);
 
-  return zones.map((zone, index) => {
+  return zones.map((zone) => {
     const latitude = typeof zone.latitude === 'number' ? zone.latitude : minLat + latRange / 2;
     const longitude = typeof zone.longitude === 'number' ? zone.longitude : minLon + lonRange / 2;
     const top = 18 + ((maxLat - latitude) / latRange) * 64;
@@ -109,7 +110,7 @@ function positionZones(zones: DoctorDashboardMapResponse['zones']): DoctorDashbo
       ...zone,
       top: `${Math.max(12, Math.min(82, top))}%`,
       left: `${Math.max(12, Math.min(82, left))}%`,
-      borderColor: zone.borderColor || (index === 0 ? '#0003B8' : '#F97316'),
+      borderColor: zoneSeverityColor(zone),
     };
   });
 }
@@ -804,16 +805,16 @@ export function DoctorDashboard() {
               showOverlayPanel
               overlayTitle={t('doctor.dashboard.map.overlayTitle').toUpperCase()}
               overlayBadgeLabel={t('doctor.dashboard.map.secure').toUpperCase()}
-              overlayItems={(mapState.data?.diseaseBreakdown ?? []).slice(0, 3).map((disease, index) => ({
+              overlayItems={(mapState.data?.diseaseBreakdown ?? []).slice(0, 3).map((disease) => ({
                 label: translateDiseaseName(t, disease.diseaseName),
                 value: formatNumber(disease.caseCount),
-                color: index === 0 ? '#1E40AF' : index === 1 ? '#3B82F6' : '#0003B8',
+                color: diseaseSeverityColor(disease),
               }))}
               showControls
               legendItems={[
-                { label: t('doctor.dashboard.map.highRisk'), color: '#1E40AF' },
-                { label: t('doctor.dashboard.map.emerging'), color: '#3B82F6' },
-                { label: t('doctor.dashboard.map.lowRisk'), color: '#93C5FD' },
+                { label: t('doctor.dashboard.map.highRisk'), color: '#EF4444' },
+                { label: t('doctor.dashboard.map.emerging'), color: '#F97316' },
+                { label: t('doctor.dashboard.map.lowRisk'), color: '#22C55E' },
                 { label: t('doctor.dashboard.map.hospitalNode'), color: '#0003B8' },
               ]}
               footerTextLeft="© OpenStreetMap contributors"
@@ -1054,15 +1055,15 @@ function StateOutbreakExplorer({
     states.map((state) => [stateLookupKey(state.stateName), state]),
   ), [states]);
   const selectedBoundary = useMemo(() => getStateBoundary(selectedState?.stateName), [selectedState?.stateName]);
+  const selectedStateColor = '#0003B8';
   const selectorPolygons = useMemo<RadarMapPolygon[]>(() => mexicoStateBoundaries.map((boundary) => {
     const state = statesByName.get(stateLookupKey(boundary.name));
-    const hasOutbreaks = (state?.outbreakCount ?? 0) > 0;
     return {
       id: boundary.id,
       geometry: boundary.geometry,
-      fillColor: hasOutbreaks ? 'rgba(0, 3, 184, 0.08)' : 'rgba(100, 116, 139, 0.04)',
-      strokeColor: hasOutbreaks ? 'rgba(0, 3, 184, 0.42)' : 'rgba(100, 116, 139, 0.24)',
-      strokeWidth: hasOutbreaks ? 1.3 : 1,
+      fillColor: state ? 'rgba(0, 3, 184, 0.05)' : 'rgba(100, 116, 139, 0.04)',
+      strokeColor: state ? 'rgba(0, 3, 184, 0.62)' : 'rgba(100, 116, 139, 0.24)',
+      strokeWidth: state && state.outbreakCount > 0 ? 1.3 : 1,
     };
   }), [statesByName]);
   const selectedPolygons = useMemo<RadarMapPolygon[]>(() => (
@@ -1070,12 +1071,12 @@ function StateOutbreakExplorer({
       ? [{
         id: selectedBoundary.id,
         geometry: selectedBoundary.geometry,
-        fillColor: 'rgba(0, 3, 184, 0.12)',
-        strokeColor: '#0003B8',
+        fillColor: severityFillColor(selectedStateColor),
+        strokeColor: selectedStateColor,
         strokeWidth: 2,
       }]
       : []
-  ), [selectedBoundary]);
+  ), [selectedBoundary, selectedStateColor]);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -1116,14 +1117,15 @@ function StateOutbreakExplorer({
                 title={shortStateName(selectedState.stateName)}
                 showControls
                 showFooter
+                fitMapToCard
                 footerTextLeft="© OpenStreetMap contributors"
                 footerTextRight={t('doctor.dashboard.map.stateOutbreakCount', {
                   count: formatNumber(stateZones.length),
                 })}
-                mapHeight={720}
+                mapHeight={600}
                 mapCenterLatitude={selectedStateCenter?.latitude}
                 mapCenterLongitude={selectedStateCenter?.longitude}
-                mapZoom={7}
+                mapZoom={8}
                 minZoom={6}
                 maxZoom={13}
                 mapBounds={selectedStateBounds}
@@ -1156,12 +1158,12 @@ function StateOutbreakExplorer({
               title={t('doctor.dashboard.map.stateSelector')}
               showControls
               showFooter
+              fitMapToCard
               footerTextLeft="© OpenStreetMap contributors"
-              footerTextRight={t('doctor.dashboard.map.selectStateHint')}
-              mapHeight={720}
+              mapHeight={600}
               mapCenterLatitude={mexicoCenter.latitude}
               mapCenterLongitude={mexicoCenter.longitude}
-              mapZoom={5}
+              mapZoom={6}
               minZoom={5}
               maxZoom={12}
               enablePan
@@ -1171,10 +1173,10 @@ function StateOutbreakExplorer({
                 id: state.stateId,
                 latitude: state.latitude,
                 longitude: state.longitude,
-                borderColor: state.outbreakCount > 0 ? '#0003B8' : '#64748B',
+                borderColor: '#0003B8',
                 fillColor: '#FFFFFF',
                 label: shortStateName(state.stateName),
-                icon: <Feather name="map-pin" size={13} color={state.outbreakCount > 0 ? '#0003B8' : '#64748B'} />,
+                icon: <Feather name="map-pin" size={13} color="#0003B8" />,
                 onPress: () => onSelectState(state),
               }))}
             />

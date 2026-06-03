@@ -4,6 +4,8 @@ import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'reac
 import { Button } from '@/components/foundation/Button';
 import { CardBase } from '@/components/patterns/CardBase';
 import { RecommendationFeedItem } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface RecommendationDismissOverlayProps {
   visible: boolean;
@@ -13,6 +15,8 @@ interface RecommendationDismissOverlayProps {
 }
 
 export function RecommendationDismissOverlay({ visible, item, onClose, onConfirm }: RecommendationDismissOverlayProps) {
+  const { language } = useTranslation();
+  const spanish = isSpanish(language);
   if (!item) return null;
 
   return (
@@ -21,17 +25,21 @@ export function RecommendationDismissOverlay({ visible, item, onClose, onConfirm
         <Pressable style={styles.backdrop} onPress={onClose} />
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
-            <Text style={styles.title}>Dismiss Recommendation?</Text>
+            <Text style={styles.title}>{spanish ? 'Descartar recomendacion?' : 'Dismiss Recommendation?'}</Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
             </TouchableOpacity>
           </View>
           <Text style={styles.body}>
-            This will move <Text style={styles.bodyStrong}>{item.title}</Text> out of the active operational queue and mark it as dismissed.
+            {spanish ? 'Esto movera ' : 'This will move '}
+            <Text style={styles.bodyStrong}>{item.title}</Text>
+            {spanish
+              ? ' fuera de la cola operativa activa y la marcara como descartada.'
+              : ' out of the active operational queue and mark it as dismissed.'}
           </Text>
           <View style={styles.footer}>
-            <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
-            <Button label="Dismiss" variant="danger" size="md" style={styles.footerButton} onPress={onConfirm} />
+            <Button label={spanish ? 'Cancelar' : 'Cancel'} variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
+            <Button label={spanish ? 'Descartar' : 'Dismiss'} variant="danger" size="md" style={styles.footerButton} onPress={onConfirm} />
           </View>
         </CardBase>
       </View>

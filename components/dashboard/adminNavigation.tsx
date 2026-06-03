@@ -30,6 +30,37 @@ export const adminSidebarItems: SidebarNavItem[] = [
   },
 ];
 
+export function getAdminSidebarItems(language: string = 'en'): SidebarNavItem[] {
+  const spanish = language === 'es';
+  return [
+    {
+      key: 'dashboard',
+      label: spanish ? 'Panel' : 'Dashboard',
+      icon: <MaterialCommunityIcons name="view-grid-outline" size={18} color="#475569" />,
+    },
+    {
+      key: 'analytics',
+      label: spanish ? 'Analiticas' : 'Analytics',
+      icon: <Feather name="bar-chart-2" size={18} color="#475569" />,
+    },
+    {
+      key: 'resources',
+      label: spanish ? 'Recursos' : 'Resources',
+      icon: <MaterialCommunityIcons name="clipboard-text-outline" size={18} color="#475569" />,
+    },
+    {
+      key: 'recommendations',
+      label: spanish ? 'Recomendaciones' : 'Recommendations',
+      icon: <Feather name="settings" size={18} color="#475569" />,
+    },
+    {
+      key: 'users',
+      label: spanish ? 'Usuarios' : 'Users',
+      icon: <Feather name="users" size={18} color="#475569" />,
+    },
+  ];
+}
+
 export const adminNavigationLinks = {
   dashboard: '/dashboard/administrator',
   analytics: '/admin/analytics',
