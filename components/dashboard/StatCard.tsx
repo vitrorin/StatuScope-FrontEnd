@@ -30,7 +30,7 @@ export function StatCard({
   trendText,
   showProgress = false,
   progressValue = 0,
-  progressColor = '#1D4ED8',
+  progressColor = '#0003B8',
   icon,
   style,
   isLoading = false,

@@ -3,6 +3,8 @@ import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardAlert } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface AlertDetailOverlayProps {
   visible: boolean;
@@ -11,6 +13,7 @@ interface AlertDetailOverlayProps {
 }
 
 export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverlayProps) {
+  const { language } = useTranslation();
   if (!alert) return null;
 
   return (
@@ -20,7 +23,7 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Alert Detail</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Detalle de alerta' : 'Alert Detail'}</Text>
               <Text style={styles.title}>{alert.title}</Text>
               <Text style={styles.subtitle}>{alert.description}</Text>
             </View>
@@ -30,12 +33,12 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
           </View>
 
           <View style={styles.grid}>
-            <MetricCard label="Department" value={alert.department} />
-            <MetricCard label="Priority" value={alert.priority} />
+            <MetricCard label={isSpanish(language) ? 'Departamento' : 'Department'} value={alert.department} />
+            <MetricCard label={isSpanish(language) ? 'Prioridad' : 'Priority'} value={alert.priority} />
           </View>
 
           <CardBase style={styles.actionCard}>
-            <Text style={styles.actionTitle}>Recommended Action</Text>
+            <Text style={styles.actionTitle}>{isSpanish(language) ? 'Accion recomendada' : 'Recommended Action'}</Text>
             <Text style={styles.actionText}>{alert.recommendedAction}</Text>
           </CardBase>
         </CardBase>

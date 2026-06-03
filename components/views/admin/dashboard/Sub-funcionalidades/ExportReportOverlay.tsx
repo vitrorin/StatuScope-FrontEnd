@@ -3,16 +3,25 @@ import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components/foundation/Button';
 import { CardBase } from '@/components/patterns/CardBase';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface ExportReportOverlayProps {
   visible: boolean;
   onClose: () => void;
 }
 
-const reportTypes = ['Executive Summary', 'Hospital Overview', 'Epidemiological Snapshot'];
+const reportTypes = ['Executive Summary', 'Hospital Overview', 'Epidemiological Snapshot'] as const;
 
 export function ExportReportOverlay({ visible, onClose }: ExportReportOverlayProps) {
-  const [selectedReport, setSelectedReport] = useState(reportTypes[0]);
+  const { language } = useTranslation();
+  const [selectedReport, setSelectedReport] = useState<(typeof reportTypes)[number]>(reportTypes[0]);
+  const localizeReportType = (report: (typeof reportTypes)[number]) => {
+    if (!isSpanish(language)) return report;
+    if (report === 'Executive Summary') return 'Resumen ejecutivo';
+    if (report === 'Hospital Overview') return 'Resumen hospitalario';
+    return 'Panorama epidemiologico';
+  };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -21,9 +30,13 @@ export function ExportReportOverlay({ visible, onClose }: ExportReportOverlayPro
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Export Report</Text>
-              <Text style={styles.title}>Hospital Dashboard Export</Text>
-              <Text style={styles.subtitle}>Choose the type of report to generate from the current dashboard state.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Exportar reporte' : 'Export Report'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Exportacion del panel hospitalario' : 'Hospital Dashboard Export'}</Text>
+              <Text style={styles.subtitle}>
+                {isSpanish(language)
+                  ? 'Elige el tipo de reporte que deseas generar a partir del estado actual del panel.'
+                  : 'Choose the type of report to generate from the current dashboard state.'}
+              </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
@@ -40,15 +53,15 @@ export function ExportReportOverlay({ visible, onClose }: ExportReportOverlayPro
                   onPress={() => setSelectedReport(report)}
                   activeOpacity={0.75}
                 >
-                  <Text style={[styles.optionText, active && styles.optionTextActive]}>{report}</Text>
+                  <Text style={[styles.optionText, active && styles.optionTextActive]}>{localizeReportType(report)}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
 
           <View style={styles.footer}>
-            <Button label="Close" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
-            <Button label="Generate Export" variant="primary" size="md" style={styles.primaryButton} onPress={onClose} />
+            <Button label={isSpanish(language) ? 'Cerrar' : 'Close'} variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
+            <Button label={isSpanish(language) ? 'Generar exportacion' : 'Generate Export'} variant="primary" size="md" style={styles.primaryButton} onPress={onClose} />
           </View>
         </CardBase>
       </View>

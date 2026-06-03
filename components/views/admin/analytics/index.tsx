@@ -7,7 +7,6 @@ export function AdminAnalytics() {
     <AnalyticsScreen
       active="analytics"
       sectionLabel="Analytics"
-      searchPlaceholder="Search hospital metrics..."
       persona="admin"
       links={adminNavigationLinks}
       sidebarItems={adminSidebarItems}

@@ -883,7 +883,6 @@ export function DoctorDiagnosis() {
     <DashboardLayout
       active="diagnosis"
       sectionLabel={t('doctor.diagnosis.sectionLabel')}
-      searchPlaceholder={t('doctor.diagnosis.searchPlaceholder')}
       userName={profile?.fullName ?? t('doctor.diagnosis.fallbackDoctor')}
       userId={profile?.hospitalName ? profile.hospitalName : profile?.email}
       avatarText={initialsFromName(profile?.fullName)}
@@ -1628,7 +1627,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 0,
     overflow: 'hidden',
-    borderRadius: 22,
+    borderRadius: 24,
     borderColor: 'rgba(148, 163, 184, 0.24)',
     shadowColor: '#000F6B',
     shadowOffset: { width: 0, height: 16 },
@@ -1720,7 +1719,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 36,
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
@@ -1978,7 +1977,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   alertDialogInsightsSection: {
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
@@ -2365,7 +2364,7 @@ const styles = StyleSheet.create({
   confirmButton: {
     flex: 1,
     minHeight: 46,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: '#0003B8',
     backgroundColor: '#FFFFFF',
@@ -2379,7 +2378,7 @@ const styles = StyleSheet.create({
   rejectButton: {
     flex: 1,
     minHeight: 46,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: '#E8EEF7',
     borderWidth: 0,
   },
@@ -2392,7 +2391,7 @@ const styles = StyleSheet.create({
   doctorOnlyButton: {
     flex: 1,
     minHeight: 46,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: '#0003B8',
     borderColor: '#0003B8',
   },

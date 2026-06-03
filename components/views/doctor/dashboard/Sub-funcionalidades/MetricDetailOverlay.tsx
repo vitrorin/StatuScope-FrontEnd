@@ -86,9 +86,9 @@ function MetricStat({ label, value, accentColor }: { label: string; value: strin
 }
 
 function accentColor(status?: DoctorDashboardMetric['status']) {
-  if (status === 'danger') return '#EF4444';
-  if (status === 'warning') return '#F59E0B';
-  if (status === 'positive') return '#22C55E';
+  if (status === 'danger') return '#1E40AF';
+  if (status === 'warning') return '#3B82F6';
+  if (status === 'positive') return '#93C5FD';
   return '#0003B8';
 }
 

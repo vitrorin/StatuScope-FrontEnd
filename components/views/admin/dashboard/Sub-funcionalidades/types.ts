@@ -36,6 +36,8 @@ export interface AdminDashboardZone {
   recommendedAction: string;
   top: string;
   left: string;
+  latitude?: number;
+  longitude?: number;
   borderColor: string;
   fillColor?: string;
 }

@@ -13,6 +13,13 @@ import { PaginationControl } from '@/components/users/PaginationControl';
 import { SummaryCountCard } from '@/components/users/SummaryCountCard';
 import { UserAvatarBadge } from '@/components/users/UserAvatarBadge';
 import { UserEditorOverlay } from '@/components/views/admin/users/Sub-funcionalidades/UserEditorOverlay';
+import { useTranslation } from '@/i18n';
+import {
+  getAdminUserRoleLabel,
+  getAdminUserStatusLabel,
+  getHospitalAdminLabel,
+  isSpanish,
+} from '@/components/views/admin/localization';
 import {
   AdminUserRecord,
   mapRoleTone,
@@ -50,6 +57,7 @@ function mapApiUserToRecord(user: AdminUserResponse): AdminUserRecord {
 export function AdminUsers() {
   const router = useRouter();
   const { logout, profile } = useAuth();
+  const { language } = useTranslation();
   const [users, setUsers] = useState<AdminUserRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +109,9 @@ export function AdminUsers() {
   const administratorCount = users.filter((user) => user.role === 'Hospital Administrator').length;
   const medicalStaffCount = users.filter((user) => user.role !== 'Hospital Administrator').length;
   const inactiveUsersCount = users.filter((user) => user.status === 'Inactive').length;
+  const hospitalAdminLabel = getHospitalAdminLabel(language);
+  const roleLabel = (role: 'All' | UserRole) => getAdminUserRoleLabel(role, language);
+  const statusLabel = (status: 'All' | UserStatus) => getAdminUserStatusLabel(status, language);
 
   const openCreate = () => {
     setEditorMode('create');
@@ -117,9 +128,8 @@ export function AdminUsers() {
   return (
     <DashboardLayout
       active="users"
-      sectionLabel="Users"
-      searchPlaceholder="Search users, emails..."
-      userName={profile?.fullName ?? 'Hospital Admin'}
+      sectionLabel={isSpanish(language) ? 'Usuarios' : 'Users'}
+      userName={profile?.fullName ?? hospitalAdminLabel}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
@@ -129,16 +139,19 @@ export function AdminUsers() {
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
-            <View style={styles.heroRow}>
-              <View>
-                <Text style={styles.heroTitle}>User Management</Text>
-                <Text style={styles.heroSubtitle}>
-                  Manage platform access, assign roles, and monitor user status across all hospitals.
+            <View style={styles.heroStrip}>
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroEyebrow}>{isSpanish(language) ? 'Control de acceso' : 'Access Control'}</Text>
+                <Text style={styles.heroTitle}>{isSpanish(language) ? 'Gestion de usuarios' : 'User Management'}</Text>
+                <Text style={styles.heroDescription}>
+                  {isSpanish(language)
+                    ? 'Administra el acceso a la plataforma, asigna roles y monitorea el estado de los usuarios en todos los hospitales.'
+                    : 'Manage platform access, assign roles, and monitor user status across all hospitals.'}
                 </Text>
               </View>
 
               <Button
-                label="Create New User"
+                label={isSpanish(language) ? 'Crear usuario' : 'Create New User'}
                 variant="primary"
                 size="lg"
                 leadingIcon={<Feather name="user-plus" size={15} color="#FFFFFF" />}
@@ -150,7 +163,7 @@ export function AdminUsers() {
             <CardBase style={styles.filterCard}>
               <View style={styles.searchRow}>
                 <InputField
-                  placeholder="Search by name or email"
+                  placeholder={isSpanish(language) ? 'Buscar por nombre o correo' : 'Search by name or email'}
                   value={searchQuery}
                   onChangeText={(text) => {
                     setSearchQuery(text);
@@ -161,7 +174,7 @@ export function AdminUsers() {
                   style={styles.searchField}
                 />
                 <Button
-                  label="Filters"
+                  label={isSpanish(language) ? 'Filtros' : 'Filters'}
                   variant="secondary"
                   size="md"
                   leadingIcon={<Feather name="sliders" size={15} color="#64748B" />}
@@ -173,7 +186,7 @@ export function AdminUsers() {
               {isFiltersOpen ? (
                 <>
                   <View style={styles.filterSection}>
-                    <Text style={styles.filterLabel}>Role</Text>
+                    <Text style={styles.filterLabel}>{isSpanish(language) ? 'Rol' : 'Role'}</Text>
                     <View style={styles.filterChips}>
                       {roleFilters.map((role) => {
                         const isActive = activeRoleFilter === role;
@@ -187,7 +200,7 @@ export function AdminUsers() {
                             }}
                             activeOpacity={0.75}
                           >
-                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{role}</Text>
+                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{roleLabel(role)}</Text>
                           </TouchableOpacity>
                         );
                       })}
@@ -195,7 +208,7 @@ export function AdminUsers() {
                   </View>
 
                   <View style={styles.filterSection}>
-                    <Text style={styles.filterLabel}>Status</Text>
+                    <Text style={styles.filterLabel}>{isSpanish(language) ? 'Estado' : 'Status'}</Text>
                     <View style={styles.filterChips}>
                       {statusFilters.map((status) => {
                         const isActive = activeStatusFilter === status;
@@ -209,7 +222,7 @@ export function AdminUsers() {
                             }}
                             activeOpacity={0.75}
                           >
-                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{status}</Text>
+                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{statusLabel(status)}</Text>
                           </TouchableOpacity>
                         );
                       })}
@@ -221,25 +234,25 @@ export function AdminUsers() {
 
             {error ? (
               <CardBase style={styles.errorCard}>
-                <Text style={styles.errorTitle}>Users unavailable</Text>
+                <Text style={styles.errorTitle}>{isSpanish(language) ? 'Usuarios no disponibles' : 'Users unavailable'}</Text>
                 <Text style={styles.errorText}>{error}</Text>
-                <Button label="Retry" variant="secondary" size="sm" onPress={() => { void loadUsers(); }} />
+                <Button label={isSpanish(language) ? 'Reintentar' : 'Retry'} variant="secondary" size="sm" onPress={() => { void loadUsers(); }} />
               </CardBase>
             ) : null}
 
             {loading ? (
               <CardBase style={styles.loadingCard}>
                 <ActivityIndicator color="#1718C7" />
-                <Text style={styles.loadingText}>Loading users...</Text>
+                <Text style={styles.loadingText}>{isSpanish(language) ? 'Cargando usuarios...' : 'Loading users...'}</Text>
               </CardBase>
             ) : null}
 
             <CardBase style={styles.tableCard}>
               <View style={styles.tableHeader}>
-                <Text style={[styles.headerCell, styles.nameCol]}>Name</Text>
+                <Text style={[styles.headerCell, styles.nameCol]}>{isSpanish(language) ? 'Nombre' : 'Name'}</Text>
                 <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
-                <Text style={[styles.headerCell, styles.roleCol]}>Role</Text>
-                <Text style={[styles.headerCell, styles.statusCol]}>Status</Text>
+                <Text style={[styles.headerCell, styles.roleCol]}>{isSpanish(language) ? 'Rol' : 'Role'}</Text>
+                <Text style={[styles.headerCell, styles.statusCol]}>{isSpanish(language) ? 'Estado' : 'Status'}</Text>
               </View>
 
               {visibleUsers.map((user, index) => (
@@ -272,27 +285,33 @@ export function AdminUsers() {
                           user.roleTone === 'info' ? styles.roleBadgeTextInfo : styles.roleBadgeTextNeutral,
                         ]}
                       >
-                        {user.role}
+                        {getAdminUserRoleLabel(user.role, language)}
                       </Text>
                     </View>
                   </View>
                   <View style={[styles.bodyCell, styles.statusCol]}>
-                    <StatusBadge label={user.status} variant={user.statusVariant} />
+                    <StatusBadge label={getAdminUserStatusLabel(user.status, language)} variant={user.statusVariant} />
                   </View>
                 </TouchableOpacity>
               ))}
 
               {visibleUsers.length === 0 ? (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateTitle}>No users found</Text>
-                  <Text style={styles.emptyStateSubtitle}>Try adjusting the current search or filters.</Text>
+                  <Text style={styles.emptyStateTitle}>{isSpanish(language) ? 'No se encontraron usuarios' : 'No users found'}</Text>
+                  <Text style={styles.emptyStateSubtitle}>
+                    {isSpanish(language) ? 'Prueba ajustando la busqueda o los filtros.' : 'Try adjusting the current search or filters.'}
+                  </Text>
                 </View>
               ) : null}
 
               <View style={styles.tableFooter}>
                 <Text style={styles.tableFooterText}>
-                  Showing {filteredUsers.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}-
-                  {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length} users
+                  {isSpanish(language) ? 'Mostrando ' : 'Showing '}
+                  {filteredUsers.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                  {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)}
+                  {isSpanish(language) ? ' de ' : ' of '}
+                  {filteredUsers.length}
+                  {isSpanish(language) ? ' usuarios' : ' users'}
                 </Text>
                 <PaginationControl
                   currentPage={currentPage}
@@ -304,21 +323,21 @@ export function AdminUsers() {
 
             <View style={styles.summaryRow}>
               <SummaryCountCard
-                title="Administrators"
+                title={isSpanish(language) ? 'Administradores' : 'Administrators'}
                 value={String(administratorCount)}
                 variant="info"
                 icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color="#1718C7" />}
                 style={styles.summaryCard}
               />
               <SummaryCountCard
-                title="Medical Staff"
+                title={isSpanish(language) ? 'Personal medico' : 'Medical Staff'}
                 value={String(medicalStaffCount)}
                 variant="info"
                 icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color="#5B63E2" />}
                 style={styles.summaryCard}
               />
               <SummaryCountCard
-                title="Inactive Users"
+                title={isSpanish(language) ? 'Usuarios inactivos' : 'Inactive Users'}
                 value={String(inactiveUsersCount)}
                 variant="neutral"
                 icon={<MaterialCommunityIcons name="account-off-outline" size={15} color="#94A3B8" />}
@@ -340,7 +359,7 @@ export function AdminUsers() {
             try {
               if (editorMode === 'create') {
                 if (!password || password.trim().length < 8) {
-                  throw new Error('Password must be at least 8 characters.');
+                  throw new Error(isSpanish(language) ? 'La contrasena debe tener al menos 8 caracteres.' : 'Password must be at least 8 characters.');
                 }
                 await createAdminUser({
                   fullName: nextUser.name,
@@ -354,7 +373,7 @@ export function AdminUsers() {
               await loadUsers();
               setIsEditorOpen(false);
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save user changes.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudieron guardar los cambios del usuario.' : 'Unable to save user changes.');
             } finally {
               setSaving(false);
             }
@@ -370,36 +389,61 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   container: {
-    padding: 28,
-    gap: 26,
+    padding: 24,
+    gap: 24,
   },
-  heroRow: {
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 20,
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
+  },
+  heroCopy: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#0003B8',
+    marginBottom: 8,
   },
   heroTitle: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: '900',
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
   },
-  heroSubtitle: {
-    marginTop: 6,
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#70839B',
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
   },
   createButton: {
     minHeight: 40,
-    borderRadius: 999,
+    borderRadius: 12,
     backgroundColor: '#1718C7',
     borderColor: '#1718C7',
     paddingHorizontal: 18,
   },
   filterCard: {
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 18,
     gap: 14,
   },
@@ -621,3 +665,4 @@ const styles = StyleSheet.create({
 });
 
 export default AdminUsers;
+export const heroStripStylesForTesting = styles;

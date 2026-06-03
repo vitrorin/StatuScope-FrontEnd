@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
 import { InventoryResourceItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface InventoryMapOverlayProps {
   visible: boolean;
@@ -19,16 +21,18 @@ interface InventoryMapOverlayProps {
 }
 
 export function InventoryMapOverlay({ visible, inventory, onClose }: InventoryMapOverlayProps) {
+  const { language } = useTranslation();
+
   const locations = useMemo(() => {
     const grouped = new Map<string, InventoryResourceItem[]>();
     for (const item of inventory) {
-      const key = item.location || 'Unassigned Location';
+      const key = item.location || (isSpanish(language) ? 'Sin ubicación asignada' : 'Unassigned Location');
       const bucket = grouped.get(key) ?? [];
       bucket.push(item);
       grouped.set(key, bucket);
     }
     return Array.from(grouped.entries());
-  }, [inventory]);
+  }, [inventory, language]);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -37,9 +41,9 @@ export function InventoryMapOverlay({ visible, inventory, onClose }: InventoryMa
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Inventory Locations</Text>
-              <Text style={styles.title}>Real Storage Map</Text>
-              <Text style={styles.subtitle}>Grouped directly from database-backed item locations instead of a static diagram.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Ubicaciones de inventario' : 'Inventory Locations'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Mapa de almacenamiento' : 'Real Storage Map'}</Text>
+              <Text style={styles.subtitle}>{isSpanish(language) ? 'Agrupados directamente desde las ubicaciones de artículos respaldadas por la base de datos.' : 'Grouped directly from database-backed item locations instead of a static diagram.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
@@ -49,8 +53,8 @@ export function InventoryMapOverlay({ visible, inventory, onClose }: InventoryMa
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {locations.length === 0 ? (
               <CardBase style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>No inventory locations available</Text>
-                <Text style={styles.emptyText}>Add an inventory item with a location to see it grouped here.</Text>
+                <Text style={styles.emptyTitle}>{isSpanish(language) ? 'No hay ubicaciones de inventario disponibles' : 'No inventory locations available'}</Text>
+                <Text style={styles.emptyText}>{isSpanish(language) ? 'Agrega un artículo de inventario con ubicación para verlo agrupado aquí.' : 'Add an inventory item with a location to see it grouped here.'}</Text>
               </CardBase>
             ) : null}
 
@@ -61,7 +65,7 @@ export function InventoryMapOverlay({ visible, inventory, onClose }: InventoryMa
                     <MaterialCommunityIcons name="map-marker-radius-outline" size={16} color="#1718C7" />
                     <Text style={styles.locationTitle}>{location}</Text>
                   </View>
-                  <Text style={styles.locationCount}>{items.length} item(s)</Text>
+                  <Text style={styles.locationCount}>{isSpanish(language) ? `${items.length} artículo(s)` : `${items.length} item(s)`}</Text>
                 </View>
 
                 <View style={styles.itemList}>
@@ -75,7 +79,7 @@ export function InventoryMapOverlay({ visible, inventory, onClose }: InventoryMa
                         <Text style={[styles.itemValue, item.tone === 'critical' && styles.itemValueCritical]}>
                           {item.valueText}
                         </Text>
-                        <Text style={styles.itemMeta}>Target {item.targetLevel}</Text>
+                        <Text style={styles.itemMeta}>{isSpanish(language) ? `Objetivo ${item.targetLevel}` : `Target ${item.targetLevel}`}</Text>
                       </View>
                     </View>
                   ))}

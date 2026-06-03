@@ -15,7 +15,7 @@ export function ProgressMetricRow({
   label,
   valueText,
   progress,
-  barColor = '#1D4ED8',
+  barColor = '#0003B8',
   barHeight = 6,
   style,
 }: ProgressMetricRowProps) {

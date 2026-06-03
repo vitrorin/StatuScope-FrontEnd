@@ -3,6 +3,8 @@ import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardMetric } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface MetricDetailOverlayProps {
   visible: boolean;
@@ -11,6 +13,7 @@ interface MetricDetailOverlayProps {
 }
 
 export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOverlayProps) {
+  const { language } = useTranslation();
   if (!metric) return null;
 
   return (
@@ -20,7 +23,7 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>Operational Metric</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Metrica operativa' : 'Operational Metric'}</Text>
               <Text style={styles.title}>{metric.detailTitle}</Text>
               <Text style={styles.subtitle}>{metric.detailSummary}</Text>
             </View>
@@ -30,12 +33,12 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricStat label="Current Value" value={metric.value} />
-            <MetricStat label="Signal" value={metric.signalLabel} />
+            <MetricStat label={isSpanish(language) ? 'Valor actual' : 'Current Value'} value={metric.value} />
+            <MetricStat label={isSpanish(language) ? 'Senal' : 'Signal'} value={metric.signalLabel} />
           </View>
 
           <CardBase style={styles.noteCard}>
-            <Text style={styles.noteLabel}>Recommended Action</Text>
+            <Text style={styles.noteLabel}>{isSpanish(language) ? 'Accion recomendada' : 'Recommended Action'}</Text>
             <Text style={styles.noteText}>{metric.recommendedAction}</Text>
           </CardBase>
         </CardBase>

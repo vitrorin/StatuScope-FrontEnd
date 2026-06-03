@@ -13,6 +13,8 @@ import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
 import { StaffingProfileItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface StaffingManageOverlayProps {
   visible: boolean;
@@ -43,6 +45,7 @@ export function StaffingManageOverlay({
   onSave,
   onDelete,
 }: StaffingManageOverlayProps) {
+  const { language } = useTranslation();
   const [draft, setDraft] = useState<StaffingProfileItem>(EMPTY_PROFILE);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
 
@@ -69,21 +72,21 @@ export function StaffingManageOverlay({
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Staffing Profiles</Text>
-              <Text style={styles.title}>Manage Staffing</Text>
-              <Text style={styles.subtitle}>Create, update, and remove real staffing profiles from the hospital database.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Perfiles de personal' : 'Staffing Profiles'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Gestionar personal' : 'Manage Staffing'}</Text>
+              <Text style={styles.subtitle}>{isSpanish(language) ? 'Crea, actualiza y elimina perfiles de personal del hospital.' : 'Create, update, and remove real staffing profiles from the hospital database.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <View style={styles.scrollContentWrapper}>
             <View style={styles.listPane}>
               <View style={styles.listHeader}>
-                <Text style={styles.listTitle}>Profiles</Text>
+                <Text style={styles.listTitle}>{isSpanish(language) ? 'Perfiles' : 'Profiles'}</Text>
                 <Button
-                  label="New"
+                  label={isSpanish(language) ? 'Nuevo' : 'New'}
                   variant="surface"
                   size="sm"
                   onPress={() => {
@@ -105,7 +108,9 @@ export function StaffingManageOverlay({
                       <Text style={styles.profileName}>{profile.roleName}</Text>
                       <Text style={styles.profileMeta}>{profile.roleCode}</Text>
                       <Text style={styles.profileMeta}>
-                        {profile.onShiftCount} on shift, {profile.onCallCount} on call, {profile.standbyCount} standby
+                        {isSpanish(language)
+                          ? `${profile.onShiftCount} en turno, ${profile.onCallCount} en guardia, ${profile.standbyCount} en reserva`
+                          : `${profile.onShiftCount} on shift, ${profile.onCallCount} on call, ${profile.standbyCount} standby`}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -114,15 +119,15 @@ export function StaffingManageOverlay({
             </View>
 
             <View style={styles.formPane}>
-              <Text style={styles.formTitle}>{mode === 'create' ? 'New Profile' : 'Edit Profile'}</Text>
+              <Text style={styles.formTitle}>{mode === 'create' ? (isSpanish(language) ? 'Nuevo perfil' : 'New Profile') : (isSpanish(language) ? 'Editar perfil' : 'Edit Profile')}</Text>
               <InputField
-                label="Role Name"
+                label={isSpanish(language) ? 'Nombre del rol' : 'Role Name'}
                 value={draft.roleName}
                 onChangeText={(text) => updateField('roleName', text)}
                 inputContainerStyle={styles.inputContainer}
               />
               <InputField
-                label="Role Code"
+                label={isSpanish(language) ? 'Código del rol' : 'Role Code'}
                 value={draft.roleCode}
                 onChangeText={(text) => updateField('roleCode', text.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
                 inputContainerStyle={styles.inputContainer}
@@ -130,7 +135,7 @@ export function StaffingManageOverlay({
               <View style={styles.row}>
                 <View style={styles.field}>
                   <InputField
-                    label="Headcount"
+                    label={isSpanish(language) ? 'Total' : 'Headcount'}
                     type="number"
                     value={draft.headcount}
                     onChangeText={(text) => updateField('headcount', text.replace(/[^0-9]/g, ''))}
@@ -139,7 +144,7 @@ export function StaffingManageOverlay({
                 </View>
                 <View style={styles.field}>
                   <InputField
-                    label="On Shift"
+                    label={isSpanish(language) ? 'En turno' : 'On Shift'}
                     type="number"
                     value={draft.onShiftCount}
                     onChangeText={(text) => updateField('onShiftCount', text.replace(/[^0-9]/g, ''))}
@@ -150,7 +155,7 @@ export function StaffingManageOverlay({
               <View style={styles.row}>
                 <View style={styles.field}>
                   <InputField
-                    label="On Call"
+                    label={isSpanish(language) ? 'En guardia' : 'On Call'}
                     type="number"
                     value={draft.onCallCount}
                     onChangeText={(text) => updateField('onCallCount', text.replace(/[^0-9]/g, ''))}
@@ -159,7 +164,7 @@ export function StaffingManageOverlay({
                 </View>
                 <View style={styles.field}>
                   <InputField
-                    label="Standby"
+                    label={isSpanish(language) ? 'En reserva' : 'Standby'}
                     type="number"
                     value={draft.standbyCount}
                     onChangeText={(text) => updateField('standbyCount', text.replace(/[^0-9]/g, ''))}
@@ -171,7 +176,7 @@ export function StaffingManageOverlay({
               <View style={styles.footer}>
                 {mode === 'edit' ? (
                   <Button
-                    label={deleting ? 'Deleting...' : 'Delete'}
+                    label={deleting ? (isSpanish(language) ? 'Eliminando...' : 'Deleting...') : (isSpanish(language) ? 'Eliminar' : 'Delete')}
                     variant="danger"
                     size="md"
                     style={styles.deleteButton}
@@ -180,7 +185,7 @@ export function StaffingManageOverlay({
                   />
                 ) : null}
                 <Button
-                  label={saving ? 'Saving...' : mode === 'create' ? 'Create Profile' : 'Save Profile'}
+                  label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : mode === 'create' ? (isSpanish(language) ? 'Crear perfil' : 'Create Profile') : (isSpanish(language) ? 'Guardar perfil' : 'Save Profile')}
                   variant="primary"
                   size="md"
                   style={styles.primaryButton}
@@ -188,9 +193,9 @@ export function StaffingManageOverlay({
                   onPress={() => onSave(draft, mode)}
                 />
               </View>
+</View>
             </View>
-          </View>
-        </CardBase>
+          </CardBase>
       </View>
     </Modal>
   );
@@ -255,9 +260,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  content: {
+  scrollContentWrapper: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
     flexDirection: 'row',
-    minHeight: 520,
   },
   listPane: {
     width: 320,

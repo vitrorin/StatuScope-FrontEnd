@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#1D4ED8',
+    color: '#0003B8',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 6,

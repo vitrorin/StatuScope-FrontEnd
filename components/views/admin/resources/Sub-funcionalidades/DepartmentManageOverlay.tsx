@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,6 +13,8 @@ import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DepartmentResourceItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface DepartmentManageOverlayProps {
   visible: boolean;
@@ -45,6 +48,7 @@ export function DepartmentManageOverlay({
   onSave,
   onDelete,
 }: DepartmentManageOverlayProps) {
+  const { language } = useTranslation();
   const [draft, setDraft] = useState<DepartmentResourceItem>(department ?? EMPTY_DEPARTMENT);
 
   useEffect(() => {
@@ -66,20 +70,20 @@ export function DepartmentManageOverlay({
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Department Manager</Text>
-              <Text style={styles.title}>{isCreate ? 'Add Department' : draft.name || 'Department'}</Text>
-              <Text style={styles.subtitle}>Manage the real department record stored for this hospital.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Gestor de departamentos' : 'Department Manager'}</Text>
+              <Text style={styles.title}>{isCreate ? (isSpanish(language) ? 'Agregar departamento' : 'Add Department') : draft.name || (isSpanish(language) ? 'Departamento' : 'Department')}</Text>
+              <Text style={styles.subtitle}>{isSpanish(language) ? 'Gestiona el registro de departamento almacenado para este hospital.' : 'Manage the real department record stored for this hospital.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Department Name"
+                  label={isSpanish(language) ? 'Nombre del departamento' : 'Department Name'}
                   value={draft.name}
                   onChangeText={(text) => updateField('name', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -87,7 +91,7 @@ export function DepartmentManageOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Department Code"
+                  label={isSpanish(language) ? 'Código del departamento' : 'Department Code'}
                   value={draft.code}
                   onChangeText={(text) => updateField('code', text.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
                   inputContainerStyle={styles.inputContainer}
@@ -98,7 +102,7 @@ export function DepartmentManageOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Level"
+                  label={isSpanish(language) ? 'Nivel' : 'Level'}
                   value={draft.level}
                   onChangeText={(text) => updateField('level', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -106,7 +110,7 @@ export function DepartmentManageOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Total Beds"
+                  label={isSpanish(language) ? 'Camas totales' : 'Total Beds'}
                   type="number"
                   value={draft.totalBeds}
                   onChangeText={(text) => updateField('totalBeds', text.replace(/[^0-9]/g, ''))}
@@ -118,7 +122,7 @@ export function DepartmentManageOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Occupied Beds"
+                  label={isSpanish(language) ? 'Camas ocupadas' : 'Occupied Beds'}
                   type="number"
                   value={draft.occupiedBeds}
                   onChangeText={(text) => updateField('occupiedBeds', text.replace(/[^0-9]/g, ''))}
@@ -129,6 +133,11 @@ export function DepartmentManageOverlay({
 
             <View style={styles.statusRow}>
               {(['Critical', 'Stable', 'High Demand'] as DepartmentResourceItem['status'][]).map((status) => {
+                const statusLabels: Record<string, string> = {
+                  'Critical': isSpanish(language) ? 'Crítico' : 'Critical',
+                  'Stable': isSpanish(language) ? 'Estable' : 'Stable',
+                  'High Demand': isSpanish(language) ? 'Alta demanda' : 'High Demand',
+                };
                 const isActive = draft.status === status;
                 return (
                   <TouchableOpacity
@@ -137,25 +146,25 @@ export function DepartmentManageOverlay({
                     onPress={() => updateField('status', status)}
                     activeOpacity={0.75}
                   >
-                    <Text style={[styles.statusChipText, isActive && styles.statusChipTextActive]}>{status}</Text>
+                    <Text style={[styles.statusChipText, isActive && styles.statusChipTextActive]}>{statusLabels[status] ?? status}</Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
             <InputField
-              label="Operational Notes"
+              label={isSpanish(language) ? 'Notas operativas' : 'Operational Notes'}
               value={draft.notes}
               onChangeText={(text) => updateField('notes', text)}
               inputContainerStyle={styles.notesInputContainer}
               inputStyle={styles.notesInput}
             />
-          </View>
+          </ScrollView>
 
           <View style={styles.footer}>
             {!isCreate && onDelete ? (
               <Button
-                label={deleting ? 'Deleting...' : 'Delete'}
+                label={deleting ? (isSpanish(language) ? 'Eliminando...' : 'Deleting...') : (isSpanish(language) ? 'Eliminar' : 'Delete')}
                 variant="danger"
                 size="md"
                 style={styles.deleteButton}
@@ -163,9 +172,9 @@ export function DepartmentManageOverlay({
                 onPress={() => onDelete(draft)}
               />
             ) : null}
-            <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
+            <Button label={isSpanish(language) ? 'Cancelar' : 'Cancel'} variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
             <Button
-              label={saving ? 'Saving...' : isCreate ? 'Create Department' : 'Save Department'}
+              label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : isCreate ? (isSpanish(language) ? 'Crear departamento' : 'Create Department') : (isSpanish(language) ? 'Guardar departamento' : 'Save Department')}
               variant="primary"
               size="md"
               style={{ ...styles.footerButton, ...styles.primaryButton }}
@@ -193,6 +202,7 @@ const styles = StyleSheet.create({
   dialog: {
     width: '100%',
     maxWidth: 720,
+    maxHeight: '90%',
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',

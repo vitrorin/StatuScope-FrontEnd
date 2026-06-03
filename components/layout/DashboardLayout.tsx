@@ -7,7 +7,6 @@ export interface DashboardLayoutProps {
   active?: SidebarActive;
   children: React.ReactNode;
   sectionLabel?: string;
-  searchPlaceholder?: string;
   userName: string;
   userId?: string;
   avatarText?: string;
@@ -20,7 +19,6 @@ export function DashboardLayout({
   active = 'dashboard',
   children,
   sectionLabel = 'Dashboard',
-  searchPlaceholder = 'Search medical records...',
   userName,
   userId,
   avatarText,
@@ -37,10 +35,8 @@ export function DashboardLayout({
         <View style={styles.mainArea}>
           <TopHeader
             sectionLabel={sectionLabel}
-            searchPlaceholder={searchPlaceholder}
             userName={userName}
             userId={userId}
-            showNotificationDot
             avatarText={avatarText}
           />
           <View style={styles.content}>{children}</View>

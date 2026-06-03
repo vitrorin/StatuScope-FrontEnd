@@ -50,12 +50,16 @@ import {
   updateAdminResourceSummary,
 } from '@/lib/adminOperational';
 import { initialsFromName } from '@/lib/format';
+import { useTranslation } from '@/i18n';
+import type { AppLanguage } from '@/i18n/language';
+import { getHospitalAdminLabel, isSpanish } from '@/components/views/admin/localization';
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminResources() {
   const router = useRouter();
   const { logout, profile } = useAuth();
+  const { language } = useTranslation();
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -99,9 +103,9 @@ export function AdminResources() {
       setLoadState('success');
     } catch (nextError) {
       setLoadState('error');
-      setError(nextError instanceof Error ? nextError.message : 'Unable to load hospital resources.');
+      setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudieron cargar los recursos hospitalarios.' : 'Unable to load hospital resources.');
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     void loadResources();
@@ -109,7 +113,7 @@ export function AdminResources() {
 
   const departments = useMemo(() => departmentsRaw.map(mapDepartment), [departmentsRaw]);
   const staffingProfiles = useMemo(() => staffingRaw.map(mapStaffingProfile), [staffingRaw]);
-  const inventoryItems = useMemo(() => inventoryRaw.map(mapInventoryItem), [inventoryRaw]);
+  const inventoryItems = useMemo(() => inventoryRaw.map((item) => mapInventoryItem(item, language)), [inventoryRaw, language]);
   const roster = useMemo(() => rosterRaw.map(mapOperationalContactToRoster), [rosterRaw]);
   const resourceConfiguration = useMemo(
     () => buildResourceConfiguration(summary, staffingRaw, departmentsRaw),
@@ -129,12 +133,12 @@ export function AdminResources() {
   ).length;
 
   const columns = [
-    { key: 'department', label: 'Department' },
-    { key: 'total', label: 'Total', align: 'center' as const },
-    { key: 'occupied', label: 'Occupied', align: 'center' as const },
-    { key: 'utilization', label: 'Utilization' },
-    { key: 'status', label: 'Status', align: 'center' as const },
-    { key: 'action', label: 'Action', align: 'right' as const },
+    { key: 'department', label: isSpanish(language) ? 'Departamento' : 'Department' },
+    { key: 'total', label: isSpanish(language) ? 'Total' : 'Total', align: 'center' as const },
+    { key: 'occupied', label: isSpanish(language) ? 'Ocupadas' : 'Occupied', align: 'center' as const },
+    { key: 'utilization', label: isSpanish(language) ? 'Ocupación' : 'Utilization' },
+    { key: 'status', label: isSpanish(language) ? 'Estado' : 'Status', align: 'center' as const },
+    { key: 'action', label: isSpanish(language) ? 'Acción' : 'Action', align: 'right' as const },
   ];
 
   const rows = departments.map((department) => {
@@ -158,7 +162,9 @@ export function AdminResources() {
           color={department.status === 'Critical' ? '#F04B4B' : department.status === 'Stable' ? '#1718C7' : '#F2B300'}
         />
       ),
-      status: <StatusBadge label={department.status} variant={mapDepartmentStatus(department.status)} />,
+      status: <StatusBadge label={isSpanish(language)
+                  ? (department.status === 'Critical' ? 'Crítico' : department.status === 'High Demand' ? 'Alta demanda' : 'Estable')
+                  : department.status} variant={mapDepartmentStatus(department.status)} />,
       action: (
         <TouchableOpacity
           onPress={() => {
@@ -167,7 +173,7 @@ export function AdminResources() {
           }}
           activeOpacity={0.75}
         >
-          <Text style={styles.manageLink}>Manage</Text>
+          <Text style={styles.manageLink}>{isSpanish(language) ? 'Administrar' : 'Manage'}</Text>
         </TouchableOpacity>
       ),
     };
@@ -189,9 +195,8 @@ export function AdminResources() {
   return (
     <DashboardLayout
       active="resources"
-      sectionLabel="Resources"
-      searchPlaceholder="Search beds, inventory..."
-      userName={profile?.fullName ?? 'Hospital Admin'}
+      sectionLabel={isSpanish(language) ? 'Recursos' : 'Resources'}
+      userName={profile?.fullName ?? getHospitalAdminLabel(language)}
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
@@ -204,22 +209,33 @@ export function AdminResources() {
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Capacity Status</Text>
+            <View style={styles.heroStrip}>
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroEyebrow}>{isSpanish(language) ? 'Operaciones hospitalarias' : 'Hospital Operations'}</Text>
+                <Text style={styles.heroTitle}>{isSpanish(language) ? 'Gestion de recursos' : 'Resource Management'}</Text>
+                <Text style={styles.heroDescription}>
+                  {isSpanish(language)
+                    ? 'Monitorea y administra la capacidad hospitalaria, el personal y el estado del inventario.'
+                    : 'Monitor and manage hospital capacity, staffing, and inventory status.'}
+                </Text>
               </View>
               <Button
-                label={saving ? 'Saving...' : 'Edit Configuration'}
-                variant="ghost"
+                label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : (isSpanish(language) ? 'Editar configuracion' : 'Edit Configuration')}
+                variant="secondary"
                 size="sm"
-                labelStyle={styles.sectionAction}
                 onPress={() => setIsEditConfigurationOpen(true)}
               />
             </View>
 
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Estado de capacidad' : 'Capacity Status'}</Text>
+              </View>
+            </View>
+
             {error ? (
               <CardBase style={styles.errorCard}>
-                <Text style={styles.errorTitle}>Resource service issue</Text>
+                <Text style={styles.errorTitle}>{isSpanish(language) ? 'Problema del servicio de recursos' : 'Resource service issue'}</Text>
                 <Text style={styles.errorText}>{error}</Text>
               </CardBase>
             ) : null}
@@ -227,21 +243,21 @@ export function AdminResources() {
             {loadState === 'loading' && !summary ? (
               <CardBase style={styles.loadingCard}>
                 <ActivityIndicator color="#1718C7" />
-                <Text style={styles.loadingText}>Loading operational resources...</Text>
+                <Text style={styles.loadingText}>{isSpanish(language) ? 'Cargando recursos operativos...' : 'Loading operational resources...'}</Text>
               </CardBase>
             ) : (
               <>
                 <View style={styles.summaryStrip}>
                   <CardBase style={styles.summaryTile}>
-                    <Text style={styles.summaryTileLabel}>Monitored Departments</Text>
+                    <Text style={styles.summaryTileLabel}>{isSpanish(language) ? 'Departamentos monitoreados' : 'Monitored Departments'}</Text>
                     <Text style={styles.summaryTileValue}>{departments.length}</Text>
                   </CardBase>
                   <CardBase style={styles.summaryTile}>
-                    <Text style={styles.summaryTileLabel}>Specialist Categories</Text>
+                    <Text style={styles.summaryTileLabel}>{isSpanish(language) ? 'Categorias de especialistas' : 'Specialist Categories'}</Text>
                     <Text style={styles.summaryTileValue}>{staffingRaw.length}</Text>
                   </CardBase>
                   <CardBase style={styles.summaryTile}>
-                    <Text style={styles.summaryTileLabel}>Operational Contacts</Text>
+                    <Text style={styles.summaryTileLabel}>{isSpanish(language) ? 'Contactos operativos' : 'Operational Contacts'}</Text>
                     <Text style={styles.summaryTileValue}>{roster.length}</Text>
                   </CardBase>
                 </View>
@@ -250,32 +266,36 @@ export function AdminResources() {
                   {availableBedPercentage < 25 ? (
                     <InlineWarningBanner
                       variant="critical"
-                      title="Capacity alert"
-                      message={`Only ${availableBeds} beds remain available across the hospital. Consider opening overflow capacity.`}
+                      title={isSpanish(language) ? 'Alerta de capacidad' : 'Capacity alert'}
+                      message={isSpanish(language)
+                        ? `Solo quedan ${availableBeds} camas disponibles en el hospital. Considera abrir capacidad de desborde.`
+                        : `Only ${availableBeds} beds remain available across the hospital. Consider opening overflow capacity.`}
                     />
                   ) : null}
                   {criticalInventoryCount > 0 || criticalDepartmentsCount > 0 ? (
                     <InlineWarningBanner
                       variant="warning"
-                      title="Automatic monitoring active"
-                      message={`${criticalDepartmentsCount} critical department(s) and ${criticalInventoryCount} critical inventory item(s) currently need attention.`}
+                      title={isSpanish(language) ? 'Monitoreo automatico activo' : 'Automatic monitoring active'}
+                      message={isSpanish(language)
+                        ? `${criticalDepartmentsCount} departamento(s) critico(s) y ${criticalInventoryCount} articulo(s) critico(s) de inventario requieren atencion.`
+                        : `${criticalDepartmentsCount} critical department(s) and ${criticalInventoryCount} critical inventory item(s) currently need attention.`}
                     />
                   ) : null}
                 </View>
 
                 <View style={styles.capacityRow}>
                   <BedCapacitySummaryCard
-                    title="Total Beds"
+                    title={isSpanish(language) ? 'Camas totales' : 'Total Beds'}
                     value={String(totalBeds)}
-                    unitText="units"
-                    trendText={`Snapshot ${summary?.source ?? 'MANUAL'}`}
+                    unitText={isSpanish(language) ? 'unidades' : 'units'}
+                    trendText={isSpanish(language) ? `Corte ${summary?.source ?? 'MANUAL'}` : `Snapshot ${summary?.source ?? 'MANUAL'}`}
                     style={styles.capacityCard}
                   />
                   <CardBase style={[styles.capacityCard, styles.availableCard]}>
-                    <Text style={styles.capacityTitle}>Available Beds</Text>
+                    <Text style={styles.capacityTitle}>{isSpanish(language) ? 'Camas disponibles' : 'Available Beds'}</Text>
                     <View style={styles.availableValueRow}>
                       <Text style={styles.availableValue}>{availableBeds}</Text>
-                      <Text style={styles.availableUnits}>units</Text>
+                      <Text style={styles.availableUnits}>{isSpanish(language) ? 'unidades' : 'units'}</Text>
                     </View>
                     <View style={styles.availableProgressRow}>
                       <ProgressBar
@@ -288,10 +308,12 @@ export function AdminResources() {
                     </View>
                   </CardBase>
                   <BedCapacitySummaryCard
-                    title="Occupied Beds"
+                    title={isSpanish(language) ? 'Camas ocupadas' : 'Occupied Beds'}
                     value={String(occupiedBeds)}
-                    unitText="units"
-                    statusText={criticalDepartmentsCount > 0 ? 'High demand in critical areas' : 'Within expected range'}
+                    unitText={isSpanish(language) ? 'unidades' : 'units'}
+                    statusText={criticalDepartmentsCount > 0
+                      ? (isSpanish(language) ? 'Alta demanda en areas criticas' : 'High demand in critical areas')
+                      : (isSpanish(language) ? 'Dentro del rango esperado' : 'Within expected range')}
                     variant={criticalDepartmentsCount > 0 ? 'critical' : 'default'}
                     valueColorOverride="#0F172A"
                     statusColorOverride={criticalDepartmentsCount > 0 ? '#F04B4B' : '#526174'}
@@ -304,20 +326,20 @@ export function AdminResources() {
                     <View style={styles.panelHeader}>
                       <View style={styles.panelHeaderTitle}>
                         <MaterialCommunityIcons name="account-group-outline" size={18} color="#1718C7" />
-                        <Text style={styles.panelTitle}>Staffing (Active Shift)</Text>
+                        <Text style={styles.panelTitle}>{isSpanish(language) ? 'Personal (Turno activo)' : 'Staffing (Active Shift)'}</Text>
                       </View>
                       <View style={styles.tableActions}>
                         <View style={styles.liveBadge}>
-                          <Text style={styles.liveBadgeText}>LIVE</Text>
+                        <Text style={styles.liveBadgeText}>{isSpanish(language) ? 'EN VIVO' : 'LIVE'}</Text>
                         </View>
-                        <Button label="Manage" variant="ghost" size="sm" onPress={() => setIsStaffingManageOpen(true)} />
+                        <Button label={isSpanish(language) ? 'Administrar' : 'Manage'} variant="ghost" size="sm" onPress={() => setIsStaffingManageOpen(true)} />
                       </View>
                     </View>
 
                     <View style={styles.panelBody}>
                       <StaffingStatusCard
-                        title="Doctors on Shift"
-                        subtitle={`${resourceConfiguration.doctors} total doctors configured`}
+                        title={isSpanish(language) ? 'Doctores en turno' : 'Doctors on Shift'}
+                        subtitle={isSpanish(language) ? `${resourceConfiguration.doctors} doctores configurados` : `${resourceConfiguration.doctors} total doctors configured`}
                         value={String(summary?.doctorsOnShift ?? 0)}
                         variant="doctor"
                         valueColor="#0F172A"
@@ -326,8 +348,8 @@ export function AdminResources() {
                         style={styles.staffingItem}
                       />
                       <StaffingStatusCard
-                        title="Nurses on Shift"
-                        subtitle={`${resourceConfiguration.nurses} nursing staff configured`}
+                        title={isSpanish(language) ? 'Enfermeras en turno' : 'Nurses on Shift'}
+                        subtitle={isSpanish(language) ? `${resourceConfiguration.nurses} personal de enfermería configurado` : `${resourceConfiguration.nurses} nursing staff configured`}
                         value={String(summary?.nursesOnShift ?? 0)}
                         variant="nurse"
                         valueColor="#0F172A"
@@ -336,8 +358,8 @@ export function AdminResources() {
                         style={styles.staffingItem}
                       />
                       <StaffingStatusCard
-                        title="Available Specialists"
-                        subtitle={`${staffingRaw.length} specialty profiles tracked`}
+                        title={isSpanish(language) ? 'Especialistas disponibles' : 'Available Specialists'}
+                        subtitle={isSpanish(language) ? `${staffingRaw.length} perfiles de especialidad monitoreados` : `${staffingRaw.length} specialty profiles tracked`}
                         value={String(totalSpecialists).padStart(2, '0')}
                         variant="specialist"
                         highlightColor="#FACC15"
@@ -349,7 +371,7 @@ export function AdminResources() {
                     </View>
 
                     <Button
-                      label="View Full Roster"
+                      label={isSpanish(language) ? 'Ver roster completo' : 'View Full Roster'}
                       variant="surface"
                       size="sm"
                       style={styles.panelButton}
@@ -361,11 +383,11 @@ export function AdminResources() {
                     <View style={styles.panelHeader}>
                       <View style={styles.panelHeaderTitle}>
                         <MaterialCommunityIcons name="clipboard-pulse-outline" size={18} color="#1718C7" />
-                        <Text style={styles.panelTitle}>Critical Inventory</Text>
+                        <Text style={styles.panelTitle}>{isSpanish(language) ? 'Inventario crítico' : 'Critical Inventory'}</Text>
                       </View>
                       <View style={styles.tableActions}>
                         <Button
-                          label="Add Item"
+                          label={isSpanish(language) ? 'Agregar artículo' : 'Add Item'}
                           variant="ghost"
                           size="sm"
                           labelStyle={styles.inventoryAction}
@@ -375,7 +397,7 @@ export function AdminResources() {
                           }}
                         />
                         <Button
-                          label="View Locations"
+                          label={isSpanish(language) ? 'Ver ubicaciones' : 'View Locations'}
                           variant="ghost"
                           size="sm"
                           labelStyle={styles.inventoryAction}
@@ -400,7 +422,9 @@ export function AdminResources() {
                               color={item.tone === 'critical' ? '#F04B4B' : '#1718C7'}
                             />
                           }
-                          actionLabel="Manage Item"
+                          actionLabel={isSpanish(language)
+                            ? (item.tone === 'critical' ? 'Pedir ahora' : item.targetQuantity > item.currentQuantity ? 'Reordenar' : 'Administrar')
+                            : (item.tone === 'critical' ? 'Order More Now' : item.targetQuantity > item.currentQuantity ? 'Order Refill' : 'Manage Item')}
                           actionPlacement="below"
                           actionVariant="secondary"
                           progressFillColor={item.tone === 'critical' ? '#F04B4B' : '#1718C7'}
@@ -418,10 +442,10 @@ export function AdminResources() {
 
                 <CardBase style={styles.tablePanel}>
                   <View style={styles.tableHeader}>
-                    <Text style={styles.tableTitle}>Bed Availability by Department</Text>
+                    <Text style={styles.tableTitle}>{isSpanish(language) ? 'Disponibilidad de camas por departamento' : 'Bed Availability by Department'}</Text>
                     <View style={styles.tableActions}>
                       <Button
-                        label="Add Department"
+                        label={isSpanish(language) ? 'Agregar departamento' : 'Add Department'}
                         variant="ghost"
                         size="sm"
                         onPress={() => {
@@ -444,20 +468,20 @@ export function AdminResources() {
 
                 <CardBase style={styles.tablePanel}>
                   <View style={styles.tableHeader}>
-                    <Text style={styles.tableTitle}>Staffing Profiles</Text>
+                    <Text style={styles.tableTitle}>{isSpanish(language) ? 'Perfiles de personal' : 'Staffing Profiles'}</Text>
                     <View style={styles.tableActions}>
-                      <Button label="Manage Staffing" variant="ghost" size="sm" onPress={() => setIsStaffingManageOpen(true)} />
+                      <Button label={isSpanish(language) ? 'Administrar personal' : 'Manage Staffing'} variant="ghost" size="sm" onPress={() => setIsStaffingManageOpen(true)} />
                     </View>
                   </View>
                   <DataTable
                     compact
                     style={styles.table}
                     columns={[
-                      { key: 'role', label: 'Role' },
-                      { key: 'headcount', label: 'Headcount', align: 'center' },
-                      { key: 'onShift', label: 'On Shift', align: 'center' },
-                      { key: 'onCall', label: 'On Call', align: 'center' },
-                      { key: 'standby', label: 'Standby', align: 'center' },
+                      { key: 'role', label: isSpanish(language) ? 'Rol' : 'Role' },
+                      { key: 'headcount', label: isSpanish(language) ? 'Total' : 'Headcount', align: 'center' as const },
+                      { key: 'onShift', label: isSpanish(language) ? 'En turno' : 'On Shift', align: 'center' as const },
+                      { key: 'onCall', label: isSpanish(language) ? 'En guardia' : 'On Call', align: 'center' as const },
+                      { key: 'standby', label: isSpanish(language) ? 'En reserva' : 'Standby', align: 'center' as const },
                     ]}
                     rows={staffingRows}
                   />
@@ -494,7 +518,7 @@ export function AdminResources() {
               await loadResources();
               setIsEditConfigurationOpen(false);
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save the resource configuration.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar la configuracion de recursos.' : 'Unable to save the resource configuration.');
             } finally {
               setSaving(false);
             }
@@ -542,7 +566,7 @@ export function AdminResources() {
               setSelectedDepartment(null);
               setDepartmentMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save the department.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar el departamento.' : 'Unable to save the department.');
             } finally {
               setSaving(false);
             }
@@ -556,7 +580,7 @@ export function AdminResources() {
               setSelectedDepartment(null);
               setDepartmentMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the department.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo eliminar el departamento.' : 'Unable to delete the department.');
             } finally {
               setDeleting(false);
             }
@@ -588,7 +612,7 @@ export function AdminResources() {
               }
               await loadResources();
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save the staffing profile.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar el perfil de personal.' : 'Unable to save the staffing profile.');
             } finally {
               setSaving(false);
             }
@@ -600,7 +624,7 @@ export function AdminResources() {
               await deleteAdminResourceStaffing(profile.id);
               await loadResources();
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the staffing profile.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo eliminar el perfil de personal.' : 'Unable to delete the staffing profile.');
             } finally {
               setDeleting(false);
             }
@@ -649,7 +673,7 @@ export function AdminResources() {
               setSelectedInventoryItem(null);
               setInventoryMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to save the inventory item.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo guardar el articulo de inventario.' : 'Unable to save the inventory item.');
             } finally {
               setSaving(false);
             }
@@ -663,7 +687,7 @@ export function AdminResources() {
               setSelectedInventoryItem(null);
               setInventoryMode('edit');
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to delete the inventory item.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo eliminar el articulo de inventario.' : 'Unable to delete the inventory item.');
             } finally {
               setDeleting(false);
             }
@@ -699,9 +723,16 @@ function mapStaffingProfile(item: HospitalStaffingProfileResponse): StaffingProf
   };
 }
 
-function mapInventoryItem(item: HospitalInventoryItemResponse): InventoryResourceItem {
+function mapInventoryItem(item: HospitalInventoryItemResponse, language: AppLanguage): InventoryResourceItem {
   const progress = item.capacityQuantity > 0 ? Math.round((item.currentQuantity / item.capacityQuantity) * 100) : 0;
   const critical = item.currentQuantity <= item.criticalThreshold || item.status.toUpperCase().includes('CRITICAL');
+  const es = isSpanish(language);
+  const actionLabel = critical
+    ? (es ? 'Pedir ahora' : 'Order More Now')
+    : item.targetQuantity > item.currentQuantity
+      ? (es ? 'Reordenar' : 'Order Refill')
+      : (es ? 'Administrar' : 'Manage Supply');
+  const actionType = critical ? 'order' : item.targetQuantity > item.currentQuantity ? 'refill' : 'manage';
   return {
     id: item.id,
     itemCode: item.itemCode,
@@ -716,8 +747,8 @@ function mapInventoryItem(item: HospitalInventoryItemResponse): InventoryResourc
     valueText: `${item.currentQuantity}${item.unit ? ` ${item.unit}` : ''} / ${item.capacityQuantity}${item.unit ? ` ${item.unit}` : ''}`,
     progress,
     tone: critical ? 'critical' : 'normal',
-    actionLabel: critical ? 'Order More Now' : item.targetQuantity > item.currentQuantity ? 'Order Refill' : 'Manage Supply',
-    actionType: critical ? 'order' : item.targetQuantity > item.currentQuantity ? 'refill' : 'manage',
+    actionLabel,
+    actionType,
     location: item.location,
     targetLevel: `${item.targetQuantity}${item.unit ? ` ${item.unit}` : ''}`,
   };
@@ -797,6 +828,17 @@ function normalizeAvailability(status: string): StaffRosterItem['availability'] 
   return 'Unavailable';
 }
 
+function localizeAvailability(availability: StaffRosterItem['availability'], language: AppLanguage): string {
+  if (!isSpanish(language)) return availability;
+  const map: Record<string, string> = {
+    'On Shift': 'En turno',
+    'On Call': 'En guardia',
+    'Standby': 'En reserva',
+    'Unavailable': 'No disponible',
+  };
+  return map[availability] ?? availability;
+}
+
 function humanizeCode(value: string) {
   return value
     .replace(/_/g, ' ')
@@ -845,7 +887,51 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
   },
   container: {
-    gap: 18,
+    padding: 24,
+    gap: 24,
+  },
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
+  },
+  heroCopy: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#0003B8',
+    marginBottom: 8,
+  },
+  heroTitle: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
+  },
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -903,7 +989,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: 16,
   },
   summaryTileLabel: {
     fontSize: 12,
@@ -1003,7 +1089,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   liveBadge: {
-    borderRadius: 6,
+    borderRadius: 8,
     backgroundColor: '#E9EAFE',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -1079,13 +1165,13 @@ const styles = StyleSheet.create({
     width: 32,
     minWidth: 32,
     minHeight: 32,
-    borderRadius: 8,
+    borderRadius: 10,
   },
   table: {
     borderWidth: 0,
     shadowOpacity: 0,
     elevation: 0,
-    borderRadius: 0,
+    borderRadius: 12,
   },
   departmentName: {
     fontSize: 13,
@@ -1123,3 +1209,4 @@ const styles = StyleSheet.create({
 });
 
 export default AdminResources;
+export const heroStripStylesForTesting = styles;

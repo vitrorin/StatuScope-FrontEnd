@@ -81,7 +81,6 @@ interface DiseaseAnalytics {
 export interface AnalyticsScreenProps {
   active?: SidebarItemKey;
   sectionLabel?: string;
-  searchPlaceholder?: string;
   userName?: string;
   userId?: string;
   avatarText?: string;
@@ -543,7 +542,6 @@ function isAdminPersona(propsPersona: AnalyticsPersona | undefined, sidebarItems
 export function AnalyticsScreen({
   active = 'analytics',
   sectionLabel = 'Analytics',
-  searchPlaceholder = 'Search medical records...',
   userName,
   userId,
   avatarText,
@@ -822,7 +820,6 @@ export function AnalyticsScreen({
     <DashboardLayout
       active={active}
       sectionLabel={sectionLabel}
-      searchPlaceholder={searchPlaceholder}
       userName={userName ?? profile?.fullName ?? 'Doctor'}
       userId={userId ?? (profile?.hospitalName ? profile.hospitalName : profile?.email)}
       avatarText={avatarText ?? initialsFromName(profile?.fullName)}
@@ -836,9 +833,14 @@ export function AnalyticsScreen({
       <>
         <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
-            <View style={styles.analyticsToolbar}>
-              <Text style={styles.toolbarEyebrow}>{t('common.analytics.title')}</Text>
-              <View style={styles.analyticsTitleUnderline} />
+            <View style={styles.heroStrip}>
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroEyebrow}>{t('common.analytics.hero.eyebrow')}</Text>
+                <Text style={styles.heroTitle}>
+                  {isAdmin ? t('common.analytics.hero.adminTitle') : t('common.analytics.hero.doctorTitle')}
+                </Text>
+                <Text style={styles.heroDescription}>{t('common.analytics.hero.subtitle')}</Text>
+              </View>
             </View>
 
             {analyticsState.status === 'error' ? (
@@ -1466,24 +1468,51 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   container: {
-    padding: 32,
+    padding: 24,
     gap: 24,
   },
-  analyticsToolbar: {
-    alignSelf: 'flex-start',
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
   },
-  toolbarEyebrow: {
-    fontSize: 40,
-    lineHeight: 48,
-    fontWeight: '900',
+  heroCopy: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#0003B8',
+    marginBottom: 8,
+  },
+  heroTitle: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
   },
-  analyticsTitleUnderline: {
-    width: 214,
-    height: 3,
-    borderRadius: 999,
-    backgroundColor: '#0F172A',
-    marginTop: 8,
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
   },
   filtersRow: {
     flexDirection: 'row',
@@ -1609,11 +1638,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   narrativeCard: {
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 20,
   },
   methodologyCard: {
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(23, 24, 199, 0.10)',
@@ -1711,7 +1740,7 @@ const styles = StyleSheet.create({
     color: '#526174',
   },
   selectorCard: {
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 20,
     zIndex: 20,
     elevation: 20,
@@ -1832,7 +1861,7 @@ const styles = StyleSheet.create({
   infoModalCard: {
     width: '100%',
     maxWidth: 460,
-    borderRadius: 22,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
     padding: 20,
     shadowColor: '#0F172A',
@@ -1989,7 +2018,7 @@ const styles = StyleSheet.create({
   panelCard: {
     flex: 1,
     minWidth: 0,
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 20,
   },
   diseaseSummaryCard: {
