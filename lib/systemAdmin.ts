@@ -13,6 +13,8 @@ export interface SystemMetricResponse {
 export interface SystemActivityPointResponse {
   label: string;
   value: number;
+  adminValue: number;
+  doctorValue: number;
 }
 
 export interface SystemRegionalDistributionResponse {
@@ -29,12 +31,52 @@ export interface SystemEventResponse {
   occurredAt: string;
 }
 
+export interface SystemNearbyOutbreakResponse {
+  id: string;
+  diseaseName: string;
+  municipalityName?: string | null;
+  stateName?: string | null;
+  caseCount: number;
+  confirmationStatus?: string | null;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | string;
+  distanceKm: number;
+  startedAt?: string | null;
+}
+
+export interface SystemHospitalOutbreakResponse {
+  id: string;
+  code: string;
+  name: string;
+  municipalityName?: string | null;
+  stateName?: string | null;
+  active: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  nearbyActiveOutbreakCount: number;
+  radiusKm: number;
+  nearbyOutbreaks: SystemNearbyOutbreakResponse[];
+}
+
+export interface SystemHospitalUserMetricResponse {
+  hospitalId: string;
+  hospitalName: string;
+  municipalityName?: string | null;
+  stateName?: string | null;
+  totalUsers: number;
+  activeUsers: number;
+  adminUsers: number;
+  doctorUsers: number;
+  inactiveUsers: number;
+}
+
 export interface SystemDashboardSummaryResponse {
   generatedAt: string;
   metrics: SystemMetricResponse[];
   userActivity: SystemActivityPointResponse[];
   regionalDistribution: SystemRegionalDistributionResponse[];
   recentEvents: SystemEventResponse[];
+  hospitalOutbreaks: SystemHospitalOutbreakResponse[];
+  hospitalUserMetrics: SystemHospitalUserMetricResponse[];
 }
 
 export interface HospitalResponse {

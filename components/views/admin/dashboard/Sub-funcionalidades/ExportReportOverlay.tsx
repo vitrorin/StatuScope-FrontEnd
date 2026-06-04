@@ -24,7 +24,24 @@ interface AdminReportPreview {
   title: string;
   subtitle: string;
   generatedAt: string;
-  rows: Array<{ label: string; value: string; detail?: string }>;
+  hospitalName: string;
+  summaryCards: Array<{ label: string; value: string; detail?: string; tone?: 'default' | 'critical' | 'warning' | 'positive' | 'info' }>;
+  charts: AdminReportChart[];
+  tables: AdminReportTable[];
+}
+
+interface AdminReportChart {
+  title: string;
+  subtitle?: string;
+  maxLabel?: string;
+  items: Array<{ label: string; value: number; displayValue?: string; color?: PdfColor }>;
+}
+
+interface AdminReportTable {
+  title: string;
+  headers: string[];
+  widths: number[];
+  rows: string[][];
 }
 
 export function ExportReportOverlay({
@@ -234,6 +251,17 @@ function buildAdminReport({
   const subtitle = language === 'es'
     ? `${hospitalName} | Generado ${new Date(generatedAt).toLocaleString()}`
     : `${hospitalName} | Generated ${new Date(generatedAt).toLocaleString()}`;
+  const location = [dashboard?.municipalityName, dashboard?.stateName].filter(Boolean).join(', ');
+  const totalAlertCases = alerts.reduce((sum, alert) => sum + (alert.caseCount ?? parseNumericValue(alert.caseLabel ?? '0')), 0);
+  const criticalAlerts = alerts.filter((alert) => alert.variant === 'critical' || normalizedSeverity(alert.priority) === 'critical').length;
+  const highActions = actions.filter((action) => ['CRITICAL', 'HIGH'].includes(normalizedSeverity(action.severity))).length;
+  const activeZones = zones.filter((zone) => zone.id !== 'hospital-node');
+  const metricCards = metrics.slice(0, 4).map((metric) => ({
+    label: metric.title,
+    value: metric.value,
+    detail: [metric.signalLabel, metric.subtitle].filter(Boolean).join(' | '),
+    tone: metric.tone,
+  }));
 
   if (type === 'hospital') {
     return {
@@ -241,17 +269,52 @@ function buildAdminReport({
       title,
       subtitle,
       generatedAt,
-      rows: [
-        ...metrics.slice(0, 4).map((metric) => ({
-          label: metric.title,
-          value: metric.value,
-          detail: [metric.signalLabel, metric.subtitle].filter(Boolean).join(' | '),
-        })),
-        ...actions.slice(0, 6).map((action) => ({
-          label: action.title,
-          value: action.severity,
-          detail: `${action.type} | ${action.status}`,
-        })),
+      hospitalName,
+      summaryCards: metricCards,
+      charts: [
+        {
+          title: language === 'es' ? 'Lectura operativa de KPIs' : 'Operational KPI Reading',
+          subtitle: language === 'es' ? 'Porcentaje disponible o nivel operativo reportado por cada KPI.' : 'Available percentage or reported operational level by KPI.',
+          maxLabel: '100%',
+          items: metrics
+            .filter((metric) => typeof metric.progressValue === 'number')
+            .slice(0, 6)
+            .map((metric) => ({
+              label: metric.title,
+              value: Math.max(0, Math.min(100, metric.progressValue ?? 0)),
+              displayValue: `${Math.round(metric.progressValue ?? 0)}%`,
+              color: metric.tone === 'critical' ? [239, 68, 68] : metric.tone === 'warning' ? [245, 158, 11] : [23, 24, 199],
+            })),
+        },
+        {
+          title: language === 'es' ? 'Acciones por estado' : 'Actions by Status',
+          subtitle: language === 'es' ? 'Distribucion del trabajo operativo recomendado.' : 'Distribution of recommended operational work.',
+          items: buildCountChart(groupBy(actions, (action) => localizeActionStatus(action.status, language)), [14, 116, 144]),
+        },
+      ],
+      tables: [
+        {
+          title: language === 'es' ? 'Capacidad, personal y recursos' : 'Capacity, Staffing, and Resources',
+          headers: [language === 'es' ? 'Indicador' : 'Metric', language === 'es' ? 'Valor' : 'Value', language === 'es' ? 'Senal' : 'Signal', language === 'es' ? 'Accion recomendada' : 'Recommended Action'],
+          widths: [144, 72, 126, 174],
+          rows: metrics.map((metric) => [
+            metric.title,
+            metric.value,
+            metric.signalLabel,
+            metric.recommendedAction,
+          ]),
+        },
+        {
+          title: language === 'es' ? 'Acciones operativas relacionadas' : 'Related Operational Actions',
+          headers: [language === 'es' ? 'Accion' : 'Action', language === 'es' ? 'Tipo' : 'Type', language === 'es' ? 'Severidad' : 'Severity', language === 'es' ? 'Estado' : 'Status'],
+          widths: [252, 96, 84, 84],
+          rows: actions.slice(0, 12).map((action) => [
+            localizeRecommendedActionTitle(action, language),
+            localizeRecommendedActionType(action.type, language),
+            localizePriorityLabel(action.severity, language),
+            localizeActionStatus(action.status, language),
+          ]),
+        },
       ],
     };
   }
@@ -262,17 +325,56 @@ function buildAdminReport({
       title,
       subtitle,
       generatedAt,
-      rows: [
-        ...alerts.slice(0, 10).map((alert) => ({
-          label: alert.title,
-          value: alert.caseLabel ?? String(alert.caseCount ?? ''),
-          detail: [alert.municipalityName ?? alert.area ?? alert.department, alert.confirmationStatus ?? alert.priority].filter(Boolean).join(' | '),
-        })),
-        ...zones.filter((zone) => zone.id !== 'hospital-node').slice(0, 8).map((zone) => ({
-          label: zone.name,
-          value: zone.cases,
-          detail: `${zone.disease} | ${zone.priority}`,
-        })),
+      hospitalName,
+      summaryCards: [
+        { label: language === 'es' ? 'Brotes activos' : 'Active Outbreaks', value: String(alerts.length), detail: language === 'es' ? 'Alertas vinculadas al hospital' : 'Alerts linked to the hospital', tone: criticalAlerts > 0 ? 'critical' : 'info' },
+        { label: language === 'es' ? 'Casos reportados' : 'Reported Cases', value: formatNumber(totalAlertCases), detail: language === 'es' ? 'Suma de alertas priorizadas' : 'Sum of prioritized alerts', tone: totalAlertCases > 0 ? 'warning' : 'positive' },
+        { label: language === 'es' ? 'Zonas en mapa' : 'Map Zones', value: String(activeZones.length), detail: language === 'es' ? 'Municipios con carga regional' : 'Municipalities with regional burden', tone: 'info' },
+        { label: language === 'es' ? 'Criticas' : 'Critical', value: String(criticalAlerts), detail: language === 'es' ? 'Alertas de maxima prioridad' : 'Highest priority alerts', tone: criticalAlerts > 0 ? 'critical' : 'positive' },
+      ],
+      charts: [
+        {
+          title: language === 'es' ? 'Top brotes por casos' : 'Top Outbreaks by Cases',
+          subtitle: language === 'es' ? 'Alertas con mayor carga clinica reportada.' : 'Alerts with the largest reported clinical burden.',
+          items: alerts
+            .slice(0, 8)
+            .map((alert) => ({
+              label: alert.title,
+              value: alert.caseCount ?? parseNumericValue(alert.caseLabel ?? '0'),
+              displayValue: alert.caseLabel ?? formatNumber(alert.caseCount ?? 0),
+              color: alert.variant === 'critical' ? [239, 68, 68] : alert.variant === 'warning' ? [245, 158, 11] : [23, 24, 199],
+            })),
+        },
+        {
+          title: language === 'es' ? 'Carga por zona del mapa' : 'Map Zone Burden',
+          subtitle: language === 'es' ? 'Municipios cercanos ordenados por casos visibles.' : 'Nearby municipalities ordered by visible cases.',
+          items: activeZones.slice(0, 8).map((zone) => ({
+            label: zone.name,
+            value: parseNumericValue(zone.cases),
+            displayValue: zone.cases,
+            color: [14, 116, 144],
+          })),
+        },
+      ],
+      tables: [
+        {
+          title: language === 'es' ? 'Brotes activos y alertas' : 'Active Outbreaks and Alerts',
+          headers: [language === 'es' ? 'Brote' : 'Outbreak', language === 'es' ? 'Casos' : 'Cases', language === 'es' ? 'Ubicacion' : 'Location', language === 'es' ? 'Estado' : 'Status', language === 'es' ? 'Prioridad' : 'Priority'],
+          widths: [176, 58, 118, 82, 82],
+          rows: alerts.slice(0, 12).map((alert) => [
+            alert.title,
+            alert.caseLabel ?? formatNumber(alert.caseCount ?? 0),
+            [alert.municipalityName ?? alert.area, alert.stateName].filter(Boolean).join(', ') || alert.department,
+            alert.confirmationStatus ?? '-',
+            alert.priority,
+          ]),
+        },
+        {
+          title: language === 'es' ? 'Zonas epidemiologicas del mapa' : 'Epidemiological Map Zones',
+          headers: [language === 'es' ? 'Zona' : 'Zone', language === 'es' ? 'Enfermedad' : 'Disease', language === 'es' ? 'Casos' : 'Cases', language === 'es' ? 'Riesgo' : 'Risk', language === 'es' ? 'Accion' : 'Action'],
+          widths: [136, 104, 58, 78, 140],
+          rows: activeZones.slice(0, 12).map((zone) => [zone.name, zone.disease, zone.cases, `${zone.risk} | ${zone.radius}`, zone.recommendedAction]),
+        },
       ],
     };
   }
@@ -282,13 +384,181 @@ function buildAdminReport({
     title,
     subtitle,
     generatedAt,
-    rows: [
-      { label: language === 'es' ? 'Hospital' : 'Hospital', value: hospitalName, detail: [dashboard?.municipalityName, dashboard?.stateName].filter(Boolean).join(', ') },
-      { label: language === 'es' ? 'KPIs monitoreadas' : 'Monitored KPIs', value: String(metrics.length), detail: metrics.map((metric) => metric.title).join(', ') },
-      { label: language === 'es' ? 'Brotes relevantes' : 'Relevant outbreaks', value: String(alerts.length), detail: alerts.slice(0, 3).map((alert) => alert.title).join(', ') },
-      { label: language === 'es' ? 'Acciones prioritarias' : 'Priority actions', value: String(actions.length), detail: actions.slice(0, 3).map((action) => action.title).join(', ') },
+    hospitalName,
+    summaryCards: [
+      { label: language === 'es' ? 'Hospital' : 'Hospital', value: hospitalName, detail: location || '-', tone: 'info' },
+      { label: language === 'es' ? 'KPIs monitoreadas' : 'Monitored KPIs', value: String(metrics.length), detail: metrics.slice(0, 3).map((metric) => metric.title).join(', '), tone: 'default' },
+      { label: language === 'es' ? 'Brotes relevantes' : 'Relevant Outbreaks', value: String(alerts.length), detail: `${formatNumber(totalAlertCases)} ${language === 'es' ? 'casos reportados' : 'reported cases'}`, tone: alerts.length > 0 ? 'warning' : 'positive' },
+      { label: language === 'es' ? 'Acciones prioritarias' : 'Priority Actions', value: String(highActions), detail: language === 'es' ? 'Criticas o altas' : 'Critical or high', tone: highActions > 0 ? 'critical' : 'positive' },
+    ],
+    charts: [
+      {
+        title: language === 'es' ? 'KPIs operativos' : 'Operational KPIs',
+        subtitle: language === 'es' ? 'Lectura porcentual de los indicadores principales.' : 'Percentage reading of the main indicators.',
+        maxLabel: '100%',
+        items: metrics
+          .filter((metric) => typeof metric.progressValue === 'number')
+          .slice(0, 6)
+          .map((metric) => ({
+            label: metric.title,
+            value: Math.max(0, Math.min(100, metric.progressValue ?? 0)),
+            displayValue: `${Math.round(metric.progressValue ?? 0)}%`,
+            color: metric.tone === 'critical' ? [239, 68, 68] : metric.tone === 'warning' ? [245, 158, 11] : [23, 24, 199],
+          })),
+      },
+      {
+        title: language === 'es' ? 'Distribucion de alertas' : 'Alert Distribution',
+        subtitle: language === 'es' ? 'Alertas agrupadas por prioridad visual.' : 'Alerts grouped by visual priority.',
+        items: buildCountChart(groupBy(alerts, (alert) => alert.variant), [239, 68, 68]),
+      },
+    ],
+    tables: [
+      {
+        title: language === 'es' ? 'KPIs principales' : 'Primary KPIs',
+        headers: [language === 'es' ? 'Indicador' : 'Metric', language === 'es' ? 'Valor' : 'Value', language === 'es' ? 'Interpretacion' : 'Interpretation', language === 'es' ? 'Siguiente accion' : 'Next Action'],
+        widths: [132, 70, 142, 172],
+        rows: metrics.map((metric) => [metric.title, metric.value, metric.detailSummary, metric.recommendedAction]),
+      },
+      {
+        title: language === 'es' ? 'Alertas prioritarias' : 'Priority Alerts',
+        headers: [language === 'es' ? 'Alerta' : 'Alert', language === 'es' ? 'Casos' : 'Cases', language === 'es' ? 'Area' : 'Area', language === 'es' ? 'Accion recomendada' : 'Recommended Action'],
+        widths: [174, 62, 118, 162],
+        rows: alerts.slice(0, 10).map((alert) => [
+          alert.title,
+          alert.caseLabel ?? formatNumber(alert.caseCount ?? 0),
+          [alert.municipalityName ?? alert.area, alert.department].filter(Boolean).join(' | '),
+          alert.recommendedAction,
+        ]),
+      },
+      {
+        title: language === 'es' ? 'Acciones recomendadas' : 'Recommended Actions',
+        headers: [language === 'es' ? 'Accion' : 'Action', language === 'es' ? 'Severidad' : 'Severity', language === 'es' ? 'Estado' : 'Status'],
+        widths: [318, 98, 100],
+        rows: actions.slice(0, 10).map((action) => [
+          localizeRecommendedActionTitle(action, language),
+          localizePriorityLabel(action.severity, language),
+          localizeActionStatus(action.status, language),
+        ]),
+      },
     ],
   };
+}
+
+function normalizedSeverity(value?: string | null) {
+  return (value ?? '').trim().toUpperCase();
+}
+
+function parseNumericValue(value: string) {
+  const parsed = Number(value.replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat().format(value);
+}
+
+function groupBy<T>(items: T[], keyGetter: (item: T) => string) {
+  return items.reduce<Record<string, number>>((groups, item) => {
+    const key = keyGetter(item) || 'N/A';
+    groups[key] = (groups[key] ?? 0) + 1;
+    return groups;
+  }, {});
+}
+
+function buildCountChart(groups: Record<string, number>, color: PdfColor) {
+  return Object.entries(groups)
+    .sort((first, second) => second[1] - first[1])
+    .slice(0, 8)
+    .map(([label, value]) => ({ label, value, displayValue: formatNumber(value), color }));
+}
+
+function localizeRecommendedActionTitle(
+  action: AdminDashboardSummaryResponse['recommendedActions'][number],
+  language: 'en' | 'es',
+) {
+  const localized = action.translations?.[language]?.title ?? action.translations?.en?.title;
+  if (localized && localized.trim().length > 0) return localized.trim();
+  if (language !== 'es') return action.title;
+  const titles: Record<string, string> = {
+    'Expand Monitored Bed Capacity': 'Expandir capacidad de camas monitoreadas',
+    'Monitor Bed Occupancy Trend': 'Monitorear tendencia de ocupacion de camas',
+    'Increase Emergency Physician Staffing': 'Aumentar cobertura de medicos de urgencias',
+    'ICU Capacity Critical - Activate Surge Protocol': 'Activar protocolo de expansion UCI',
+    'Implement Respiratory Isolation Measures': 'Implementar medidas de aislamiento respiratorio',
+    'Replenish Critical Protective and Respiratory Supplies': 'Reabastecer insumos criticos de proteccion respiratoria',
+    'Review PPE Stock Levels': 'Revisar niveles de inventario de EPP',
+  };
+  return titles[action.title] ?? action.title;
+}
+
+function localizeRecommendedActionType(type: string, language: 'en' | 'es') {
+  const normalized = type.toUpperCase();
+  if (language !== 'es') {
+    const englishLabels: Record<string, string> = {
+      SUPPLY: 'Supplies',
+      BED_CAPACITY: 'Hospital Capacity',
+      STAFFING: 'Staffing',
+      ISOLATION: 'Local Epidemiology',
+      LOCAL_EPIDEMIOLOGY: 'Local Epidemiology',
+      EPIDEMIOLOGY_HOSPITAL: 'Hospital Epidemiology',
+      EPIDEMIOLOGY_MUNICIPAL: 'Municipal Epidemiology',
+    };
+    return englishLabels[normalized] ?? type.replace(/_/g, ' ');
+  }
+  const labels: Record<string, string> = {
+    SUPPLY: 'Insumos',
+    BED_CAPACITY: 'Capacidad hospitalaria',
+    STAFFING: 'Personal',
+    ISOLATION: 'Epidemiologia local',
+    LOCAL_EPIDEMIOLOGY: 'Epidemiologia local',
+    EPIDEMIOLOGY_HOSPITAL: 'Epidemiologia hospitalaria',
+    EPIDEMIOLOGY_MUNICIPAL: 'Epidemiologia municipal',
+  };
+  return labels[normalized] ?? type.replace(/_/g, ' ');
+}
+
+function localizePriorityLabel(severity: string, language: 'en' | 'es') {
+  const normalized = severity.toUpperCase();
+  if (language !== 'es') {
+    const labels: Record<string, string> = {
+      CRITICAL: 'Critical',
+      HIGH: 'High',
+      MEDIUM: 'Medium',
+      MODERATE: 'Medium',
+      LOW: 'Low',
+    };
+    return labels[normalized] ?? normalized;
+  }
+  const labels: Record<string, string> = {
+    CRITICAL: 'Critica',
+    HIGH: 'Alta',
+    MEDIUM: 'Media',
+    MODERATE: 'Media',
+    LOW: 'Baja',
+  };
+  return labels[normalized] ?? severity;
+}
+
+function localizeActionStatus(status: string, language: 'en' | 'es') {
+  const normalized = status.toUpperCase();
+  if (language !== 'es') {
+    const labels: Record<string, string> = {
+      NEW: 'New',
+      ACCEPTED: 'Accepted',
+      ASSIGNED: 'Assigned',
+      COMPLETED: 'Completed',
+      REJECTED: 'Rejected',
+    };
+    return labels[normalized] ?? normalized;
+  }
+  const labels: Record<string, string> = {
+    NEW: 'Nueva',
+    ACCEPTED: 'Aceptada',
+    ASSIGNED: 'Asignada',
+    COMPLETED: 'Completada',
+    REJECTED: 'Rechazada',
+  };
+  return labels[normalized] ?? status;
 }
 
 function reportTitle(type: AdminReportType, language: 'en' | 'es') {
@@ -301,35 +571,143 @@ function buildReportPdf(report: AdminReportPreview, language: 'en' | 'es') {
   const pdf = createSimplePdf();
   let y = 54;
 
-  pdf.text(report.title, 48, y, 18, true);
+  pdf.rect(36, 34, 540, 86, [246, 247, 255], [218, 220, 251]);
+  pdf.text(report.title, 54, y, 18, true, [15, 23, 42]);
   y += 24;
-  pdf.text(report.subtitle, 48, y, 10, false, [82, 97, 116]);
-  y += 16;
-  pdf.text(`${language === 'es' ? 'Tipo' : 'Type'}: ${reportTitle(report.type, language)}`, 48, y, 10, false, [82, 97, 116]);
-  y += 28;
+  pdf.text(report.subtitle, 54, y, 10, false, [82, 97, 116]);
+  y += 17;
+  pdf.text(`${language === 'es' ? 'Tipo' : 'Type'}: ${reportTitle(report.type, language)} | StatuScope`, 54, y, 9, false, [82, 97, 116]);
+  y = 144;
 
-  report.rows.forEach((row) => {
-    y = pdf.ensureSpace(y, 58);
-    const labelLines = wrapText(row.label, 44);
-    const detailLines = wrapText(row.detail ?? '', 74);
-    pdf.text(labelLines[0] ?? row.label, 58, y, 10, true);
-    pdf.text(row.value, 455, y, 10, true, [0, 3, 184]);
-    y += 14;
-    detailLines.slice(0, 2).forEach((line) => {
-      pdf.text(line, 58, y, 9, false, [82, 97, 116]);
-      y += 12;
-    });
-    y += 12;
+  y = drawSummaryCards(pdf, y, report.summaryCards, language === 'es' ? 'Resumen de indicadores' : 'Indicator Summary');
+  report.charts.forEach((chart) => {
+    if (chart.items.length > 0) y = drawBarChart(pdf, y, chart);
+  });
+  report.tables.forEach((table) => {
+    y = drawPdfTable(pdf, y, table.title, table.headers, table.widths, table.rows);
   });
 
   const filename = `statuscope-admin-${report.type}-report-${new Date().toISOString().slice(0, 10)}.pdf`;
   return { pdf: pdf.output(), filename };
 }
 
+function drawPdfSectionTitle(pdf: SimplePdf, y: number, title: string) {
+  y = pdf.ensureSpace(y, 52);
+  pdf.text(title, 48, y, 13, true, [23, 24, 199]);
+  return y + 24;
+}
+
+function drawSummaryCards(pdf: SimplePdf, y: number, cards: AdminReportPreview['summaryCards'], title: string) {
+  if (cards.length === 0) return y;
+  y = drawPdfSectionTitle(pdf, y, title);
+  const cardWidth = 252;
+  const cardHeight = 72;
+  const gap = 12;
+
+  cards.slice(0, 4).forEach((card, index) => {
+    const column = index % 2;
+    const row = Math.floor(index / 2);
+    const x = 48 + column * (cardWidth + gap);
+    const cardY = y + row * (cardHeight + gap);
+    const accent = toneColor(card.tone);
+    pdf.rect(x, cardY, cardWidth, cardHeight, [248, 250, 252], [226, 232, 240]);
+    pdf.rect(x, cardY, 4, cardHeight, accent, accent);
+    pdf.text(card.label, x + 16, cardY + 18, 8.5, true, [100, 116, 139]);
+    wrapPdfText(card.value, 24).slice(0, 1).forEach((line) => {
+      pdf.text(line, x + 16, cardY + 40, 15, true, [15, 23, 42]);
+    });
+    wrapPdfText(card.detail ?? '', 34).slice(0, 1).forEach((line) => {
+      pdf.text(line, x + 16, cardY + 58, 8.3, false, [82, 97, 116]);
+    });
+  });
+
+  return y + Math.ceil(Math.min(cards.length, 4) / 2) * (cardHeight + gap) + 12;
+}
+
+function drawBarChart(pdf: SimplePdf, y: number, chart: AdminReportChart) {
+  y = drawPdfSectionTitle(pdf, y, chart.title);
+  const chartHeight = Math.max(128, chart.items.length * 28 + 54);
+  y = pdf.ensureSpace(y, chartHeight + 20);
+  const x = 48;
+  const width = 516;
+  pdf.rect(x, y, width, chartHeight, [255, 255, 255], [226, 232, 240]);
+  if (chart.subtitle) pdf.text(chart.subtitle, x + 14, y + 20, 8.6, false, [82, 97, 116]);
+  if (chart.maxLabel) pdf.text(chart.maxLabel, x + width - 58, y + 20, 8.2, true, [100, 116, 139]);
+
+  const maxValue = Math.max(1, ...chart.items.map((item) => item.value));
+  let cursorY = y + 44;
+  chart.items.forEach((item) => {
+    const labelLines = wrapPdfText(item.label, 26);
+    const barX = x + 174;
+    const barWidth = 258;
+    const fillWidth = Math.max(4, (item.value / maxValue) * barWidth);
+    pdf.text(labelLines[0] ?? item.label, x + 14, cursorY + 8, 8.5, true, [15, 23, 42]);
+    pdf.rect(barX, cursorY, barWidth, 10, [238, 242, 247], [238, 242, 247]);
+    pdf.rect(barX, cursorY, fillWidth, 10, item.color ?? [23, 24, 199], item.color ?? [23, 24, 199]);
+    pdf.text(item.displayValue ?? formatNumber(item.value), barX + barWidth + 14, cursorY + 9, 8.5, true, [71, 85, 105]);
+    cursorY += 28;
+  });
+
+  return y + chartHeight + 20;
+}
+
+function drawPdfTable(
+  pdf: SimplePdf,
+  y: number,
+  title: string,
+  headers: string[],
+  widths: number[],
+  rows: string[][],
+) {
+  y = drawPdfSectionTitle(pdf, y, title);
+  const x = 48;
+  const tableWidth = widths.reduce((sum, width) => sum + width, 0);
+  const headerHeight = 26;
+  y = pdf.ensureSpace(y, headerHeight + 28);
+  pdf.rect(x, y, tableWidth, headerHeight, [248, 250, 252], [226, 232, 240]);
+  let cursorX = x;
+  headers.forEach((header, index) => {
+    pdf.text(header, cursorX + 7, y + 17, 8.2, true, [100, 116, 139]);
+    if (index > 0) pdf.line(cursorX, y, cursorX, y + headerHeight, [226, 232, 240]);
+    cursorX += widths[index];
+  });
+  y += headerHeight;
+
+  const safeRows = rows.length > 0 ? rows : [['Sin datos disponibles']];
+  safeRows.forEach((row) => {
+    const paddedRow = headers.map((_, index) => row[index] ?? '');
+    const cellLines = paddedRow.map((cell, index) => wrapPdfText(cell, Math.max(8, Math.floor((widths[index] - 14) / 5.2))));
+    const rowHeight = Math.max(32, Math.max(...cellLines.map((lines) => lines.length)) * 11 + 14);
+    y = pdf.ensureSpace(y, rowHeight + 18);
+    pdf.rect(x, y, tableWidth, rowHeight, undefined, [226, 232, 240]);
+    cursorX = x;
+    cellLines.forEach((lines, columnIndex) => {
+      lines.slice(0, 4).forEach((line, lineIndex) => {
+        pdf.text(line, cursorX + 7, y + 16 + lineIndex * 11, 8.2, columnIndex === 0, columnIndex === 0 ? [15, 23, 42] : [71, 85, 105]);
+      });
+      if (columnIndex > 0) pdf.line(cursorX, y, cursorX, y + rowHeight, [226, 232, 240]);
+      cursorX += widths[columnIndex];
+    });
+    y += rowHeight;
+  });
+
+  return y + 20;
+}
+
+function toneColor(tone?: AdminReportPreview['summaryCards'][number]['tone']): PdfColor {
+  if (tone === 'critical') return [239, 68, 68];
+  if (tone === 'warning') return [245, 158, 11];
+  if (tone === 'positive') return [16, 185, 129];
+  if (tone === 'info') return [14, 116, 144];
+  return [23, 24, 199];
+}
+
 type PdfColor = [number, number, number];
 
 interface SimplePdf {
   text: (value: string, x: number, y: number, size?: number, bold?: boolean, color?: PdfColor) => void;
+  line: (x1: number, y1: number, x2: number, y2: number, color?: PdfColor, width?: number) => void;
+  rect: (x: number, y: number, width: number, height: number, fill?: PdfColor, stroke?: PdfColor) => void;
   ensureSpace: (y: number, minSpace: number) => number;
   output: () => string;
 }
@@ -348,6 +726,26 @@ function createSimplePdf(): SimplePdf {
       const [r, g, b] = color.map((component) => (component / 255).toFixed(3));
       currentPage().push(
         `BT /${bold ? 'F2' : 'F1'} ${size} Tf ${r} ${g} ${b} rg ${x.toFixed(2)} ${pdfY.toFixed(2)} Td (${escapePdfText(value)}) Tj ET`,
+      );
+    },
+    line(x1, y1, x2, y2, color = [226, 232, 240], width = 0.7) {
+      const [r, g, b] = color.map((component) => (component / 255).toFixed(3));
+      currentPage().push(
+        `q ${r} ${g} ${b} RG ${width.toFixed(2)} w ${x1.toFixed(2)} ${(pageHeight - y1).toFixed(2)} m ${x2.toFixed(2)} ${(pageHeight - y2).toFixed(2)} l S Q`,
+      );
+    },
+    rect(x, y, width, height, fill, stroke = [226, 232, 240]) {
+      const pdfY = pageHeight - y - height;
+      const strokeColor = stroke.map((component) => (component / 255).toFixed(3)).join(' ');
+      if (fill) {
+        const fillColor = fill.map((component) => (component / 255).toFixed(3)).join(' ');
+        currentPage().push(
+          `q ${fillColor} rg ${strokeColor} RG ${x.toFixed(2)} ${pdfY.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re B Q`,
+        );
+        return;
+      }
+      currentPage().push(
+        `q ${strokeColor} RG ${x.toFixed(2)} ${pdfY.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re S Q`,
       );
     },
     ensureSpace(y, minSpace) {
@@ -444,7 +842,7 @@ function escapePdfText(value: string) {
     .replace(/\r?\n/g, ' ');
 }
 
-function wrapText(value: string, maxChars: number) {
+function wrapPdfText(value: string, maxChars: number) {
   const words = value.split(/\s+/);
   const lines: string[] = [];
   let current = '';

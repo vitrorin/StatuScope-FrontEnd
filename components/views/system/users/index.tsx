@@ -1,10 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { systemNavigationLinks, getSystemSidebarItems } from '@/components/dashboard/systemNavigation';
 import { Button } from '@/components/foundation/Button';
+import { StatusBadge, StatusBadgeVariant } from '@/components/feedback/StatusBadge';
+import { InputField } from '@/components/inputs/InputField';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { CardBase } from '@/components/patterns/CardBase';
+import { PaginationControl } from '@/components/users/PaginationControl';
+import { SummaryCountCard } from '@/components/users/SummaryCountCard';
+import { UserAvatarBadge } from '@/components/users/UserAvatarBadge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/i18n';
 import { createAdminUser, listAdminUsers } from '@/lib/adminUsers';
@@ -15,13 +21,13 @@ import {
   HospitalResponse,
   listSystemHospitals,
   updateAdminUser,
-  updateAdminUserStatus,
 } from '@/lib/systemAdmin';
 import { initialsFromName } from '@/lib/format';
 import { isSpanish } from '@/components/views/admin/localization';
 
 const roleOptions: BackendRoleCode[] = ['SYSTEM_ADMIN', 'HOSPITAL_ADMIN', 'DOCTOR'];
 const statusOptions: BackendUserStatus[] = ['ACTIVE', 'DISABLED', 'PENDING'];
+const ITEMS_PER_PAGE = 6;
 
 export function SystemUsers() {
   const router = useRouter();
@@ -36,6 +42,8 @@ export function SystemUsers() {
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | BackendRoleCode>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | BackendUserStatus>('ALL');
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const sidebarItems = useMemo(() => getSystemSidebarItems(language), [language]);
@@ -68,11 +76,17 @@ export function SystemUsers() {
         user.fullName.toLowerCase().includes(normalized) ||
         user.email.toLowerCase().includes(normalized) ||
         (user.hospitalName ?? '').toLowerCase().includes(normalized) ||
-        primaryRole.toLowerCase().includes(normalized);
+        roleLabel(primaryRole, es).toLowerCase().includes(normalized);
       return matchesRole && matchesStatus && matchesQuery;
     });
-  }, [query, roleFilter, statusFilter, users]);
+  }, [es, query, roleFilter, statusFilter, users]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, roleFilter, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
+  const visibleUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   const adminCount = users.filter((user) => user.roleCodes.includes('SYSTEM_ADMIN') || user.roleCodes.includes('HOSPITAL_ADMIN')).length;
   const medicalCount = users.filter((user) => user.roleCodes.includes('DOCTOR')).length;
   const inactiveCount = users.filter((user) => user.status !== 'ACTIVE').length;
@@ -100,7 +114,7 @@ export function SystemUsers() {
         });
       } else {
         if (input.password.length < 8) {
-          throw new Error(es ? 'La contraseña debe tener al menos 8 caracteres.' : 'Password must be at least 8 characters.');
+          throw new Error(es ? 'La contrasena debe tener al menos 8 caracteres.' : 'Password must be at least 8 characters.');
         }
         await createAdminUser({
           fullName: input.fullName,
@@ -119,19 +133,6 @@ export function SystemUsers() {
     }
   };
 
-  const toggleStatus = async (user: AdminUserResponse) => {
-    setSaving(true);
-    setError(null);
-    try {
-      await updateAdminUserStatus(user.id, user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE');
-      await load();
-    } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : es ? 'No se pudo actualizar el estado.' : 'Unable to update status.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <DashboardLayout
       active="users"
@@ -143,103 +144,205 @@ export function SystemUsers() {
       sidebarItems={sidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
-          <View>
-            <Text style={styles.eyebrow}>{es ? 'Control global de acceso' : 'Global Access Control'}</Text>
-            <Text style={styles.title}>{es ? 'Gestión de usuarios' : 'User Management'}</Text>
-            <Text style={styles.subtitle}>
-              {es ? 'Administra usuarios, roles y asignaciones hospitalarias de toda la plataforma.' : 'Manage platform access, roles, and hospital assignments across the full network.'}
-            </Text>
-          </View>
-          <Button
-            label={es ? 'Crear usuario' : 'Create New User'}
-            variant="primary"
-            size="md"
-            leadingIcon={<Feather name="user-plus" size={16} color="#FFFFFF" />}
-            onPress={openCreate}
-          />
-        </View>
-
-        <View style={styles.summaryGrid}>
-          <SummaryCard title={es ? 'Administradores' : 'Administrators'} value={adminCount} icon="shield" tone="#1D4ED8" />
-          <SummaryCard title={es ? 'Personal médico' : 'Medical Staff'} value={medicalCount} icon="activity" tone="#4F46E5" />
-          <SummaryCard title={es ? 'Inactivos/Suspendidos' : 'Inactive/Suspended'} value={inactiveCount} icon="user-x" tone="#64748B" />
-        </View>
-
-        <View style={styles.toolbar}>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={es ? 'Buscar usuarios, correos u hospitales...' : 'Search users, emails, or hospitals...'}
-            placeholderTextColor="#94A3B8"
-            style={styles.searchInput}
-          />
-          <View style={styles.filterRow}>
-            {(['ALL', ...roleOptions] as ('ALL' | BackendRoleCode)[]).map((role) => (
-              <FilterChip key={role} label={role === 'ALL' ? (es ? 'Todos' : 'All') : roleLabel(role, es)} active={roleFilter === role} onPress={() => setRoleFilter(role)} />
-            ))}
-          </View>
-          <View style={styles.filterRow}>
-            {(['ALL', ...statusOptions] as ('ALL' | BackendUserStatus)[]).map((status) => (
-              <FilterChip key={status} label={status === 'ALL' ? (es ? 'Todos' : 'All') : statusLabel(status, es)} active={statusFilter === status} onPress={() => setStatusFilter(status)} />
-            ))}
-          </View>
-        </View>
-
-        {loading ? <UsersSkeleton /> : (
-          <View style={styles.tableCard}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.headerCell, styles.nameCol]}>{es ? 'Nombre' : 'Name'}</Text>
-              <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
-              <Text style={[styles.headerCell, styles.roleCol]}>{es ? 'Rol' : 'Role'}</Text>
-              <Text style={[styles.headerCell, styles.hospitalCol]}>{es ? 'Hospital' : 'Hospital'}</Text>
-              <Text style={[styles.headerCell, styles.statusCol]}>{es ? 'Estado' : 'Status'}</Text>
-              <Text style={[styles.headerCell, styles.actionCol]}>{es ? 'Acciones' : 'Actions'}</Text>
-            </View>
-            {filteredUsers.map((user) => {
-              const role = user.roleCodes[0] ?? 'DOCTOR';
-              return (
-                <View key={user.id} style={styles.tableRow}>
-                  <View style={[styles.userCell, styles.nameCol]}>
-                    <View style={styles.avatar}><Text style={styles.avatarText}>{initialsFromName(user.fullName)}</Text></View>
-                    <Text style={styles.userName}>{user.fullName}</Text>
-                  </View>
-                  <Text style={[styles.bodyCell, styles.emailCol]}>{user.email}</Text>
-                  <View style={styles.roleCol}><RoleBadge role={role} es={es} /></View>
-                  <Text style={[styles.bodyCell, styles.hospitalCol]}>{user.hospitalName ?? (es ? 'Sistema' : 'System')}</Text>
-                  <View style={styles.statusCol}><StatusPill status={user.status} es={es} /></View>
-                  <View style={[styles.actionCol, styles.actions]}>
-                    <TouchableOpacity onPress={() => { setSelectedUser(user); setEditorOpen(true); }} activeOpacity={0.75}>
-                      <Feather name="edit-2" size={17} color="#64748B" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => { void toggleStatus(user); }} activeOpacity={0.75} disabled={saving}>
-                      <Feather name={user.status === 'ACTIVE' ? 'slash' : 'check-circle'} size={18} color={user.status === 'ACTIVE' ? '#EF4444' : '#10B981'} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })}
-            {filteredUsers.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyTitle}>{es ? 'No se encontraron usuarios' : 'No users found'}</Text>
+      <>
+        <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.container}>
+            <View style={styles.heroStrip}>
+              <View style={styles.heroCopy}>
+                <Text style={styles.heroEyebrow}>{es ? 'Control de acceso' : 'Access Control'}</Text>
+                <Text style={styles.heroTitle}>{es ? 'Gestion de usuarios' : 'User Management'}</Text>
+                <Text style={styles.heroDescription}>
+                  {es
+                    ? 'Administra el acceso a la plataforma, asigna roles y monitorea el estado de los usuarios en todos los hospitales.'
+                    : 'Manage platform access, assign roles, and monitor user status across all hospitals.'}
+                </Text>
               </View>
+
+              <Button
+                label={es ? 'Crear usuario' : 'Create New User'}
+                variant="primary"
+                size="lg"
+                leadingIcon={<Feather name="user-plus" size={15} color="#FFFFFF" />}
+                style={styles.createButton}
+                onPress={openCreate}
+              />
+            </View>
+
+            <CardBase style={styles.filterCard}>
+              <View style={styles.searchRow}>
+                <InputField
+                  placeholder={es ? 'Buscar por nombre o correo' : 'Search by name or email'}
+                  value={query}
+                  onChangeText={setQuery}
+                  leftIcon={<Feather name="search" size={16} color="#94A3B8" />}
+                  inputContainerStyle={styles.searchInputContainer}
+                  style={styles.searchField}
+                />
+                <Button
+                  label={es ? 'Filtros' : 'Filters'}
+                  variant="secondary"
+                  size="md"
+                  leadingIcon={<Feather name="sliders" size={15} color="#64748B" />}
+                  style={styles.filterToggleButton}
+                  onPress={() => setIsFiltersOpen((current) => !current)}
+                />
+              </View>
+
+              {isFiltersOpen ? (
+                <>
+                  <View style={styles.filterSection}>
+                    <Text style={styles.filterLabel}>{es ? 'Rol' : 'Role'}</Text>
+                    <View style={styles.filterChips}>
+                      {(['ALL', ...roleOptions] as ('ALL' | BackendRoleCode)[]).map((role) => {
+                        const isActive = roleFilter === role;
+                        return (
+                          <TouchableOpacity
+                            key={role}
+                            style={[styles.filterChip, isActive && styles.filterChipActive]}
+                            onPress={() => setRoleFilter(role)}
+                            activeOpacity={0.75}
+                          >
+                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                              {role === 'ALL' ? (es ? 'Todos' : 'All') : roleLabel(role, es)}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  <View style={styles.filterSection}>
+                    <Text style={styles.filterLabel}>{es ? 'Estado' : 'Status'}</Text>
+                    <View style={styles.filterChips}>
+                      {(['ALL', ...statusOptions] as ('ALL' | BackendUserStatus)[]).map((status) => {
+                        const isActive = statusFilter === status;
+                        return (
+                          <TouchableOpacity
+                            key={status}
+                            style={[styles.filterChip, isActive && styles.filterChipActive]}
+                            onPress={() => setStatusFilter(status)}
+                            activeOpacity={0.75}
+                          >
+                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                              {status === 'ALL' ? (es ? 'Todos' : 'All') : statusLabel(status, es)}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </>
+              ) : null}
+            </CardBase>
+
+            {error ? (
+              <CardBase style={styles.errorCard}>
+                <Text style={styles.errorTitle}>{es ? 'Usuarios no disponibles' : 'Users unavailable'}</Text>
+                <Text style={styles.errorText}>{error}</Text>
+                <Button label={es ? 'Reintentar' : 'Retry'} variant="secondary" size="sm" onPress={() => { void load(); }} />
+              </CardBase>
             ) : null}
+
+            {loading ? (
+              <UsersTableSkeleton />
+            ) : (
+              <CardBase style={styles.tableCard}>
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.headerCell, styles.nameCol]}>{es ? 'Nombre' : 'Name'}</Text>
+                  <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
+                  <Text style={[styles.headerCell, styles.roleCol]}>{es ? 'Rol' : 'Role'}</Text>
+                  <Text style={[styles.headerCell, styles.statusCol]}>{es ? 'Estado' : 'Status'}</Text>
+                </View>
+
+                {visibleUsers.map((user, index) => {
+                  const role = user.roleCodes[0] ?? 'DOCTOR';
+                  return (
+                    <TouchableOpacity
+                      key={user.id}
+                      style={[styles.tableRow, index === visibleUsers.length - 1 && styles.tableRowLast]}
+                      activeOpacity={0.78}
+                      onPress={() => {
+                        setSelectedUser(user);
+                        setEditorOpen(true);
+                      }}
+                    >
+                      <View style={[styles.nameCol, styles.nameCell]}>
+                        <UserAvatarBadge initials={initialsFromName(user.fullName)} variant="default" />
+                        <View style={styles.userNameStack}>
+                          <Text style={styles.userName}>{user.fullName}</Text>
+                          <Text style={styles.userHospital}>{user.hospitalName ?? (es ? 'Sistema' : 'System')}</Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.bodyCell, styles.emailCol, styles.emailText]}>{user.email}</Text>
+                      <View style={styles.roleCol}>
+                        <RoleBadge role={role} es={es} />
+                      </View>
+                      <View style={styles.statusCol}>
+                        <StatusBadge label={statusLabel(user.status, es)} variant={statusBadgeVariant(user.status)} />
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                {visibleUsers.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateTitle}>{es ? 'No se encontraron usuarios' : 'No users found'}</Text>
+                    <Text style={styles.emptyStateSubtitle}>
+                      {es ? 'Prueba ajustando la busqueda o los filtros.' : 'Try adjusting the current search or filters.'}
+                    </Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.tableFooter}>
+                  <Text style={styles.tableFooterText}>
+                    {es ? 'Mostrando ' : 'Showing '}
+                    {filteredUsers.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                    {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)}
+                    {es ? ' de ' : ' of '}
+                    {filteredUsers.length}
+                    {es ? ' usuarios' : ' users'}
+                  </Text>
+                  <PaginationControl currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                </View>
+              </CardBase>
+            )}
+
+            <View style={styles.summaryRow}>
+              <SummaryCountCard
+                title={es ? 'Administradores' : 'Administrators'}
+                value={String(adminCount)}
+                variant="info"
+                icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color="#1718C7" />}
+                style={styles.summaryCard}
+              />
+              <SummaryCountCard
+                title={es ? 'Personal medico' : 'Medical Staff'}
+                value={String(medicalCount)}
+                variant="info"
+                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color="#5B63E2" />}
+                style={styles.summaryCard}
+              />
+              <SummaryCountCard
+                title={es ? 'Usuarios inactivos' : 'Inactive Users'}
+                value={String(inactiveCount)}
+                variant="neutral"
+                icon={<MaterialCommunityIcons name="account-off-outline" size={15} color="#94A3B8" />}
+                style={styles.summaryCard}
+              />
+            </View>
           </View>
-        )}
+        </ScrollView>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </ScrollView>
-
-      <UserEditorModal
-        visible={editorOpen}
-        user={selectedUser}
-        hospitals={hospitals}
-        saving={saving}
-        es={es}
-        onClose={() => setEditorOpen(false)}
-        onSave={saveUser}
-      />
+        <UserEditorModal
+          visible={editorOpen}
+          user={selectedUser}
+          hospitals={hospitals}
+          saving={saving}
+          es={es}
+          onClose={() => setEditorOpen(false)}
+          onSave={saveUser}
+        />
+      </>
     </DashboardLayout>
   );
 }
@@ -295,23 +398,34 @@ function UserEditorModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.modalCard}>
+        <CardBase style={styles.modalCard}>
           <View style={styles.modalHeader}>
-            <View>
-              <Text style={styles.eyebrow}>{es ? 'Usuarios y roles' : 'Users & Roles'}</Text>
+            <View style={styles.modalHeaderCopy}>
+              <Text style={styles.modalEyebrow}>{es ? 'Usuarios y roles' : 'Users & Roles'}</Text>
               <Text style={styles.modalTitle}>{user ? (es ? 'Editar usuario' : 'Edit User') : (es ? 'Crear usuario' : 'Create User')}</Text>
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}><Feather name="x" size={20} color="#64748B" /></TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
+              <Feather name="x" size={20} color="#64748B" />
+            </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.form}>
+          <ScrollView contentContainerStyle={styles.form} showsVerticalScrollIndicator={false}>
             <Field label={es ? 'Nombre completo' : 'Full Name'} value={draft.fullName} onChangeText={(fullName) => setDraft((prev) => ({ ...prev, fullName }))} />
             <Field label="Email" value={draft.email} onChangeText={(email) => setDraft((prev) => ({ ...prev, email }))} />
-            {!user ? <Field label={es ? 'Contraseña' : 'Password'} value={draft.password} onChangeText={(password) => setDraft((prev) => ({ ...prev, password }))} secure /> : null}
+            {!user ? (
+              <Field label={es ? 'Contrasena' : 'Password'} value={draft.password} onChangeText={(password) => setDraft((prev) => ({ ...prev, password }))} secure />
+            ) : null}
 
             <Text style={styles.formLabel}>{es ? 'Rol' : 'Role'}</Text>
             <View style={styles.choiceRow}>
-              {roleOptions.map((role) => <FilterChip key={role} label={roleLabel(role, es)} active={draft.roleCode === role} onPress={() => setDraft((prev) => ({ ...prev, roleCode: role }))} />)}
+              {roleOptions.map((role) => (
+                <FilterChip
+                  key={role}
+                  label={roleLabel(role, es)}
+                  active={draft.roleCode === role}
+                  onPress={() => setDraft((prev) => ({ ...prev, roleCode: role, hospitalId: role === 'SYSTEM_ADMIN' ? undefined : prev.hospitalId ?? hospitals[0]?.id }))}
+                />
+              ))}
             </View>
 
             {draft.roleCode !== 'SYSTEM_ADMIN' ? (
@@ -319,7 +433,12 @@ function UserEditorModal({
                 <Text style={styles.formLabel}>{es ? 'Hospital asignado' : 'Assigned Hospital'}</Text>
                 <View style={styles.hospitalChoices}>
                   {hospitals.map((hospital) => (
-                    <FilterChip key={hospital.id} label={hospital.name} active={draft.hospitalId === hospital.id} onPress={() => setDraft((prev) => ({ ...prev, hospitalId: hospital.id }))} />
+                    <FilterChip
+                      key={hospital.id}
+                      label={hospital.name}
+                      active={draft.hospitalId === hospital.id}
+                      onPress={() => setDraft((prev) => ({ ...prev, hospitalId: hospital.id }))}
+                    />
                   ))}
                 </View>
               </>
@@ -329,7 +448,14 @@ function UserEditorModal({
               <>
                 <Text style={styles.formLabel}>{es ? 'Estado' : 'Status'}</Text>
                 <View style={styles.choiceRow}>
-                  {statusOptions.map((status) => <FilterChip key={status} label={statusLabel(status, es)} active={draft.status === status} onPress={() => setDraft((prev) => ({ ...prev, status }))} />)}
+                  {statusOptions.map((status) => (
+                    <FilterChip
+                      key={status}
+                      label={statusLabel(status, es)}
+                      active={draft.status === status}
+                      onPress={() => setDraft((prev) => ({ ...prev, status }))}
+                    />
+                  ))}
                 </View>
               </>
             ) : null}
@@ -337,29 +463,16 @@ function UserEditorModal({
 
           <View style={styles.modalFooter}>
             <Button label={es ? 'Cancelar' : 'Cancel'} variant="secondary" onPress={onClose} />
-            <Button label={saving ? (es ? 'Guardando...' : 'Saving...') : (es ? 'Guardar' : 'Save')} variant="primary" disabled={saving} onPress={() => { void onSave(draft); }} />
+            <Button
+              label={saving ? (es ? 'Guardando...' : 'Saving...') : (es ? 'Guardar' : 'Save')}
+              variant="primary"
+              disabled={saving}
+              onPress={() => { void onSave(draft); }}
+            />
           </View>
-        </View>
+        </CardBase>
       </View>
     </Modal>
-  );
-}
-
-function SummaryCard({ title, value, icon, tone }: { title: string; value: number; icon: keyof typeof Feather.glyphMap; tone: string }) {
-  return (
-    <View style={styles.summaryCard}>
-      <View style={[styles.summaryIcon, { backgroundColor: `${tone}14` }]}><Feather name={icon} size={18} color={tone} /></View>
-      <Text style={styles.summaryTitle}>{title}</Text>
-      <Text style={styles.summaryValue}>{value}</Text>
-    </View>
-  );
-}
-
-function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={onPress} activeOpacity={0.75}>
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
-    </TouchableOpacity>
   );
 }
 
@@ -372,22 +485,64 @@ function Field({ label, value, onChangeText, secure = false }: { label: string; 
   );
 }
 
-function RoleBadge({ role, es }: { role: BackendRoleCode; es: boolean }) {
-  return <View style={styles.roleBadge}><Text style={styles.roleBadgeText}>{roleLabel(role, es)}</Text></View>;
+function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={[styles.choiceChip, active && styles.choiceChipActive]} onPress={onPress} activeOpacity={0.75}>
+      <Text style={[styles.choiceChipText, active && styles.choiceChipTextActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
 }
 
-function StatusPill({ status, es }: { status: BackendUserStatus; es: boolean }) {
-  const active = status === 'ACTIVE';
-  const pending = status === 'PENDING';
+function RoleBadge({ role, es }: { role: BackendRoleCode; es: boolean }) {
+  const system = role === 'SYSTEM_ADMIN';
+  const doctor = role === 'DOCTOR';
   return (
-    <View style={[styles.statusPill, active ? styles.statusActive : pending ? styles.statusPending : styles.statusDisabled]}>
-      <Text style={[styles.statusText, active ? styles.statusTextActive : pending ? styles.statusTextPending : styles.statusTextDisabled]}>{statusLabel(status, es)}</Text>
+    <View style={[styles.roleBadge, system ? styles.roleBadgeSystem : doctor ? styles.roleBadgeInfo : styles.roleBadgeNeutral]}>
+      <Text style={[styles.roleBadgeText, system ? styles.roleBadgeTextSystem : doctor ? styles.roleBadgeTextInfo : styles.roleBadgeTextNeutral]}>
+        {roleLabel(role, es)}
+      </Text>
     </View>
   );
 }
 
-function UsersSkeleton() {
-  return <View style={[styles.tableCard, styles.skeletonTable]} />;
+function UsersTableSkeleton() {
+  return (
+    <CardBase style={styles.tableCard}>
+      <View style={styles.tableHeader}>
+        <View style={[styles.usersSkeletonLine, styles.nameCol, { height: 12 }]} />
+        <View style={[styles.usersSkeletonLine, styles.emailCol, { height: 12 }]} />
+        <View style={[styles.usersSkeletonLine, styles.roleCol, { height: 12 }]} />
+        <View style={[styles.usersSkeletonLine, styles.statusCol, { height: 12 }]} />
+      </View>
+      {[0, 1, 2, 3, 4].map((item) => (
+        <View key={item} style={[styles.tableRow, item === 4 && styles.tableRowLast]}>
+          <View style={[styles.nameCol, styles.nameCell]}>
+            <View style={styles.usersSkeletonAvatar} />
+            <View style={styles.usersSkeletonNameStack}>
+              <View style={[styles.usersSkeletonLine, { width: item === 1 ? 116 : 148, height: 14 }]} />
+              <View style={[styles.usersSkeletonLine, { width: 88, height: 10 }]} />
+            </View>
+          </View>
+          <View style={styles.emailCol}>
+            <View style={[styles.usersSkeletonLine, { width: item === 2 ? 154 : 190 }]} />
+          </View>
+          <View style={styles.roleCol}>
+            <View style={styles.usersSkeletonBadge} />
+          </View>
+          <View style={styles.statusCol}>
+            <View style={[styles.usersSkeletonBadge, styles.usersSkeletonStatus]} />
+          </View>
+        </View>
+      ))}
+      <View style={styles.tableFooter}>
+        <View style={[styles.usersSkeletonLine, { width: 160 }]} />
+        <View style={styles.usersSkeletonPager}>
+          <View style={styles.usersSkeletonPagerButton} />
+          <View style={styles.usersSkeletonPagerButton} />
+        </View>
+      </View>
+    </CardBase>
+  );
 }
 
 function roleLabel(role: BackendRoleCode, es: boolean) {
@@ -402,66 +557,428 @@ function statusLabel(status: BackendUserStatus, es: boolean) {
   return es ? 'Inactivo' : 'Inactive';
 }
 
+function statusBadgeVariant(status: BackendUserStatus): StatusBadgeVariant {
+  if (status === 'ACTIVE') return 'success';
+  if (status === 'PENDING') return 'warning';
+  return 'neutral';
+}
+
 const styles = StyleSheet.create({
-  contentContainer: { padding: 32, gap: 24 },
-  hero: { backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', padding: 28, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20 },
-  eyebrow: { fontSize: 12, fontWeight: '800', color: '#0003B8', textTransform: 'uppercase' },
-  title: { marginTop: 8, fontSize: 30, lineHeight: 38, fontWeight: '800', color: '#111827' },
-  subtitle: { marginTop: 6, fontSize: 15, lineHeight: 23, color: '#64748B' },
-  summaryGrid: { flexDirection: 'row', gap: 20 },
-  summaryCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', padding: 22 },
-  summaryIcon: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  summaryTitle: { marginTop: 14, fontSize: 14, fontWeight: '800', color: '#334155' },
-  summaryValue: { marginTop: 8, fontSize: 30, fontWeight: '800', color: '#1D4ED8' },
-  toolbar: { backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', padding: 18, gap: 12 },
-  searchInput: { minHeight: 44, borderRadius: 10, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 14, color: '#111827', fontWeight: '600' },
-  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0' },
-  chipActive: { backgroundColor: '#E0E7FF', borderColor: '#C7D2FE' },
-  chipText: { fontSize: 12, fontWeight: '800', color: '#64748B' },
-  chipTextActive: { color: '#0003B8' },
-  tableCard: { backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
-  tableHeader: { minHeight: 52, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', paddingHorizontal: 20 },
-  tableRow: { minHeight: 74, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-  headerCell: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
-  bodyCell: { fontSize: 14, fontWeight: '600', color: '#475569' },
-  nameCol: { flex: 1.45 },
-  emailCol: { flex: 1.45 },
-  roleCol: { flex: 1.15 },
-  hospitalCol: { flex: 1.25 },
-  statusCol: { flex: 0.85 },
-  actionCol: { flex: 0.7 },
-  userCell: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 34, height: 34, borderRadius: 999, backgroundColor: '#E0E7FF', alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#0003B8', fontWeight: '800', fontSize: 12 },
-  userName: { color: '#111827', fontWeight: '800', fontSize: 14 },
-  roleBadge: { alignSelf: 'flex-start', backgroundColor: '#EEF2FF', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  roleBadgeText: { color: '#0003B8', fontSize: 11, fontWeight: '800' },
-  statusPill: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  statusActive: { backgroundColor: '#DCFCE7' },
-  statusPending: { backgroundColor: '#FEF3C7' },
-  statusDisabled: { backgroundColor: '#F1F5F9' },
-  statusText: { fontSize: 11, fontWeight: '800' },
-  statusTextActive: { color: '#059669' },
-  statusTextPending: { color: '#D97706' },
-  statusTextDisabled: { color: '#64748B' },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
-  emptyState: { padding: 28, alignItems: 'center' },
-  emptyTitle: { fontSize: 15, fontWeight: '800', color: '#64748B' },
-  errorText: { color: '#DC2626', fontWeight: '700' },
-  skeletonTable: { height: 360, backgroundColor: '#F8FAFC' },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.42)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  modalCard: { width: '100%', maxWidth: 720, maxHeight: '92%', backgroundColor: '#FFFFFF', borderRadius: 14, overflow: 'hidden' },
-  modalHeader: { padding: 24, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
-  modalTitle: { marginTop: 6, fontSize: 24, fontWeight: '800', color: '#111827' },
-  closeButton: { width: 38, height: 38, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center' },
-  form: { padding: 24, gap: 14 },
-  field: { gap: 7 },
-  formLabel: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
-  input: { minHeight: 44, borderRadius: 10, borderWidth: 1, borderColor: '#CBD5E1', paddingHorizontal: 13, color: '#111827', fontWeight: '700' },
-  choiceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  hospitalChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, maxHeight: 120 },
-  modalFooter: { padding: 18, borderTopWidth: 1, borderTopColor: '#E2E8F0', flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
+  contentContainer: {
+    paddingBottom: 32,
+  },
+  container: {
+    padding: 24,
+    gap: 24,
+  },
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.08)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000F6B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
+  },
+  heroCopy: {
+    flex: 1,
+    paddingRight: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#0003B8',
+    marginBottom: 8,
+  },
+  heroTitle: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 8,
+    maxWidth: 720,
+  },
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#475569',
+    maxWidth: 760,
+  },
+  createButton: {
+    minHeight: 40,
+    borderRadius: 12,
+    backgroundColor: '#1718C7',
+    borderColor: '#1718C7',
+    paddingHorizontal: 18,
+  },
+  filterCard: {
+    borderRadius: 16,
+    padding: 18,
+    gap: 14,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  searchField: {
+    flex: 1,
+    marginBottom: 0,
+  },
+  filterToggleButton: {
+    minHeight: 46,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+  },
+  searchInputContainer: {
+    height: 46,
+    borderRadius: 12,
+    borderColor: '#DCE3EE',
+  },
+  filterSection: {
+    gap: 10,
+  },
+  filterLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '800',
+    color: '#8A9AAF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  filterChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: '#F6F8FC',
+    borderWidth: 1,
+    borderColor: '#E8EDF5',
+  },
+  filterChipActive: {
+    backgroundColor: '#EEF1FF',
+    borderColor: 'rgba(23, 24, 199, 0.24)',
+  },
+  filterChipText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  filterChipTextActive: {
+    color: '#1718C7',
+  },
+  tableCard: {
+    borderRadius: 16,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  tableHeader: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 20,
+  },
+  tableRow: {
+    minHeight: 74,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  tableRowLast: {
+    borderBottomWidth: 0,
+  },
+  headerCell: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#64748B',
+    textTransform: 'uppercase',
+  },
+  bodyCell: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  nameCol: {
+    flex: 1.35,
+  },
+  emailCol: {
+    flex: 1.35,
+  },
+  roleCol: {
+    flex: 1,
+  },
+  statusCol: {
+    flex: 0.72,
+  },
+  nameCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  userNameStack: {
+    flex: 1,
+    minWidth: 0,
+  },
+  userName: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  userHospital: {
+    marginTop: 2,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700',
+    color: '#94A3B8',
+  },
+  emailText: {
+    color: '#475569',
+  },
+  roleBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  roleBadgeInfo: {
+    backgroundColor: '#EEF1FF',
+  },
+  roleBadgeNeutral: {
+    backgroundColor: '#F1F5F9',
+  },
+  roleBadgeSystem: {
+    backgroundColor: '#F5F3FF',
+  },
+  roleBadgeText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+  },
+  roleBadgeTextInfo: {
+    color: '#1718C7',
+  },
+  roleBadgeTextNeutral: {
+    color: '#64748B',
+  },
+  roleBadgeTextSystem: {
+    color: '#5B21B6',
+  },
+  emptyState: {
+    padding: 28,
+    alignItems: 'center',
+  },
+  emptyStateTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  emptyStateSubtitle: {
+    marginTop: 6,
+    fontSize: 13,
+    color: '#94A3B8',
+  },
+  tableFooter: {
+    minHeight: 58,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  tableFooterText: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  summaryCard: {
+    flex: 1,
+  },
+  errorCard: {
+    borderRadius: 16,
+    padding: 18,
+    borderColor: '#FECACA',
+    gap: 8,
+  },
+  errorTitle: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '900',
+    color: '#991B1B',
+  },
+  errorText: {
+    color: '#64748B',
+    lineHeight: 20,
+  },
+  usersSkeletonLine: {
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
+  },
+  usersSkeletonAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    backgroundColor: '#E0E7FF',
+  },
+  usersSkeletonNameStack: {
+    gap: 8,
+  },
+  usersSkeletonBadge: {
+    width: 126,
+    height: 28,
+    borderRadius: 999,
+    backgroundColor: '#EEF2F7',
+  },
+  usersSkeletonStatus: {
+    width: 82,
+  },
+  usersSkeletonPager: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  usersSkeletonPagerButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#EEF2F7',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.42)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 720,
+    maxHeight: '92%',
+    borderRadius: 24,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  modalHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  modalEyebrow: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '800',
+    color: '#1718C7',
+    textTransform: 'uppercase',
+  },
+  modalTitle: {
+    marginTop: 6,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  form: {
+    padding: 24,
+    gap: 14,
+  },
+  field: {
+    gap: 7,
+  },
+  formLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#64748B',
+    textTransform: 'uppercase',
+  },
+  input: {
+    minHeight: 46,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    paddingHorizontal: 13,
+    color: '#111827',
+    fontWeight: '700',
+  },
+  choiceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  hospitalChoices: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    maxHeight: 136,
+  },
+  choiceChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  choiceChipActive: {
+    backgroundColor: '#E0E7FF',
+    borderColor: '#C7D2FE',
+  },
+  choiceChipText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  choiceChipTextActive: {
+    color: '#0003B8',
+  },
+  modalFooter: {
+    padding: 18,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
 });
 
 export default SystemUsers;

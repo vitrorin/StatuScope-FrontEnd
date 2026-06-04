@@ -159,7 +159,7 @@ export function SystemHospitals() {
           />
         </View>
 
-        {loading ? <View style={[styles.tableCard, styles.skeletonTable]} /> : (
+        {loading ? <HospitalsSkeleton /> : (
           <View style={styles.tableCard}>
             <View style={styles.tableHeader}>
               <Text style={[styles.headerCell, styles.hospitalCol]}>{es ? 'Hospital' : 'Hospital Name'}</Text>
@@ -383,6 +383,42 @@ function StatusPill({ active, es }: { active: boolean; es: boolean }) {
   );
 }
 
+function HospitalsSkeleton() {
+  return (
+    <View style={styles.tableCard}>
+      <View style={styles.tableHeader}>
+        <View style={[styles.skeletonLine, styles.hospitalCol]} />
+        <View style={[styles.skeletonLine, styles.cityCol]} />
+        <View style={[styles.skeletonLine, styles.staffCol]} />
+        <View style={[styles.skeletonLine, styles.statusCol]} />
+      </View>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <View key={index} style={styles.tableRow}>
+          <View style={[styles.hospitalCell, styles.hospitalCol]}>
+            <View style={styles.skeletonIcon} />
+            <View style={styles.skeletonStack}>
+              <View style={[styles.skeletonLine, { width: index === 1 ? 170 : 210 }]} />
+              <View style={[styles.skeletonLine, { width: 72, height: 10 }]} />
+            </View>
+          </View>
+          <View style={styles.cityCol}>
+            <View style={[styles.skeletonLine, { width: 130 }]} />
+          </View>
+          <View style={styles.staffCol}>
+            <View style={[styles.skeletonLine, { width: 58 }]} />
+          </View>
+          <View style={styles.statusCol}>
+            <View style={styles.skeletonBadge} />
+          </View>
+          <View style={styles.actionCol}>
+            <View style={[styles.skeletonLine, { width: 44 }]} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 function Field({ label, value, onChangeText }: { label: string; value: string; onChangeText: (value: string) => void }) {
   return (
     <View style={styles.field}>
@@ -417,18 +453,18 @@ function numberOrUndefined(value: string) {
 
 const styles = StyleSheet.create({
   contentContainer: { padding: 32, gap: 24 },
-  hero: { backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', padding: 28, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20 },
+  hero: { backgroundColor: '#F8FAFF', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(0, 3, 184, 0.08)', padding: 28, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20, shadowColor: '#000F6B', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 26, elevation: 4 },
   eyebrow: { fontSize: 12, fontWeight: '800', color: '#0003B8', textTransform: 'uppercase' },
   title: { marginTop: 8, fontSize: 30, lineHeight: 38, fontWeight: '800', color: '#111827' },
   subtitle: { marginTop: 6, fontSize: 15, lineHeight: 23, color: '#64748B' },
   summaryGrid: { flexDirection: 'row', gap: 20 },
-  summaryCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', padding: 22, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  summaryIcon: { width: 42, height: 42, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  summaryCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', padding: 22, flexDirection: 'row', alignItems: 'center', gap: 14, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 3 },
+  summaryIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   summaryTitle: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
   summaryValue: { marginTop: 4, fontSize: 28, fontWeight: '800', color: '#1D4ED8' },
-  toolbar: { backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', padding: 18 },
-  searchInput: { minHeight: 44, borderRadius: 10, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 14, color: '#111827', fontWeight: '600' },
-  tableCard: { backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' },
+  toolbar: { backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', padding: 18, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 2 },
+  searchInput: { minHeight: 46, borderRadius: 12, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 14, color: '#111827', fontWeight: '600' },
+  tableCard: { backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 3 },
   tableHeader: { minHeight: 52, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', paddingHorizontal: 20 },
   tableRow: { minHeight: 76, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   headerCell: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
@@ -438,7 +474,7 @@ const styles = StyleSheet.create({
   statusCol: { flex: 0.8 },
   actionCol: { flex: 0.6 },
   hospitalCell: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  hospitalIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  hospitalIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
   hospitalIconInactive: { backgroundColor: '#F1F5F9' },
   hospitalName: { color: '#111827', fontWeight: '800', fontSize: 14 },
   hospitalCode: { marginTop: 2, color: '#94A3B8', fontWeight: '700', fontSize: 11 },
@@ -453,17 +489,21 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
   errorText: { color: '#DC2626', fontWeight: '700' },
   skeletonTable: { height: 360, backgroundColor: '#F8FAFC' },
+  skeletonLine: { height: 12, borderRadius: 999, backgroundColor: '#E8EEF6' },
+  skeletonIcon: { width: 36, height: 36, borderRadius: 14, backgroundColor: '#DBEAFE' },
+  skeletonStack: { gap: 7 },
+  skeletonBadge: { width: 82, height: 28, borderRadius: 999, backgroundColor: '#EEF2F7' },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.42)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  modalCard: { width: '100%', maxWidth: 820, maxHeight: '92%', backgroundColor: '#FFFFFF', borderRadius: 14, overflow: 'hidden' },
+  modalCard: { width: '100%', maxWidth: 820, maxHeight: '92%', backgroundColor: '#FFFFFF', borderRadius: 24, overflow: 'hidden' },
   modalHeader: { padding: 24, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
   modalTitle: { marginTop: 6, fontSize: 24, fontWeight: '800', color: '#111827' },
-  closeButton: { width: 38, height: 38, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center' },
+  closeButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center' },
   form: { padding: 24, gap: 14 },
   twoCols: { flexDirection: 'row', gap: 12 },
   threeCols: { flexDirection: 'row', gap: 12 },
   field: { flex: 1, gap: 7 },
   formLabel: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
-  input: { minHeight: 44, borderRadius: 10, borderWidth: 1, borderColor: '#CBD5E1', paddingHorizontal: 13, color: '#111827', fontWeight: '700' },
+  input: { minHeight: 46, borderRadius: 12, borderWidth: 1, borderColor: '#CBD5E1', paddingHorizontal: 13, color: '#111827', fontWeight: '700' },
   selectedHint: { color: '#64748B', fontSize: 12, fontWeight: '700' },
   municipalityChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   municipalityChip: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0' },
