@@ -410,6 +410,8 @@ function shortStateName(name: string): string {
     'Michoacan de Ocampo': 'Michoacan',
     'Michoacán de Ocampo': 'Michoacán',
     'Veracruz de Ignacio de la Llave': 'Veracruz',
+    'Estado de Mexico': 'México',
+    'Estado de México': 'México',
     'Mexico': 'México',
   };
   return aliases[name] ?? name;
@@ -421,13 +423,26 @@ function stateLookupKey(name: string): string {
     'Michoacan de Ocampo': 'Michoacan',
     'Michoacán de Ocampo': 'Michoacán',
     'Veracruz de Ignacio de la Llave': 'Veracruz',
+    'Estado de Mexico': 'Mexico',
+    'Estado de México': 'Mexico',
     'Mexico': 'Mexico',
     'México': 'Mexico',
   };
   return (aliases[name] ?? shortStateName(name))
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
     .toLowerCase();
+}
+
+function findStateByName(
+  states: DoctorDashboardStateMapItem[],
+  stateName: string | null | undefined,
+): DoctorDashboardStateMapItem | null {
+  if (!stateName) return null;
+  const targetKey = stateLookupKey(stateName);
+  return states.find((state) => stateLookupKey(state.stateName) === targetKey) ?? null;
 }
 
 function getStateBoundary(stateName: string | undefined | null) {
@@ -529,7 +544,8 @@ async function loadStateReportWithFallback(
   stateOutbreakMap: DoctorDashboardMapResponse | null,
 ) {
   try {
-    return await getDoctorDashboardStateReport(state.stateId);
+    const report = await getDoctorDashboardStateReport(state.stateId);
+    return report.outbreaks.length > 0 ? report : reportFromStateMap(state, stateOutbreakMap);
   } catch {
     return reportFromStateMap(state, stateOutbreakMap);
   }
@@ -574,8 +590,8 @@ export function AnalyticsScreen({
         getDoctorDashboardStateMap(),
         getDoctorDashboardDiseaseCatalog(),
       ]);
-      const stateKey = stateLookupKey(stateReport.stateName ?? localReport.stateName ?? '');
-      const selectedState = stateMap.states.find((state) => stateLookupKey(state.stateName) === stateKey);
+      const selectedState = findStateByName(stateMap.states, localReport.stateName)
+        ?? findStateByName(stateMap.states, stateReport.stateName);
       const stateOutbreakMap = selectedState
         ? await getDoctorDashboardStateOutbreakMap(selectedState.stateId)
         : null;
