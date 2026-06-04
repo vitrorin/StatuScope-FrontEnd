@@ -326,6 +326,8 @@ describe('createAdminRecommendationTask', () => {
 
 describe('createAdminRecommendationNotification', () => {
   const NOTIF_INPUT = {
+    audienceType: 'CONTACT' as const,
+    audienceContactId: 'contact-001',
     audienceLabel: 'All Doctors',
     message: 'Critical antiviral shortage.',
   };

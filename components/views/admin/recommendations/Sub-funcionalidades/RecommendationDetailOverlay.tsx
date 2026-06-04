@@ -10,8 +10,9 @@ import {
   View,
 } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
-import { SeverityBadge } from '@/components/recommendations/SeverityBadge';
 import { RecommendationFeedItem } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { getRecommendationSourceLabel, isSpanish } from '@/components/views/admin/localization';
 
 interface RecommendationDetailOverlayProps {
   visible: boolean;
@@ -24,6 +25,7 @@ export function RecommendationDetailOverlay({
   item,
   onClose,
 }: RecommendationDetailOverlayProps) {
+  const { language } = useTranslation();
   if (!item) return null;
 
   return (
@@ -38,7 +40,6 @@ export function RecommendationDetailOverlay({
               <Text style={styles.subtitle}>{item.description}</Text>
             </View>
             <View style={styles.headerRight}>
-              <SeverityBadge label={item.severity.toUpperCase()} severity={item.severity} />
               <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
                 <Feather name="x" size={18} color="#64748B" />
               </TouchableOpacity>
@@ -47,30 +48,37 @@ export function RecommendationDetailOverlay({
 
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.metricRow}>
-              <MetricCard label="Confidence" value={`${item.confidenceScore}%`} />
-              <MetricCard label="Expected Impact" value={item.expectedImpact} />
-              <MetricCard label="Urgency Window" value={item.urgencyWindow} />
+              <MetricCard
+                label={isSpanish(language) ? 'Prioridad calculada' : 'Calculated Priority'}
+                value={getSeverityLabel(item.backendSeverity, language)}
+              />
+              <MetricCard
+                label={isSpanish(language) ? 'Impacto esperado' : 'Expected Impact'}
+                value={item.expectedImpact}
+              />
+              <MetricCard
+                label={isSpanish(language) ? 'Ventana de urgencia' : 'Urgency Window'}
+                value={item.urgencyWindow}
+              />
             </View>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Generation Source</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Origen de generacion' : 'Generation Source'}</Text>
               <Text style={styles.sectionValue}>
-                {item.createdByMode === 'LLM_ASSISTED'
-                  ? 'LLM-assisted recommendation grounded in real-time outbreaks and hospital resource capacity.'
-                  : 'Operational recommendation generated from live hospital and outbreak rules.'}
+                {getRecommendationSourceLabel(item.createdByMode, language)}
               </Text>
             </CardBase>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Affected Scope</Text>
-              <Text style={styles.sectionLabel}>Departments</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Alcance afectado' : 'Affected Scope'}</Text>
+              <Text style={styles.sectionLabel}>{isSpanish(language) ? 'Departamentos' : 'Departments'}</Text>
               <Text style={styles.sectionValue}>{item.affectedDepartments.join(', ')}</Text>
-              <Text style={[styles.sectionLabel, styles.sectionLabelSpacing]}>Resources</Text>
+              <Text style={[styles.sectionLabel, styles.sectionLabelSpacing]}>{isSpanish(language) ? 'Recursos' : 'Resources'}</Text>
               <Text style={styles.sectionValue}>{item.affectedResources.join(', ')}</Text>
             </CardBase>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Why the AI flagged this</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Por que IA marco esto' : 'Why the AI flagged this'}</Text>
               {item.rationale.map((reason) => (
                 <View key={reason} style={styles.bulletRow}>
                   <View style={styles.bullet} />
@@ -80,7 +88,7 @@ export function RecommendationDetailOverlay({
             </CardBase>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Recommended Actions</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Acciones recomendadas' : 'Recommended Actions'}</Text>
               {item.recommendedActions.map((action) => (
                 <View key={action} style={styles.actionRow}>
                   <Feather name="check-circle" size={15} color="#1718C7" />
@@ -90,7 +98,7 @@ export function RecommendationDetailOverlay({
             </CardBase>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Activity Trail</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Historial de actividad' : 'Activity Trail'}</Text>
               {item.auditTrail.map((event) => (
                 <View key={`${event.timestamp}-${event.label}`} style={styles.auditRow}>
                   <Text style={styles.auditTime}>{event.timestamp}</Text>
@@ -105,7 +113,13 @@ export function RecommendationDetailOverlay({
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
     <CardBase style={styles.metricCard}>
       <Text style={styles.metricLabel}>{label}</Text>
@@ -204,9 +218,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   metricValue: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '900',
+    fontSize: 16,
+    lineHeight: 23,
+    fontWeight: '600',
     color: '#0F172A',
   },
   sectionCard: {
@@ -285,3 +299,12 @@ const styles = StyleSheet.create({
 });
 
 export default RecommendationDetailOverlay;
+
+function getSeverityLabel(severity: string, language: 'en' | 'es') {
+  const normalized = severity.toUpperCase();
+  if (!isSpanish(language)) return normalized;
+  if (normalized === 'CRITICAL') return 'CRITICA';
+  if (normalized === 'HIGH') return 'ALTA';
+  if (normalized === 'MEDIUM') return 'MEDIA';
+  return 'BAJA';
+}

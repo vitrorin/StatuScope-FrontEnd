@@ -1,15 +1,15 @@
-# StatuScope — Frontend
+# StatuScope - Frontend
 
-Cross-platform (iOS, Android, Web) medical radar system for hospitals. Built with **Expo React Native**, **Expo Router**, and **NativeWind**.
+Cross-platform medical radar system for hospitals. Built with **Expo React Native**, **Expo Router**, and Firebase Authentication.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 18 or later
-- [npm](https://www.npmjs.com/) (comes with Node) or [Yarn](https://yarnpkg.com/)
-- [Expo Go](https://expo.dev/go) on your physical device **or** an Android/iOS emulator
-- A running instance of the [StatusScope Backend](../StatusScope-Backend)
+- Node.js 18 or later
+- npm or Yarn
+- Expo Go, an emulator, or a web browser
+- A running instance of the StatusScope Backend
 
-## 1. Clone & install dependencies
+## Setup
 
 ```bash
 git clone <repo-url>
@@ -17,76 +17,155 @@ cd StatuScope-FrontEnd
 npm install
 ```
 
-## 2. Configure environment variables
-
-Create a `.env.local` file in the project root:
-
-```bash
-cp .env.example .env.local   # if an example file exists, otherwise create it manually
-```
-
-Add your Firebase project credentials:
+Create a local environment file:
 
 ```env
+EXPO_PUBLIC_API_URL=http://localhost:8080
+
 EXPO_PUBLIC_FIREBASE_API_KEY=your-api-key
 EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
 EXPO_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
 EXPO_PUBLIC_FIREBASE_APP_ID=your-app-id
 ```
 
-> You can find these values in your Firebase console under **Project Settings → General → Your apps**.
+Firebase web credentials are available in Firebase Console under Project Settings > General > Your apps.
 
-## 3. Run the app
+## Run
 
 ```bash
 npx expo start
 ```
 
-Then choose how to open it:
+Then choose a target:
 
 | Key | Target |
-|-----|--------|
+| --- | --- |
 | `a` | Android emulator |
-| `i` | iOS simulator (macOS only) |
+| `i` | iOS simulator |
 | `w` | Web browser |
-| Scan QR | Expo Go on a physical device |
+| QR | Expo Go on a physical device |
 
-### Platform-specific shortcuts
+Useful scripts:
 
 ```bash
-npm run android   # open directly on Android emulator
-npm run ios       # open directly on iOS simulator (macOS only)
-npm run web       # open in the browser
+npm run start
+npm run android
+npm run ios
+npm run web
+npm run build:web
+npm run serve:dist
+npm run lint
+npm run cy:run
+npm run cy:open
+npm run storybook
+npm run build-storybook
+npm run docker:build
 ```
 
-## 4. Run tests
+## Test
 
 ```bash
 npx vitest
+node ./node_modules/typescript/bin/tsc --noEmit
 ```
 
-## 5. Run Storybook (component explorer)
+Current known type-check gaps outside the latest system-admin work:
 
-```bash
-npm run storybook           # web Storybook at http://localhost:6006
-npm run storybook-generate  # regenerate story index after adding new stories
+- `__tests__/unit/lib/doctorDashboard.test.ts` imports `radiusQuery`, which is not exported.
+- `stories/compositions/TopHeader.stories.tsx` still passes the removed `searchPlaceholder` prop.
+
+The production web export currently passes with `npm run build:web`.
+
+`serve:dist` serves the exported web build on port `4173`. Cypress, Storybook, lint, and Docker scripts are available in `package.json` for local QA and UI review.
+
+## App Areas
+
+### System Administrator
+
+Dedicated platform-wide area for `SYSTEM_ADMIN` users:
+
+| Route | Purpose |
+| --- | --- |
+| `/system/dashboard` | Global platform overview, KPIs, user activity, regional distribution, hospital status, and outbreak/security context |
+| `/system/users` | Global Users & Roles management across all hospitals |
+| `/system/hospitals` | Hospital registration, editing, activation, and deactivation |
+
+System administrators are redirected to `/system/dashboard` after login.
+
+System admin pages are protected with `RoleGate` for `SYSTEM_ADMIN`. Some hospital-admin screens also allow `SYSTEM_ADMIN` because the backend gives system administrators platform-wide privileges.
+
+### Hospital Administrator
+
+Hospital-scoped area for `HOSPITAL_ADMIN` users:
+
+| Route | Purpose |
+| --- | --- |
+| `/dashboard/administrator` | Hospital operations dashboard |
+| `/admin/analytics` | Epidemiological analytics |
+| `/admin/resources` | Hospital resources, inventory, staffing, and supply requests |
+| `/admin/recommendations` | Operational recommendations, tasks, notifications, and supply requests |
+| `/admin/users` | Hospital users and operational contact directory |
+
+Hospital administrators are redirected to `/dashboard/administrator` after login.
+
+### Doctor
+
+Doctor-facing area for `DOCTOR` users:
+
+| Route | Purpose |
+| --- | --- |
+| `/dashboard/doctor` | Doctor dashboard |
+| `/analytics` | Disease analytics |
+| `/diagnosis` | Diagnosis assistant |
+
+Doctors are redirected to `/dashboard/doctor` after login.
+
+Doctor analytics and dashboard screens consume the expanded `/doctor/dashboard/*` API: summary, metrics, local/state maps, state outbreak drill-down, alerts, local/state disease breakdowns, and reports.
+
+## Important Frontend Modules
+
+```text
+app/                         Expo Router routes
+components/dashboard/        Shared sidebar/navigation helpers
+components/layout/           Dashboard shell and top header
+components/views/doctor/     Doctor screens
+components/views/admin/      Hospital administrator screens
+components/views/system/     System administrator screens
+contexts/                    Auth context
+i18n/                        English/Spanish language support
+lib/                         API clients and shared utilities
 ```
 
-## Project structure
+System admin API calls live in:
 
-```
-app/          ← file-based routes (Expo Router)
-components/   ← UI components organised by domain
-contexts/     ← React Context providers (auth, etc.)
-constants/    ← design tokens and theme
-lib/          ← shared utilities (api client, firebase init)
-hooks/        ← custom React hooks
-types/        ← shared TypeScript types
-stories/      ← Storybook stories
+```text
+lib/systemAdmin.ts
 ```
 
-## Learn more
+Hospital operational API calls live in:
 
-- [Expo documentation](https://docs.expo.dev/)
-- [Expo Router](https://docs.expo.dev/router/introduction/)
-- [NativeWind](https://www.nativewind.dev/)
+```text
+lib/adminOperational.ts
+```
+
+Doctor dashboard calls live in:
+
+```text
+lib/doctorDashboard.ts
+```
+
+Diagnosis assistant and evaluation calls live in:
+
+```text
+lib/diagnosisAssistant.ts
+lib/diagnosisEvaluation.ts
+lib/diagnosisDiseases.ts
+```
+
+## Design Notes
+
+- Screens use the existing `DashboardLayout` and sidebar patterns.
+- System admin has its own sidebar with only Dashboard, Users & Roles, and Hospitals.
+- Hospital admin Users keeps the operational directory; system admin Users intentionally does not.
+- Skeleton states are used for loading dashboards, users, resources, and system admin screens.
+- Text is handled in Spanish/English using the existing i18n helpers and local language state.

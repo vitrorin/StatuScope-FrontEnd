@@ -6,8 +6,9 @@ export default function HomeScreen() {
   if (!profile) {
     return <Redirect href="/login" />;
   }
-  const target =
-    profile.roles.includes('SYSTEM_ADMIN') || profile.roles.includes('HOSPITAL_ADMIN')
+  const target = profile.roles.includes('SYSTEM_ADMIN')
+    ? '/system/dashboard'
+    : profile.roles.includes('HOSPITAL_ADMIN')
       ? '/dashboard/administrator'
       : '/dashboard/doctor';
   return <Redirect href={target} />;

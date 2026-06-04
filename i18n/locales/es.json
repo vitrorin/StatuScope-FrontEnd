@@ -25,6 +25,10 @@
       "beds": "{{count}} camas",
       "bed": "{{count}} cama",
       "kilometers": "{{count}} km",
+      "open": "{{count}} libres",
+      "free": "{{count}} libres",
+      "doctor": "{{count}} medico",
+      "doctors": "{{count}} medicos",
       "withinKilometers": "Dentro de {{count}} km",
       "staffing": "{{doctors}} medicos / {{nurses}} enfermeros"
     },
@@ -552,6 +556,79 @@
           "signalLabel": "Concentración prioritaria",
           "insightCriteria": "Brotes prioritarios del municipio ordenados por severidad y casos.",
           "recommendedAction": "Priorizar este municipio al revisar síntomas compatibles y contexto epidemiológico cercano."
+        }
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "kpiDetails": {
+        "operationalMetric": "Metrica operativa",
+        "currentSituation": "Situacion actual",
+        "indicator": "Indicador",
+        "insightsTitle": "Informacion operativa relevante",
+        "outbreaksTitle": "Brotes activos cercanos rankeados",
+        "defaultCriteria": "Senales operativas relacionadas con esta KPI.",
+        "recommendedAction": "Accion recomendada",
+        "bedsCriteria": "Senales de capacidad de recursos",
+        "staffCriteria": "Personal clinico disponible por rol.",
+        "icuCriteria": "Senales de disponibilidad critica sin repetir el conteo principal de UCI.",
+        "outbreaksCriteria": "Brotes activos cercanos ordenados por carga de casos.",
+        "freeCapacity": "Capacidad libre",
+        "capacitySignal": "Senal de capacidad",
+        "calculatedPriority": "Prioridad calculada",
+        "recommendationStatus": "Estado de recomendacion",
+        "doctorsAvailable": "Medicos disponibles",
+        "nursesAvailable": "Enfermeras disponibles",
+        "activeShift": "Turno activo",
+        "clinicalCoverage": "Cobertura clinica",
+        "icuFreeCapacity": "Capacidad libre UCI",
+        "hospitalResources": "Recursos hospitalarios",
+        "intensiveCareUnit": "Unidad de cuidados intensivos",
+        "capacityProtocol": "Protocolo de capacidad",
+        "staffingProtocol": "Protocolo de personal",
+        "relatedHospitalAlerts": "Alertas hospitalarias relacionadas",
+        "noPriorityAction": "Sin accion prioritaria",
+        "review": "Revision",
+        "stable": "Estable",
+        "watch": "Vigilancia",
+        "critical": "Critico",
+        "free": "libre",
+        "available": "disponibles"
+      },
+      "metrics": {
+        "beds": {
+          "title": "Camas disponibles"
+        },
+        "staff": {
+          "title": "Personal activo"
+        },
+        "icu": {
+          "title": "Disponibilidad UCI"
+        },
+        "outbreaks": {
+          "title": "Brotes activos"
+        },
+        "availableBeds": {
+          "title": "Camas disponibles"
+        },
+        "occupiedBeds": {
+          "title": "Camas ocupadas"
+        },
+        "oxygenCapacity": {
+          "title": "Capacidad de oxigeno"
+        },
+        "oxygenAvailability": {
+          "title": "Disponibilidad de oxigeno"
+        },
+        "icuOccupancy": {
+          "title": "Ocupacion UCI"
+        },
+        "triagePressure": {
+          "title": "Presion de triaje"
+        },
+        "emergencyLoad": {
+          "title": "Carga de emergencias"
         }
       }
     }

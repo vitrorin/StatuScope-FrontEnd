@@ -1,38 +1,60 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, LayoutChangeEvent, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle, useWindowDimensions } from 'react-native';
+import { LayoutChangeEvent, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle, useWindowDimensions } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { RadarMapCard } from '@/components/dashboard/RadarMapCard';
-import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
+import { RadarMapCard, RadarMapPolygon } from '@/components/dashboard/RadarMapCard';
+import { adminNavigationLinks, getAdminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { AlertCard } from '@/components/feedback/AlertCard';
 import { Button } from '@/components/foundation/Button';
-import { ProgressBar } from '@/components/foundation/ProgressBar';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
 import { AlertDetailOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/AlertDetailOverlay';
-import { AlertProtocolOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/AlertProtocolOverlay';
-import { EpidemiologicalReportOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/EpidemiologicalReportOverlay';
 import { ExportReportOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/ExportReportOverlay';
 import { MapZoneDetailOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/MapZoneDetailOverlay';
 import { MetricDetailOverlay } from '@/components/views/admin/dashboard/Sub-funcionalidades/MetricDetailOverlay';
 import {
   AdminDashboardAlert,
   AdminDashboardMetric,
+  AdminDashboardMetricInsight,
   AdminDashboardZone,
 } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 import {
   AdminDashboardSummaryResponse,
   getAdminDashboardSummary,
+  listAdminRecommendations,
+  OperationalRecommendationResponse,
 } from '@/lib/adminOperational';
+import {
+  DoctorDashboardMapResponse,
+  DoctorDashboardAlertResponse,
+  DoctorDashboardMetricResponse,
+  DoctorDashboardStateMapItem,
+  getDoctorDashboardAlerts,
+  getDoctorDashboardMap,
+  getDoctorDashboardMetrics,
+  getDoctorDashboardStateMap,
+  getDoctorDashboardStateOutbreakMap,
+} from '@/lib/doctorDashboard';
 import { initialsFromName } from '@/lib/format';
 import { useTranslation } from '@/i18n';
 import { getHospitalAdminLabel, isSpanish } from '@/components/views/admin/localization';
 import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboardLocalization';
-
-const MAP_IMAGE_URI = 'https://www.figma.com/api/mcp/asset/5bd3e67c-b2d1-4685-9db8-9c8033f3f9f3';
+import { translateDiseaseName } from '@/lib/diseaseLocalization';
+import { aggregateOutbreakColor, diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
+import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
+
+interface SectionState<T> {
+  status: LoadState;
+  data: T | null;
+  error: string | null;
+}
+
+function initialSectionState<T>(): SectionState<T> {
+  return { status: 'idle', data: null, error: null };
+}
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -42,30 +64,45 @@ export function AdminDashboard() {
   const [gridWidth, setGridWidth] = useState(0);
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [dashboard, setDashboard] = useState<AdminDashboardSummaryResponse | null>(null);
+  const [operationalRecommendations, setOperationalRecommendations] = useState<OperationalRecommendationResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
-  const [isProtocolOpen, setIsProtocolOpen] = useState(false);
-  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isMoreAlertsOpen, setIsMoreAlertsOpen] = useState(false);
+  const [isStateExplorerOpen, setIsStateExplorerOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<AdminDashboardAlert | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<AdminDashboardMetric | null>(null);
   const [selectedZone, setSelectedZone] = useState<AdminDashboardZone | null>(null);
+  const [selectedAction, setSelectedAction] = useState<AdminDashboardSummaryResponse['recommendedActions'][number] | null>(null);
+  const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
+  const [selectedState, setSelectedState] = useState<DoctorDashboardStateMapItem | null>(null);
+  const [mapState, setMapState] = useState<SectionState<DoctorDashboardMapResponse>>(initialSectionState);
+  const [alertsState, setAlertsState] = useState<SectionState<{ alerts: DoctorDashboardAlertResponse[] }>>(initialSectionState);
+  const [stateMapState, setStateMapState] = useState<SectionState<{ states: DoctorDashboardStateMapItem[] }>>(initialSectionState);
+  const [stateOutbreakMapState, setStateOutbreakMapState] = useState<SectionState<DoctorDashboardMapResponse>>(initialSectionState);
+  const [doctorMetricsState, setDoctorMetricsState] = useState<SectionState<{ metrics: DoctorDashboardMetricResponse[] }>>(initialSectionState);
+  const [isMapHovered, setIsMapHovered] = useState(false);
+  const selectedRadiusKm = 75;
   const gridGap = 16;
   const topGap = 12;
-  const isCompact = viewportWidth < 1220;
+  const isCompact = viewportWidth < 1320;
   const isNarrow = viewportWidth < 860;
-  const actionWidth = !isCompact && gridWidth > 0 ? (gridWidth - gridGap) * 0.28 : undefined;
-  const mapWidth = !isCompact && gridWidth > 0 && actionWidth ? gridWidth - actionWidth - gridGap : undefined;
   const topCardColumns = isNarrow ? 1 : isCompact ? 2 : 4;
   const topCardWidth = gridWidth > 0
     ? (gridWidth - topGap * Math.max(0, topCardColumns - 1)) / topCardColumns
     : undefined;
+  const mapWidth = !isCompact && topCardWidth ? topCardWidth * 2 + topGap : undefined;
+  const sidePanelWidth = !isCompact && gridWidth > 0 && mapWidth ? (gridWidth - mapWidth - gridGap * 2) / 2 : undefined;
 
   const loadDashboard = useCallback(async () => {
     setLoadState((current) => (current === 'success' ? 'success' : 'loading'));
     setError(null);
     try {
-      const data = await getAdminDashboardSummary();
+      const [data, recommendationFeed] = await Promise.all([
+        getAdminDashboardSummary(),
+        listAdminRecommendations(),
+      ]);
       setDashboard(data);
+      setOperationalRecommendations(recommendationFeed);
       setLoadState('success');
     } catch (nextError) {
       setLoadState('error');
@@ -73,18 +110,148 @@ export function AdminDashboard() {
     }
   }, [language]);
 
+  const loadMap = useCallback(async () => {
+    setMapState((current) => ({ ...current, status: 'loading', error: null }));
+    try {
+      const data = await getDoctorDashboardMap(selectedRadiusKm);
+      setMapState({ status: 'success', data, error: null });
+    } catch (nextError) {
+      setMapState((current) => ({
+        status: 'error',
+        data: current.data,
+        error: nextError instanceof Error ? nextError.message : 'Unable to load map.',
+      }));
+    }
+  }, [selectedRadiusKm]);
+
+  const loadAlerts = useCallback(async () => {
+    setAlertsState((current) => ({ ...current, status: 'loading', error: null }));
+    try {
+      const data = await getDoctorDashboardAlerts(selectedRadiusKm);
+      setAlertsState({ status: 'success', data, error: null });
+    } catch (nextError) {
+      setAlertsState((current) => ({
+        status: 'error',
+        data: current.data,
+        error: nextError instanceof Error ? nextError.message : 'Unable to load alerts.',
+      }));
+    }
+  }, [selectedRadiusKm]);
+
+  const loadDoctorMetrics = useCallback(async () => {
+    setDoctorMetricsState((current) => ({ ...current, status: 'loading', error: null }));
+    try {
+      const data = await getDoctorDashboardMetrics(selectedRadiusKm);
+      setDoctorMetricsState({ status: 'success', data, error: null });
+    } catch (nextError) {
+      setDoctorMetricsState((current) => ({
+        status: 'error',
+        data: current.data,
+        error: nextError instanceof Error ? nextError.message : 'Unable to load clinical metrics.',
+      }));
+    }
+  }, [selectedRadiusKm]);
+
+  const loadStateMap = useCallback(async () => {
+    setStateMapState((current) => ({ ...current, status: 'loading', error: null }));
+    try {
+      const data = await getDoctorDashboardStateMap();
+      setStateMapState({ status: 'success', data, error: null });
+    } catch (nextError) {
+      setStateMapState((current) => ({
+        status: 'error',
+        data: current.data,
+        error: nextError instanceof Error ? nextError.message : 'Unable to load states.',
+      }));
+    }
+  }, []);
+
+  const loadStateOutbreakMap = useCallback(async (state: DoctorDashboardStateMapItem) => {
+    setSelectedState(state);
+    setStateOutbreakMapState({ status: 'loading', data: null, error: null });
+    try {
+      const data = await getDoctorDashboardStateOutbreakMap(state.stateId);
+      setStateOutbreakMapState({ status: 'success', data, error: null });
+    } catch (nextError) {
+      setStateOutbreakMapState((current) => ({
+        status: 'error',
+        data: current.data,
+        error: nextError instanceof Error ? nextError.message : 'Unable to load state outbreaks.',
+      }));
+    }
+  }, []);
+
+  const openStateExplorer = useCallback(() => {
+    setIsStateExplorerOpen(true);
+    setSelectedState(null);
+    setStateOutbreakMapState(initialSectionState());
+    void loadStateMap();
+  }, [loadStateMap]);
+
   useEffect(() => {
     void loadDashboard();
-  }, [loadDashboard]);
+    void loadMap();
+    void loadAlerts();
+    void loadDoctorMetrics();
+  }, [loadAlerts, loadDashboard, loadDoctorMetrics, loadMap]);
 
   const topCards = useMemo(() => {
     if (!dashboard) return [];
-    return dashboard.topCards.map((card) => mapMetric(card, dashboard, language, t));
-  }, [dashboard, language, t]);
-  const alerts = useMemo(() => (dashboard?.alerts ?? []).map((alert) => mapAlert(alert, language, t)), [dashboard, language, t]);
-  const mapZones = useMemo(() => positionZones(dashboard?.mapZones ?? [], language, t), [dashboard, language, t]);
-  const mapViewport = useMemo(() => deriveMapViewport(dashboard?.mapZones ?? []), [dashboard]);
-  const actionCards = useMemo(() => dashboard?.recommendedActions ?? [], [dashboard]);
+    const localRiskMetric = doctorMetricsState.data?.metrics.find((metric) => metric.id === 'local-risk-level') ?? null;
+    return dashboard.topCards.map((card) => mapMetric(card, dashboard, language, t, alertsState.data?.alerts ?? [], localRiskMetric));
+  }, [alertsState.data?.alerts, dashboard, doctorMetricsState.data?.metrics, language, t]);
+  const alerts = useMemo(
+    () => (alertsState.data?.alerts ?? []).map((alert) => describeAlert(alert, t)),
+    [alertsState.data?.alerts, t],
+  );
+  const visibleAlerts = useMemo(() => alerts.slice(0, 4), [alerts]);
+  const remainingAlerts = useMemo(() => alerts.slice(4), [alerts]);
+  const mapZones = useMemo(
+    () => positionZones(mapState.data?.zones ?? [], t),
+    [mapState.data?.zones, t],
+  );
+  const mapCenter = useMemo(() => getMapCenter(mapZones), [mapZones]);
+  const localMapBounds = useMemo(
+    () => getRadiusBounds(mapCenter, mapState.data?.radiusKm),
+    [mapCenter, mapState.data?.radiusKm],
+  );
+  const stateOutbreakZones = useMemo(
+    () => positionZones(stateOutbreakMapState.data?.zones ?? [], t, selectedState?.stateName),
+    [selectedState?.stateName, stateOutbreakMapState.data?.zones, t],
+  );
+  const selectedStateCenter = useMemo(
+    () => selectedState ? { latitude: selectedState.latitude, longitude: selectedState.longitude } : getMapCenter(stateOutbreakZones),
+    [selectedState, stateOutbreakZones],
+  );
+  const selectedStateBoundary = useMemo(() => getStateBoundary(selectedState?.stateName), [selectedState?.stateName]);
+  const selectedStateBounds = useMemo(
+    () => getBoundaryBounds(selectedStateBoundary) ?? getZoneBounds(stateOutbreakZones),
+    [selectedStateBoundary, stateOutbreakZones],
+  );
+  const archivedActionIds = useMemo(
+    () => new Set(operationalRecommendations.filter(isArchivedOperationalRecommendation).map((item) => item.id)),
+    [operationalRecommendations],
+  );
+  const archivedActionKeys = useMemo(
+    () => new Set(operationalRecommendations.filter(isArchivedOperationalRecommendation).map(operationalRecommendationKey)),
+    [operationalRecommendations],
+  );
+  const actionCards = useMemo(
+    () => [...(dashboard?.recommendedActions ?? [])]
+      .filter((action) => !isArchivedRecommendedAction(action.status))
+      .filter((action) => !archivedActionIds.has(action.id))
+      .filter((action) => !archivedActionKeys.has(recommendedActionKey(action)))
+      .sort(compareRecommendedActions),
+    [archivedActionIds, archivedActionKeys, dashboard],
+  );
+  const visibleActions = useMemo(() => actionCards.slice(0, 3), [actionCards]);
+  const remainingActions = useMemo(() => actionCards.slice(3), [actionCards]);
+  const sidebarItems = useMemo(() => getAdminSidebarItems(language), [language]);
+  const isDashboardLoading = loadState === 'loading' || loadState === 'idle';
+  const metricSkeletons = useMemo(
+    () => ['beds', 'staff', 'icu', 'outbreaks'].map((id) => ({ id })),
+    [],
+  );
 
   return (
     <DashboardLayout
@@ -94,10 +261,10 @@ export function AdminDashboard() {
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
-      sidebarItems={adminSidebarItems}
+      sidebarItems={sidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false} scrollEnabled={!isMapHovered}>
         <View style={styles.container}>
           <View style={styles.heroStrip}>
             <View style={styles.heroCopy}>
@@ -131,14 +298,6 @@ export function AdminDashboard() {
                 style={styles.secondaryAction}
                 onPress={() => setIsExportOpen(true)}
               />
-              <Button
-                label={isSpanish(language) ? 'Protocolo de alerta' : 'Alert Protocol'}
-                size="sm"
-                variant="primary"
-                leadingIcon={<Feather name="star" size={12} color="#FFFFFF" />}
-                style={styles.primaryAction}
-                onPress={() => setIsProtocolOpen(true)}
-              />
             </View>
           </View>
 
@@ -149,138 +308,208 @@ export function AdminDashboard() {
             </CardBase>
           ) : null}
 
-          {loadState === 'loading' && !dashboard ? (
-            <CardBase style={styles.loadingCard}>
-              <ActivityIndicator color="#0003B8" />
-              <Text style={styles.loadingText}>{isSpanish(language) ? 'Cargando panel operativo...' : 'Loading operational dashboard...'}</Text>
-            </CardBase>
-          ) : (
-            <>
-              <View
-                style={styles.dashboardSection}
-                onLayout={(event: LayoutChangeEvent) => {
-                  const nextWidth = event.nativeEvent.layout.width;
-                  if (Math.abs(nextWidth - gridWidth) > 1) {
-                    setGridWidth(nextWidth);
-                  }
-                }}
-              >
-                <View style={[styles.mainGrid, isCompact && styles.mainGridCompact]}>
-                  <RadarMapCard
-                    title={isSpanish(language) ? 'Mapa de calor en vivo' : 'Live Heatmap'}
-                    showOverlayPanel
-                    overlayTitle={isSpanish(language) ? 'MAPA DE CALOR EN VIVO' : 'LIVE HEATMAP'}
-                    overlayBadgeLabel={isSpanish(language) ? 'SEGURO' : 'SECURE'}
-                    overlayItems={buildMapOverlayItems(mapZones, language)}
-                    showControls
-                    legendItems={[
-                      { label: isSpanish(language) ? 'Critico' : 'Critical', color: '#EF4444' },
-                      { label: isSpanish(language) ? 'Advertencia' : 'Warning', color: '#F97316' },
-                      { label: isSpanish(language) ? 'Estable' : 'Stable', color: '#0003B8' },
-                    ]}
-                    footerTextRight={
-                      dashboard?.generatedAt
-                        ? `${isSpanish(language) ? 'Ultima sincronizacion' : 'Last Sync'}: ${new Date(dashboard.generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                        : isSpanish(language) ? 'Ultima sincronizacion: pendiente' : 'Last Sync: Pending'
-                    }
-                    mapImageUri={MAP_IMAGE_URI}
-                    mapHeight={isNarrow ? 360 : 430}
-                    mapCenterLatitude={mapViewport.centerLatitude}
-                    mapCenterLongitude={mapViewport.centerLongitude}
-                    mapZoom={mapViewport.zoom}
-                    minZoom={mapViewport.minZoom}
-                    maxZoom={16}
-                    mapBounds={mapViewport.bounds}
-                    enablePan
-                    pins={mapZones.map((zone) => ({
-                      id: zone.id,
-                      top: zone.top,
-                      left: zone.left,
-                      latitude: zone.latitude,
-                      longitude: zone.longitude,
-                      borderColor: zone.borderColor,
-                      fillColor: '#FFFFFF',
-                      icon:
-                        zone.borderColor === '#0003B8' ? (
-                          <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
-                        ) : zone.borderColor === '#F97316' ? (
-                          <MaterialCommunityIcons name="virus-outline" size={14} color="#F97316" />
-                        ) : (
-                          <MaterialCommunityIcons name="alert" size={16} color="#EF4444" />
-                        ),
-                      onPress: () => setSelectedZone(zone),
-                    }))}
-                    style={[
-                      styles.mapCard,
-                      isCompact ? styles.mapCardCompact : null,
-                      mapWidth ? { width: mapWidth, flex: undefined } : null,
-                    ]}
-                  />
-
-                  <PriorityActionsCard
-                    actions={actionCards}
-                    language={language}
-                    style={[
-                      styles.analyticsCard,
-                      isCompact && styles.stackCard,
-                      actionWidth ? { width: actionWidth, flex: undefined } : null,
-                    ]}
-                    onOpenReport={() => setIsReportOpen(true)}
-                  />
-                </View>
-
+          <View
+            style={styles.dashboardSection}
+            onLayout={(event: LayoutChangeEvent) => {
+              const nextWidth = event.nativeEvent.layout.width;
+              if (Math.abs(nextWidth - gridWidth) > 1) {
+                setGridWidth(nextWidth);
+              }
+            }}
+          >
                 <View style={[styles.topCardsRow, isCompact && styles.topCardsRowCompact]}>
-                  {topCards.map((card) => (
+                  {isDashboardLoading && topCards.length === 0 ? metricSkeletons.map((card) => (
+                    <OverviewMetricCard
+                      key={card.id}
+                      id={card.id}
+                      title=""
+                      value=""
+                      detailTitle=""
+                      detailSummary=""
+                      signalLabel=""
+                      recommendedAction=""
+                      isLoading
+                      style={
+                        topCardWidth
+                          ? { width: topCardWidth, minHeight: 176, flex: undefined }
+                          : undefined
+                      }
+                    />
+                  )) : topCards.map((card) => (
                     <OverviewMetricCard
                       key={card.title}
                       {...card}
                       onPress={() => setSelectedMetric(card)}
                       style={
                         topCardWidth
-                          ? { width: topCardWidth, minHeight: 132, flex: undefined }
+                          ? { width: topCardWidth, minHeight: 176, flex: undefined }
                           : undefined
                       }
                     />
                   ))}
                 </View>
 
-                <View style={[styles.alertsPanel, styles.alertsPanelHorizontal]}>
-                  <View style={styles.alertsHeader}>
-                    <Text style={styles.alertsTitle}>{isSpanish(language) ? 'Alertas contextuales de enfermedad' : 'Contextual Disease Alerts'}</Text>
-                  </View>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.alertsListHorizontal}
-                  >
-                    {alerts.map((alert) => (
-                      <TouchableOpacity
-                        key={alert.id}
-                        activeOpacity={0.8}
-                        onPress={() => setSelectedAlert(alert)}
-                        style={styles.alertHorizontalItem}
-                      >
-                        <AlertCard
-                          title={alert.title}
-                          description={alert.description}
-                          variant={alert.variant}
-                          style={styles.alertCard}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+                <View style={[styles.mainGrid, isCompact && styles.mainGridCompact]}>
+                  {mapState.status === 'loading' || mapState.status === 'idle' ? (
+                    <MapSkeleton width={mapWidth} />
+                  ) : mapState.status === 'error' ? (
+                    <View style={[styles.retryHost, mapWidth ? { width: mapWidth } : styles.mapCard]}>
+                      <MapSkeleton />
+                      <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadMap} />
+                    </View>
+                  ) : (
+                    <RadarMapCard
+                      title={t('doctor.dashboard.map.title')}
+                      showOverlayPanel
+                      overlayTitle={t('doctor.dashboard.map.overlayTitle').toUpperCase()}
+                      overlayBadgeLabel={t('doctor.dashboard.map.secure').toUpperCase()}
+                      overlayItems={(mapState.data?.diseaseBreakdown ?? []).slice(0, 3).map((disease) => ({
+                        label: translateDiseaseName(t, disease.diseaseName),
+                        value: formatNumber(disease.caseCount),
+                        color: diseaseSeverityColor(disease),
+                      }))}
+                      showControls
+                      legendItems={[
+                        { label: t('doctor.dashboard.map.highRisk'), color: '#EF4444' },
+                        { label: t('doctor.dashboard.map.emerging'), color: '#F97316' },
+                        { label: t('doctor.dashboard.map.lowRisk'), color: '#22C55E' },
+                        { label: t('doctor.dashboard.map.hospitalNode'), color: '#0003B8' },
+                      ]}
+                      footerTextLeft="© OpenStreetMap contributors"
+                      footerTextRight={formatSyncTime(mapState.data?.generatedAt, t)}
+                      mapHeight={isNarrow ? 360 : 520}
+                      mapCenterLatitude={mapCenter?.latitude}
+                      mapCenterLongitude={mapCenter?.longitude}
+                      mapZoom={10}
+                      minZoom={10}
+                      maxZoom={14}
+                      mapBounds={localMapBounds}
+                      enablePan
+                      onMapHoverChange={setIsMapHovered}
+                      surveillanceRadiusKm={mapState.data?.radiusKm}
+                      bottomRightActionLabel={t('doctor.dashboard.map.viewOtherStates')}
+                      onBottomRightActionPress={openStateExplorer}
+                      pins={mapZones.map((zone) => ({
+                        id: zone.id,
+                        top: zone.top,
+                        left: zone.left,
+                        latitude: zone.latitude,
+                        longitude: zone.longitude,
+                        borderColor: zone.borderColor,
+                        fillColor: '#FFFFFF',
+                        icon:
+                          zone.borderColor === '#0003B8' ? (
+                            <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
+                          ) : zone.borderColor === '#F97316' ? (
+                            <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
+                          ) : zone.borderColor === '#22C55E' ? (
+                            <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
+                          ) : (
+                            <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />
+                          ),
+                        onPress: () => setSelectedZone(zone),
+                      }))}
+                      style={[
+                        styles.mapCard,
+                        isCompact ? styles.mapCardCompact : null,
+                        mapWidth ? { width: mapWidth, flex: undefined } : null,
+                      ]}
+                    />
+                  )}
+
+                  <ContextualAlertsPanel
+                    alerts={visibleAlerts}
+                    language={language}
+                    remainingCount={remainingAlerts.length}
+                    isLoading={alertsState.status === 'loading' || alertsState.status === 'idle'}
+                    style={[
+                      styles.sidePanel,
+                      isCompact && styles.stackCard,
+                      sidePanelWidth ? { width: sidePanelWidth, flex: undefined } : null,
+                    ]}
+                    onSelectAlert={setSelectedAlert}
+                    onOpenMore={() => setIsMoreAlertsOpen(true)}
+                  />
+
+                  <PriorityActionsCard
+                    actions={visibleActions}
+                    remainingCount={remainingActions.length}
+                    language={language}
+                    isLoading={isDashboardLoading && actionCards.length === 0}
+                    onSelectAction={setSelectedAction}
+                    onOpenMore={() => setIsMoreActionsOpen(true)}
+                    style={[
+                      styles.analyticsCard,
+                      isCompact && styles.stackCard,
+                      sidePanelWidth ? { width: sidePanelWidth, flex: undefined } : null,
+                    ]}
+                  />
                 </View>
               </View>
-            </>
-          )}
         </View>
       </ScrollView>
-      <ExportReportOverlay visible={isExportOpen} onClose={() => setIsExportOpen(false)} />
-      <AlertProtocolOverlay visible={isProtocolOpen} onClose={() => setIsProtocolOpen(false)} />
+      <ExportReportOverlay
+        visible={isExportOpen}
+        dashboard={dashboard}
+        metrics={topCards}
+        alerts={alerts}
+        actions={actionCards}
+        zones={mapZones}
+        onClose={() => setIsExportOpen(false)}
+      />
       <AlertDetailOverlay visible={selectedAlert !== null} alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
-      <EpidemiologicalReportOverlay visible={isReportOpen} onClose={() => setIsReportOpen(false)} />
+      <MoreAlertsOverlay
+        visible={isMoreAlertsOpen}
+        alerts={remainingAlerts}
+        language={language}
+        onClose={() => setIsMoreAlertsOpen(false)}
+        onSelectAlert={(alert) => {
+          setIsMoreAlertsOpen(false);
+          setSelectedAlert(alert);
+        }}
+      />
+      <StateOutbreakExplorer
+        visible={isStateExplorerOpen}
+        states={stateMapState.data?.states ?? []}
+        statesStatus={stateMapState.status}
+        selectedState={selectedState}
+        selectedStateCenter={selectedStateCenter}
+        selectedStateBounds={selectedStateBounds}
+        stateZones={stateOutbreakZones}
+        stateMapStatus={stateOutbreakMapState.status}
+        onClose={() => setIsStateExplorerOpen(false)}
+        onRetryStates={loadStateMap}
+        onSelectState={(state) => { void loadStateOutbreakMap(state); }}
+        onBack={() => {
+          setSelectedState(null);
+          setStateOutbreakMapState(initialSectionState());
+        }}
+        onZonePress={setSelectedZone}
+        onMapHoverChange={setIsMapHovered}
+        t={t}
+      />
       <MetricDetailOverlay visible={selectedMetric !== null} metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
       <MapZoneDetailOverlay visible={selectedZone !== null} zone={selectedZone} onClose={() => setSelectedZone(null)} />
+      <HospitalRecommendationOverlay
+        visible={selectedAction !== null}
+        action={selectedAction}
+        language={language}
+        onClose={() => setSelectedAction(null)}
+        onGoToTask={(id) => {
+          setSelectedAction(null);
+          router.push({ pathname: '/admin/recommendations', params: { focus: id } });
+        }}
+      />
+      <MoreRecommendationsOverlay
+        visible={isMoreActionsOpen}
+        actions={remainingActions}
+        language={language}
+        onClose={() => setIsMoreActionsOpen(false)}
+        onSelectAction={(action) => {
+          setIsMoreActionsOpen(false);
+          setSelectedAction(action);
+        }}
+      />
     </DashboardLayout>
   );
 }
@@ -288,121 +517,638 @@ export function AdminDashboard() {
 interface OverviewMetricCardProps extends AdminDashboardMetric {
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
+  isLoading?: boolean;
 }
 
 function OverviewMetricCard({
+  id,
   title,
   value,
+  valueUnit,
   badge,
-  badgeColor = '#94A3B8',
   subtitle,
-  progressValue,
-  progressColor = '#93C5FD',
-  segmented = false,
   tone = 'default',
   style,
   onPress,
+  isLoading = false,
 }: OverviewMetricCardProps) {
-  const isCritical = tone === 'critical';
+  const palette = metricTonePalette(isLoading ? 'default' : tone);
 
   return (
-    <TouchableOpacity activeOpacity={0.84} onPress={onPress} disabled={!onPress}>
-      <CardBase style={[styles.metricCard, isCritical && styles.metricCardCritical, style]}>
+    <TouchableOpacity activeOpacity={0.84} onPress={onPress} disabled={!onPress || isLoading}>
+      <CardBase style={[styles.metricCard, { borderColor: palette.border, backgroundColor: '#FFFFFF' }, style]}>
+        <View style={[styles.metricAccent, { backgroundColor: palette.accent }]} />
         <View style={styles.metricHeader}>
-          <Text style={[styles.metricTitle, isCritical && styles.metricTitleCritical]}>{title}</Text>
-          {badge ? <Text style={[styles.metricBadge, { color: badgeColor }]}>{badge}</Text> : null}
-          {isCritical ? (
-            <Feather name="alert-triangle" size={14} color="#1E40AF" style={styles.metricIcon} />
+          {isLoading ? <SkeletonLine width="48%" height={16} /> : <Text style={styles.metricTitle}>{title}</Text>}
+          {isLoading ? (
+            <View style={styles.skeletonBadge} />
+          ) : badge ? (
+            <View style={[styles.metricBadgePill, { backgroundColor: `${palette.accent}12` }]}>
+              <Text style={[styles.metricBadge, { color: palette.accent }]}>{badge}</Text>
+            </View>
           ) : null}
         </View>
 
-        <Text style={[styles.metricValue, isCritical && styles.metricValueCritical]}>{value}</Text>
-
-        {subtitle ? (
-          <Text style={[styles.metricSubtitle, isCritical && styles.metricSubtitleCritical]}>
-            {subtitle}
-          </Text>
-        ) : null}
-
-        {segmented ? (
-          <View style={styles.segmentedBar}>
-            <View style={[styles.segmentedFill, { backgroundColor: '#0003B8' }]} />
-            <View style={[styles.segmentedFill, { backgroundColor: '#0003B8' }]} />
-            <View style={[styles.segmentedFill, { backgroundColor: '#CBD5E1' }]} />
+        <View style={styles.metricValueRow}>
+          <View style={[styles.metricIconBox, { backgroundColor: `${palette.accent}12` }]}>
+            {metricCardIcon(id, palette.accent)}
           </View>
-        ) : progressValue !== undefined ? (
-          <ProgressBar
-            value={progressValue}
-            color={progressColor}
-            trackColor={isCritical ? '#BFDBFE' : '#E2E8F0'}
-            style={styles.metricProgress}
-          />
+          {isLoading ? (
+            <View style={styles.skeletonValueBlock}>
+              <SkeletonLine width={130} height={34} />
+              <SkeletonLine width={84} height={18} />
+            </View>
+          ) : (
+            <View style={styles.metricValueCopy}>
+              <Text style={styles.metricValue}>{value}</Text>
+              {valueUnit ? <Text style={styles.metricValueUnit}>{valueUnit}</Text> : null}
+            </View>
+          )}
+        </View>
+
+        {isLoading ? (
+          <View style={styles.skeletonSubtitleBlock}>
+            <SkeletonLine width="92%" />
+            <SkeletonLine width="58%" />
+          </View>
+        ) : subtitle ? (
+          <Text style={styles.metricSubtitle}>{subtitle}</Text>
         ) : null}
       </CardBase>
     </TouchableOpacity>
   );
 }
 
+function metricCardIcon(metricId: string, color: string) {
+  const normalized = metricId.toLowerCase();
+  const iconName: React.ComponentProps<typeof Feather>['name'] = normalized === 'beds'
+    ? 'activity'
+    : normalized === 'staff'
+      ? 'users'
+      : normalized === 'icu'
+        ? 'heart'
+        : normalized === 'outbreaks'
+          ? 'alert-triangle'
+          : 'bar-chart-2';
+  return <Feather name={iconName} size={18} color={color} />;
+}
+
+function SkeletonLine({ width, height = 12, style }: { width: number | string; height?: number; style?: object }) {
+  return <View style={[styles.skeletonLine, { width, height }, style]} />;
+}
+
+function ContextualAlertsPanel({
+  alerts,
+  language,
+  remainingCount,
+  isLoading = false,
+  style,
+  onSelectAlert,
+  onOpenMore,
+}: {
+  alerts: AdminDashboardAlert[];
+  language: 'en' | 'es';
+  remainingCount: number;
+  isLoading?: boolean;
+  style?: StyleProp<ViewStyle>;
+  onSelectAlert: (alert: AdminDashboardAlert) => void;
+  onOpenMore: () => void;
+}) {
+  return (
+    <View style={[styles.alertsPanel, style]}>
+      <View style={styles.alertsHeader}>
+        <Text style={styles.alertsTitle}>{language === 'es' ? 'Brotes activos mas relevantes' : 'Most Relevant Active Outbreaks'}</Text>
+        <View style={styles.sectionHeaderRule} />
+      </View>
+      <View style={styles.alertsList}>
+        <View style={styles.alertItems}>
+          {isLoading ? (
+            [0, 1, 2].map((item) => (
+              <View key={item} style={styles.alertSkeletonItem}>
+                <SkeletonLine width="48%" height={16} />
+                <SkeletonLine width="84%" />
+                <SkeletonLine width="64%" />
+              </View>
+            ))
+          ) : alerts.length === 0 ? (
+            <AlertCard
+              title={language === 'es' ? 'Sin alertas activas' : 'No active alerts'}
+              description={language === 'es' ? 'No hay senales activas de brotes para el contexto de este hospital.' : 'No active outbreak signals are currently available for this hospital context.'}
+              variant="neutral"
+              style={styles.alertCard}
+            />
+          ) : alerts.map((alert) => (
+            <TouchableOpacity
+              key={alert.id}
+              activeOpacity={0.8}
+              onPress={() => onSelectAlert(alert)}
+            >
+              <AlertCard
+                title={alert.title}
+                description={alert.description}
+                variant={alert.variant}
+                style={styles.alertCard}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+        {remainingCount > 0 ? (
+          <TouchableOpacity
+            style={styles.moreAlertsButton}
+            activeOpacity={0.82}
+            onPress={onOpenMore}
+          >
+            <Feather name="list" size={17} color="#0003B8" />
+            <Text style={styles.moreAlertsText}>{language === 'es' ? 'Mostrar mas brotes' : 'Show more outbreaks'}</Text>
+            <View style={styles.moreAlertsBadge}>
+              <Text style={styles.moreAlertsBadgeText}>{remainingCount}</Text>
+            </View>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 function PriorityActionsCard({
   actions,
+  remainingCount,
   language,
+  isLoading = false,
+  onSelectAction,
+  onOpenMore,
   style,
-  onOpenReport,
 }: {
   actions: AdminDashboardSummaryResponse['recommendedActions'];
+  remainingCount: number;
   language: 'en' | 'es';
+  isLoading?: boolean;
+  onSelectAction: (action: AdminDashboardSummaryResponse['recommendedActions'][number]) => void;
+  onOpenMore: () => void;
   style?: StyleProp<ViewStyle>;
-  onOpenReport?: () => void;
 }) {
   return (
     <CardBase style={[styles.caseCard, style]}>
-      <View style={styles.caseHeader}>
-        <Text style={styles.caseTitle}>{language === 'es' ? 'Acciones prioritarias' : 'Priority Actions'}</Text>
-        <Button
-          label={language === 'es' ? 'En vivo' : 'Live Feed'}
-          size="sm"
-          variant="surface"
-          style={styles.caseFilter}
-          labelStyle={styles.caseFilterLabel}
-        />
+      <View style={styles.alertsHeader}>
+        <Text style={styles.alertsTitle}>{language === 'es' ? 'Recomendaciones Hospitalarias' : 'Hospital Recommendations'}</Text>
+        <View style={styles.sectionHeaderRule} />
       </View>
-
-      <Text style={styles.caseSectionLabel}>{language === 'es' ? 'Cola operativa' : 'Operational Queue'}</Text>
 
       <View style={styles.caseMetrics}>
-        {actions.slice(0, 5).map((action) => (
-          <View key={action.id} style={styles.actionMetricRow}>
-            <View style={styles.actionMetricTopRow}>
-              <Text style={styles.caseMetricName}>{action.title}</Text>
-              <Text style={styles.caseMetricValue}>{action.status.replace(/_/g, ' ')}</Text>
-            </View>
-            <View style={styles.caseMetricTrack}>
-              <View
-                style={[
-                  styles.caseMetricFill,
-                  {
-                    width: `${severityToProgress(action.severity)}%`,
-                    backgroundColor: severityToColor(action.severity),
-                  },
-                ]}
-              />
-            </View>
-            <Text style={styles.actionMetricMeta}>
-              {action.type.replace(/_/g, ' ')} | {action.severity.toLowerCase()} {language === 'es' ? 'prioridad' : 'priority'}
+        <View style={styles.actionItems}>
+          {isLoading ? (
+            [0, 1, 2].map((item) => (
+              <View key={item} style={styles.actionSkeletonItem}>
+                <View style={styles.actionMetricTopRow}>
+                  <View style={styles.skeletonActionIcon} />
+                  <View style={styles.actionMetricTextGroup}>
+                    <SkeletonLine width="72%" height={16} />
+                    <SkeletonLine width="38%" height={12} style={styles.skeletonSpacedSmall} />
+                  </View>
+                </View>
+                <View style={styles.actionMetricBadges}>
+                  <SkeletonLine width={82} height={24} />
+                  <SkeletonLine width={74} height={14} />
+                </View>
+              </View>
+            ))
+          ) : actions.map((action) => {
+            const categoryTone = recommendedActionCategoryTone(action.type);
+            const priorityTone = severityTone(action.severity);
+            return (
+              <TouchableOpacity
+                key={action.id}
+                style={[styles.actionMetricCard, { borderColor: categoryTone.border }]}
+                activeOpacity={0.86}
+                onPress={() => onSelectAction(action)}
+              >
+                <View style={styles.actionMetricTopRow}>
+                  <View style={[styles.actionMetricIcon, { backgroundColor: categoryTone.soft }]}>
+                    {actionIcon(action.type, categoryTone.accent)}
+                  </View>
+                  <View style={styles.actionMetricTextGroup}>
+                    <Text style={styles.caseMetricName}>{localizeRecommendedActionTitle(action, language)}</Text>
+                    <Text style={styles.actionMetricMeta}>{localizeRecommendedActionType(action.type, language).toUpperCase()}</Text>
+                  </View>
+                </View>
+                <View style={styles.actionMetricBadges}>
+                  <View style={styles.actionPriorityBadge}>
+                    <Text style={styles.actionPriorityText}>{language === 'es' ? 'Prioridad: ' : 'Priority: '}</Text>
+                    <Text style={[styles.actionPriorityValue, { color: priorityTone.accent, backgroundColor: priorityTone.soft }]}>
+                      {localizePriorityLabel(action.severity, language)}
+                    </Text>
+                  </View>
+                  <View style={[styles.actionStatusBadge, { backgroundColor: actionStatusTone(action.status).soft }]}>
+                    <Text style={[styles.caseMetricValue, { color: actionStatusTone(action.status).accent }]}>
+                      {localizeActionStatus(action.status, language)}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {!isLoading && remainingCount > 0 ? (
+          <TouchableOpacity style={styles.moreAlertsButton} activeOpacity={0.78} onPress={onOpenMore}>
+            <Feather name="list" size={15} color="#0003B8" />
+            <Text style={styles.showMoreActionsText}>
+              {language === 'es' ? 'Mostrar mas recomendaciones' : 'Show more recommendations'}
             </Text>
-          </View>
-        ))}
+            <View style={styles.moreAlertsBadge}>
+              <Text style={styles.moreAlertsBadgeText}>{remainingCount}</Text>
+            </View>
+          </TouchableOpacity>
+        ) : null}
       </View>
-
-      <Button
-        label={language === 'es' ? 'Ver reporte epidemiologico completo' : 'View Full Epidemiological Report'}
-        variant="secondary"
-        size="sm"
-        style={styles.caseAction}
-        labelStyle={styles.caseActionLabel}
-        onPress={onOpenReport}
-      />
     </CardBase>
+  );
+}
+
+function MoreAlertsOverlay({
+  visible,
+  alerts,
+  language,
+  onClose,
+  onSelectAlert,
+}: {
+  visible: boolean;
+  alerts: AdminDashboardAlert[];
+  language: 'en' | 'es';
+  onClose: () => void;
+  onSelectAlert: (alert: AdminDashboardAlert) => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.moreAlertsOverlay}>
+        <Pressable style={styles.moreAlertsBackdrop} onPress={onClose} />
+        <View style={styles.moreAlertsCard}>
+          <View style={styles.moreAlertsHeader}>
+            <View>
+              <Text style={styles.moreAlertsEyebrow}>{language === 'es' ? 'Brotes activos' : 'Active outbreaks'}</Text>
+              <Text style={styles.moreAlertsTitle}>{language === 'es' ? 'Mas brotes contextuales' : 'More contextual outbreaks'}</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
+              <Feather name="x" size={18} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
+            {alerts.map((alert) => (
+              <TouchableOpacity key={alert.id} activeOpacity={0.82} onPress={() => onSelectAlert(alert)}>
+                <AlertCard
+                  title={alert.title}
+                  description={alert.description}
+                  variant={alert.variant}
+                  style={styles.alertCard}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function RetryOverlay({
+  label,
+  onRetry,
+}: {
+  label: string;
+  onRetry: () => void;
+}) {
+  return (
+    <View style={styles.retryOverlay}>
+      <TouchableOpacity style={styles.retryButton} activeOpacity={0.82} onPress={onRetry}>
+        <Feather name="refresh-cw" size={18} color="#0003B8" />
+        <Text style={styles.retryText}>{label}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function MoreRecommendationsOverlay({
+  visible,
+  actions,
+  language,
+  onClose,
+  onSelectAction,
+}: {
+  visible: boolean;
+  actions: AdminDashboardSummaryResponse['recommendedActions'];
+  language: 'en' | 'es';
+  onClose: () => void;
+  onSelectAction: (action: AdminDashboardSummaryResponse['recommendedActions'][number]) => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.moreAlertsOverlay}>
+        <Pressable style={styles.moreAlertsBackdrop} onPress={onClose} />
+        <View style={styles.moreAlertsCard}>
+          <View style={styles.moreAlertsHeader}>
+            <View>
+              <Text style={styles.moreAlertsEyebrow}>{language === 'es' ? 'Recomendaciones' : 'Recommendations'}</Text>
+              <Text style={styles.moreAlertsTitle}>{language === 'es' ? 'Mas recomendaciones hospitalarias' : 'More hospital recommendations'}</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
+              <Feather name="x" size={18} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
+            {actions.map((action) => {
+              const categoryTone = recommendedActionCategoryTone(action.type);
+              const priorityTone = severityTone(action.severity);
+              return (
+                <TouchableOpacity
+                  key={action.id}
+                  style={[styles.actionMetricCard, { borderColor: categoryTone.border }]}
+                  activeOpacity={0.82}
+                  onPress={() => onSelectAction(action)}
+                >
+                  <View style={styles.actionMetricTopRow}>
+                    <View style={[styles.actionMetricIcon, { backgroundColor: categoryTone.soft }]}>
+                      {actionIcon(action.type, categoryTone.accent)}
+                    </View>
+                    <View style={styles.actionMetricTextGroup}>
+                      <Text style={styles.caseMetricName}>{localizeRecommendedActionTitle(action, language)}</Text>
+                      <Text style={styles.actionMetricMeta}>{localizeRecommendedActionType(action.type, language).toUpperCase()}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.actionMetricBadges}>
+                    <View style={styles.actionPriorityBadge}>
+                      <Text style={styles.actionPriorityText}>{language === 'es' ? 'Prioridad: ' : 'Priority: '}</Text>
+                      <Text style={[styles.actionPriorityValue, { color: priorityTone.accent, backgroundColor: priorityTone.soft }]}>
+                        {localizePriorityLabel(action.severity, language)}
+                      </Text>
+                    </View>
+                    <View style={[styles.actionStatusBadge, { backgroundColor: actionStatusTone(action.status).soft }]}>
+                      <Text style={[styles.caseMetricValue, { color: actionStatusTone(action.status).accent }]}>
+                        {localizeActionStatus(action.status, language)}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function HospitalRecommendationOverlay({
+  visible,
+  action,
+  language,
+  onClose,
+  onGoToTask,
+}: {
+  visible: boolean;
+  action: AdminDashboardSummaryResponse['recommendedActions'][number] | null;
+  language: 'en' | 'es';
+  onClose: () => void;
+  onGoToTask: (id: string) => void;
+}) {
+  if (!action) return null;
+  const title = localizeRecommendedActionTitle(action, language);
+  const description = localizedActionDescription(action, language);
+  const actions = localizedActionSteps(action, language);
+  const priority = localizePriorityLabel(action.severity, language);
+  const accent = severityToColor(action.severity);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.recommendationModalOverlay}>
+        <Pressable style={styles.recommendationModalBackdrop} onPress={onClose} />
+        <View style={styles.recommendationModalCard}>
+          <View style={styles.recommendationModalHeader}>
+            <View style={[styles.recommendationModalIcon, { backgroundColor: severityToSoftColor(action.severity) }]}>
+              {actionIcon(action.type, accent)}
+            </View>
+            <View style={styles.recommendationModalTitleGroup}>
+              <Text style={styles.recommendationModalTitle}>{title}</Text>
+            </View>
+            <TouchableOpacity style={styles.recommendationModalClose} activeOpacity={0.75} onPress={onClose}>
+              <Feather name="x" size={18} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.recommendationModalDescription}>{description}</Text>
+
+          <View style={styles.recommendationModalSignalRow}>
+            <View style={styles.recommendationModalSignalCard}>
+              <Text style={styles.recommendationModalSignalLabel}>{language === 'es' ? 'Prioridad' : 'Priority'}</Text>
+              <Text style={[styles.recommendationModalSignalValue, { color: accent }]}>{priority}</Text>
+            </View>
+            <View style={styles.recommendationModalSignalCard}>
+              <Text style={styles.recommendationModalSignalLabel}>{language === 'es' ? 'Estado' : 'Status'}</Text>
+              <Text style={styles.recommendationModalSignalValue}>{localizeActionStatus(action.status, language)}</Text>
+            </View>
+          </View>
+
+          <View style={styles.recommendationModalActionBlock}>
+            <Text style={styles.recommendationModalActionTitle}>
+              {language === 'es' ? 'Acciones a realizar' : 'Actions to complete'}
+            </Text>
+            {actions.map((step, index) => (
+              <View key={`${step}-${index}`} style={styles.recommendationModalStep}>
+                <View style={[styles.recommendationModalStepNumber, { borderColor: accent }]}>
+                  <Text style={[styles.recommendationModalStepNumberText, { color: accent }]}>{index + 1}</Text>
+                </View>
+                <Text style={styles.recommendationModalStepText}>{step}</Text>
+              </View>
+            ))}
+          </View>
+
+          <Button
+            label={language === 'es' ? 'Ir a la tarea' : 'Go to task'}
+            variant="primary"
+            size="lg"
+            onPress={() => onGoToTask(action.id)}
+            style={styles.recommendationModalButton}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function MapSkeleton({ width }: { width?: number }) {
+  return <View style={[styles.mapSkeleton, width ? { width, flex: undefined } : null]} />;
+}
+
+function StateOutbreakExplorer({
+  visible,
+  states,
+  statesStatus,
+  selectedState,
+  selectedStateCenter,
+  selectedStateBounds,
+  stateZones,
+  stateMapStatus,
+  onClose,
+  onRetryStates,
+  onSelectState,
+  onBack,
+  onZonePress,
+  onMapHoverChange,
+  t,
+}: {
+  visible: boolean;
+  states: DoctorDashboardStateMapItem[];
+  statesStatus: LoadState;
+  selectedState: DoctorDashboardStateMapItem | null;
+  selectedStateCenter: { latitude: number; longitude: number } | null;
+  selectedStateBounds?: {
+    minLatitude: number;
+    maxLatitude: number;
+    minLongitude: number;
+    maxLongitude: number;
+  };
+  stateZones: AdminDashboardZone[];
+  stateMapStatus: LoadState;
+  onClose: () => void;
+  onRetryStates: () => void;
+  onSelectState: (state: DoctorDashboardStateMapItem) => void;
+  onBack: () => void;
+  onZonePress: (zone: AdminDashboardZone) => void;
+  onMapHoverChange: (isHovering: boolean) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
+  const mexicoCenter = { latitude: 23.6345, longitude: -102.5528 };
+  const statesByName = useMemo(() => new Map(
+    states.map((state) => [stateLookupKey(state.stateName), state]),
+  ), [states]);
+  const selectedBoundary = useMemo(() => getStateBoundary(selectedState?.stateName), [selectedState?.stateName]);
+  const selectedStateColor = '#0003B8';
+  const selectorPolygons = useMemo<RadarMapPolygon[]>(() => mexicoStateBoundaries.map((boundary) => {
+    const state = statesByName.get(stateLookupKey(boundary.name));
+    return {
+      id: boundary.id,
+      geometry: boundary.geometry,
+      fillColor: state ? 'rgba(0, 3, 184, 0.05)' : 'rgba(100, 116, 139, 0.04)',
+      strokeColor: state ? 'rgba(0, 3, 184, 0.62)' : 'rgba(100, 116, 139, 0.24)',
+      strokeWidth: state && state.outbreakCount > 0 ? 1.3 : 1,
+    };
+  }), [statesByName]);
+  const selectedPolygons = useMemo<RadarMapPolygon[]>(() => (
+    selectedBoundary
+      ? [{
+        id: selectedBoundary.id,
+        geometry: selectedBoundary.geometry,
+        fillColor: severityFillColor(selectedStateColor),
+        strokeColor: selectedStateColor,
+        strokeWidth: 2,
+      }]
+      : []
+  ), [selectedBoundary, selectedStateColor]);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.stateExplorerOverlay}>
+        <Pressable style={styles.stateExplorerBackdrop} onPress={onClose} />
+        <View style={styles.stateExplorerCard}>
+          <View style={styles.stateExplorerHeader}>
+            <View>
+              <Text style={styles.stateExplorerEyebrow}>
+                {selectedState ? t('doctor.dashboard.map.stateOutbreaks') : t('doctor.dashboard.map.stateSelector')}
+              </Text>
+              <Text style={styles.stateExplorerTitle}>
+                {selectedState ? shortStateName(selectedState.stateName) : t('doctor.dashboard.map.viewOtherStates')}
+              </Text>
+            </View>
+            <View style={styles.stateExplorerActions}>
+              {selectedState ? (
+                <TouchableOpacity style={styles.stateExplorerSecondaryButton} onPress={onBack} activeOpacity={0.75}>
+                  <Feather name="arrow-left" size={16} color="#0003B8" />
+                  <Text style={styles.stateExplorerSecondaryText}>{t('doctor.dashboard.map.backToStates')}</Text>
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
+                <Feather name="x" size={18} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {selectedState ? (
+            stateMapStatus === 'loading' ? (
+              <MapSkeleton />
+            ) : stateMapStatus === 'error' ? (
+              <View style={styles.stateExplorerError}>
+                <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={() => onSelectState(selectedState)} />
+              </View>
+            ) : (
+              <RadarMapCard
+                title={shortStateName(selectedState.stateName)}
+                showControls
+                showFooter
+                fitMapToCard
+                footerTextLeft="© OpenStreetMap contributors"
+                footerTextRight={t('doctor.dashboard.map.stateOutbreakCount', {
+                  count: formatNumber(stateZones.length),
+                })}
+                mapHeight={600}
+                mapCenterLatitude={selectedStateCenter?.latitude}
+                mapCenterLongitude={selectedStateCenter?.longitude}
+                mapZoom={8}
+                minZoom={6}
+                maxZoom={13}
+                mapBounds={selectedStateBounds}
+                enablePan
+                onMapHoverChange={onMapHoverChange}
+                polygons={selectedPolygons}
+                pins={stateZones.map((zone) => ({
+                  id: zone.id,
+                  latitude: zone.latitude,
+                  longitude: zone.longitude,
+                  borderColor: zone.borderColor,
+                  fillColor: '#FFFFFF',
+                  icon: zone.borderColor === '#22C55E'
+                    ? <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
+                    : zone.borderColor === '#F97316'
+                      ? <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
+                      : <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />,
+                  onPress: () => onZonePress(zone),
+                }))}
+              />
+            )
+          ) : statesStatus === 'loading' ? (
+            <MapSkeleton />
+          ) : statesStatus === 'error' ? (
+            <View style={styles.stateExplorerError}>
+              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={onRetryStates} />
+            </View>
+          ) : (
+            <RadarMapCard
+              title={t('doctor.dashboard.map.stateSelector')}
+              showControls
+              showFooter
+              fitMapToCard
+              footerTextLeft="© OpenStreetMap contributors"
+              mapHeight={600}
+              mapCenterLatitude={mexicoCenter.latitude}
+              mapCenterLongitude={mexicoCenter.longitude}
+              mapZoom={6}
+              minZoom={5}
+              maxZoom={12}
+              enablePan
+              onMapHoverChange={onMapHoverChange}
+              polygons={selectorPolygons}
+              pins={states.map((state) => ({
+                id: state.stateId,
+                latitude: state.latitude,
+                longitude: state.longitude,
+                borderColor: '#0003B8',
+                fillColor: '#FFFFFF',
+                label: shortStateName(state.stateName),
+                icon: <Feather name="map-pin" size={13} color="#0003B8" />,
+                onPress: () => onSelectState(state),
+              }))}
+            />
+          )}
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -411,64 +1157,406 @@ function mapMetric(
   summary: AdminDashboardSummaryResponse,
   language: 'en' | 'es',
   t: (key: string, params?: Record<string, string | number>) => string,
+  outbreakAlerts: DoctorDashboardAlertResponse[],
+  localRiskMetric: DoctorDashboardMetricResponse | null,
 ): AdminDashboardMetric {
-  const title = localizeAdminMetricTitle(metric.title, language);
+  const metricId = (metric.id ?? '').toLowerCase();
+  if (metricId === 'outbreaks' && localRiskMetric) {
+    return mapLocalRiskMetric(localRiskMetric, summary, language, t);
+  }
+  const title = localizeAdminMetricTitle(metric.title, t, metricId);
   const status = (metric.status ?? '').toUpperCase();
+  const tone = deriveMetricTone(metric.id, status, metric.value);
+  const palette = metricTonePalette(tone);
+  const matchedAction = summary.recommendedActions.find((action) => action.type === metric.id?.toUpperCase());
   const recommendedAction =
-    summary.recommendedActions.find((action) => action.type === metric.id?.toUpperCase())?.title
+    (matchedAction ? localizeRecommendedActionTitle(matchedAction, language) : null)
     ?? (language === 'es'
       ? `Revisa ${title.toLowerCase()} y manten alineado al equipo operativo.`
       : `Review ${title.toLowerCase()} and keep the operational team aligned.`);
 
   return {
+    id: metric.id,
     title,
-    value: translateDashboardValue(t, metric.value),
-    badge: translateDashboardBadge(t, metric.badge ?? undefined),
-    badgeColor: status.includes('CRITICAL') ? '#1E40AF' : status.includes('WARNING') ? '#3B82F6' : '#93C5FD',
+    value: metricDisplayValue(metricId, metric.value, t),
+    valueUnit: metricValueUnit(metricId, language),
+    badge: metricId === 'outbreaks'
+      ? t('common.units.kilometers', { count: 75 }).toUpperCase()
+      : translateDashboardBadge(t, metric.badge ?? undefined),
+    badgeColor: palette.accent,
     subtitle: metric.subtitle ? localizeAdminMetricSubtitle(metric.subtitle, language) : undefined,
-    progressValue: deriveProgress(metric.value, metric.status),
-    progressColor: status.includes('CRITICAL') ? '#1E40AF' : status.includes('WARNING') ? '#3B82F6' : '#93C5FD',
-    segmented: title.toUpperCase().includes('OXYGEN'),
-    tone: status.includes('CRITICAL') ? 'critical' : 'default',
+    tone,
     detailTitle: title,
     detailSummary: metric.subtitle
       ? localizeAdminMetricSubtitle(metric.subtitle, language)
       : language === 'es'
         ? `Senal operativa en vivo para ${title.toLowerCase()}.`
         : `Live operational signal for ${title.toLowerCase()}.`,
-    signalLabel: translateDashboardValue(t, metric.status ?? 'Stable'),
+    signalLabel: metricToneLabel(tone, t),
     recommendedAction,
+    insightCriteria: metricInsightCriteria(metricId, t),
+    insightsVariant: metricId === 'outbreaks' ? 'ranked' : 'list',
+    insights: buildMetricInsights(metric, summary, language, t, outbreakAlerts),
+    relatedAlerts: buildMetricRelatedAlerts(metricId, summary, language),
   };
 }
 
-function mapAlert(
-  alert: AdminDashboardSummaryResponse['alerts'][number],
+function mapLocalRiskMetric(
+  metric: DoctorDashboardMetricResponse,
+  summary: AdminDashboardSummaryResponse,
   language: 'en' | 'es',
   t: (key: string, params?: Record<string, string | number>) => string,
+): AdminDashboardMetric {
+  const title = t('doctor.dashboard.metrics.local-risk-level.title');
+  const tone = doctorStatusToAdminTone(metric.status ?? 'neutral');
+  const palette = metricTonePalette(tone);
+
+  return {
+    id: 'outbreaks',
+    title,
+    value: translateDashboardValue(t, metric.value),
+    badge: translateDashboardBadge(t, metric.badge ?? undefined),
+    badgeColor: palette.accent,
+    subtitle: t('doctor.dashboard.metrics.local-risk-level.subtitle'),
+    tone,
+    detailTitle: title,
+    detailSummary: t('doctor.dashboard.metrics.local-risk-level.detailSummary'),
+    signalLabel: t('doctor.dashboard.metrics.local-risk-level.signalLabel'),
+    recommendedAction: t('doctor.dashboard.metrics.local-risk-level.recommendedAction'),
+    insightCriteria: t('doctor.dashboard.metrics.local-risk-level.insightCriteria'),
+    insightsVariant: 'ranked',
+    insights: metric.insights?.map((insight) => ({
+      ...insight,
+      title: translateDiseaseName(t, insight.title),
+      severity: translateDashboardValue(t, insight.severity),
+      cases: translateDashboardValue(t, insight.cases),
+      meta: insight.meta ? translateDashboardValue(t, insight.meta) : insight.meta,
+    })) ?? buildOutbreakMetricInsights([], summary, language, t),
+  };
+}
+
+function doctorStatusToAdminTone(status: string): AdminDashboardMetric['tone'] {
+  if (status === 'danger') return 'critical';
+  if (status === 'warning') return 'warning';
+  if (status === 'positive') return 'positive';
+  return 'default';
+}
+
+function metricValueUnit(metricId: string, language: 'en' | 'es') {
+  if (metricId === 'beds' || metricId === 'icu') return language === 'es' ? 'camas' : 'beds';
+  if (metricId === 'staff') return language === 'es' ? 'miembros' : 'members';
+  return undefined;
+}
+
+function metricDisplayValue(
+  metricId: string,
+  value: string,
+  t: (key: string, params?: Record<string, string | number>) => string,
+) {
+  const ratio = parseRatio(value);
+  if ((metricId === 'beds' || metricId === 'icu') && ratio.current != null) {
+    return new Intl.NumberFormat().format(ratio.current);
+  }
+  return translateDashboardValue(t, value);
+}
+
+function metricInsightCriteria(
+  metricId: string,
+  t: (key: string, params?: Record<string, string | number>) => string,
+) {
+  if (metricId === 'beds') return t('admin.dashboard.kpiDetails.bedsCriteria');
+  if (metricId === 'staff') return t('admin.dashboard.kpiDetails.staffCriteria');
+  if (metricId === 'icu') return t('admin.dashboard.kpiDetails.icuCriteria');
+  if (metricId === 'outbreaks') return t('admin.dashboard.kpiDetails.outbreaksCriteria');
+  return t('admin.dashboard.kpiDetails.defaultCriteria');
+}
+
+function buildMetricInsights(
+  metric: AdminDashboardSummaryResponse['topCards'][number],
+  summary: AdminDashboardSummaryResponse,
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
+  outbreakAlerts: DoctorDashboardAlertResponse[],
+): AdminDashboardMetricInsight[] {
+  const metricId = (metric.id ?? '').toLowerCase();
+  if (metricId === 'beds') return buildBedMetricInsights(metric, summary, language, t);
+  if (metricId === 'staff') return buildStaffMetricInsights(metric, summary, language, t);
+  if (metricId === 'icu') return buildIcuMetricInsights(metric, summary, language, t);
+  if (metricId === 'outbreaks') return buildOutbreakMetricInsights(outbreakAlerts, summary, language, t);
+  return buildFallbackMetricInsights(metric, summary, language, t);
+}
+
+function buildBedMetricInsights(
+  metric: AdminDashboardSummaryResponse['topCards'][number],
+  summary: AdminDashboardSummaryResponse,
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
+): AdminDashboardMetricInsight[] {
+  const { current: availableBeds, total: totalBeds } = parseRatio(metric.value);
+  const availability = totalBeds && availableBeds != null ? Math.round((availableBeds / totalBeds) * 100) : null;
+  const tone = deriveMetricTone(metric.id, (metric.status ?? '').toUpperCase(), metric.value);
+  const signal = { label: metricToneLabel(tone, t), color: toneToColor(tone) };
+
+  return compactInsights([
+    availability != null ? insight({
+      title: t('admin.dashboard.kpiDetails.freeCapacity'),
+      location: t('admin.dashboard.kpiDetails.hospitalResources'),
+      cases: `${availability}%`,
+      severity: t('admin.dashboard.kpiDetails.free'),
+      color: signal.color,
+      meta: signal.label,
+    }) : null,
+  ]).slice(0, 3);
+}
+
+function buildStaffMetricInsights(
+  metric: AdminDashboardSummaryResponse['topCards'][number],
+  summary: AdminDashboardSummaryResponse,
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
+): AdminDashboardMetricInsight[] {
+  const doctors = parseFirstNumber(metric.badge);
+  const totalStaff = parseFirstNumber(metric.value);
+  const nurses = totalStaff != null && doctors != null ? Math.max(0, totalStaff - doctors) : null;
+  const staffColor = toneToColor(deriveMetricTone(metric.id, (metric.status ?? '').toUpperCase(), metric.value));
+
+  return compactInsights([
+    doctors != null ? insight({
+      title: t('admin.dashboard.kpiDetails.doctorsAvailable'),
+      location: t('admin.dashboard.kpiDetails.activeShift'),
+      cases: String(doctors),
+      severity: t('admin.dashboard.kpiDetails.available'),
+      color: staffColor,
+    }) : null,
+    nurses != null ? insight({
+      title: t('admin.dashboard.kpiDetails.nursesAvailable'),
+      location: t('admin.dashboard.kpiDetails.activeShift'),
+      cases: String(nurses),
+      severity: t('admin.dashboard.kpiDetails.available'),
+      color: staffColor,
+    }) : null,
+  ]).slice(0, 3);
+}
+
+function buildIcuMetricInsights(
+  metric: AdminDashboardSummaryResponse['topCards'][number],
+  summary: AdminDashboardSummaryResponse,
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
+): AdminDashboardMetricInsight[] {
+  const { current: availableIcu, total: totalIcu } = parseRatio(metric.value);
+  const availability = totalIcu && availableIcu != null ? Math.round((availableIcu / totalIcu) * 100) : null;
+  const tone = deriveMetricTone(metric.id, (metric.status ?? '').toUpperCase(), metric.value);
+  const signal = { label: metricToneLabel(tone, t), color: toneToColor(tone) };
+
+  return compactInsights([
+    availability != null ? insight({
+      title: t('admin.dashboard.kpiDetails.icuFreeCapacity'),
+      location: t('admin.dashboard.kpiDetails.intensiveCareUnit'),
+      cases: `${availability}%`,
+      severity: t('admin.dashboard.kpiDetails.free'),
+      color: signal.color,
+      meta: signal.label,
+    }) : null,
+  ]).slice(0, 3);
+}
+
+function buildOutbreakMetricInsights(
+  outbreakAlerts: DoctorDashboardAlertResponse[],
+  summary: AdminDashboardSummaryResponse,
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
+): AdminDashboardMetricInsight[] {
+  const source = outbreakAlerts.length > 0
+    ? outbreakAlerts.map((alert) => ({
+      title: translateDiseaseName(t, alert.title.replace(/ activity$/i, '').replace(/^Actividad de\s+/i, '')),
+      location: alert.municipalityName ?? alert.area,
+      cases: alert.caseLabel
+        ? translateDashboardValue(t, alert.caseLabel)
+        : t((alert.caseCount ?? 0) === 1 ? 'common.units.case' : 'common.units.activeCases', {
+          count: (alert.caseCount ?? 0).toLocaleString(),
+        }),
+      severity: alert.confirmationStatus ? statusLabel(alert.confirmationStatus, t) : translateDashboardValue(t, alert.priority),
+      color: alert.variant === 'critical' ? '#EF4444' : alert.variant === 'warning' ? '#F59E0B' : '#2563EB',
+      meta: alert.confirmationStatus ? statusLabel(alert.confirmationStatus, t) : translateDashboardValue(t, alert.priority),
+      count: alert.caseCount ?? 0,
+    }))
+    : summary.alerts.map((alert) => ({
+      title: translateDiseaseName(t, alert.disease),
+      location: alert.location,
+      cases: t(alert.caseCount === 1 ? 'common.units.case' : 'common.units.activeCases', {
+        count: alert.caseCount.toLocaleString(),
+      }),
+      severity: translateDashboardValue(t, alert.severity),
+      color: alert.severity === 'HIGH' ? '#EF4444' : alert.severity === 'MEDIUM' ? '#F59E0B' : '#2563EB',
+      meta: translateDashboardValue(t, alert.severity),
+      count: alert.caseCount,
+    }));
+
+  return source
+    .sort((left, right) => right.count - left.count)
+    .slice(0, 5)
+    .map(({ count: _count, ...item }) => item);
+}
+
+function buildFallbackMetricInsights(
+  metric: AdminDashboardSummaryResponse['topCards'][number],
+  summary: AdminDashboardSummaryResponse,
+  language: 'en' | 'es',
+  t: (key: string, params?: Record<string, string | number>) => string,
+): AdminDashboardMetricInsight[] {
+  return compactInsights([
+    insight({
+      title: localizeAdminMetricTitle(metric.title, t),
+      location: summary.hospitalName,
+      cases: translateDashboardValue(t, metric.value),
+      severity: translateDashboardValue(t, metric.status ?? 'Stable'),
+      color: '#0003B8',
+      meta: language === 'es' ? 'Seguimiento operativo' : 'Operational follow-up',
+    }),
+  ]);
+}
+
+function buildMetricRelatedAlerts(
+  metricId: string,
+  summary: AdminDashboardSummaryResponse,
+  language: 'en' | 'es',
+): AdminDashboardMetricInsight[] {
+  const relatedTypes = relatedActionTypesForMetric(metricId);
+  if (relatedTypes.length === 0) return [];
+  return summary.recommendedActions
+    .filter((action) => relatedTypes.includes(action.type.toUpperCase()))
+    .slice(0, 3)
+    .map((action) => insight({
+      title: localizeRecommendedActionTitle(action, language),
+      location: localizeRecommendedActionType(action.type, language),
+      cases: localizePriorityLabel(action.severity, language),
+      severity: localizeActionStatus(action.status, language),
+      color: severityToColor(action.severity),
+      meta: localizeActionStatus(action.status, language),
+    }));
+}
+
+function relatedActionTypesForMetric(metricId: string): string[] {
+  if (metricId === 'beds') return ['BED_CAPACITY'];
+  if (metricId === 'staff') return ['STAFFING', 'SUPPLY'];
+  if (metricId === 'icu') return ['BED_CAPACITY'];
+  return [];
+}
+
+function insight(value: AdminDashboardMetricInsight): AdminDashboardMetricInsight {
+  return value;
+}
+
+function compactInsights(items: Array<AdminDashboardMetricInsight | null>): AdminDashboardMetricInsight[] {
+  return items.filter((item): item is AdminDashboardMetricInsight => item !== null);
+}
+
+function parseRatio(value: string): { current: number | null; total: number | null } {
+  const match = value.match(/(\d+)\s*\/\s*(\d+)/);
+  if (!match) return { current: parseFirstNumber(value), total: null };
+  return {
+    current: Number.parseInt(match[1], 10),
+    total: Number.parseInt(match[2], 10),
+  };
+}
+
+function parseFirstNumber(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const match = value.match(/\d+/);
+  return match ? Number.parseInt(match[0], 10) : null;
+}
+
+function statusLabel(value: string | undefined | null, t: (key: string) => string): string {
+  if (value === 'CONFIRMED') return t('common.statuses.confirmed');
+  if (value === 'SUSPECTED') return t('common.statuses.suspected');
+  return value ?? '';
+}
+
+function describeAlert(
+  alert: DoctorDashboardAlertResponse,
+  t: (key: string, params?: Record<string, string | number>) => string,
 ): AdminDashboardAlert {
+  const match = alert.description.match(/^([\d,]+) active cases? in (.+)\. Status: (.+)\.$/);
+  const rawDiseaseName = alert.title.replace(/ activity$/, '');
+  const diseaseName = translateDiseaseName(t, rawDiseaseName);
+  if (!match) {
+    return {
+      id: alert.id,
+      title: t('doctor.dashboard.alerts.activityTitle', { disease: diseaseName }),
+      description: alert.description,
+      variant: alert.variant,
+      department: alert.area,
+      area: alert.area,
+      priority: translateDashboardValue(t, alert.priority),
+      recommendedAction: alert.recommendedAction,
+      caseCount: alert.caseCount,
+      caseLabel: alert.caseLabel ? translateDashboardValue(t, alert.caseLabel) : undefined,
+      confirmationStatus: alert.confirmationStatus ? statusLabel(alert.confirmationStatus, t) : undefined,
+      municipalityName: alert.municipalityName,
+      stateName: alert.stateName,
+    };
+  }
+
+  const [, count, area, status] = match;
   return {
     id: alert.id,
-    title: language === 'es' ? `Alerta de ${translateDashboardValue(t, alert.disease)}` : `${translateDashboardValue(t, alert.disease)} alert`,
-    description: language === 'es'
-      ? `${alert.message} (${alert.caseCount} casos activos).`
-      : `${alert.message} (${alert.caseCount} active cases).`,
-    variant: alert.severity === 'HIGH' ? 'critical' : alert.severity === 'MEDIUM' ? 'warning' : 'info',
-    department: alert.location,
-    priority: translateDashboardValue(t, alert.severity),
-    recommendedAction: language === 'es'
-      ? `Revisa las medidas de contencion en ${alert.location} y ajusta el personal si aumenta la presion de casos.`
-      : `Review containment measures for ${alert.location} and adjust staffing if case pressure rises.`,
+    title: t('doctor.dashboard.alerts.activityTitle', { disease: diseaseName }),
+    description: t('doctor.dashboard.alerts.activityDescription', {
+      cases: t('common.units.activeCases', { count }),
+      area,
+      status: statusLabel(status.toUpperCase(), t),
+    }),
+    variant: alert.variant,
+    department: alert.area,
+    area: alert.area,
+    priority: translateDashboardValue(t, alert.priority),
+    recommendedAction: alert.recommendedAction,
+    caseCount: alert.caseCount,
+    caseLabel: alert.caseLabel ? translateDashboardValue(t, alert.caseLabel) : undefined,
+    confirmationStatus: alert.confirmationStatus ? statusLabel(alert.confirmationStatus, t) : statusLabel(status.toUpperCase(), t),
+    municipalityName: alert.municipalityName,
+    stateName: alert.stateName,
   };
+}
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat().format(value);
+}
+
+function formatSyncTime(
+  value: string | undefined,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
+  if (!value) return t('doctor.dashboard.map.lastSyncPending');
+  return t('doctor.dashboard.map.lastSync', {
+    time: new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  });
 }
 
 function positionZones(
-  zones: AdminDashboardSummaryResponse['mapZones'],
-  language: 'en' | 'es',
+  zones: DoctorDashboardMapResponse['zones'],
   t: (key: string, params?: Record<string, string | number>) => string,
+  fallbackStateName?: string | null,
 ): AdminDashboardZone[] {
   if (zones.length === 0) return [];
-  const latitudes = zones.map((zone) => zone.latitude);
-  const longitudes = zones.map((zone) => zone.longitude);
+
+  const zonesWithCoordinates = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (zonesWithCoordinates.length === 0) {
+    return zones.map((zone, index) => toAdminMapZone({
+      zone,
+      top: `${32 + index * 8}%`,
+      left: `${44 + index * 6}%`,
+      borderColor: zoneSeverityColor(zone),
+      t,
+      fallbackStateName,
+    }));
+  }
+
+  const latitudes = zonesWithCoordinates.map((zone) => zone.latitude as number);
+  const longitudes = zonesWithCoordinates.map((zone) => zone.longitude as number);
   const minLat = Math.min(...latitudes);
   const maxLat = Math.max(...latitudes);
   const minLon = Math.min(...longitudes);
@@ -477,139 +1565,529 @@ function positionZones(
   const lonRange = Math.max(maxLon - minLon, 0.01);
 
   return zones.map((zone) => {
-    const top = 18 + ((maxLat - zone.latitude) / latRange) * 64;
-    const left = 18 + ((zone.longitude - minLon) / lonRange) * 64;
-    const risk = translateDashboardValue(t, zone.status.replace(/_/g, ' '));
-    return {
-      id: zone.municipalityId,
-      name: zone.municipalityName,
-      risk,
-      disease: language === 'es'
-        ? zone.outbreakCount === 1 ? '1 senal de brote' : `${zone.outbreakCount} senales de brote`
-        : zone.outbreakCount === 1 ? '1 outbreak signal' : `${zone.outbreakCount} outbreak signals`,
-      cases: language === 'es'
-        ? `${zone.outbreakCount} cluster${zone.outbreakCount === 1 ? '' : 'es'} activos`
-        : `${zone.outbreakCount} active cluster${zone.outbreakCount === 1 ? '' : 's'}`,
-      radius: translateDashboardValue(t, language === 'es' ? 'Monitoreo regional' : 'Regional monitoring'),
-      priority: zone.status.toUpperCase().includes('CRITICAL')
-        ? (language === 'es' ? 'Inmediata' : 'Immediate')
-        : zone.status.toUpperCase().includes('WARNING')
-          ? (language === 'es' ? 'Alta' : 'High')
-          : (language === 'es' ? 'Monitorear' : 'Monitor'),
-      note: language === 'es'
-        ? `${zone.municipalityName} esta bajo seguimiento dentro del perimetro de alerta del hospital.`
-        : `${zone.municipalityName} is being tracked as part of the hospital alert perimeter.`,
-      recommendedAction: language === 'es'
-        ? `Coordina la planeacion de ingresos frente a las ${zone.outbreakCount} senales de brote en ${zone.municipalityName}.`
-        : `Coordinate intake planning against the ${zone.outbreakCount} outbreak signal(s) in ${zone.municipalityName}.`,
+    const latitude = typeof zone.latitude === 'number' ? zone.latitude : minLat + latRange / 2;
+    const longitude = typeof zone.longitude === 'number' ? zone.longitude : minLon + lonRange / 2;
+    const top = 18 + ((maxLat - latitude) / latRange) * 64;
+    const left = 18 + ((longitude - minLon) / lonRange) * 64;
+
+    return toAdminMapZone({
+      zone,
       top: `${Math.max(12, Math.min(82, top))}%`,
       left: `${Math.max(12, Math.min(82, left))}%`,
-      latitude: zone.latitude,
-      longitude: zone.longitude,
-      borderColor: zone.status.toUpperCase().includes('CRITICAL') ? '#EF4444' : zone.status.toUpperCase().includes('WARNING') ? '#F97316' : '#0003B8',
-    };
+      borderColor: zoneSeverityColor(zone),
+      t,
+      fallbackStateName,
+    });
   });
 }
 
-function deriveMapViewport(zones: AdminDashboardSummaryResponse['mapZones']) {
-  const withCoordinates = zones.filter((zone) => Number.isFinite(zone.latitude) && Number.isFinite(zone.longitude));
-  if (withCoordinates.length === 0) {
-    return {
-      centerLatitude: 19.4326,
-      centerLongitude: -99.1332,
-      zoom: 10,
-      minZoom: 8,
-      bounds: undefined,
-    };
+function toAdminMapZone({
+  zone,
+  top,
+  left,
+  borderColor,
+  t,
+  fallbackStateName,
+}: {
+  zone: DoctorDashboardMapResponse['zones'][number];
+  top: string;
+  left: string;
+  borderColor: string;
+  t: (key: string, params?: Record<string, string | number>) => string;
+  fallbackStateName?: string | null;
+}): AdminDashboardZone {
+  return {
+    id: zone.id,
+    name: zone.name,
+    risk: translateDashboardValue(t, zone.risk),
+    disease: translateDiseaseName(t, zone.disease),
+    cases: translateDashboardValue(t, zone.cases),
+    radius: translateDashboardValue(t, zone.radius),
+    priority: translateDashboardValue(t, zone.priority),
+    note: translateDashboardValue(t, zone.note),
+    recommendedAction: translateDashboardValue(t, zone.recommendedAction),
+    municipalityName: zone.municipalityName ?? undefined,
+    stateName: zone.stateName ?? fallbackStateName ?? undefined,
+    top,
+    left,
+    borderColor,
+    latitude: typeof zone.latitude === 'number' ? zone.latitude : undefined,
+    longitude: typeof zone.longitude === 'number' ? zone.longitude : undefined,
+  };
+}
+
+function getMapCenter(zones: AdminDashboardZone[]) {
+  const hospitalNode = zones.find(
+    (zone) => zone.id === 'hospital-node' && typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (hospitalNode && typeof hospitalNode.latitude === 'number' && typeof hospitalNode.longitude === 'number') {
+    return { latitude: hospitalNode.latitude, longitude: hospitalNode.longitude };
   }
 
-  const latitudes = withCoordinates.map((zone) => zone.latitude);
-  const longitudes = withCoordinates.map((zone) => zone.longitude);
-  const minLatitude = Math.min(...latitudes);
-  const maxLatitude = Math.max(...latitudes);
-  const minLongitude = Math.min(...longitudes);
-  const maxLongitude = Math.max(...longitudes);
-  const centerLatitude = (minLatitude + maxLatitude) / 2;
-  const centerLongitude = (minLongitude + maxLongitude) / 2;
-  const span = Math.max(maxLatitude - minLatitude, maxLongitude - minLongitude);
-
-  let zoom = 11;
-  if (span > 2.1) zoom = 7;
-  else if (span > 1.2) zoom = 8;
-  else if (span > 0.65) zoom = 9;
-  else if (span > 0.3) zoom = 10;
+  const geocodedZones = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (geocodedZones.length === 0) return null;
 
   return {
-    centerLatitude,
-    centerLongitude,
-    zoom,
-    minZoom: Math.max(6, zoom - 2),
-    bounds: {
-      minLatitude: minLatitude - 0.25,
-      maxLatitude: maxLatitude + 0.25,
-      minLongitude: minLongitude - 0.25,
-      maxLongitude: maxLongitude + 0.25,
-    },
+    latitude: geocodedZones.reduce((sum, zone) => sum + (zone.latitude as number), 0) / geocodedZones.length,
+    longitude: geocodedZones.reduce((sum, zone) => sum + (zone.longitude as number), 0) / geocodedZones.length,
   };
 }
 
-function buildMapOverlayItems(zones: AdminDashboardZone[], language: 'en' | 'es') {
-  const critical = zones.filter((zone) => zone.borderColor === '#EF4444').length;
-  const warning = zones.filter((zone) => zone.borderColor === '#F97316').length;
-  return [
-    { label: language === 'es' ? 'Zonas criticas' : 'Critical zones', value: String(critical), color: '#EF4444' },
-    { label: language === 'es' ? 'Zonas de advertencia' : 'Warning zones', value: String(warning), color: '#F97316' },
-    { label: language === 'es' ? 'Municipios monitoreados' : 'Tracked municipalities', value: String(zones.length), color: '#0003B8' },
-  ];
+function getRadiusBounds(
+  center: { latitude: number; longitude: number } | null,
+  radiusKm: number | undefined,
+) {
+  if (!center || typeof radiusKm !== 'number') return undefined;
+  const latitudePadding = radiusKm / 111;
+  const longitudePadding = radiusKm / (111 * Math.cos(center.latitude * Math.PI / 180));
+
+  return {
+    minLatitude: center.latitude - latitudePadding,
+    maxLatitude: center.latitude + latitudePadding,
+    minLongitude: center.longitude - longitudePadding,
+    maxLongitude: center.longitude + longitudePadding,
+  };
 }
 
-function localizeAdminMetricTitle(title: string, language: 'en' | 'es') {
-  if (language !== 'es') return title;
+function shortStateName(name: string): string {
+  const aliases: Record<string, string> = {
+    'Coahuila de Zaragoza': 'Coahuila',
+    'Michoacan de Ocampo': 'Michoacan',
+    'Michoac\u00e1n de Ocampo': 'Michoac\u00e1n',
+    'Veracruz de Ignacio de la Llave': 'Veracruz',
+    Mexico: 'M\u00e9xico',
+  };
+  return aliases[name] ?? name;
+}
+
+function stateLookupKey(name: string): string {
+  const aliases: Record<string, string> = {
+    'Coahuila de Zaragoza': 'Coahuila',
+    'Michoacan de Ocampo': 'Michoacan',
+    'Michoac\u00e1n de Ocampo': 'Michoac\u00e1n',
+    'Veracruz de Ignacio de la Llave': 'Veracruz',
+    Mexico: 'Mexico',
+    'M\u00e9xico': 'Mexico',
+  };
+  return (aliases[name] ?? shortStateName(name))
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function getStateBoundary(stateName: string | undefined | null) {
+  if (!stateName) return undefined;
+  const targetKey = stateLookupKey(stateName);
+  return mexicoStateBoundaries.find((boundary) => stateLookupKey(boundary.name) === targetKey);
+}
+
+function getZoneBounds(zones: AdminDashboardZone[]) {
+  const geocodedZones = zones.filter(
+    (zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number',
+  );
+  if (geocodedZones.length === 0) return undefined;
+
+  const latitudes = geocodedZones.map((zone) => zone.latitude as number);
+  const longitudes = geocodedZones.map((zone) => zone.longitude as number);
+  const latitudePadding = Math.max(0.12, (Math.max(...latitudes) - Math.min(...latitudes)) * 0.18);
+  const longitudePadding = Math.max(0.12, (Math.max(...longitudes) - Math.min(...longitudes)) * 0.18);
+
+  return {
+    minLatitude: Math.min(...latitudes) - latitudePadding,
+    maxLatitude: Math.max(...latitudes) + latitudePadding,
+    minLongitude: Math.min(...longitudes) - longitudePadding,
+    maxLongitude: Math.max(...longitudes) + longitudePadding,
+  };
+}
+
+function getBoundaryBounds(boundary: MexicoStateBoundary | undefined) {
+  if (!boundary) return undefined;
+  const points = boundary.geometry.coordinates.flat(2);
+  if (points.length === 0) return undefined;
+
+  const longitudes = points.map(([longitude]) => longitude);
+  const latitudes = points.map(([, latitude]) => latitude);
+  const latitudePadding = Math.max(0.1, (Math.max(...latitudes) - Math.min(...latitudes)) * 0.12);
+  const longitudePadding = Math.max(0.1, (Math.max(...longitudes) - Math.min(...longitudes)) * 0.12);
+
+  return {
+    minLatitude: Math.min(...latitudes) - latitudePadding,
+    maxLatitude: Math.max(...latitudes) + latitudePadding,
+    minLongitude: Math.min(...longitudes) - longitudePadding,
+    maxLongitude: Math.max(...longitudes) + longitudePadding,
+  };
+}
+
+function localizeRecommendedActionTitle(
+  action: AdminDashboardSummaryResponse['recommendedActions'][number],
+  language: 'en' | 'es',
+) {
+  const localized = action.translations?.[language]?.title ?? action.translations?.en?.title;
+  if (localized && localized.trim().length > 0) return localized.trim();
+  if (language !== 'es') return action.title;
+  const titles: Record<string, string> = {
+    'Expand Monitored Bed Capacity': 'Expandir capacidad de camas monitoreadas',
+    'Monitor Bed Occupancy Trend': 'Monitorear tendencia de ocupacion de camas',
+    'Increase Emergency Physician Staffing': 'Aumentar cobertura de medicos de urgencias',
+    'ICU Capacity Critical - Activate Surge Protocol': 'Activar protocolo de expansion UCI',
+    'Implement Respiratory Isolation Measures': 'Implementar medidas de aislamiento respiratorio',
+    'Replenish Critical Protective and Respiratory Supplies': 'Reabastecer insumos criticos de proteccion respiratoria',
+    'Review PPE Stock Levels': 'Revisar niveles de inventario de EPP',
+  };
+  return titles[action.title] ?? action.title;
+}
+
+function localizedActionDescription(
+  action: AdminDashboardSummaryResponse['recommendedActions'][number],
+  language: 'en' | 'es',
+) {
+  const localized = action.translations?.[language]?.description ?? action.translations?.en?.description;
+  if (localized && localized.trim().length > 0) return localized.trim();
+  const category = localizeRecommendedActionType(action.type, language).toLowerCase();
+  return language === 'es'
+    ? `Recomendacion operativa relacionada con ${category}, priorizada por las senales actuales del hospital.`
+    : `Operational recommendation related to ${category}, prioritized from the hospital's current signals.`;
+}
+
+function localizedActionSteps(
+  action: AdminDashboardSummaryResponse['recommendedActions'][number],
+  language: 'en' | 'es',
+) {
+  const localized = action.translations?.[language]?.recommendedActions ?? action.translations?.en?.recommendedActions;
+  if (localized && localized.length > 0) return localized.filter((step) => step.trim().length > 0).slice(0, 4);
+  const type = action.type.toUpperCase();
+  if (language === 'es') {
+    if (type === 'SUPPLY') return ['Validar inventario critico', 'Coordinar reabastecimiento', 'Confirmar disponibilidad con el area responsable'];
+    if (type === 'BED_CAPACITY') return ['Revisar ocupacion actual', 'Activar protocolo de capacidad', 'Coordinar altas y traslados necesarios'];
+    if (type === 'STAFFING') return ['Confirmar personal disponible', 'Reasignar cobertura operativa', 'Notificar al area responsable'];
+    if (type.includes('EPIDEMIOLOGY')) return ['Revisar senal epidemiologica', 'Alinear respuesta preventiva', 'Notificar al equipo operativo'];
+    return ['Revisar la recomendacion', 'Asignar responsable', 'Dar seguimiento operativo'];
+  }
+  if (type === 'SUPPLY') return ['Validate critical inventory', 'Coordinate replenishment', 'Confirm availability with the responsible area'];
+  if (type === 'BED_CAPACITY') return ['Review current occupancy', 'Activate capacity protocol', 'Coordinate required discharges and transfers'];
+  if (type === 'STAFFING') return ['Confirm available staff', 'Reassign operational coverage', 'Notify the responsible area'];
+  if (type.includes('EPIDEMIOLOGY')) return ['Review epidemiological signal', 'Align preventive response', 'Notify the operational team'];
+  return ['Review the recommendation', 'Assign an owner', 'Track operational follow-up'];
+}
+
+function localizeRecommendedActionType(type: string, language: 'en' | 'es') {
+  const normalized = type.toUpperCase();
+  if (language !== 'es') {
+    const englishLabels: Record<string, string> = {
+      SUPPLY: 'Supplies',
+      BED_CAPACITY: 'Hospital Capacity',
+      STAFFING: 'Staffing',
+      ISOLATION: 'Local Epidemiology',
+      LOCAL_EPIDEMIOLOGY: 'Local Epidemiology',
+      EPIDEMIOLOGY_HOSPITAL: 'Hospital Epidemiology',
+      EPIDEMIOLOGY_MUNICIPAL: 'Municipal Epidemiology',
+    };
+    return englishLabels[normalized] ?? type.replace(/_/g, ' ');
+  }
+  const labels: Record<string, string> = {
+    SUPPLY: 'Insumos',
+    BED_CAPACITY: 'Capacidad hospitalaria',
+    STAFFING: 'Personal',
+    ISOLATION: 'Epidemiologia local',
+    LOCAL_EPIDEMIOLOGY: 'Epidemiologia local',
+    EPIDEMIOLOGY_HOSPITAL: 'Epidemiologia hospitalaria',
+    EPIDEMIOLOGY_MUNICIPAL: 'Epidemiologia municipal',
+  };
+  return labels[normalized] ?? type.replace(/_/g, ' ');
+}
+
+function localizePriorityLabel(severity: string, language: 'en' | 'es') {
+  const normalized = severity.toUpperCase();
+  if (language !== 'es') {
+    const labels: Record<string, string> = {
+      CRITICAL: 'Critical',
+      HIGH: 'High',
+      MEDIUM: 'Medium',
+      MODERATE: 'Medium',
+      LOW: 'Low',
+    };
+    return labels[normalized] ?? normalized;
+  }
+  const labels: Record<string, string> = {
+    CRITICAL: 'Crítica',
+    HIGH: 'Alta',
+    MEDIUM: 'Media',
+    MODERATE: 'Media',
+    LOW: 'Baja',
+  };
+  return labels[normalized] ?? 'Prioridad';
+}
+
+function localizeAdminMetricTitle(
+  title: string,
+  t: (key: string, params?: Record<string, string | number>) => string,
+  metricId?: string,
+) {
+  if (metricId) {
+    const idTranslated = t(`admin.dashboard.metrics.${metricId}.title`);
+    if (idTranslated !== `admin.dashboard.metrics.${metricId}.title`) return idTranslated;
+  }
   const normalized = title.trim().toLowerCase();
-  const dictionary: Record<string, string> = {
-    'available beds': 'Camas disponibles',
-    'occupied beds': 'Camas ocupadas',
-    'oxygen capacity': 'Capacidad de oxigeno',
-    'oxygen availability': 'Disponibilidad de oxigeno',
-    'icu occupancy': 'Ocupacion UCI',
-    'triage pressure': 'Presion de triaje',
-    'emergency load': 'Carga de emergencias',
+  const keys: Record<string, string> = {
+    'available beds': 'availableBeds',
+    'occupied beds': 'occupiedBeds',
+    'oxygen capacity': 'oxygenCapacity',
+    'oxygen availability': 'oxygenAvailability',
+    'staff on shift': 'staff',
+    'icu availability': 'icu',
+    'icu occupancy': 'icuOccupancy',
+    'triage pressure': 'triagePressure',
+    'emergency load': 'emergencyLoad',
+    'active outbreaks': 'outbreaks',
   };
-  return dictionary[normalized] ?? title;
+  const key = keys[normalized];
+  if (!key) return title;
+  const translated = t(`admin.dashboard.metrics.${key}.title`);
+  return translated === `admin.dashboard.metrics.${key}.title` ? title : translated;
 }
 
 function localizeAdminMetricSubtitle(subtitle: string, language: 'en' | 'es') {
+  const normalized = subtitle.trim().toLowerCase();
+  if (normalized === 'icu beds') {
+    return language === 'es' ? 'En Unidad de Cuidados Intensivos' : 'In Intensive Care Unit';
+  }
+  if (normalized === 'doctors + nurses') {
+    return language === 'es' ? 'En turno' : 'On shift';
+  }
   if (language !== 'es') return subtitle;
+  const labels: Record<string, string> = {
+    'general ward': 'Hospitalizacion general',
+    'nearby area': 'Area cercana',
+  };
+  if (labels[normalized]) return labels[normalized];
   return subtitle
     .replace(/^Live operational signal for /i, 'Senal operativa en vivo para ')
     .replace(/^Snapshot /i, 'Corte ')
     .replace(/^Updated /i, 'Actualizado ');
 }
 
-function deriveProgress(value: string, status?: string | null) {
-  const ratioMatch = value.match(/(\d+)\s*\/\s*(\d+)/);
-  if (ratioMatch) {
-    const current = Number.parseInt(ratioMatch[1], 10);
-    const total = Number.parseInt(ratioMatch[2], 10);
-    if (total > 0) return Math.round((current / total) * 100);
-  }
-  const percentMatch = value.match(/(\d+)%/);
-  if (percentMatch) return Number.parseInt(percentMatch[1], 10);
-  if ((status ?? '').toUpperCase().includes('CRITICAL')) return 92;
-  if ((status ?? '').toUpperCase().includes('WARNING')) return 68;
-  return 48;
-}
-
 function severityToColor(value: string) {
-  if (value === 'HIGH') return '#1E40AF';
-  if (value === 'MEDIUM') return '#3B82F6';
-  return '#93C5FD';
+  const normalized = value.toUpperCase();
+  if (normalized === 'CRITICAL') return '#DC2626';
+  if (normalized === 'HIGH') return '#EF4444';
+  if (normalized === 'MEDIUM') return '#F59E0B';
+  return '#2563EB';
 }
 
-function severityToProgress(value: string) {
-  if (value === 'HIGH') return 92;
-  if (value === 'MEDIUM') return 64;
-  return 38;
+function severityToSoftColor(value: string) {
+  const normalized = value.toUpperCase();
+  if (normalized === 'CRITICAL') return '#FEF2F2';
+  if (normalized === 'HIGH') return '#FEF2F2';
+  if (normalized === 'MEDIUM') return '#FFFBEB';
+  return '#EFF6FF';
+}
+
+function severityToBorderColor(value: string) {
+  const normalized = value.toUpperCase();
+  if (normalized === 'CRITICAL') return 'rgba(220, 38, 38, 0.34)';
+  if (normalized === 'HIGH') return 'rgba(239, 68, 68, 0.28)';
+  if (normalized === 'MEDIUM') return 'rgba(245, 158, 11, 0.28)';
+  return 'rgba(37, 99, 235, 0.2)';
+}
+
+function severityTone(value: string) {
+  const normalized = value.toUpperCase();
+  if (normalized === 'CRITICAL') return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
+  if (normalized === 'HIGH') return { accent: '#EA580C', soft: '#FFF7ED', border: '#FED7AA' };
+  if (normalized === 'MEDIUM' || normalized === 'MODERATE') return { accent: '#2563EB', soft: '#EFF6FF', border: '#BFDBFE' };
+  return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+}
+
+function severityRank(value: string) {
+  const normalized = value.toUpperCase();
+  if (normalized === 'CRITICAL') return 4;
+  if (normalized === 'HIGH') return 3;
+  if (normalized === 'MEDIUM' || normalized === 'MODERATE') return 2;
+  return 1;
+}
+
+function compareRecommendedActions(
+  first: AdminDashboardSummaryResponse['recommendedActions'][number],
+  second: AdminDashboardSummaryResponse['recommendedActions'][number],
+) {
+  const severityDelta = severityRank(second.severity) - severityRank(first.severity);
+  if (severityDelta !== 0) return severityDelta;
+  return localizeRecommendedActionTitle(first, 'en').localeCompare(localizeRecommendedActionTitle(second, 'en'));
+}
+
+function isArchivedRecommendedAction(status: string) {
+  const normalized = status.toUpperCase();
+  return normalized === 'COMPLETED' || normalized === 'REJECTED' || normalized === 'DISMISSED';
+}
+
+function isArchivedOperationalRecommendation(recommendation: OperationalRecommendationResponse) {
+  return isArchivedRecommendedAction(recommendation.status);
+}
+
+function recommendedActionKey(action: AdminDashboardSummaryResponse['recommendedActions'][number]) {
+  return `${normalizeRecommendationType(action.type)}:${normalizeRecommendationText(localizeRecommendedActionTitle(action, 'en') || action.title)}`;
+}
+
+function operationalRecommendationKey(recommendation: OperationalRecommendationResponse) {
+  const localizedTitle = recommendation.translations?.en?.title ?? recommendation.title;
+  return `${normalizeRecommendationType(recommendation.type)}:${normalizeRecommendationText(localizedTitle)}`;
+}
+
+function normalizeRecommendationType(value: string) {
+  const normalized = value.toUpperCase();
+  if (normalized === 'ISOLATION') return 'LOCAL_EPIDEMIOLOGY';
+  return normalized;
+}
+
+function normalizeRecommendationText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function recommendedActionCategoryTone(type: string) {
+  const normalized = type.toUpperCase();
+  if (normalized === 'BED_CAPACITY') {
+    return { accent: '#0891B2', soft: '#ECFEFF', border: 'rgba(8, 145, 178, 0.24)' };
+  }
+  if (normalized === 'STAFFING') {
+    return { accent: '#7C3AED', soft: '#F5F3FF', border: 'rgba(124, 58, 237, 0.24)' };
+  }
+  if (normalized === 'SUPPLY') {
+    return { accent: '#9333EA', soft: '#FAF5FF', border: 'rgba(147, 51, 234, 0.24)' };
+  }
+  if (normalized === 'LOCAL_EPIDEMIOLOGY' || normalized.startsWith('EPIDEMIOLOGY')) {
+    return { accent: '#9F1239', soft: '#FFF1F2', border: 'rgba(159, 18, 57, 0.24)' };
+  }
+  return { accent: '#475569', soft: '#F8FAFC', border: 'rgba(71, 85, 105, 0.22)' };
+}
+
+function actionIcon(type: string, color: string) {
+  const normalized = type.toUpperCase();
+  const iconName = normalized === 'SUPPLY'
+    ? 'package'
+    : normalized === 'BED_CAPACITY'
+      ? 'activity'
+    : normalized === 'STAFFING'
+      ? 'users'
+      : normalized === 'ISOLATION'
+          ? 'shield'
+          : normalized === 'LOCAL_EPIDEMIOLOGY' || normalized.startsWith('EPIDEMIOLOGY')
+            ? 'map-pin'
+            : 'check-square';
+
+  return <Feather name={iconName} size={16} color={color} />;
+}
+
+function localizeActionStatus(status: string, language: 'en' | 'es') {
+  const normalized = status.toUpperCase();
+  const labels: Record<string, { en: string; es: string }> = {
+    NEW: { en: 'Unassigned', es: 'Sin asignar' },
+    ACCEPTED: { en: 'Accepted', es: 'Aceptado' },
+    ASSIGNED: { en: 'Assigned', es: 'Asignado' },
+    IN_PROGRESS: { en: 'In progress', es: 'En progreso' },
+    COMPLETED: { en: 'Completed', es: 'Completado' },
+    DISMISSED: { en: 'Dismissed', es: 'Descartado' },
+  };
+  return labels[normalized]?.[language] ?? status.replace(/_/g, ' ');
+}
+
+function actionStatusTone(status: string) {
+  const normalized = status.toUpperCase();
+  if (normalized === 'NEW') return { accent: '#1718C7', soft: '#EEF2FF', border: '#C7D2FE' };
+  if (normalized === 'ASSIGNED' || normalized === 'ACCEPTED' || normalized === 'IN_PROGRESS' || normalized === 'COMPLETED') {
+    return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+  }
+  if (normalized === 'REJECTED' || normalized === 'DISMISSED') return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
+  return { accent: '#475569', soft: '#F8FAFC', border: '#E2E8F0' };
+}
+
+function deriveMetricTone(metricId: string | undefined, status: string, value?: string): AdminDashboardMetric['tone'] {
+  const normalizedMetricId = (metricId ?? '').toLowerCase();
+  const ratio = value ? parseRatio(value) : { current: null, total: null };
+  const availabilityPercent = ratio.total && ratio.current != null ? (ratio.current / ratio.total) * 100 : null;
+
+  if (normalizedMetricId === 'icu') {
+    if ((ratio.current != null && ratio.current <= 3) || (availabilityPercent != null && availabilityPercent <= 15)) return 'critical';
+    if ((ratio.current != null && ratio.current <= 5) || (availabilityPercent != null && availabilityPercent <= 30)) return 'warning';
+    return 'positive';
+  }
+
+  if (normalizedMetricId === 'beds') {
+    if (availabilityPercent != null && availabilityPercent <= 15) return 'critical';
+    if (availabilityPercent != null && availabilityPercent <= 30) return 'warning';
+  }
+
+  if (status.includes('CRITICAL')) return 'critical';
+  if (status.includes('WARNING')) return 'warning';
+  if (normalizedMetricId === 'staff') return 'positive';
+  if (normalizedMetricId === 'outbreaks') return 'info';
+  return 'positive';
+}
+
+function metricToneLabel(
+  tone: AdminDashboardMetric['tone'],
+  t: (key: string, params?: Record<string, string | number>) => string,
+) {
+  if (tone === 'critical') return t('admin.dashboard.kpiDetails.critical');
+  if (tone === 'warning') return t('admin.dashboard.kpiDetails.watch');
+  return t('admin.dashboard.kpiDetails.stable');
+}
+
+function toneToColor(tone: AdminDashboardMetric['tone']) {
+  if (tone === 'critical') return '#EF4444';
+  if (tone === 'warning') return '#F59E0B';
+  if (tone === 'positive') return '#22C55E';
+  if (tone === 'info') return '#0EA5E9';
+  return '#64748B';
+}
+
+function metricTonePalette(tone: AdminDashboardMetric['tone'] = 'default', fallbackAccent?: string) {
+  const palettes = {
+    critical: {
+      accent: '#EF4444',
+      border: 'rgba(239, 68, 68, 0.24)',
+      label: '#991B1B',
+      value: '#7F1D1D',
+      track: '#FEE2E2',
+    },
+    warning: {
+      accent: '#F59E0B',
+      border: 'rgba(245, 158, 11, 0.26)',
+      label: '#92400E',
+      value: '#78350F',
+      track: '#FEF3C7',
+    },
+    positive: {
+      accent: '#22C55E',
+      border: 'rgba(34, 197, 94, 0.24)',
+      label: '#166534',
+      value: '#14532D',
+      track: '#DCFCE7',
+    },
+    info: {
+      accent: '#0EA5E9',
+      border: 'rgba(14, 165, 233, 0.22)',
+      label: '#0369A1',
+      value: '#0F172A',
+      track: '#E0F2FE',
+    },
+    default: {
+      accent: fallbackAccent ?? '#64748B',
+      border: '#E2E8F0',
+      label: '#64748B',
+      value: '#0F172A',
+      track: '#E2E8F0',
+    },
+  };
+
+  return palettes[tone ?? 'default'];
 }
 
 const styles = StyleSheet.create({
@@ -675,12 +2153,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
   },
-  primaryAction: {
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    backgroundColor: '#0003B8',
-    borderColor: '#0003B8',
-  },
   errorCard: {
     borderRadius: 16,
     padding: 16,
@@ -699,16 +2171,18 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#1D4ED8',
   },
-  loadingCard: {
-    minHeight: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
+  skeletonLine: {
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
   },
-  loadingText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#526174',
+  skeletonSpacedSmall: {
+    marginTop: 8,
+  },
+  skeletonBadge: {
+    width: 54,
+    height: 24,
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
   },
   topCardsRow: {
     flexDirection: 'row',
@@ -720,74 +2194,98 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    minHeight: 132,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
+    minHeight: 176,
+    padding: 24,
+    paddingTop: 22,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.10,
+    shadowRadius: 30,
+    elevation: 5,
   },
-  metricCardCritical: {
-    backgroundColor: '#F0F7FF',
-    borderColor: '#BFDBFE',
+  metricAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
   },
   metricHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 14,
-    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 18,
+    gap: 12,
   },
   metricTitle: {
     flex: 1,
     fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '800',
-    letterSpacing: 0.9,
-    color: '#7A8CA5',
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 0,
+    color: '#64748B',
   },
-  metricTitleCritical: {
-    color: '#1E40AF',
+  metricBadgePill: {
+    flexShrink: 0,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
   },
   metricBadge: {
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: 14,
     fontWeight: '800',
   },
-  metricIcon: {
-    marginTop: 1,
+  metricValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 54,
+  },
+  metricValueCopy: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  skeletonValueBlock: {
+    flex: 1,
+    minWidth: 0,
+    gap: 7,
+  },
+  metricIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   metricValue: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: '900',
     color: '#0F172A',
-    letterSpacing: -0.8,
   },
-  metricValueCritical: {
-    color: '#1E3A8A',
+  metricValueUnit: {
+    flexShrink: 1,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '900',
+    color: '#0F172A',
   },
   metricSubtitle: {
-    marginTop: 6,
-    fontSize: 11,
-    lineHeight: 15,
-    color: '#94A3B8',
+    marginTop: 12,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#64748B',
   },
-  metricSubtitleCritical: {
-    color: '#1E40AF',
-  },
-  metricProgress: {
-    marginTop: 10,
-  },
-  segmentedBar: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 10,
-  },
-  segmentedFill: {
-    flex: 1,
-    height: 5,
-    borderRadius: 999,
+  skeletonSubtitleBlock: {
+    marginTop: 12,
+    gap: 7,
   },
   dashboardSection: {
     gap: 16,
@@ -795,7 +2293,7 @@ const styles = StyleSheet.create({
   mainGrid: {
     flexDirection: 'row',
     gap: 16,
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
   },
   mainGridCompact: {
     flexDirection: 'column',
@@ -804,11 +2302,58 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     alignSelf: 'stretch',
   },
+  retryHost: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  retryOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(248, 250, 252, 0.72)',
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.14)',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+  retryText: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#0003B8',
+  },
+  mapSkeleton: {
+    flex: 1,
+    height: 560,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.05)',
+    backgroundColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 3,
+  },
   mapCardCompact: {
     width: '100%',
   },
   alertsPanel: {
     flexShrink: 0,
+    display: 'flex',
+    padding: 16,
     backgroundColor: '#FCFDFE',
     borderRadius: 14,
     borderWidth: 1,
@@ -821,41 +2366,55 @@ const styles = StyleSheet.create({
     elevation: 3,
     alignSelf: 'stretch',
   },
-  alertsPanelHorizontal: {
-    minHeight: 226,
+  sidePanel: {
+    minHeight: 560,
   },
   alertsHeader: {
-    paddingHorizontal: 24,
-    paddingVertical: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
   alertsTitle: {
-    fontSize: 18,
-    lineHeight: 28,
-    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '800',
     color: '#0F172A',
   },
+  sectionHeaderRule: {
+    width: 42,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: '#0003B8',
+    marginTop: 10,
+  },
   alertsList: {
-    padding: 24,
-    gap: 16,
+    flex: 1,
+    padding: 16,
+    gap: 12,
     flexDirection: 'column',
+    justifyContent: 'space-between',
   },
-  alertsListHorizontal: {
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    gap: 14,
-  },
-  alertHorizontalItem: {
-    width: 320,
+  alertItems: {
+    gap: 12,
   },
   alertCard: {
     width: '100%',
     minHeight: 0,
   },
+  alertSkeletonItem: {
+    minHeight: 96,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#EEF2F7',
+    backgroundColor: '#F8FAFC',
+    padding: 14,
+    gap: 10,
+    justifyContent: 'center',
+  },
   analyticsCard: {
     flexShrink: 0,
-    minHeight: 540,
+    minHeight: 560,
   },
   stackCard: {
     width: '100%',
@@ -863,11 +2422,11 @@ const styles = StyleSheet.create({
   },
   caseCard: {
     flexShrink: 0,
-    minHeight: 540,
-    paddingHorizontal: 16,
-    paddingVertical: 18,
+    display: 'flex',
+    minHeight: 560,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
   },
   caseHeader: {
     flexDirection: 'row',
@@ -882,20 +2441,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
   },
-  caseFilter: {
-    minHeight: 28,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-  },
-  caseFilterLabel: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '700',
-    color: '#475569',
-  },
   caseSectionLabel: {
     marginBottom: 12,
     fontSize: 12,
@@ -906,22 +2451,271 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   caseMetrics: {
-    gap: 14,
-    marginBottom: 24,
+    flex: 1,
+    padding: 16,
+    gap: 12,
+    justifyContent: 'space-between',
   },
-  actionMetricRow: {
-    gap: 7,
+  actionItems: {
+    gap: 12,
+  },
+  actionMetricCard: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
+    gap: 12,
+  },
+  actionSkeletonItem: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EEF2F7',
+    backgroundColor: '#F8FAFC',
+    gap: 12,
+  },
+  skeletonActionIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#E8EEF6',
   },
   actionMetricTopRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  actionMetricIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  actionMetricTextGroup: {
+    flex: 1,
+    gap: 4,
   },
   actionMetricMeta: {
     fontSize: 12,
     lineHeight: 16,
     color: '#70839B',
+  },
+  actionMetricBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  actionPriorityBadge: {
+    minHeight: 26,
+    borderRadius: 999,
+    paddingLeft: 10,
+    paddingRight: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 2,
+  },
+  actionPriorityText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '900',
+    color: '#526174',
+    textTransform: 'uppercase',
+  },
+  actionPriorityValue: {
+    overflow: 'hidden',
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+  actionStatusBadge: {
+    minHeight: 26,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  showMoreActionsButton: {
+    minHeight: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    backgroundColor: '#EEF2FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  showMoreActionsText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#0003B8',
+  },
+  showMoreActionsCount: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  showMoreActionsCountText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '900',
+    color: '#1718C7',
+  },
+  recommendationModalOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  recommendationModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.28)',
+  },
+  recommendationModalCard: {
+    width: '100%',
+    maxWidth: 620,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#DDE5F2',
+    backgroundColor: '#FFFFFF',
+    padding: 22,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 18 },
+    elevation: 24,
+  },
+  recommendationModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  recommendationModalIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  recommendationModalTitleGroup: {
+    flex: 1,
+  },
+  recommendationModalEyebrow: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '900',
+    color: '#0003B8',
+    textTransform: 'uppercase',
+  },
+  recommendationModalTitle: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  recommendationModalClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#DDE5F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  recommendationModalDescription: {
+    marginTop: 16,
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#526174',
+  },
+  recommendationModalSignalRow: {
+    marginTop: 18,
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  recommendationModalSignalCard: {
+    flex: 1,
+    minWidth: 190,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#DDE5F2',
+    backgroundColor: '#F8FAFC',
+    padding: 14,
+    gap: 6,
+  },
+  recommendationModalSignalLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '900',
+    color: '#8A9AB2',
+    textTransform: 'uppercase',
+  },
+  recommendationModalSignalValue: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  recommendationModalActionBlock: {
+    marginTop: 18,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#DDE5F2',
+    padding: 14,
+    gap: 10,
+  },
+  recommendationModalActionTitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  recommendationModalStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  recommendationModalStepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    flexShrink: 0,
+  },
+  recommendationModalStepNumberText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '900',
+  },
+  recommendationModalStepText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#526174',
+    fontWeight: '700',
+  },
+  recommendationModalButton: {
+    marginTop: 18,
+    alignSelf: 'stretch',
   },
   caseMetricName: {
     flex: 1,
@@ -934,30 +2728,181 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
     fontWeight: '800',
-    color: '#243347',
+    color: '#475569',
   },
-  caseMetricTrack: {
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: '#E8EDF5',
-    overflow: 'hidden',
-  },
-  caseMetricFill: {
-    height: '100%',
-    borderRadius: 999,
-  },
-  caseAction: {
-    marginTop: 'auto',
-    minHeight: 40,
+  moreAlertsButton: {
+    minHeight: 52,
+    width: '100%',
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.16)',
+    backgroundColor: '#EEF2FF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
   },
-  caseActionLabel: {
+  moreAlertsText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#0003B8',
+  },
+  moreAlertsBadge: {
+    minWidth: 26,
+    height: 24,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  moreAlertsBadgeText: {
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '900',
+    color: '#0003B8',
+  },
+  moreAlertsOverlay: {
+    flex: 1,
+    padding: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreAlertsBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.38)',
+  },
+  moreAlertsCard: {
+    width: '100%',
+    maxWidth: 760,
+    maxHeight: '86%',
+    overflow: 'hidden',
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.16,
+    shadowRadius: 42,
+    elevation: 6,
+  },
+  moreAlertsHeader: {
+    minHeight: 84,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  moreAlertsEyebrow: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: '#64748B',
+  },
+  moreAlertsTitle: {
+    marginTop: 4,
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  closeButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moreAlertsList: {
+    padding: 24,
+    gap: 14,
+  },
+  stateExplorerOverlay: {
+    flex: 1,
+    padding: 28,
+    justifyContent: 'center',
+  },
+  stateExplorerBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.38)',
+  },
+  stateExplorerCard: {
+    flex: 1,
+    overflow: 'hidden',
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.16,
+    shadowRadius: 34,
+    elevation: 6,
+  },
+  stateExplorerHeader: {
+    minHeight: 76,
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  stateExplorerEyebrow: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    color: '#0003B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  stateExplorerTitle: {
+    marginTop: 4,
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  stateExplorerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  stateExplorerSecondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 3, 184, 0.14)',
+    backgroundColor: '#F8FAFC',
+  },
+  stateExplorerSecondaryText: {
     fontSize: 13,
     lineHeight: 16,
-    fontWeight: '700',
-    color: '#243347',
+    fontWeight: '800',
+    color: '#0003B8',
+  },
+  stateExplorerError: {
+    flex: 1,
+    minHeight: 620,
+    position: 'relative',
+    backgroundColor: '#F8FAFC',
   },
 });
 

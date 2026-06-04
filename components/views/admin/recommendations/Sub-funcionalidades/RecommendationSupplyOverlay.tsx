@@ -5,6 +5,8 @@ import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
 import { RecommendationFeedItem } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 interface RecommendationSupplyOverlayProps {
   visible: boolean;
@@ -14,6 +16,8 @@ interface RecommendationSupplyOverlayProps {
 }
 
 export function RecommendationSupplyOverlay({ visible, item, onClose, onSubmit }: RecommendationSupplyOverlayProps) {
+  const { language } = useTranslation();
+  const spanish = isSpanish(language);
   const [supplyType, setSupplyType] = useState('Supplementary oxygen');
   const [quantity, setQuantity] = useState('20');
   const [destination, setDestination] = useState('Ward 4');
@@ -21,12 +25,12 @@ export function RecommendationSupplyOverlay({ visible, item, onClose, onSubmit }
 
   useEffect(() => {
     if (visible) {
-      setSupplyType(item?.affectedResources[0] ?? 'Emergency stock');
+      setSupplyType(item?.affectedResources[0] ?? (spanish ? 'Inventario de emergencia' : 'Emergency stock'));
       setQuantity(item?.severity === 'high' ? '30' : '20');
-      setDestination(item?.affectedDepartments[0] ?? 'Operations');
-      setSupplier('Regional Medical Supply');
+      setDestination(item?.affectedDepartments[0] ?? (spanish ? 'Operaciones' : 'Operations'));
+      setSupplier(spanish ? 'Proveedor medico regional' : 'Regional Medical Supply');
     }
-  }, [item, visible]);
+  }, [item, spanish, visible]);
 
   if (!item) return null;
 
@@ -37,9 +41,13 @@ export function RecommendationSupplyOverlay({ visible, item, onClose, onSubmit }
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Supply Action</Text>
-              <Text style={styles.title}>Provision Resources</Text>
-              <Text style={styles.subtitle}>Prepare a supply response aligned with this recommendation.</Text>
+              <Text style={styles.eyebrow}>{spanish ? 'Accion de insumos' : 'Supply Action'}</Text>
+              <Text style={styles.title}>{spanish ? 'Preparar recursos' : 'Provision Resources'}</Text>
+              <Text style={styles.subtitle}>
+                {spanish
+                  ? 'Prepara una respuesta de insumos alineada con esta recomendacion.'
+                  : 'Prepare a supply response aligned with this recommendation.'}
+              </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
               <Feather name="x" size={18} color="#64748B" />
@@ -48,25 +56,25 @@ export function RecommendationSupplyOverlay({ visible, item, onClose, onSubmit }
           <View style={styles.content}>
             <View style={styles.row}>
               <View style={styles.field}>
-                <InputField label="Supply Type" value={supplyType} onChangeText={setSupplyType} inputContainerStyle={styles.inputContainer} />
+                <InputField label={spanish ? 'Tipo de insumo' : 'Supply Type'} value={supplyType} onChangeText={setSupplyType} inputContainerStyle={styles.inputContainer} />
               </View>
               <View style={styles.field}>
-                <InputField label="Quantity" value={quantity} type="number" onChangeText={(text) => setQuantity(text.replace(/[^0-9]/g, ''))} inputContainerStyle={styles.inputContainer} />
+                <InputField label={spanish ? 'Cantidad' : 'Quantity'} value={quantity} type="number" onChangeText={(text) => setQuantity(text.replace(/[^0-9]/g, ''))} inputContainerStyle={styles.inputContainer} />
               </View>
             </View>
             <View style={styles.row}>
               <View style={styles.field}>
-                <InputField label="Destination" value={destination} onChangeText={setDestination} inputContainerStyle={styles.inputContainer} />
+                <InputField label={spanish ? 'Destino' : 'Destination'} value={destination} onChangeText={setDestination} inputContainerStyle={styles.inputContainer} />
               </View>
               <View style={styles.field}>
-                <InputField label="Suggested Supplier" value={supplier} onChangeText={setSupplier} inputContainerStyle={styles.inputContainer} />
+                <InputField label={spanish ? 'Proveedor sugerido' : 'Suggested Supplier'} value={supplier} onChangeText={setSupplier} inputContainerStyle={styles.inputContainer} />
               </View>
             </View>
           </View>
           <View style={styles.footer}>
-            <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
+            <Button label={spanish ? 'Cancelar' : 'Cancel'} variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
             <Button
-              label="Submit Supply Request"
+              label={spanish ? 'Enviar solicitud' : 'Submit Supply Request'}
               variant="primary"
               size="md"
               style={{ ...styles.footerButton, ...styles.primaryButton }}

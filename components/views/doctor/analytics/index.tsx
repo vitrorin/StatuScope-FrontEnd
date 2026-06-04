@@ -410,6 +410,8 @@ function shortStateName(name: string): string {
     'Michoacan de Ocampo': 'Michoacan',
     'Michoacán de Ocampo': 'Michoacán',
     'Veracruz de Ignacio de la Llave': 'Veracruz',
+    'Estado de Mexico': 'México',
+    'Estado de México': 'México',
     'Mexico': 'México',
   };
   return aliases[name] ?? name;
@@ -421,13 +423,26 @@ function stateLookupKey(name: string): string {
     'Michoacan de Ocampo': 'Michoacan',
     'Michoacán de Ocampo': 'Michoacán',
     'Veracruz de Ignacio de la Llave': 'Veracruz',
+    'Estado de Mexico': 'Mexico',
+    'Estado de México': 'Mexico',
     'Mexico': 'Mexico',
     'México': 'Mexico',
   };
   return (aliases[name] ?? shortStateName(name))
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
     .toLowerCase();
+}
+
+function findStateByName(
+  states: DoctorDashboardStateMapItem[],
+  stateName: string | null | undefined,
+): DoctorDashboardStateMapItem | null {
+  if (!stateName) return null;
+  const targetKey = stateLookupKey(stateName);
+  return states.find((state) => stateLookupKey(state.stateName) === targetKey) ?? null;
 }
 
 function getStateBoundary(stateName: string | undefined | null) {
@@ -529,7 +544,8 @@ async function loadStateReportWithFallback(
   stateOutbreakMap: DoctorDashboardMapResponse | null,
 ) {
   try {
-    return await getDoctorDashboardStateReport(state.stateId);
+    const report = await getDoctorDashboardStateReport(state.stateId);
+    return report.outbreaks.length > 0 ? report : reportFromStateMap(state, stateOutbreakMap);
   } catch {
     return reportFromStateMap(state, stateOutbreakMap);
   }
@@ -574,8 +590,8 @@ export function AnalyticsScreen({
         getDoctorDashboardStateMap(),
         getDoctorDashboardDiseaseCatalog(),
       ]);
-      const stateKey = stateLookupKey(stateReport.stateName ?? localReport.stateName ?? '');
-      const selectedState = stateMap.states.find((state) => stateLookupKey(state.stateName) === stateKey);
+      const selectedState = findStateByName(stateMap.states, localReport.stateName)
+        ?? findStateByName(stateMap.states, stateReport.stateName);
       const stateOutbreakMap = selectedState
         ? await getDoctorDashboardStateOutbreakMap(selectedState.stateId)
         : null;
@@ -1175,7 +1191,7 @@ function DiseaseSelector({
         </TouchableOpacity>
       </View>
       {loading ? (
-        <Text style={styles.mutedText}>{t('common.analytics.selector.loading')}</Text>
+        <DiseaseSelectorLoadingSkeleton />
       ) : (
         <View style={styles.diseaseDropdown}>
           <View
@@ -1247,7 +1263,7 @@ function DiseaseSelector({
                   setIsStateOpen(true);
                 }}
                 onFocus={() => {
-                  setStateSearchQuery(selectedState?.stateName ?? '');
+                  setStateSearchQuery('');
                   setIsStateOpen(true);
                 }}
                 placeholder={selectedState?.stateName ?? t('common.analytics.selector.statePlaceholder')}
@@ -1256,7 +1272,14 @@ function DiseaseSelector({
               />
               <TouchableOpacity
                 activeOpacity={0.82}
-                onPress={() => setIsStateOpen((current) => !current)}
+                onPress={() => {
+                  setIsStateOpen((current) => {
+                    if (!current) {
+                      setStateSearchQuery('');
+                    }
+                    return !current;
+                  });
+                }}
                 style={styles.diseaseDropdownIconButton}
               >
                 <Feather name={isStateOpen ? 'chevron-up' : 'chevron-down'} size={18} color="#1718C7" />
@@ -1338,6 +1361,29 @@ function DiseaseSelector({
         </View>
       </Modal>
     </CardBase>
+  );
+}
+
+function DiseaseSelectorLoadingSkeleton() {
+  return (
+    <View style={styles.selectorLoadingBlock}>
+      <View style={styles.selectorLoadingInput}>
+        <View style={[styles.analyticsSkeletonLine, styles.analyticsSkeletonInputText]} />
+        <View style={styles.analyticsSkeletonIcon} />
+      </View>
+      <View style={styles.selectorLoadingList}>
+        {[0, 1, 2].map((item) => (
+          <View key={item} style={styles.selectorLoadingOption}>
+            <View style={styles.analyticsSkeletonDot} />
+            <View style={styles.selectorLoadingOptionText}>
+              <View style={[styles.analyticsSkeletonLine, { width: item === 0 ? '54%' : item === 1 ? '42%' : '48%' }]} />
+              <View style={[styles.analyticsSkeletonLine, styles.analyticsSkeletonSmallLine]} />
+            </View>
+            <View style={[styles.analyticsSkeletonLine, styles.analyticsSkeletonBadge]} />
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -1935,6 +1981,73 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 30,
   },
+  selectorLoadingBlock: {
+    marginTop: 10,
+    maxWidth: 420,
+    gap: 10,
+  },
+  selectorLoadingInput: {
+    minHeight: 48,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#D6E0EF',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+  },
+  selectorLoadingList: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5EAF3',
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+  },
+  selectorLoadingOption: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  selectorLoadingOptionText: {
+    flex: 1,
+    gap: 8,
+  },
+  analyticsSkeletonLine: {
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
+  },
+  analyticsSkeletonInputText: {
+    flex: 1,
+    height: 14,
+  },
+  analyticsSkeletonSmallLine: {
+    width: '30%',
+    height: 9,
+    backgroundColor: '#EEF2F7',
+  },
+  analyticsSkeletonBadge: {
+    width: 56,
+    height: 22,
+    backgroundColor: '#EEF2FF',
+  },
+  analyticsSkeletonIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: '#EEF2FF',
+  },
+  analyticsSkeletonDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    backgroundColor: '#EEF2F7',
+  },
   diseaseDropdownButton: {
     minHeight: 48,
     borderRadius: 16,
@@ -1964,12 +2077,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF',
   },
   diseaseDropdownList: {
-    position: 'absolute',
-    top: 56,
+    position: 'relative',
+    marginTop: 8,
     left: 0,
     right: 0,
-    zIndex: 40,
-    elevation: 24,
     maxHeight: 280,
     borderRadius: 16,
     borderWidth: 1,

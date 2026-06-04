@@ -42,7 +42,7 @@ export function InventoryMapOverlay({ visible, inventory, onClose }: InventoryMa
           <View style={styles.header}>
             <View>
               <Text style={styles.eyebrow}>{isSpanish(language) ? 'Ubicaciones de inventario' : 'Inventory Locations'}</Text>
-              <Text style={styles.title}>{isSpanish(language) ? 'Mapa de almacenamiento' : 'Real Storage Map'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Ubicaciones de inventario' : 'Inventory Locations'}</Text>
               <Text style={styles.subtitle}>{isSpanish(language) ? 'Agrupados directamente desde las ubicaciones de artículos respaldadas por la base de datos.' : 'Grouped directly from database-backed item locations instead of a static diagram.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>

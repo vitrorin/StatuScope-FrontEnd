@@ -25,6 +25,10 @@
       "beds": "{{count}} beds",
       "bed": "{{count}} bed",
       "kilometers": "{{count}} km",
+      "open": "{{count}} open",
+      "free": "{{count}} free",
+      "doctor": "{{count}} doctor",
+      "doctors": "{{count}} doctors",
       "withinKilometers": "Within {{count}} km",
       "staffing": "{{doctors}} MD / {{nurses}} RN"
     },
@@ -552,6 +556,79 @@
           "signalLabel": "Priority concentration",
           "insightCriteria": "Priority outbreaks in the municipality ranked by severity and cases.",
           "recommendedAction": "Prioritize this municipality when reviewing compatible symptoms and nearby outbreak context."
+        }
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "kpiDetails": {
+        "operationalMetric": "Operational Metric",
+        "currentSituation": "Current Situation",
+        "indicator": "Indicator",
+        "insightsTitle": "Relevant operational information",
+        "outbreaksTitle": "Ranked nearby active outbreaks",
+        "defaultCriteria": "Operational signals related to this KPI.",
+        "recommendedAction": "Recommended Action",
+        "bedsCriteria": "Resource capacity signals",
+        "staffCriteria": "Available clinical staff by role.",
+        "icuCriteria": "Critical-care availability signals without repeating the headline ICU count.",
+        "outbreaksCriteria": "Nearby active outbreaks ranked by case burden.",
+        "freeCapacity": "Free capacity",
+        "capacitySignal": "Capacity signal",
+        "calculatedPriority": "Calculated priority",
+        "recommendationStatus": "Recommendation status",
+        "doctorsAvailable": "Doctors available",
+        "nursesAvailable": "Nurses available",
+        "activeShift": "Active shift",
+        "clinicalCoverage": "Clinical coverage",
+        "icuFreeCapacity": "ICU free capacity",
+        "hospitalResources": "Hospital resources",
+        "intensiveCareUnit": "Intensive care unit",
+        "capacityProtocol": "Capacity protocol",
+        "staffingProtocol": "Staffing protocol",
+        "relatedHospitalAlerts": "Related hospital alerts",
+        "noPriorityAction": "No priority action",
+        "review": "Review",
+        "stable": "Stable",
+        "watch": "Watch",
+        "critical": "Critical",
+        "free": "free",
+        "available": "available"
+      },
+      "metrics": {
+        "beds": {
+          "title": "Available Beds"
+        },
+        "staff": {
+          "title": "Active Staff"
+        },
+        "icu": {
+          "title": "ICU Availability"
+        },
+        "outbreaks": {
+          "title": "Active Outbreaks"
+        },
+        "availableBeds": {
+          "title": "Available Beds"
+        },
+        "occupiedBeds": {
+          "title": "Occupied Beds"
+        },
+        "oxygenCapacity": {
+          "title": "Oxygen Capacity"
+        },
+        "oxygenAvailability": {
+          "title": "Oxygen Availability"
+        },
+        "icuOccupancy": {
+          "title": "ICU Occupancy"
+        },
+        "triagePressure": {
+          "title": "Triage Pressure"
+        },
+        "emergencyLoad": {
+          "title": "Emergency Load"
         }
       }
     }

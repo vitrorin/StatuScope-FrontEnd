@@ -17,6 +17,7 @@ import { InputField } from '@/components/inputs/InputField';
 import { CheckboxField } from '@/components/inputs/CheckboxField';
 import { useAuth } from '@/contexts/AuthContext';
 import type { UserProfile } from '@/contexts/AuthContext';
+import { ApiError } from '@/lib/api';
 
 const BRAND_BLUE = '#0003B8';
 const PANEL_TEXT = '#0F172A';
@@ -75,7 +76,10 @@ const radarStats: RadarStat[] = [
 ];
 
 function dashboardForProfile(profile: UserProfile): string {
-  if (profile.roles.includes('SYSTEM_ADMIN') || profile.roles.includes('HOSPITAL_ADMIN')) {
+  if (profile.roles.includes('SYSTEM_ADMIN')) {
+    return '/system/dashboard';
+  }
+  if (profile.roles.includes('HOSPITAL_ADMIN')) {
     return '/dashboard/administrator';
   }
   return '/dashboard/doctor';
@@ -110,8 +114,12 @@ export function Login() {
     try {
       const me = await login(email.trim(), password);
       router.replace(dashboardForProfile(me) as never);
-    } catch {
-      setError('Invalid email or password.');
+    } catch (nextError) {
+      if (nextError instanceof ApiError && nextError.status === 401) {
+        setError('Firebase accepted the login, but this account is not registered or active in StatuScope. Please sign up again or ask an admin to activate it.');
+      } else {
+        setError('Invalid email or password.');
+      }
     } finally {
       setSubmitting(false);
     }

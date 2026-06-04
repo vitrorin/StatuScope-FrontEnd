@@ -1,14 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
+import { adminNavigationLinks, getAdminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
-import { MetaInfoRow } from '@/components/recommendations/MetaInfoRow';
-import { SeverityBadge } from '@/components/recommendations/SeverityBadge';
 import { RecommendationDetailOverlay } from '@/components/views/admin/recommendations/Sub-funcionalidades/RecommendationDetailOverlay';
 import { RecommendationDismissOverlay } from '@/components/views/admin/recommendations/Sub-funcionalidades/RecommendationDismissOverlay';
 import { RecommendationNotifyOverlay } from '@/components/views/admin/recommendations/Sub-funcionalidades/RecommendationNotifyOverlay';
@@ -25,9 +23,14 @@ import {
   createAdminRecommendationNotification,
   createAdminRecommendationTask,
   createAdminSupplyRequest,
+  getAdminResourceDepartments,
   getAdminRecommendationDetail,
+  HospitalDepartmentResourceResponse,
+  listOperationalContacts,
   listAdminRecommendations,
+  OperationalContactResponse,
   OperationalRecommendationResponse,
+  OperationalRecommendationTranslation,
   refreshAdminRecommendations,
   updateAdminRecommendationStatus,
 } from '@/lib/adminOperational';
@@ -35,7 +38,6 @@ import { useTranslation } from '@/i18n';
 import {
   formatRelativeDate,
   getHospitalAdminLabel,
-  getRecommendationSourceLabel,
   getRecommendationStatusLabel,
   isSpanish,
 } from '@/components/views/admin/localization';
@@ -43,7 +45,8 @@ import {
 const tabs: { label: string; value: RecommendationTab }[] = [
   { label: 'Active Alerts', value: 'active' },
   { label: 'High Urgency', value: 'high' },
-  { label: 'In Progress', value: 'inProgress' },
+  { label: 'Assigned', value: 'assigned' },
+  { label: 'Unassigned', value: 'unassigned' },
   { label: 'Archive', value: 'archive' },
 ];
 
@@ -51,14 +54,20 @@ type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminRecommendations() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ focus?: string }>();
   const { logout, profile } = useAuth();
   const { language } = useTranslation();
+  const scrollRef = useRef<ScrollView | null>(null);
+  const itemOffsetsRef = useRef<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState<RecommendationTab>('active');
   const [loadState, setLoadState] = useState<LoadState>('idle');
   const [refreshing, setRefreshing] = useState(false);
-  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
+  const [, setActionBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; tone: 'success' | 'warning' | 'error' } | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationFeedItem[]>([]);
+  const [operationalContacts, setOperationalContacts] = useState<OperationalContactResponse[]>([]);
+  const [departments, setDepartments] = useState<HospitalDepartmentResourceResponse[]>([]);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [notifyId, setNotifyId] = useState<string | null>(null);
@@ -68,6 +77,7 @@ export function AdminRecommendations() {
   const loadRecommendations = useCallback(async () => {
     setLoadState((current) => (current === 'success' ? 'success' : 'loading'));
     setError(null);
+    setToast(null);
     try {
       const data = await listAdminRecommendations();
       setRecommendations(data.map((item) => mapRecommendation(item, language)));
@@ -78,20 +88,48 @@ export function AdminRecommendations() {
     }
   }, [language]);
 
+  const loadOperationalContacts = useCallback(async () => {
+    try {
+      const data = await listOperationalContacts();
+      setOperationalContacts(data.filter((contact) => contact.availabilityStatus !== 'INACTIVE'));
+    } catch {
+      setOperationalContacts([]);
+    }
+  }, []);
+
+  const loadDepartments = useCallback(async () => {
+    try {
+      const response = await getAdminResourceDepartments();
+      setDepartments(response.data ?? []);
+    } catch {
+      setDepartments([]);
+    }
+  }, []);
+
   useEffect(() => {
     void loadRecommendations();
-  }, [loadRecommendations]);
+    void loadOperationalContacts();
+    void loadDepartments();
+  }, [loadDepartments, loadOperationalContacts, loadRecommendations]);
+
+  const showToast = useCallback((message: string, tone: 'success' | 'warning' | 'error' = 'success') => {
+    setToast({ message, tone });
+    setTimeout(() => {
+      setToast((current) => (current?.message === message ? null : current));
+    }, 4200);
+  }, []);
 
   const refreshRecommendation = useCallback(async (id: string) => {
     const detail = await getAdminRecommendationDetail(id);
     const mapped = mapRecommendation(detail, language);
     setRecommendations((current) => current.map((item) => (item.id === id ? mapped : item)));
-    return mapped;
+    return { detail, mapped };
   }, [language]);
 
   const handleStatusChange = useCallback(async (id: string, status: RecommendationStatus) => {
     setActionBusyId(id);
     setError(null);
+    setToast(null);
     try {
       await updateAdminRecommendationStatus(id, toApiStatus(status));
       await refreshRecommendation(id);
@@ -105,6 +143,7 @@ export function AdminRecommendations() {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     setError(null);
+    setToast(null);
     try {
       await refreshAdminRecommendations();
       await loadRecommendations();
@@ -120,26 +159,68 @@ export function AdminRecommendations() {
   const notifyRecommendation = recommendations.find((item) => item.id === notifyId) ?? null;
   const supplyRecommendation = recommendations.find((item) => item.id === supplyId) ?? null;
   const dismissRecommendation = recommendations.find((item) => item.id === dismissId) ?? null;
+  const assignableContacts = useMemo(() => operationalContacts.filter((contact) => contact.assignable), [operationalContacts]);
+  const notifiableContacts = useMemo(() => operationalContacts.filter((contact) => contact.notifiable), [operationalContacts]);
+  const focusedRecommendationId = typeof params.focus === 'string' ? params.focus : undefined;
+  const sidebarItems = useMemo(() => getAdminSidebarItems(language), [language]);
+  const archivedKeys = useMemo(
+    () => new Set(recommendations.filter((item) => isArchived(item.status)).map(recommendationDisplayKey)),
+    [recommendations],
+  );
+  const nonArchivedRecommendations = useMemo(
+    () => recommendations.filter((item) => !isArchived(item.status) && !archivedKeys.has(recommendationDisplayKey(item))),
+    [archivedKeys, recommendations],
+  );
 
   const visibleRecommendations = useMemo(() => {
     if (activeTab === 'high') {
-      return recommendations.filter((item) => item.severity === 'high' && !isArchived(item.status));
+      return nonArchivedRecommendations.filter((item) => isHighUrgency(item));
     }
-    if (activeTab === 'inProgress') {
-      return recommendations.filter((item) => item.status === 'accepted' || item.status === 'assigned');
+    if (activeTab === 'assigned') {
+      return nonArchivedRecommendations.filter((item) => item.status === 'accepted' || item.status === 'assigned');
+    }
+    if (activeTab === 'unassigned') {
+      return nonArchivedRecommendations.filter((item) => item.status === 'new');
     }
     if (activeTab === 'archive') {
       return recommendations.filter((item) => isArchived(item.status));
     }
-    return recommendations.filter((item) => !isArchived(item.status));
-  }, [activeTab, recommendations]);
+    return nonArchivedRecommendations;
+  }, [activeTab, nonArchivedRecommendations, recommendations]);
 
   const tabBadges = useMemo(() => ({
-    active: recommendations.filter((item) => !isArchived(item.status)).length,
-    high: recommendations.filter((item) => item.severity === 'high' && !isArchived(item.status)).length,
-    inProgress: recommendations.filter((item) => item.status === 'accepted' || item.status === 'assigned').length,
+    active: nonArchivedRecommendations.length,
+    high: nonArchivedRecommendations.filter((item) => isHighUrgency(item)).length,
+    assigned: nonArchivedRecommendations.filter((item) => item.status === 'accepted' || item.status === 'assigned').length,
+    unassigned: nonArchivedRecommendations.filter((item) => item.status === 'new').length,
     archive: recommendations.filter((item) => isArchived(item.status)).length,
-  }), [recommendations]);
+  }), [nonArchivedRecommendations, recommendations]);
+
+  useEffect(() => {
+    if (!focusedRecommendationId || recommendations.length === 0) return;
+    const target = recommendations.find((item) => item.id === focusedRecommendationId);
+    if (!target) return;
+    if (isArchived(target.status)) {
+      setActiveTab('archive');
+    } else if (target.status === 'accepted' || target.status === 'assigned') {
+      setActiveTab('assigned');
+    } else if (target.status === 'new') {
+      setActiveTab('unassigned');
+    } else {
+      setActiveTab('active');
+    }
+  }, [focusedRecommendationId, recommendations]);
+
+  useEffect(() => {
+    if (!focusedRecommendationId || visibleRecommendations.length === 0) return;
+    const targetVisible = visibleRecommendations.some((item) => item.id === focusedRecommendationId);
+    if (!targetVisible) return;
+    const timeout = setTimeout(() => {
+      const y = itemOffsetsRef.current[focusedRecommendationId] ?? 0;
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - 180), animated: true });
+    }, 180);
+    return () => clearTimeout(timeout);
+  }, [focusedRecommendationId, visibleRecommendations]);
 
   return (
     <DashboardLayout
@@ -149,11 +230,11 @@ export function AdminRecommendations() {
       userId={profile?.email ?? undefined}
       avatarText={initialsFromName(profile?.fullName)}
       links={adminNavigationLinks}
-      sidebarItems={adminSidebarItems}
+      sidebarItems={sidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <>
-        <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
             <View style={styles.heroStrip}>
               <View style={styles.heroCopy}>
@@ -189,7 +270,7 @@ export function AdminRecommendations() {
 
             <View style={styles.summaryRow}>
               <SummaryTile label={isSpanish(language) ? 'Cola activa' : 'Active Queue'} value={String(tabBadges.active)} />
-              <SummaryTile label={isSpanish(language) ? 'En progreso' : 'In Progress'} value={String(tabBadges.inProgress)} />
+              <SummaryTile label={isSpanish(language) ? 'Asignado' : 'Assigned'} value={String(tabBadges.assigned)} />
               <SummaryTile label={isSpanish(language) ? 'Completadas' : 'Completed'} value={String(recommendations.filter((item) => item.status === 'completed').length)} />
               <SummaryTile label={isSpanish(language) ? 'Descartadas' : 'Rejected'} value={String(recommendations.filter((item) => item.status === 'rejected').length)} />
             </View>
@@ -215,34 +296,40 @@ export function AdminRecommendations() {
             </View>
 
             {loadState === 'loading' && recommendations.length === 0 ? (
-              <CardBase style={styles.loadingCard}>
-                <ActivityIndicator color="#1718C7" />
-                <Text style={styles.loadingText}>{isSpanish(language) ? 'Cargando recomendaciones...' : 'Loading recommendation feed...'}</Text>
-              </CardBase>
+              <RecommendationsSkeleton />
             ) : visibleRecommendations.length > 0 ? (
               <View style={styles.feed}>
                 {visibleRecommendations.map((item) => (
-                  <AdminRecommendationCard
+                  <View
                     key={item.id}
-                    item={item}
-                    language={language}
-                    isBusy={actionBusyId === item.id}
-                    onOpenDetail={async () => {
-                      setDetailId(item.id);
-                      try {
-                        await refreshRecommendation(item.id);
-                      } catch {
-                        return;
-                      }
+                    onLayout={(event) => {
+                      itemOffsetsRef.current[item.id] = event.nativeEvent.layout.y;
                     }}
-                    onStatusChange={(status) => void handleStatusChange(item.id, status)}
-                    onAction={(actionLabel) => {
-                      if (actionLabel === (isSpanish(language) ? 'Asignar tarea' : 'Assign task')) setTaskId(item.id);
-                      if (actionLabel === (isSpanish(language) ? 'Notificar personal' : 'Notify staff')) setNotifyId(item.id);
-                      if (actionLabel === (isSpanish(language) ? 'Pedir insumos' : 'Order supplies')) setSupplyId(item.id);
-                      if (actionLabel === (isSpanish(language) ? 'Descartar' : 'Dismiss')) setDismissId(item.id);
-                    }}
-                  />
+                    style={item.id === focusedRecommendationId ? styles.focusedRecommendationShell : null}
+                  >
+                    <AdminRecommendationCard
+                      item={item}
+                      language={language}
+                      onOpenDetail={async () => {
+                        setDetailId(item.id);
+                        try {
+                          await refreshRecommendation(item.id);
+                        } catch {
+                          return;
+                        }
+                      }}
+                      onAction={(actionLabel) => {
+                        if (
+                          actionLabel === (isSpanish(language) ? 'Asignar tarea' : 'Assign task') ||
+                          actionLabel === (isSpanish(language) ? 'Reasignar tarea' : 'Reassign task')
+                        ) setTaskId(item.id);
+                        if (actionLabel === (isSpanish(language) ? 'Notificar personal' : 'Notify staff')) setNotifyId(item.id);
+                        if (actionLabel === (isSpanish(language) ? 'Pedir insumos' : 'Order supplies')) setSupplyId(item.id);
+                        if (actionLabel === (isSpanish(language) ? 'Completar' : 'Complete')) void handleStatusChange(item.id, 'completed');
+                        if (actionLabel === (isSpanish(language) ? 'Descartar' : 'Dismiss')) setDismissId(item.id);
+                      }}
+                    />
+                  </View>
                 ))}
               </View>
             ) : (
@@ -257,27 +344,42 @@ export function AdminRecommendations() {
           </View>
         </ScrollView>
 
+        {toast ? (
+          <View style={[styles.toast, toast.tone === 'warning' && styles.toastWarning, toast.tone === 'error' && styles.toastError]}>
+            <Feather
+              name={toast.tone === 'success' ? 'check-circle' : toast.tone === 'warning' ? 'alert-triangle' : 'x-circle'}
+              size={16}
+              color={toast.tone === 'success' ? '#16A34A' : toast.tone === 'warning' ? '#EA580C' : '#DC2626'}
+            />
+            <Text style={styles.toastText}>{toast.message}</Text>
+          </View>
+        ) : null}
+
         <RecommendationDetailOverlay visible={detailRecommendation !== null} item={detailRecommendation} onClose={() => setDetailId(null)} />
         <RecommendationTaskOverlay
           visible={taskRecommendation !== null}
           item={taskRecommendation}
+          contacts={assignableContacts}
           onClose={() => setTaskId(null)}
           onSave={async (payload) => {
             if (!taskRecommendation) return;
             setActionBusyId(taskRecommendation.id);
             setError(null);
+            setToast(null);
             try {
               await createAdminRecommendationTask(taskRecommendation.id, {
+                ownerContactId: payload.ownerContactId,
                 ownerLabel: payload.owner,
                 departmentLabel: payload.area,
                 deadlineAt: toIsoDeadline(payload.deadline),
-                priority: payload.priority.toUpperCase(),
                 notes: payload.notes,
+                language,
               });
-              await refreshRecommendation(taskRecommendation.id);
+              const { detail } = await refreshRecommendation(taskRecommendation.id);
+              showToast(deliveryNotice(detail, language, 'task'), deliveryToastTone(detail));
               setTaskId(null);
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to create the task.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo crear la tarea.' : 'Unable to create the task.');
             } finally {
               setActionBusyId(null);
             }
@@ -286,20 +388,28 @@ export function AdminRecommendations() {
         <RecommendationNotifyOverlay
           visible={notifyRecommendation !== null}
           item={notifyRecommendation}
+          contacts={notifiableContacts}
+          departments={departments}
           onClose={() => setNotifyId(null)}
           onSend={async (payload) => {
             if (!notifyRecommendation) return;
             setActionBusyId(notifyRecommendation.id);
             setError(null);
+            setToast(null);
             try {
               await createAdminRecommendationNotification(notifyRecommendation.id, {
+                audienceType: payload.audienceType,
+                audienceContactId: payload.audienceContactId,
+                audienceDepartmentCode: payload.audienceDepartmentCode,
                 audienceLabel: payload.audience,
                 message: payload.message,
+                language,
               });
-              await refreshRecommendation(notifyRecommendation.id);
+              const { detail } = await refreshRecommendation(notifyRecommendation.id);
+              showToast(deliveryNotice(detail, language, 'notification'), deliveryToastTone(detail));
               setNotifyId(null);
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to send the notification.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo enviar la notificacion.' : 'Unable to send the notification.');
             } finally {
               setActionBusyId(null);
             }
@@ -324,7 +434,7 @@ export function AdminRecommendations() {
               await refreshRecommendation(supplyRecommendation.id);
               setSupplyId(null);
             } catch (nextError) {
-              setError(nextError instanceof Error ? nextError.message : 'Unable to create the supply request.');
+              setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudo crear la solicitud de insumos.' : 'Unable to create the supply request.');
             } finally {
               setActionBusyId(null);
             }
@@ -345,68 +455,117 @@ export function AdminRecommendations() {
   );
 }
 
+function RecommendationsSkeleton() {
+  return (
+    <View style={styles.feed}>
+      {[0, 1, 2].map((item) => (
+        <CardBase key={item} style={styles.recommendationSkeletonCard}>
+          <View style={styles.recommendationSkeletonHeader}>
+            <View style={styles.skeletonCategoryRow}>
+              <View style={styles.skeletonIcon} />
+              <View style={[styles.skeletonLine, { width: 96, height: 14 }]} />
+            </View>
+            <View style={styles.skeletonPill} />
+          </View>
+          <View style={[styles.skeletonLine, { width: item === 1 ? '48%' : '62%', height: 20 }]} />
+          <View style={styles.skeletonParagraph}>
+            <View style={[styles.skeletonLine, { width: '92%' }]} />
+            <View style={[styles.skeletonLine, { width: '74%' }]} />
+          </View>
+          <View style={styles.skeletonSignalGrid}>
+            <View style={styles.skeletonSignalCard} />
+            <View style={styles.skeletonSignalCard} />
+            <View style={styles.skeletonSignalCard} />
+          </View>
+          <View style={styles.skeletonFooterRow}>
+            <View style={[styles.skeletonLine, { width: 118 }]} />
+            <View style={styles.skeletonButtonRow}>
+              <View style={styles.skeletonButton} />
+              <View style={styles.skeletonButton} />
+              <View style={styles.skeletonButton} />
+            </View>
+          </View>
+        </CardBase>
+      ))}
+    </View>
+  );
+}
+
 function AdminRecommendationCard({
   item,
   language,
-  isBusy,
   onOpenDetail,
   onAction,
-  onStatusChange,
 }: {
   item: RecommendationFeedItem;
   language: 'en' | 'es';
-  isBusy: boolean;
   onOpenDetail: () => void;
   onAction: (actionLabel: string) => void;
-  onStatusChange: (status: RecommendationStatus) => void;
 }) {
+  const tone = recommendationCategoryTone(item.type);
+  const priorityTone = recommendationPriorityTone(item.backendSeverity);
+  const archiveTone = archivedStatusTone(item.status);
+  const statusTone = recommendationStatusTone(item.status);
+  const displayTone = archiveTone ?? tone;
+  const displayPriorityTone = archiveTone ?? priorityTone;
+  const createdMeta = item.metaItems[0];
+  const actionIconByLabel = (label: string): React.ComponentProps<typeof Feather>['name'] => {
+    const normalized = label.toLowerCase();
+    if (normalized.includes('tarea') || normalized.includes('task')) return 'check-square';
+    if (normalized.includes('notificar') || normalized.includes('notify')) return 'send';
+    if (normalized.includes('insumo') || normalized.includes('suppl')) return 'package';
+    if (normalized.includes('descartar') || normalized.includes('dismiss')) return 'x-circle';
+    return 'arrow-right';
+  };
+
   return (
-    <CardBase style={[styles.recommendationCard, item.severity === 'high' && styles.recommendationCardHigh]}>
+    <CardBase style={[
+      styles.recommendationCard,
+      { borderColor: archiveTone?.border ?? tone.border },
+      archiveTone ? { backgroundColor: archiveTone.soft } : null,
+    ]}>
+      <View style={[styles.recommendationAccent, { backgroundColor: displayTone.accent }]} />
       <TouchableOpacity style={styles.recommendationBody} activeOpacity={0.92} onPress={onOpenDetail}>
         <View style={styles.topRow}>
           <View style={styles.categoryWrap}>
             <View style={styles.categoryRow}>
-              <Feather
-                name={item.severity === 'high' ? 'alert-triangle' : item.severity === 'medium' ? 'settings' : 'archive'}
-                size={14}
-                color={item.severity === 'high' ? '#F04B4B' : item.severity === 'medium' ? '#F59E0B' : '#7C8CA4'}
-              />
-              <Text
-                style={[
-                  styles.category,
-                  {
-                    color:
-                      item.severity === 'high'
-                        ? '#F04B4B'
-                        : item.severity === 'medium'
-                          ? '#D7860E'
-                          : '#7C8CA4',
-                  },
-                ]}
-              >
-                {item.category}
-              </Text>
+              <View style={[styles.categoryIcon, { backgroundColor: displayTone.soft }]}>
+                <Feather name={tone.icon} size={15} color={displayTone.accent} />
+              </View>
+              <Text style={[styles.category, { color: displayTone.accent }]}>{item.category.toUpperCase()}</Text>
             </View>
             <Text style={styles.recommendationTitle}>{item.title}</Text>
           </View>
 
           <View style={styles.headerIndicators}>
-            <SeverityBadge label={item.severity.toUpperCase()} severity={item.severity} />
-            <View style={styles.statusPill}>
-              <Text style={styles.statusPillLabel}>{getRecommendationStatusLabel(item.status, language)}</Text>
+            <View style={[styles.statusPill, { borderColor: statusTone.border, backgroundColor: statusTone.soft }]}>
+              <Text style={[styles.statusPillLabel, { color: statusTone.accent }]}>{getRecommendationStatusLabel(item.status, language)}</Text>
             </View>
           </View>
         </View>
 
         <Text style={styles.recommendationDescription}>{item.description}</Text>
-        <Text style={styles.insightLine}>
-          {language === 'es' ? 'Confianza' : 'Confidence'} {item.confidenceScore}% | {language === 'es' ? 'Impacto' : 'Impact'}: {item.expectedImpact} | {language === 'es' ? 'Ventana' : 'Window'}: {item.urgencyWindow}
-        </Text>
-        <Text style={styles.contextLine}>{getRecommendationSourceLabel(item.createdByMode, language)}</Text>
+
+        <View style={styles.signalGrid}>
+          <View style={[styles.signalCard, styles.prioritySignalCard, archiveTone ? styles.archivedSignalCard : { backgroundColor: displayPriorityTone.soft, borderColor: displayPriorityTone.border }]}>
+            <Text style={styles.signalLabel}>{language === 'es' ? 'Prioridad calculada' : 'Calculated priority'}</Text>
+            <Text style={[styles.signalValue, { color: displayPriorityTone.accent }]}>{getSeverityLabel(item.backendSeverity, language)}</Text>
+          </View>
+          <View style={[styles.signalCard, archiveTone && styles.archivedSignalCard]}>
+            <Text style={styles.signalLabel}>{language === 'es' ? 'Ventana' : 'Window'}</Text>
+            <Text style={styles.signalValue}>{item.urgencyWindow}</Text>
+          </View>
+          <View style={[styles.signalCard, styles.signalCardWide, archiveTone && styles.archivedSignalCard]}>
+            <Text style={styles.signalLabel}>{language === 'es' ? 'Impacto esperado' : 'Expected impact'}</Text>
+            <Text style={styles.signalValue} numberOfLines={2}>{item.expectedImpact}</Text>
+          </View>
+        </View>
 
         <View style={styles.cardFooter}>
-          <MetaInfoRow items={item.metaItems} style={styles.metaRow} />
-
+          <View style={styles.contextSource}>
+            {createdMeta?.icon ?? <Feather name="clock" size={14} color="#64748B" />}
+            <Text style={styles.contextLine}>{createdMeta?.label}</Text>
+          </View>
           <View style={styles.cardActions}>
             {item.actions.map((action) => (
               <Button
@@ -414,6 +573,7 @@ function AdminRecommendationCard({
                 label={action.label}
                 variant={action.variant}
                 size="sm"
+                leadingIcon={<Feather name={actionIconByLabel(action.label)} size={14} color={action.variant === 'primary' ? '#FFFFFF' : '#334155'} />}
                 style={
                   action.variant === 'primary'
                     ? { ...styles.cardActionButton, ...styles.cardActionPrimary }
@@ -429,23 +589,6 @@ function AdminRecommendationCard({
             ))}
           </View>
         </View>
-
-        <View style={styles.statusRow}>
-          {(['accepted', 'assigned', 'completed', 'rejected'] as RecommendationStatus[]).map((status) => (
-            <TouchableOpacity
-              key={status}
-              style={[styles.statusChip, item.status === status && styles.statusChipActive, isBusy && styles.statusChipDisabled]}
-              onPress={() => onStatusChange(status)}
-              activeOpacity={0.75}
-              disabled={isBusy}
-            >
-              <Text style={[styles.statusChipText, item.status === status && styles.statusChipTextActive]}>
-                {getRecommendationStatusLabel(status, language)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-          {isBusy ? <ActivityIndicator size="small" color="#1718C7" style={styles.statusSpinner} /> : null}
-        </View>
       </TouchableOpacity>
     </CardBase>
   );
@@ -460,31 +603,118 @@ function SummaryTile({ label, value }: { label: string; value: string }) {
   );
 }
 
+function recommendationCategoryTone(type: string) {
+  const normalized = type.toUpperCase();
+  if (normalized === 'BED_CAPACITY') {
+    return {
+      accent: '#0891B2',
+      soft: '#ECFEFF',
+      border: 'rgba(8, 145, 178, 0.24)',
+      icon: 'activity' as const,
+    };
+  }
+  if (normalized === 'STAFFING') {
+    return {
+      accent: '#7C3AED',
+      soft: '#F5F3FF',
+      border: 'rgba(124, 58, 237, 0.24)',
+      icon: 'users' as const,
+    };
+  }
+  if (normalized === 'SUPPLY') {
+    return {
+      accent: '#9333EA',
+      soft: '#FAF5FF',
+      border: 'rgba(147, 51, 234, 0.24)',
+      icon: 'package' as const,
+    };
+  }
+  if (normalized === 'LOCAL_EPIDEMIOLOGY' || normalized.startsWith('EPIDEMIOLOGY')) {
+    return {
+      accent: '#9F1239',
+      soft: '#FFF1F2',
+      border: 'rgba(159, 18, 57, 0.24)',
+      icon: 'map-pin' as const,
+    };
+  }
+  return {
+    accent: '#475569',
+    soft: '#F8FAFC',
+    border: 'rgba(71, 85, 105, 0.22)',
+    icon: 'briefcase' as const,
+  };
+}
+
+function recommendationPriorityTone(severity: string) {
+  const normalized = severity.toUpperCase();
+  if (normalized === 'CRITICAL') {
+    return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
+  }
+  if (normalized === 'HIGH') {
+    return { accent: '#EA580C', soft: '#FFF7ED', border: '#FED7AA' };
+  }
+  if (normalized === 'MEDIUM' || normalized === 'MODERATE') {
+    return { accent: '#2563EB', soft: '#EFF6FF', border: '#BFDBFE' };
+  }
+  return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+}
+
+function archivedStatusTone(status: RecommendationStatus) {
+  if (status === 'completed') {
+    return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+  }
+  if (status === 'rejected') {
+    return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
+  }
+  return null;
+}
+
+function recommendationStatusTone(status: RecommendationStatus) {
+  if (status === 'new') return { accent: '#1718C7', soft: '#EEF2FF', border: '#C7D2FE' };
+  if (status === 'assigned' || status === 'accepted' || status === 'completed') {
+    return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+  }
+  if (status === 'rejected') return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
+  return { accent: '#475569', soft: '#F8FAFC', border: '#E2E8F0' };
+}
+
 function mapRecommendation(item: OperationalRecommendationResponse, language: 'en' | 'es'): RecommendationFeedItem {
   const severity = mapSeverity(item.severity);
   const status = mapStatus(item.status);
+  const content = selectRecommendationContent(item, language);
+  const activeTask = (item.tasks ?? []).find((task) => task.status !== 'COMPLETED' && task.status !== 'CANCELLED') ?? item.tasks?.[0];
   return {
     id: item.id,
+    type: item.type,
     severity,
-    category: item.category || item.type.replace(/_/g, ' '),
-    title: item.title,
-    description: item.description,
+    backendSeverity: normalizeBackendSeverity(item.severity),
+    category: localizeRecommendationCategory(item.category || item.type.replace(/_/g, ' '), item.type, language),
+    title: content.title,
+    description: content.description,
     createdByMode: item.createdByMode,
     metaItems: [
-      { label: formatRelativeDate(item.createdAt, language), icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
-      { label: item.type.replace(/_/g, ' '), icon: <Feather name="briefcase" size={13} color="#7C8CA4" /> },
+      { label: formatLastUpdatedLabel(item.updatedAt ?? item.createdAt, language), icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
     ],
     accentColor: severity === 'high' ? '#F7C9CC' : severity === 'medium' ? '#F2E5C1' : '#E3E8F0',
-    actions: buildActions(item.type, status, language),
-    confidenceScore: Math.round(Number(item.confidenceScore ?? 0)),
-    expectedImpact: item.expectedImpact,
-    urgencyWindow: item.urgencyWindow,
-    affectedDepartments: item.affectedDepartments ?? [],
-    affectedResources: item.affectedResources ?? [],
-    rationale: item.rationale ?? [],
-    recommendedActions: item.recommendedActions ?? [],
+    actions: buildActions(item.type, status, language, Boolean(activeTask)),
+    confidenceScore: formatCalculatedPriority(item.confidenceScore),
+    expectedImpact: content.expectedImpact,
+    urgencyWindow: content.urgencyWindow,
+    affectedDepartments: localizeList(item.affectedDepartments ?? [], language),
+    affectedResources: localizeList(item.affectedResources ?? [], language),
+    rationale: content.rationale,
+    recommendedActions: content.recommendedActions,
     status,
-    assignee: item.tasks?.[0]?.ownerLabel ?? undefined,
+    assignee: activeTask?.ownerLabel ?? undefined,
+    activeTask: activeTask ? {
+      id: activeTask.id,
+      ownerContactId: activeTask.ownerContactId,
+      ownerLabel: activeTask.ownerLabel,
+      departmentLabel: activeTask.departmentLabel,
+      deadlineAt: activeTask.deadlineAt,
+      notes: activeTask.notes,
+      priority: activeTask.priority,
+    } : undefined,
     auditTrail: (item.auditTrail ?? []).map((audit) => ({
       timestamp: formatDateTime(audit.createdAt),
       label: audit.eventLabel,
@@ -492,23 +722,181 @@ function mapRecommendation(item: OperationalRecommendationResponse, language: 'e
   };
 }
 
-function buildActions(type: string, status: RecommendationStatus, language: 'en' | 'es'): RecommendationFeedItem['actions'] {
+function selectRecommendationContent(item: OperationalRecommendationResponse, language: 'en' | 'es') {
+  const localized = item.translations?.[language] ?? item.translations?.en ?? null;
+  return {
+    title: localizedText(localized?.title, localizeRecommendationTitle(item.title, language)),
+    description: localizedText(localized?.description, localizeRecommendationDescription(item, language)),
+    expectedImpact: localizedText(localized?.expectedImpact, localizeExpectedImpact(item.expectedImpact, language)),
+    urgencyWindow: localizedText(localized?.urgencyWindow, localizeUrgencyWindow(item.urgencyWindow, language)),
+    rationale: localizedList(localized?.rationale, item.rationale ?? [], language),
+    recommendedActions: localizedList(localized?.recommendedActions, item.recommendedActions ?? [], language),
+  };
+}
+
+function localizedText(value: string | null | undefined, fallback: string) {
+  return value && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+function localizedList(value: OperationalRecommendationTranslation['rationale'], fallback: string[], language: 'en' | 'es') {
+  const source = value && value.length > 0 ? value : fallback;
+  return language === 'es' ? localizeList(source ?? [], language) : source ?? [];
+}
+
+function formatLastUpdatedLabel(value: string, language: 'en' | 'es') {
+  const relative = formatRelativeDate(value, language);
+  if (language === 'es') {
+    const normalized = relative.replace(/^Hace/, 'hace').replace(/^Justo ahora$/, 'justo ahora');
+    return `Ultima actualizacion ${normalized}`;
+  }
+  return `Last update ${relative}`;
+}
+
+function formatCalculatedPriority(value: number | string | null | undefined) {
+  const numeric = Number(value ?? 0);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.round(numeric <= 1 ? numeric * 100 : numeric);
+}
+
+function localizeRecommendationTitle(title: string, language: 'en' | 'es') {
+  if (language !== 'es') return title;
+  const titles: Record<string, string> = {
+    'Expand Monitored Bed Capacity': 'Expandir capacidad de camas monitoreadas',
+    'Monitor Bed Occupancy Trend': 'Monitorear tendencia de ocupacion de camas',
+    'Increase Emergency Physician Staffing': 'Aumentar cobertura de medicos de urgencias',
+    'ICU Capacity Critical - Activate Surge Protocol': 'Activar protocolo de expansion UCI',
+    'Review Local Epidemiology Response': 'Revisar respuesta de epidemiologia local',
+    'Implement Respiratory Isolation Measures': 'Implementar medidas de aislamiento respiratorio',
+    'Replenish Critical Protective and Respiratory Supplies': 'Reabastecer insumos criticos de proteccion respiratoria',
+    'Review PPE Stock Levels': 'Revisar niveles de inventario de EPP',
+  };
+  return titles[title] ?? title;
+}
+
+function localizeRecommendationDescription(item: OperationalRecommendationResponse, language: 'en' | 'es') {
+  if (language !== 'es') return item.description;
+  const descriptions: Record<string, string> = {
+    'Expand Monitored Bed Capacity': 'Abrir camas monitoreadas adicionales para prevenir saturacion de capacidad hospitalaria.',
+    'Monitor Bed Occupancy Trend': 'Iniciar planeacion de contingencia para evitar llegar a capacidad critica.',
+    'Increase Emergency Physician Staffing': 'Aumentar cobertura medica de urgencias ante presion por brotes cercanos y demanda hospitalaria.',
+    'ICU Capacity Critical - Activate Surge Protocol': 'La ocupacion UCI esta en nivel critico; activar el protocolo de expansion para preservar cuidados intensivos.',
+    'Review Local Epidemiology Response': 'Revisar la preparacion hospitalaria ante actividad epidemiologica local en el area de influencia.',
+    'Implement Respiratory Isolation Measures': 'Establecer zonas de aislamiento respiratorio para reducir transmision intrahospitalaria durante el brote activo.',
+    'Replenish Critical Protective and Respiratory Supplies': 'Reabastecer insumos criticos de proteccion y respuesta respiratoria para mantener seguridad del personal y atencion continua.',
+    'Review PPE Stock Levels': 'Revisar inventario de EPP y preparar reposicion preventiva ante aumento de consumo.',
+  };
+  return descriptions[item.title] ?? item.description;
+}
+
+function localizeExpectedImpact(value: string, language: 'en' | 'es') {
+  if (language !== 'es') return value;
+  const impacts: Record<string, string> = {
+    'Reduce patient wait times and prevent diversion': 'Reducir tiempos de espera y prevenir derivacion de pacientes',
+    'Prevent critical bed shortage': 'Prevenir escasez critica de camas',
+    'Improve patient throughput during outbreak surge': 'Mejorar flujo de pacientes durante aumento por brote',
+    'Prevent ICU overflow and ensure critical care availability': 'Prevenir saturacion UCI y asegurar disponibilidad de cuidados criticos',
+    'Reduce risk of influenza transmission to staff and patients within the hospital': 'Reducir riesgo de transmision respiratoria a personal y pacientes dentro del hospital',
+    'Ensure uninterrupted staff protection and maintain readiness for respiratory surge': 'Asegurar proteccion continua del personal y preparacion ante demanda respiratoria',
+    'Avoid PPE stockout during active outbreak period': 'Evitar agotamiento de EPP durante el periodo de brote activo',
+  };
+  return impacts[value] ?? value;
+}
+
+function localizeUrgencyWindow(value: string, language: 'en' | 'es') {
+  if (language !== 'es') return value;
+  const windows: Record<string, string> = {
+    Immediately: 'Inmediatamente',
+    'Within 12 hours': 'Dentro de 12 horas',
+    'Within 24 hours': 'Dentro de 24 horas',
+    'Within 48 hours': 'Dentro de 48 horas',
+  };
+  return windows[value] ?? value;
+}
+
+function localizeRecommendationCategory(category: string, type: string, language: 'en' | 'es') {
+  if (language !== 'es') {
+    const englishCategories: Record<string, string> = {
+      EPIDEMIOLOGY_HOSPITAL: 'Hospital Epidemiology',
+      EPIDEMIOLOGY_MUNICIPAL: 'Municipal Epidemiology',
+      LOCAL_EPIDEMIOLOGY: 'Local Epidemiology',
+    };
+    return englishCategories[category] ?? englishCategories[type] ?? category;
+  }
+  const categories: Record<string, string> = {
+    SUPPLY: 'Insumos',
+    'BED CAPACITY': 'Capacidad hospitalaria',
+    BED_CAPACITY: 'Capacidad hospitalaria',
+    STAFFING: 'Personal',
+    ISOLATION: 'Epidemiologia local',
+    LOCAL_EPIDEMIOLOGY: 'Epidemiologia local',
+    EPIDEMIOLOGY_HOSPITAL: 'Epidemiologia hospitalaria',
+    EPIDEMIOLOGY_MUNICIPAL: 'Epidemiologia municipal',
+  };
+  return categories[category] ?? categories[type] ?? category;
+}
+
+function localizeRecommendationType(type: string, language: 'en' | 'es') {
+  if (language !== 'es') return type.replace(/_/g, ' ');
+  return localizeRecommendationCategory(type.replace(/_/g, ' '), type, language);
+}
+
+function localizeList(values: string[], language: 'en' | 'es') {
+  if (language !== 'es') return values;
+  return values.map((value) => {
+    const normalized = value.trim();
+    const translations: Record<string, string> = {
+      'General Ward': 'Hospitalizacion general',
+      ICU: 'UCI',
+      'Intensive Care Unit': 'Unidad de cuidados intensivos',
+      'Emergency Department': 'Urgencias',
+      'Respiratory Ward': 'Area respiratoria',
+      'Isolation Rooms': 'Salas de aislamiento',
+      'N95 Respirator Masks': 'Respiradores N95',
+      'Isolation Gowns': 'Batas de aislamiento',
+      'Central Supply': 'Almacen central',
+      'Emergency Physicians': 'Medicos de urgencias',
+      'Open additional monitored beds to prevent capacity overflow.': 'Abrir camas monitoreadas adicionales para prevenir saturacion de capacidad.',
+      'Reconfirm discharge readiness for stable patients': 'Reconfirmar altas posibles en pacientes estables',
+      'Activate ICU surge protocol': 'Activar protocolo de expansion UCI',
+      'Assign respiratory-capable overflow beds': 'Asignar camas de desborde con capacidad respiratoria',
+      'Expedite eligible ICU discharges': 'Agilizar egresos UCI elegibles',
+      'Replenish PPE and respiratory supplies': 'Reabastecer EPP e insumos respiratorios',
+      'Notify central supply coordinator': 'Notificar a coordinacion de almacen central',
+      'Prepare 48-hour consumption buffer': 'Preparar reserva de consumo para 48 horas',
+      'Establish respiratory isolation zones': 'Establecer zonas de aislamiento respiratorio',
+      'Assign dedicated staff flow for suspected respiratory cases': 'Asignar flujo dedicado de personal para casos respiratorios sospechosos',
+      'Review PPE burn rate before next shift': 'Revisar tasa de consumo de EPP antes del siguiente turno',
+    };
+    return translations[normalized] ?? value;
+  });
+}
+
+function buildActions(type: string, status: RecommendationStatus, language: 'en' | 'es', hasActiveTask: boolean): RecommendationFeedItem['actions'] {
   const actions: RecommendationFeedItem['actions'] = [];
   if (!isArchived(status)) {
-    actions.push({ label: language === 'es' ? 'Asignar tarea' : 'Assign task', variant: 'primary' });
+    actions.push({ label: hasActiveTask ? (language === 'es' ? 'Reasignar tarea' : 'Reassign task') : (language === 'es' ? 'Asignar tarea' : 'Assign task'), variant: 'primary' });
     actions.push({ label: language === 'es' ? 'Notificar personal' : 'Notify staff', variant: 'secondary' });
-    if (type === 'SUPPLY' || type === 'BED_CAPACITY' || type === 'ISOLATION') {
+    if (type === 'SUPPLY' || type === 'BED_CAPACITY' || type === 'ISOLATION' || type === 'LOCAL_EPIDEMIOLOGY') {
       actions.push({ label: language === 'es' ? 'Pedir insumos' : 'Order supplies', variant: 'secondary' });
     }
+    actions.push({ label: language === 'es' ? 'Completar' : 'Complete', variant: 'secondary' });
     actions.push({ label: language === 'es' ? 'Descartar' : 'Dismiss', variant: 'secondary' });
   }
   return actions;
 }
 
 function mapSeverity(value: string): RecommendationFeedItem['severity'] {
-  if (value === 'HIGH') return 'high';
+  if (value === 'CRITICAL' || value === 'HIGH') return 'high';
   if (value === 'MEDIUM') return 'medium';
   return 'low';
+}
+
+function normalizeBackendSeverity(value: string) {
+  const normalized = value.toUpperCase();
+  if (normalized === 'CRITICAL' || normalized === 'HIGH' || normalized === 'MEDIUM' || normalized === 'LOW') {
+    return normalized;
+  }
+  return 'LOW';
 }
 
 function mapStatus(value: string): RecommendationStatus {
@@ -541,20 +929,95 @@ function toIsoDeadline(value: string) {
   return Number.isNaN(parsed) ? null : new Date(parsed).toISOString();
 }
 
+function getSeverityLabel(severity: string, language: 'en' | 'es') {
+  const normalized = severity.toUpperCase();
+  if (language !== 'es') return normalized;
+  if (normalized === 'CRITICAL') return 'CRITICA';
+  if (normalized === 'HIGH') return 'ALTA';
+  if (normalized === 'MEDIUM') return 'MEDIA';
+  return 'BAJA';
+}
+
+function deliveryNotice(
+  detail: OperationalRecommendationResponse,
+  language: 'en' | 'es',
+  kind: 'task' | 'notification',
+) {
+  const emailNotification = [...(detail.notifications ?? [])]
+    .filter((notification) => notification.deliveryChannel === 'EMAIL')
+    .sort((left, right) => String(right.sentAt ?? '').localeCompare(String(left.sentAt ?? '')))[0];
+
+  if (!emailNotification) {
+    return language === 'es'
+      ? kind === 'task' ? 'Tarea creada. No se encontro evidencia de envio por correo.' : 'Notificacion registrada. No se encontro evidencia de envio por correo.'
+      : kind === 'task' ? 'Task created. No email delivery evidence was found.' : 'Notification recorded. No email delivery evidence was found.';
+  }
+
+  const summary = emailNotification.recipientSummary;
+  const summaryText = summary && summary.total > 0
+    ? language === 'es'
+      ? ` ${summary.sent}/${summary.total} correos enviados.`
+      : ` ${summary.sent}/${summary.total} emails sent.`
+    : '';
+
+  if (emailNotification.status === 'SENT') {
+    return language === 'es'
+      ? kind === 'task' ? `Tarea asignada y correo enviado.${summaryText}` : `Aviso enviado por correo.${summaryText}`
+      : kind === 'task' ? `Task assigned and email sent.${summaryText}` : `Notice sent by email.${summaryText}`;
+  }
+
+  if (emailNotification.status === 'PARTIAL') {
+    return language === 'es'
+      ? `Aviso enviado parcialmente.${summaryText}`
+      : `Notice partially delivered.${summaryText}`;
+  }
+
+  const detailText = emailNotification.deliveryStatusDetail ? ` ${emailNotification.deliveryStatusDetail}` : '';
+  return language === 'es'
+    ? kind === 'task' ? `Tarea creada, pero el correo fallo.${detailText}` : `Notificacion registrada, pero el correo fallo.${detailText}`
+    : kind === 'task' ? `Task created, but email delivery failed.${detailText}` : `Notification recorded, but email delivery failed.${detailText}`;
+}
+
+function deliveryToastTone(detail: OperationalRecommendationResponse): 'success' | 'warning' | 'error' {
+  const emailNotification = [...(detail.notifications ?? [])]
+    .filter((notification) => notification.deliveryChannel === 'EMAIL')
+    .sort((left, right) => String(right.sentAt ?? '').localeCompare(String(left.sentAt ?? '')))[0];
+  if (!emailNotification) return 'warning';
+  if (emailNotification.status === 'SENT') return 'success';
+  if (emailNotification.status === 'PARTIAL') return 'warning';
+  return 'error';
+}
+
 function isArchived(status: RecommendationStatus) {
   return status === 'completed' || status === 'rejected';
 }
 
+function isHighUrgency(item: RecommendationFeedItem) {
+  return item.backendSeverity === 'CRITICAL';
+}
+
+function recommendationDisplayKey(item: RecommendationFeedItem) {
+  const normalizedTitle = item.title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return `${item.type.toUpperCase()}:${normalizedTitle}`;
+}
+
 function localizeTabLabel(tab: RecommendationTab, language: 'en' | 'es') {
   if (language === 'es') {
-    if (tab === 'active') return 'Alertas activas';
+    if (tab === 'active') return 'Totales';
     if (tab === 'high') return 'Alta urgencia';
-    if (tab === 'inProgress') return 'En progreso';
+    if (tab === 'assigned') return 'Asignado';
+    if (tab === 'unassigned') return 'Sin asignar';
     return 'Archivo';
   }
-  if (tab === 'active') return 'Active Alerts';
+  if (tab === 'active') return 'Totals';
   if (tab === 'high') return 'High Urgency';
-  if (tab === 'inProgress') return 'In Progress';
+  if (tab === 'assigned') return 'Assigned';
+  if (tab === 'unassigned') return 'Unassigned';
   return 'Archive';
 }
 
@@ -630,6 +1093,36 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: '#B91C1C',
+  },
+  toast: {
+    position: 'absolute',
+    right: 24,
+    bottom: 24,
+    maxWidth: 420,
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  toastWarning: { borderColor: '#FED7AA', backgroundColor: '#FFF7ED' },
+  toastError: { borderColor: '#FECACA', backgroundColor: '#FEF2F2' },
+  toastText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -717,6 +1210,84 @@ const styles = StyleSheet.create({
   feed: {
     gap: 18,
   },
+  focusedRecommendationShell: {
+    borderRadius: 22,
+    shadowColor: '#1718C7',
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+  },
+  recommendationSkeletonCard: {
+    padding: 18,
+    borderColor: '#E8EDF5',
+    gap: 14,
+  },
+  recommendationSkeletonHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  skeletonCategoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  skeletonLine: {
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: '#E8EEF6',
+  },
+  skeletonIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 6,
+    backgroundColor: '#EEF2FF',
+  },
+  skeletonPill: {
+    width: 68,
+    height: 26,
+    borderRadius: 999,
+    backgroundColor: '#EEF2F7',
+  },
+  skeletonParagraph: {
+    gap: 8,
+  },
+  skeletonSignalGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  skeletonSignalCard: {
+    flex: 1,
+    minWidth: 180,
+    height: 74,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5EAF3',
+    backgroundColor: '#F8FAFC',
+  },
+  skeletonFooterRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#EEF2F7',
+    paddingTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  skeletonButtonRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  skeletonButton: {
+    width: 116,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#E8EEF6',
+  },
   emptyCard: {
     minHeight: 220,
     alignItems: 'center',
@@ -747,21 +1318,34 @@ const styles = StyleSheet.create({
     color: '#70839B',
   },
   recommendationCard: {
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    padding: 0,
     overflow: 'hidden',
     borderColor: '#E8EDF5',
     backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.08,
+    shadowRadius: 28,
+    elevation: 4,
   },
-  recommendationCardHigh: {
-    borderColor: '#F5D3D5',
+  recommendationAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
   },
   recommendationBody: {
     flex: 1,
+    paddingHorizontal: 22,
+    paddingVertical: 16,
+    paddingLeft: 26,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     gap: 16,
   },
   categoryWrap: {
@@ -770,45 +1354,38 @@ const styles = StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: 9,
+    marginBottom: 10,
+  },
+  categoryIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   category: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   recommendationTitle: {
     fontSize: 18,
-    lineHeight: 28,
+    lineHeight: 24,
     fontWeight: '900',
     color: '#1F2937',
-    marginBottom: 8,
   },
   headerIndicators: {
     alignItems: 'flex-end',
     gap: 10,
   },
   recommendationDescription: {
+    marginTop: 14,
     fontSize: 14,
-    lineHeight: 24,
+    lineHeight: 22,
     color: '#67788F',
-    marginBottom: 10,
-  },
-  insightLine: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '700',
-    color: '#526174',
-    marginBottom: 8,
-  },
-  contextLine: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#64748B',
-    marginBottom: 16,
   },
   statusPill: {
     alignSelf: 'flex-start',
@@ -825,18 +1402,78 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1718C7',
   },
-  cardFooter: {
+  signalGrid: {
+    marginTop: 14,
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  signalCard: {
+    minWidth: 150,
+    flexGrow: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8EDF5',
+    backgroundColor: '#F8FAFC',
+  },
+  archivedSignalCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.42)',
+    borderColor: 'rgba(255, 255, 255, 0.24)',
+  },
+  signalCardWide: {
+    flexBasis: 280,
+  },
+  prioritySignalCard: {
+    maxWidth: 210,
+  },
+  signalLabel: {
+    fontSize: 10,
+    lineHeight: 13,
+    fontWeight: '800',
+    color: '#7387A5',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 5,
+  },
+  signalValue: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '900',
+    color: '#273449',
+  },
+  contextStrip: {
+    marginTop: 14,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#EDF2F7',
-    paddingTop: 14,
+    borderTopColor: '#EEF2F7',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 12,
+  },
+  contextSource: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    flexShrink: 1,
+  },
+  contextLine: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#64748B',
+  },
+  cardFooter: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#EEF2F7',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
-  },
-  metaRow: {
-    flex: 1,
-    marginTop: 0,
+    flexWrap: 'wrap',
   },
   cardActions: {
     flexDirection: 'row',
@@ -847,7 +1484,7 @@ const styles = StyleSheet.create({
   cardActionButton: {
     minHeight: 40,
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
   },
   cardActionPrimary: {
     backgroundColor: '#1718C7',
@@ -860,40 +1497,6 @@ const styles = StyleSheet.create({
   },
   cardActionLabelPrimary: {
     color: '#FFFFFF',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-    marginTop: 14,
-    alignItems: 'center',
-  },
-  statusChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: '#F6F8FC',
-    borderWidth: 1,
-    borderColor: '#E8EDF5',
-  },
-  statusChipActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
-  },
-  statusChipDisabled: {
-    opacity: 0.65,
-  },
-  statusChipText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: '#70839B',
-  },
-  statusChipTextActive: {
-    color: '#1718C7',
-  },
-  statusSpinner: {
-    marginLeft: 4,
   },
 });
 
