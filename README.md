@@ -48,10 +48,18 @@ Then choose a target:
 Useful scripts:
 
 ```bash
+npm run start
 npm run android
 npm run ios
 npm run web
 npm run build:web
+npm run serve:dist
+npm run lint
+npm run cy:run
+npm run cy:open
+npm run storybook
+npm run build-storybook
+npm run docker:build
 ```
 
 ## Test
@@ -68,6 +76,8 @@ Current known type-check gaps outside the latest system-admin work:
 
 The production web export currently passes with `npm run build:web`.
 
+`serve:dist` serves the exported web build on port `4173`. Cypress, Storybook, lint, and Docker scripts are available in `package.json` for local QA and UI review.
+
 ## App Areas
 
 ### System Administrator
@@ -76,11 +86,13 @@ Dedicated platform-wide area for `SYSTEM_ADMIN` users:
 
 | Route | Purpose |
 | --- | --- |
-| `/system/dashboard` | Global platform overview, KPIs, user activity, regional distribution, and recent events |
+| `/system/dashboard` | Global platform overview, KPIs, user activity, regional distribution, hospital status, and outbreak/security context |
 | `/system/users` | Global Users & Roles management across all hospitals |
 | `/system/hospitals` | Hospital registration, editing, activation, and deactivation |
 
 System administrators are redirected to `/system/dashboard` after login.
+
+System admin pages are protected with `RoleGate` for `SYSTEM_ADMIN`. Some hospital-admin screens also allow `SYSTEM_ADMIN` because the backend gives system administrators platform-wide privileges.
 
 ### Hospital Administrator
 
@@ -108,6 +120,8 @@ Doctor-facing area for `DOCTOR` users:
 
 Doctors are redirected to `/dashboard/doctor` after login.
 
+Doctor analytics and dashboard screens consume the expanded `/doctor/dashboard/*` API: summary, metrics, local/state maps, state outbreak drill-down, alerts, local/state disease breakdowns, and reports.
+
 ## Important Frontend Modules
 
 ```text
@@ -132,6 +146,20 @@ Hospital operational API calls live in:
 
 ```text
 lib/adminOperational.ts
+```
+
+Doctor dashboard calls live in:
+
+```text
+lib/doctorDashboard.ts
+```
+
+Diagnosis assistant and evaluation calls live in:
+
+```text
+lib/diagnosisAssistant.ts
+lib/diagnosisEvaluation.ts
+lib/diagnosisDiseases.ts
 ```
 
 ## Design Notes

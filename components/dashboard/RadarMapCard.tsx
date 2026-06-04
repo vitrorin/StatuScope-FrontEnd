@@ -74,6 +74,18 @@ export interface RadarMapCardProps {
   onBottomRightActionPress?: () => void;
 }
 
+type WheelZoomEvent = {
+  preventDefault?: () => void;
+  stopPropagation?: () => void;
+  deltaY?: number;
+  nativeEvent?: {
+    preventDefault?: () => void;
+    stopPropagation?: () => void;
+    stopImmediatePropagation?: () => void;
+    deltaY?: number;
+  };
+};
+
 const defaultPins: RadarMapPin[] = [
   {
     top: '49%',
@@ -197,10 +209,13 @@ export function RadarMapCard({
     setCurrentZoom(mapZoom);
   };
 
-  const handleWheelZoom = (event: { preventDefault?: () => void; stopPropagation?: () => void; deltaY?: number }) => {
+  const handleWheelZoom = (event: WheelZoomEvent) => {
     event.preventDefault?.();
     event.stopPropagation?.();
-    const deltaY = event.deltaY ?? 0;
+    event.nativeEvent?.preventDefault?.();
+    event.nativeEvent?.stopPropagation?.();
+    event.nativeEvent?.stopImmediatePropagation?.();
+    const deltaY = event.deltaY ?? event.nativeEvent?.deltaY ?? 0;
     if (deltaY === 0) return;
     setCurrentZoom((zoom) => Math.max(minZoom, Math.min(maxZoom, zoom + (deltaY < 0 ? 1 : -1))));
   };
@@ -246,7 +261,7 @@ export function RadarMapCard({
             <Image
               key={`${tile.z}-${tile.x}-${tile.y}`}
               source={{ uri: `https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png` }}
-              style={[styles.mapTile, { left: tile.left, top: tile.top }]}
+              style={[styles.mapTile, { left: tile.left, top: tile.top, width: tile.size, height: tile.size }]}
               contentFit="cover"
               pointerEvents="none"
             />
@@ -472,12 +487,45 @@ function MapSurfaceFrame({
   height: number;
   fillAvailableHeight?: boolean;
   onLayout: (event: LayoutChangeEvent) => void;
-  onWheel: (event: { preventDefault?: () => void; stopPropagation?: () => void; deltaY?: number }) => void;
+  onWheel: (event: WheelZoomEvent) => void;
   onHoverChange?: (isHovering: boolean) => void;
   panHandlers?: object;
 }) {
+  const frameRef = useRef<View | null>(null);
+
+  useEffect(() => {
+    const node = frameRef.current as unknown as {
+      addEventListener?: (
+        type: 'wheel',
+        listener: (event: WheelEvent) => void,
+        options?: { passive?: boolean; capture?: boolean },
+      ) => void;
+      removeEventListener?: (
+        type: 'wheel',
+        listener: (event: WheelEvent) => void,
+        options?: { passive?: boolean; capture?: boolean },
+      ) => void;
+    } | null;
+
+    if (!node?.addEventListener || !node.removeEventListener) return undefined;
+
+    const handleNativeWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      onWheel(event);
+    };
+    const wheelOptions = { passive: false, capture: true };
+
+    node.addEventListener('wheel', handleNativeWheel, wheelOptions);
+    return () => {
+      node.removeEventListener?.('wheel', handleNativeWheel, wheelOptions);
+    };
+  }, [onWheel]);
+
   return (
     <View
+      ref={frameRef}
       style={[styles.mapContainer, fillAvailableHeight ? styles.mapContainerFill : { height }]}
       onLayout={onLayout}
       {...(panHandlers ?? {})}
@@ -540,17 +588,19 @@ function buildTileLayout(
     return [];
   }
 
-  const worldSize = TILE_SIZE * 2 ** zoom;
+  const tileZoom = Math.max(0, Math.min(19, Math.round(zoom)));
+  const tileScale = 2 ** (zoom - tileZoom);
+  const scaledTileSize = TILE_SIZE * tileScale;
   const centerX = lonToWorldX(longitude, zoom);
   const centerY = latToWorldY(latitude, zoom);
   const originX = centerX - width / 2;
   const originY = centerY - height / 2;
-  const startX = Math.floor(originX / TILE_SIZE);
-  const endX = Math.floor((originX + width) / TILE_SIZE);
-  const startY = Math.floor(originY / TILE_SIZE);
-  const endY = Math.floor((originY + height) / TILE_SIZE);
-  const maxTile = 2 ** zoom;
-  const tiles: { x: number; y: number; z: number; left: number; top: number }[] = [];
+  const startX = Math.floor(originX / scaledTileSize);
+  const endX = Math.floor((originX + width) / scaledTileSize);
+  const startY = Math.floor(originY / scaledTileSize);
+  const endY = Math.floor((originY + height) / scaledTileSize);
+  const maxTile = 2 ** tileZoom;
+  const tiles: { x: number; y: number; z: number; left: number; top: number; size: number }[] = [];
 
   for (let tileX = startX; tileX <= endX; tileX += 1) {
     for (let tileY = startY; tileY <= endY; tileY += 1) {
@@ -559,9 +609,10 @@ function buildTileLayout(
       tiles.push({
         x: wrappedX,
         y: tileY,
-        z: zoom,
-        left: tileX * TILE_SIZE - originX,
-        top: tileY * TILE_SIZE - originY,
+        z: tileZoom,
+        left: tileX * scaledTileSize - originX,
+        top: tileY * scaledTileSize - originY,
+        size: scaledTileSize,
       });
     }
   }
@@ -739,6 +790,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     cursor: 'grab' as never,
     userSelect: 'none' as never,
+    overscrollBehavior: 'contain' as never,
+    touchAction: 'none' as never,
   },
   mapContainerFill: {
     flex: 1,
