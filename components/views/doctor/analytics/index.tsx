@@ -1247,7 +1247,7 @@ function DiseaseSelector({
                   setIsStateOpen(true);
                 }}
                 onFocus={() => {
-                  setStateSearchQuery(selectedState?.stateName ?? '');
+                  setStateSearchQuery('');
                   setIsStateOpen(true);
                 }}
                 placeholder={selectedState?.stateName ?? t('common.analytics.selector.statePlaceholder')}
@@ -1256,7 +1256,14 @@ function DiseaseSelector({
               />
               <TouchableOpacity
                 activeOpacity={0.82}
-                onPress={() => setIsStateOpen((current) => !current)}
+                onPress={() => {
+                  setIsStateOpen((current) => {
+                    if (!current) {
+                      setStateSearchQuery('');
+                    }
+                    return !current;
+                  });
+                }}
                 style={styles.diseaseDropdownIconButton}
               >
                 <Feather name={isStateOpen ? 'chevron-up' : 'chevron-down'} size={18} color="#1718C7" />
@@ -2054,12 +2061,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF',
   },
   diseaseDropdownList: {
-    position: 'absolute',
-    top: 56,
+    position: 'relative',
+    marginTop: 8,
     left: 0,
     right: 0,
-    zIndex: 40,
-    elevation: 24,
     maxHeight: 280,
     borderRadius: 16,
     borderWidth: 1,
