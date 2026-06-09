@@ -5,6 +5,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { useTranslation } from '@/i18n';
 import { getDoctorDashboardReport, DoctorDashboardReportResponse, DoctorDashboardReportScope } from '@/lib/doctorDashboard';
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 export interface ReportDiseaseRow {
   disease: string;
@@ -93,7 +94,7 @@ export function EpidemiologicalReportOverlay({
           <View style={styles.header}>
             {previewReport ? (
               <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.75}>
-                <Feather name="arrow-left" size={18} color="#0003B8" />
+                <Feather name="arrow-left" size={18} color={AppColors.brand.primary} />
                 <Text style={styles.backText}>{t('doctor.dashboard.reports.back')}</Text>
               </TouchableOpacity>
             ) : null}
@@ -109,7 +110,7 @@ export function EpidemiologicalReportOverlay({
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -119,13 +120,13 @@ export function EpidemiologicalReportOverlay({
                 <PdfPreviewFrame url={previewUrl} title={t('doctor.dashboard.overlays.reportPreview')} />
               ) : (
                 <View style={styles.previewFallback}>
-                  <Feather name="file-text" size={24} color="#0003B8" />
+                  <Feather name="file-text" size={24} color={AppColors.brand.primary} />
                   <Text style={styles.previewFallbackText}>{t('doctor.dashboard.reports.previewUnavailable')}</Text>
                 </View>
               )}
 
               <TouchableOpacity style={styles.downloadButton} activeOpacity={0.82} onPress={handleDownload}>
-                <Feather name="download" size={18} color="#FFFFFF" />
+                <Feather name="download" size={18} color={AppColors.surface.card} />
                 <Text style={styles.downloadButtonText}>{t('doctor.dashboard.reports.downloadReport')}</Text>
               </TouchableOpacity>
             </View>
@@ -181,13 +182,13 @@ function ReportOption({
   return (
     <TouchableOpacity style={[styles.optionCard, disabled ? styles.optionCardDisabled : null]} activeOpacity={0.82} onPress={onPress} disabled={disabled}>
       <View style={styles.optionIcon}>
-        <Feather name={icon} size={18} color="#0003B8" />
+        <Feather name={icon} size={18} color={AppColors.brand.primary} />
       </View>
       <View style={styles.optionCopy}>
         <Text style={styles.optionTitle}>{title}</Text>
         <Text style={styles.optionDescription}>{description}</Text>
       </View>
-      <Feather name={isLoading ? 'loader' : 'download'} size={18} color="#64748B" />
+      <Feather name={isLoading ? 'loader' : 'download'} size={18} color={AppColors.text.secondary} />
     </TouchableOpacity>
   );
 }
@@ -200,7 +201,7 @@ function PdfPreviewFrame({ url, title }: { url: string; title: string }) {
       width: '100%',
       height: '100%',
       border: '0',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: AppColors.surface.card,
     },
   });
 }
@@ -652,54 +653,54 @@ function wrapText(value: string, maxChars: number) {
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
   backdrop: { ...StyleSheet.absoluteFillObject },
-  selectionBackdrop: { backgroundColor: 'rgba(255,255,255,0.74)' },
-  previewBackdrop: { backgroundColor: 'rgba(15, 23, 42, 0.38)' },
+  selectionBackdrop: { backgroundColor: AppColors.modal.backdrop },
+  previewBackdrop: { backgroundColor: withAlpha(AppColors.text.primary, 0.38) },
   dialog: { width: '100%', padding: 0, overflow: 'hidden' },
   selectionDialog: { maxWidth: 700, maxHeight: '86%', borderRadius: 24 },
   previewDialog: { flex: 1, borderRadius: 18 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 18, paddingHorizontal: 22, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EEF2F7', minHeight: 76 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 18, paddingHorizontal: 22, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft, minHeight: 76 },
   headerCopy: { flex: 1 },
-  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#1718C7', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
-  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
-  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.brand.action, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
+  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: AppColors.text.soft },
+  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: AppColors.border.default },
   backButton: {
     height: 40,
     borderRadius: 12,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.14)',
-    backgroundColor: '#F8FAFC',
+    borderColor: withAlpha(AppColors.brand.primary, 0.14),
+    backgroundColor: AppColors.surface.subtle,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  backText: { fontSize: 13, lineHeight: 16, fontWeight: '800', color: '#0003B8' },
+  backText: { fontSize: 13, lineHeight: 16, fontWeight: '800', color: AppColors.brand.primary },
   options: { padding: 24, gap: 12 },
   optionCard: {
     minHeight: 78,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.subtle,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
   optionCardDisabled: { opacity: 0.58 },
-  optionIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0, 3, 184, 0.08)', borderWidth: 1, borderColor: 'rgba(0, 3, 184, 0.16)' },
+  optionIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: withAlpha(AppColors.brand.primary, 0.08), borderWidth: 1, borderColor: withAlpha(AppColors.brand.primary, 0.16) },
   optionCopy: { flex: 1 },
-  optionTitle: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#0F172A' },
-  optionDescription: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
+  optionTitle: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.text.primary },
+  optionDescription: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
   previewBody: { flex: 1, padding: 18, gap: 14 },
   previewFallback: {
     flex: 1,
     minHeight: 520,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.subtle,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
@@ -708,7 +709,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textAlign: 'center',
   },
   previewStats: { flexDirection: 'row', gap: 12 },
@@ -717,8 +718,8 @@ const styles = StyleSheet.create({
     minHeight: 76,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.subtle,
     padding: 14,
     justifyContent: 'center',
   },
@@ -726,46 +727,46 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
-  previewStatValue: { marginTop: 6, fontSize: 18, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
+  previewStatValue: { marginTop: 6, fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
   previewScroll: {
     maxHeight: 300,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
   previewList: { padding: 12, gap: 10 },
   previewRow: {
     minHeight: 72,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
+    borderColor: AppColors.border.soft,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   previewRowCopy: { flex: 1, minWidth: 0 },
-  previewDisease: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
-  previewLocation: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
+  previewDisease: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
+  previewLocation: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
   previewMeta: { alignItems: 'flex-end', maxWidth: 140 },
-  previewCases: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#0003B8' },
-  previewStatus: { marginTop: 4, fontSize: 11, lineHeight: 14, fontWeight: '800', color: '#64748B' },
+  previewCases: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.brand.primary },
+  previewStatus: { marginTop: 4, fontSize: 11, lineHeight: 14, fontWeight: '800', color: AppColors.text.secondary },
   downloadButton: {
     minHeight: 52,
     borderRadius: 14,
-    backgroundColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
   },
-  downloadButtonText: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#FFFFFF' },
+  downloadButtonText: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.surface.card },
 });
 
 export default EpidemiologicalReportOverlay;

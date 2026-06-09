@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View 
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardMetric } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
+import { AppColors } from '@/constants/theme';
 
 interface MetricDetailOverlayProps {
   visible: boolean;
@@ -37,7 +38,7 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
               <Text style={styles.subtitle}>{metric.detailSummary}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -134,16 +135,16 @@ function MetricStat({ label, value, accentColor }: { label: string; value: strin
 }
 
 function accentColor(tone?: AdminDashboardMetric['tone']) {
-  if (tone === 'critical') return '#EF4444';
-  if (tone === 'warning') return '#F59E0B';
-  if (tone === 'positive') return '#22C55E';
-  if (tone === 'info') return '#0EA5E9';
-  return '#0003B8';
+  if (tone === 'critical') return AppColors.status.dangerBright;
+  if (tone === 'warning') return AppColors.status.warning;
+  if (tone === 'positive') return AppColors.status.successBright;
+  if (tone === 'info') return AppColors.status.infoBright;
+  return AppColors.brand.primary;
 }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.74)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: AppColors.modal.backdrop },
   dialog: { width: '100%', maxWidth: 760, maxHeight: '86%', borderRadius: 24, padding: 0, overflow: 'hidden' },
   header: {
     flexDirection: 'row',
@@ -153,20 +154,20 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   headerCopy: { flex: 1 },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
   },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
-  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
+  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: AppColors.text.soft },
   closeButton: {
     width: 40,
     height: 40,
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   body: { padding: 24, gap: 20 },
   metricsGrid: { flexDirection: 'row', gap: 12 },
@@ -184,17 +185,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
   },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
+  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
   insightsSection: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
   },
   insightsHeader: {
@@ -202,20 +203,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
     flexDirection: 'row',
     alignItems: 'center',
   },
   insightsHeaderCopy: { flex: 1 },
-  insightsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
-  insightsCriteria: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
+  insightsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
+  insightsCriteria: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
   insightsList: { padding: 12, gap: 10 },
   insightRow: {
     minHeight: 72,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
+    borderColor: AppColors.border.soft,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -231,13 +232,13 @@ const styles = StyleSheet.create({
   },
   insightRankText: { fontSize: 13, lineHeight: 16, fontWeight: '900' },
   insightCopy: { flex: 1, minWidth: 0 },
-  insightTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
-  insightLocation: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
+  insightTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
+  insightLocation: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
   insightMeta: { alignItems: 'flex-end', maxWidth: 150 },
   insightCases: { fontSize: 13, lineHeight: 18, fontWeight: '900' },
-  insightSeverity: { marginTop: 4, fontSize: 11, lineHeight: 14, fontWeight: '700', color: '#64748B' },
+  insightSeverity: { marginTop: 4, fontSize: 11, lineHeight: 14, fontWeight: '700', color: AppColors.text.secondary },
   emptyInsight: { padding: 18 },
-  emptyInsightText: { fontSize: 14, lineHeight: 22, color: '#526174' },
+  emptyInsightText: { fontSize: 14, lineHeight: 22, color: AppColors.text.body },
 });
 
 export default MetricDetailOverlay;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface MetaItem {
   label: string;
@@ -45,14 +46,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   labelCompact: {
     fontSize: 11,
   },
   separator: {
     marginHorizontal: 8,
-    color: '#D1D5DB',
+    color: AppColors.border.strong,
     fontSize: 10,
   },
 });

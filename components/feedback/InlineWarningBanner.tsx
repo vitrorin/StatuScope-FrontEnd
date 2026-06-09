@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export type InlineWarningBannerVariant = 'critical' | 'warning' | 'info';
 
@@ -13,24 +14,24 @@ export interface InlineWarningBannerProps {
 
 const variantStyles = {
   critical: {
-    background: '#FEF2F2',
-    border: '#FECACA',
-    titleColor: '#DC2626',
-    messageColor: '#B91C1C',
+    background: AppColors.status.dangerSoft,
+    border: AppColors.status.dangerBorder,
+    titleColor: AppColors.status.danger,
+    messageColor: AppColors.status.dangerDark,
     icon: 'alert-triangle' as const,
   },
   warning: {
-    background: '#FFFBEB',
-    border: '#FDE68A',
-    titleColor: '#D97706',
-    messageColor: '#92400E',
+    background: AppColors.status.warningWash,
+    border: AppColors.status.warningBorder,
+    titleColor: AppColors.status.warningText,
+    messageColor: AppColors.status.warningLabel,
     icon: 'zap' as const,
   },
   info: {
-    background: '#EFF6FF',
-    border: '#BFDBFE',
-    titleColor: '#1D4ED8',
-    messageColor: '#1E40AF',
+    background: AppColors.status.infoSoft,
+    border: AppColors.status.infoSoft,
+    titleColor: AppColors.brand.link,
+    messageColor: AppColors.status.infoDark,
     icon: 'info' as const,
   },
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 export type SummaryVariant = 'default' | 'info' | 'warning' | 'neutral';
 
@@ -15,24 +16,24 @@ export interface SummaryCountCardProps {
 
 const variantStyles = {
   default: {
-    iconBg: 'rgba(0, 3, 184, 0.08)',
-    iconColor: '#0003B8',
-    valueColor: '#111827',
+    iconBg: withAlpha(AppColors.brand.primary, 0.08),
+    iconColor: AppColors.brand.primary,
+    valueColor: AppColors.text.strong,
   },
   info: {
-    iconBg: 'rgba(0, 3, 184, 0.08)',
-    iconColor: '#0003B8',
-    valueColor: '#111827',
+    iconBg: withAlpha(AppColors.brand.primary, 0.08),
+    iconColor: AppColors.brand.primary,
+    valueColor: AppColors.text.strong,
   },
   warning: {
-    iconBg: '#FEF3C7',
-    iconColor: '#D97706',
-    valueColor: '#111827',
+    iconBg: AppColors.status.warningSoft,
+    iconColor: AppColors.status.warningText,
+    valueColor: AppColors.text.strong,
   },
   neutral: {
-    iconBg: '#F3F4F6',
-    iconColor: '#6B7280',
-    valueColor: '#111827',
+    iconBg: AppColors.surface.control,
+    iconColor: AppColors.table.muted,
+    valueColor: AppColors.text.strong,
   },
 };
 
@@ -69,12 +70,12 @@ export function SummaryCountCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.05)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.05),
     padding: 21,
-    shadowColor: '#000000',
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 1.1,
   },
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     fontSize: 14,
     lineHeight: 20,
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   valueAccent: {
     marginLeft: 5,

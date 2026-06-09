@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { Avatar } from '../foundation/Avatar';
 import { LanguageSwitcher } from '../inputs/LanguageSwitcher';
+import { AppColors } from '@/constants/theme';
 
 export interface TopHeaderProps {
   sectionLabel?: string;
@@ -50,11 +51,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     minHeight: 68,
     paddingHorizontal: 32,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
   },
   leftSection: {
     flex: 1,
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   rightSection: {
     flexDirection: 'row',
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 32,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
   },
   profileSection: {
     flexDirection: 'row',
@@ -88,15 +89,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   userId: {
     marginTop: 0,
     fontSize: 12,
     lineHeight: 16,
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   avatar: {
-    backgroundColor: '#5FA8A2',
+    backgroundColor: AppColors.brand.teal,
   },
 });

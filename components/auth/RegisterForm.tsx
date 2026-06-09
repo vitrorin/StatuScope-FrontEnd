@@ -14,11 +14,12 @@ import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApiError } from '@/lib/api';
+import { AppColors } from '@/constants/theme';
 
-const BRAND_BLUE = '#0003B8';
-const PANEL_TEXT = '#0F172A';
-const MUTED_TEXT = '#64748B';
-const FIELD_BORDER = '#E2E8F0';
+const BRAND_BLUE = AppColors.brand.primary;
+const PANEL_TEXT = AppColors.text.primary;
+const MUTED_TEXT = AppColors.text.secondary;
+const FIELD_BORDER = AppColors.border.default;
 
 export function RegisterForm() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export function RegisterForm() {
         <View style={[styles.shell, isCompact && styles.shellCompact]}>
           <View style={styles.brandRow}>
             <View style={styles.brandBadge}>
-              <MaterialCommunityIcons name="radar" size={20} color="#FFFFFF" />
+              <MaterialCommunityIcons name="radar" size={20} color={AppColors.surface.card} />
             </View>
             <View>
               <Text style={styles.brandTitle}>StatuScope</Text>
@@ -101,7 +102,7 @@ export function RegisterForm() {
 
           {error ? (
             <View style={styles.errorBanner}>
-              <Feather name="alert-circle" size={14} color="#B91C1C" />
+              <Feather name="alert-circle" size={14} color={AppColors.status.dangerDark} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
@@ -113,10 +114,10 @@ export function RegisterForm() {
               value={fullName}
               onChangeText={setFullName}
               labelStyle={styles.fieldLabel}
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={AppColors.table.muted}
               inputContainerStyle={styles.input}
               inputStyle={styles.inputText}
-              leftIcon={<Feather name="user" size={16} color="#94A3B8" />}
+              leftIcon={<Feather name="user" size={16} color={AppColors.text.muted} />}
             />
 
             <InputField
@@ -126,10 +127,10 @@ export function RegisterForm() {
               value={email}
               onChangeText={setEmail}
               labelStyle={styles.fieldLabel}
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={AppColors.table.muted}
               inputContainerStyle={styles.input}
               inputStyle={styles.inputText}
-              leftIcon={<Feather name="mail" size={16} color="#94A3B8" />}
+              leftIcon={<Feather name="mail" size={16} color={AppColors.text.muted} />}
             />
 
             <InputField
@@ -139,10 +140,10 @@ export function RegisterForm() {
               value={password}
               onChangeText={setPassword}
               labelStyle={styles.fieldLabel}
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={AppColors.table.muted}
               inputContainerStyle={styles.input}
               inputStyle={styles.inputText}
-              leftIcon={<Feather name="lock" size={16} color="#94A3B8" />}
+              leftIcon={<Feather name="lock" size={16} color={AppColors.text.muted} />}
             />
 
             <InputField
@@ -152,10 +153,10 @@ export function RegisterForm() {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               labelStyle={styles.fieldLabel}
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={AppColors.table.muted}
               inputContainerStyle={styles.input}
               inputStyle={styles.inputText}
-              leftIcon={<Feather name="lock" size={16} color="#94A3B8" />}
+              leftIcon={<Feather name="lock" size={16} color={AppColors.text.muted} />}
             />
 
             <InputField
@@ -164,10 +165,10 @@ export function RegisterForm() {
               value={inviteCode}
               onChangeText={setInviteCode}
               labelStyle={styles.fieldLabel}
-              placeholderTextColor="#6B7280"
+              placeholderTextColor={AppColors.table.muted}
               inputContainerStyle={styles.input}
               inputStyle={styles.inputText}
-              leftIcon={<Feather name="key" size={16} color="#94A3B8" />}
+              leftIcon={<Feather name="key" size={16} color={AppColors.text.muted} />}
               hint="Provided by your hospital administrator."
             />
 
@@ -179,7 +180,7 @@ export function RegisterForm() {
               style={styles.submitButton}
               labelStyle={styles.submitButtonLabel}
               trailingIcon={
-                submitting ? null : <Feather name="arrow-right" size={16} color="#FFFFFF" />
+                submitting ? null : <Feather name="arrow-right" size={16} color={AppColors.surface.card} />
               }
               onPress={handleSubmit}
             />
@@ -202,7 +203,7 @@ export default RegisterForm;
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: '#F5F5F8',
+    backgroundColor: AppColors.surface.page,
   },
   scrollContent: {
     flexGrow: 1,
@@ -214,11 +215,11 @@ const styles = StyleSheet.create({
   shell: {
     width: '100%',
     maxWidth: 520,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 12,
     paddingHorizontal: 56,
     paddingVertical: 48,
-    shadowColor: '#000000',
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 25 },
     shadowOpacity: 0.18,
     shadowRadius: 28,
@@ -279,14 +280,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FECACA',
-    backgroundColor: '#FEF2F2',
+    borderColor: AppColors.status.dangerBorder,
+    backgroundColor: AppColors.status.dangerSoft,
   },
   errorText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-    color: '#B91C1C',
+    color: AppColors.status.dangerDark,
     fontWeight: '600',
   },
   formFields: {
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '600',
-    color: '#334155',
+    color: AppColors.text.body,
     marginBottom: 0,
   },
   input: {
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
   },
   inputText: {
     fontSize: 16,
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   submitButton: {
     marginTop: 12,
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
   signInPrompt: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#475569',
+    color: AppColors.text.body,
   },
   signInLink: {
     fontSize: 14,

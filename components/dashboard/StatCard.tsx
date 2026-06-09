@@ -3,6 +3,7 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Badge } from '../foundation/Badge';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 export type StatCardStatus = 'positive' | 'danger' | 'warning' | 'neutral';
 
@@ -30,7 +31,7 @@ export function StatCard({
   trendText,
   showProgress = false,
   progressValue = 0,
-  progressColor = '#0003B8',
+  progressColor = AppColors.brand.primary,
   icon,
   style,
   isLoading = false,
@@ -90,24 +91,24 @@ const statusStyles: Record<StatCardStatus, {
   iconBackground: string;
 }> = {
   positive: {
-    accent: '#22C55E',
-    border: 'rgba(34, 197, 94, 0.22)',
-    iconBackground: 'rgba(34, 197, 94, 0.10)',
+    accent: AppColors.status.successBright,
+    border: withAlpha(AppColors.status.successBright, 0.22),
+    iconBackground: withAlpha(AppColors.status.successBright, 0.10),
   },
   danger: {
-    accent: '#EF4444',
-    border: 'rgba(239, 68, 68, 0.22)',
-    iconBackground: 'rgba(239, 68, 68, 0.10)',
+    accent: AppColors.status.dangerBright,
+    border: withAlpha(AppColors.status.dangerBright, 0.22),
+    iconBackground: withAlpha(AppColors.status.dangerBright, 0.10),
   },
   warning: {
-    accent: '#F59E0B',
-    border: 'rgba(245, 158, 11, 0.24)',
-    iconBackground: 'rgba(245, 158, 11, 0.12)',
+    accent: AppColors.status.warning,
+    border: withAlpha(AppColors.status.warning, 0.24),
+    iconBackground: withAlpha(AppColors.status.warning, 0.12),
   },
   neutral: {
-    accent: '#64748B',
-    border: '#E2E8F0',
-    iconBackground: '#F1F5F9',
+    accent: AppColors.text.secondary,
+    border: AppColors.border.default,
+    iconBackground: AppColors.surface.muted,
   },
 };
 
@@ -118,9 +119,9 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 22,
     borderRadius: 14,
-    backgroundColor: '#FEFFFF',
+    backgroundColor: AppColors.surface.frost,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.10,
     shadowRadius: 30,
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   titleContainer: {
     flex: 1,
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 22,
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   valueRow: {
     flexDirection: 'row',
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 38,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   skeletonValueBlock: {
     gap: 6,
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     width: '62%',
     height: 34,
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   skeletonValueShort: {
     width: '48%',
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontSize: 12,
     lineHeight: 17,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   skeletonSubtitleBlock: {
     marginTop: 14,
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
     width: '78%',
     height: 12,
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   skeletonSubtitleShort: {
     width: '58%',
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 12,
     lineHeight: 16,
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   progressContainer: {
     marginTop: 12,

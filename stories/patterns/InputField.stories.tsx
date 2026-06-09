@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { AppColors } from '@/constants/theme';
 
 import { View } from 'react-native';
 import { InputField } from '../../components/inputs/InputField';
@@ -8,7 +9,7 @@ const meta = {
   component: InputField,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ maxWidth: 400 }}>
           <Story />
         </View>
@@ -33,7 +34,7 @@ export const WithLeftIcon: Story = {
   args: {
     label: 'Username',
     placeholder: 'Enter username',
-    leftIcon: <View style={{ width: 20, height: 20, backgroundColor: '#9CA3AF', borderRadius: 10 }} />,
+    leftIcon: <View style={{ width: 20, height: 20, backgroundColor: AppColors.text.disabled, borderRadius: 10 }} />,
   },
 };
 

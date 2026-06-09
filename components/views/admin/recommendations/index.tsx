@@ -35,6 +35,7 @@ import {
   updateAdminRecommendationStatus,
 } from '@/lib/adminOperational';
 import { useTranslation } from '@/i18n';
+import { AppColors, withAlpha } from '@/constants/theme';
 import {
   formatRelativeDate,
   getHospitalAdminLabel,
@@ -249,8 +250,8 @@ export function AdminRecommendations() {
                 size="md"
                 leadingIcon={
                   refreshing
-                    ? <ActivityIndicator size="small" color="#475569" />
-                    : <Feather name="refresh-cw" size={14} color="#475569" />
+                    ? <ActivityIndicator size="small" color={AppColors.text.body} />
+                    : <Feather name="refresh-cw" size={14} color={AppColors.text.body} />
                 }
                 style={styles.refreshButton}
                 onPress={() => void handleRefresh()}
@@ -330,7 +331,7 @@ export function AdminRecommendations() {
             ) : (
               <CardBase style={styles.emptyCard}>
                 <View style={styles.emptyIconWrap}>
-                  <MaterialCommunityIcons name="progress-clock" size={22} color="#1718C7" />
+                  <MaterialCommunityIcons name="progress-clock" size={22} color={AppColors.brand.action} />
                 </View>
                 <Text style={styles.emptyTitle}>{isSpanish(language) ? 'No se encontraron recomendaciones' : 'No recommendations found'}</Text>
                 <Text style={styles.emptySubtitle}>{isSpanish(language) ? 'El filtro actual todavia no tiene registros de recomendaciones.' : 'The current filter does not have any recommendation records yet.'}</Text>
@@ -344,7 +345,7 @@ export function AdminRecommendations() {
             <Feather
               name={toast.tone === 'success' ? 'check-circle' : toast.tone === 'warning' ? 'alert-triangle' : 'x-circle'}
               size={16}
-              color={toast.tone === 'success' ? '#16A34A' : toast.tone === 'warning' ? '#EA580C' : '#DC2626'}
+              color={toast.tone === 'success' ? AppColors.status.success : toast.tone === 'warning' ? AppColors.clinicalSeverity.high.accent : AppColors.status.danger}
             />
             <Text style={styles.toastText}>{toast.message}</Text>
           </View>
@@ -560,7 +561,7 @@ function AdminRecommendationCard({
 
         <View style={styles.cardFooter}>
           <View style={styles.contextSource}>
-            {createdMeta?.icon ?? <Feather name="clock" size={14} color="#64748B" />}
+            {createdMeta?.icon ?? <Feather name="clock" size={14} color={AppColors.text.secondary} />}
             <Text style={styles.contextLine}>{createdMeta?.label}</Text>
           </View>
           <View style={styles.cardActions}>
@@ -570,7 +571,7 @@ function AdminRecommendationCard({
                 label={action.label}
                 variant={action.variant}
                 size="sm"
-                leadingIcon={<Feather name={actionIconByLabel(action.label)} size={14} color={action.variant === 'primary' ? '#FFFFFF' : '#334155'} />}
+                leadingIcon={<Feather name={actionIconByLabel(action.label)} size={14} color={action.variant === 'primary' ? AppColors.surface.card : AppColors.text.body} />}
                 style={
                   action.variant === 'primary'
                     ? { ...styles.cardActionButton, ...styles.cardActionPrimary }
@@ -604,40 +605,40 @@ function recommendationCategoryTone(type: string) {
   const normalized = type.toUpperCase();
   if (normalized === 'BED_CAPACITY') {
     return {
-      accent: '#0891B2',
-      soft: '#ECFEFF',
-      border: 'rgba(8, 145, 178, 0.24)',
+      accent: AppColors.resourceStatus.info.accent,
+      soft: AppColors.resourceStatus.info.background,
+      border: AppColors.recommendationCategory.medical.border,
       icon: 'activity' as const,
     };
   }
   if (normalized === 'STAFFING') {
     return {
-      accent: '#7C3AED',
-      soft: '#F5F3FF',
-      border: 'rgba(124, 58, 237, 0.24)',
+      accent: AppColors.recommendationCategory.logistics.accent,
+      soft: AppColors.recommendationCategory.logistics.soft,
+      border: AppColors.recommendationCategory.logistics.border,
       icon: 'users' as const,
     };
   }
   if (normalized === 'SUPPLY') {
     return {
-      accent: '#9333EA',
+      accent: AppColors.recommendationCategory.staffing.accent,
       soft: '#FAF5FF',
-      border: 'rgba(147, 51, 234, 0.24)',
+      border: AppColors.recommendationCategory.staffing.border,
       icon: 'package' as const,
     };
   }
   if (normalized === 'LOCAL_EPIDEMIOLOGY' || normalized.startsWith('EPIDEMIOLOGY')) {
     return {
-      accent: '#9F1239',
-      soft: '#FFF1F2',
-      border: 'rgba(159, 18, 57, 0.24)',
+      accent: AppColors.clinicalSeverity.critical.text,
+      soft: AppColors.status.dangerPanel,
+      border: AppColors.recommendationCategory.critical.border,
       icon: 'map-pin' as const,
     };
   }
   return {
-    accent: '#475569',
-    soft: '#F8FAFC',
-    border: 'rgba(71, 85, 105, 0.22)',
+    accent: AppColors.text.body,
+    soft: AppColors.surface.subtle,
+    border: withAlpha(AppColors.text.body, 0.22),
     icon: 'briefcase' as const,
   };
 }
@@ -645,34 +646,34 @@ function recommendationCategoryTone(type: string) {
 function recommendationPriorityTone(severity: string) {
   const normalized = severity.toUpperCase();
   if (normalized === 'CRITICAL') {
-    return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
+    return { accent: AppColors.status.danger, soft: AppColors.status.dangerSoft, border: AppColors.status.dangerBorder };
   }
   if (normalized === 'HIGH') {
-    return { accent: '#EA580C', soft: '#FFF7ED', border: '#FED7AA' };
+    return { accent: AppColors.clinicalSeverity.high.accent, soft: AppColors.status.warningPanel, border: AppColors.clinicalSeverity.high.border };
   }
   if (normalized === 'MEDIUM' || normalized === 'MODERATE') {
-    return { accent: '#2563EB', soft: '#EFF6FF', border: '#BFDBFE' };
+    return { accent: AppColors.status.info, soft: AppColors.status.infoSoft, border: AppColors.status.infoSoft };
   }
-  return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+  return { accent: AppColors.status.success, soft: AppColors.status.successWash, border: AppColors.status.successBorder };
 }
 
 function archivedStatusTone(status: RecommendationStatus) {
   if (status === 'completed') {
-    return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+    return { accent: AppColors.status.success, soft: AppColors.status.successWash, border: AppColors.status.successBorder };
   }
   if (status === 'rejected') {
-    return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
+    return { accent: AppColors.status.danger, soft: AppColors.status.dangerSoft, border: AppColors.status.dangerBorder };
   }
   return null;
 }
 
 function recommendationStatusTone(status: RecommendationStatus) {
-  if (status === 'new') return { accent: '#1718C7', soft: '#EEF2FF', border: '#C7D2FE' };
+  if (status === 'new') return { accent: AppColors.brand.action, soft: AppColors.surface.brandSoft, border: AppColors.border.brandSubtle };
   if (status === 'assigned' || status === 'accepted' || status === 'completed') {
-    return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+    return { accent: AppColors.status.success, soft: AppColors.status.successWash, border: AppColors.status.successBorder };
   }
-  if (status === 'rejected') return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
-  return { accent: '#475569', soft: '#F8FAFC', border: '#E2E8F0' };
+  if (status === 'rejected') return { accent: AppColors.status.danger, soft: AppColors.status.dangerSoft, border: AppColors.status.dangerBorder };
+  return { accent: AppColors.text.body, soft: AppColors.surface.subtle, border: AppColors.border.default };
 }
 
 const recommendationTitleKeys: Record<string, string> = {
@@ -791,9 +792,9 @@ function mapRecommendation(
     description: content.description,
     createdByMode: item.createdByMode,
     metaItems: [
-      { label: formatLastUpdatedLabel(item.updatedAt ?? item.createdAt, language), icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
+      { label: formatLastUpdatedLabel(item.updatedAt ?? item.createdAt, language), icon: <Feather name="clock" size={13} color={AppColors.text.soft} /> },
     ],
-    accentColor: severity === 'high' ? '#F7C9CC' : severity === 'medium' ? '#F2E5C1' : '#E3E8F0',
+    accentColor: severity === 'high' ? AppColors.clinicalSeverity.critical.border : severity === 'medium' ? '#F2E5C1' : '#E3E8F0',
     actions: buildActions(item.type, status, t, Boolean(activeTask)),
     confidenceScore: formatCalculatedPriority(item.confidenceScore),
     expectedImpact: content.expectedImpact,
@@ -1036,13 +1037,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
     borderRadius: 24,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.08)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000F6B',
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1058,21 +1059,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   heroTitle: {
     fontSize: 26,
     lineHeight: 34,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 8,
     maxWidth: 720,
   },
   heroDescription: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#475569',
+    color: AppColors.text.body,
     maxWidth: 760,
   },
   refreshButton: {
@@ -1082,20 +1083,20 @@ const styles = StyleSheet.create({
   errorCard: {
     borderRadius: 16,
     padding: 16,
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
+    backgroundColor: AppColors.status.dangerSoft,
+    borderColor: AppColors.status.dangerBorder,
   },
   errorTitle: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#991B1B',
+    color: AppColors.status.dangerDeep,
   },
   errorText: {
     marginTop: 6,
     fontSize: 13,
     lineHeight: 20,
-    color: '#B91C1C',
+    color: AppColors.status.dangerDark,
   },
   toast: {
     position: 'absolute',
@@ -1110,22 +1111,22 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
-    backgroundColor: '#F0FDF4',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.status.successBorder,
+    backgroundColor: AppColors.status.successWash,
+    shadowColor: AppColors.text.primary,
     shadowOpacity: 0.12,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
   },
-  toastWarning: { borderColor: '#FED7AA', backgroundColor: '#FFF7ED' },
-  toastError: { borderColor: '#FECACA', backgroundColor: '#FEF2F2' },
+  toastWarning: { borderColor: AppColors.clinicalSeverity.high.border, backgroundColor: AppColors.status.warningPanel },
+  toastError: { borderColor: AppColors.status.dangerBorder, backgroundColor: AppColors.status.dangerSoft },
   toastText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -1140,7 +1141,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
@@ -1149,14 +1150,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 32,
     fontWeight: '900',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   tabsRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5EAF3',
+    borderBottomColor: AppColors.border.divider,
   },
   tabItem: {
     flexDirection: 'row',
@@ -1167,16 +1168,16 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabItemActive: {
-    borderBottomColor: '#1718C7',
+    borderBottomColor: AppColors.brand.action,
   },
   tabLabel: {
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#6B7C93',
+    color: AppColors.table.muted,
   },
   tabLabelActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   tabBadge: {
     minWidth: 20,
@@ -1185,19 +1186,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   tabBadgeActive: {
-    backgroundColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
   },
   tabBadgeText: {
     fontSize: 10,
     lineHeight: 12,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
   },
   tabBadgeTextInactive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   loadingCard: {
     minHeight: 220,
@@ -1208,21 +1209,21 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   feed: {
     gap: 18,
   },
   focusedRecommendationShell: {
     borderRadius: 22,
-    shadowColor: '#1718C7',
+    shadowColor: AppColors.brand.action,
     shadowOpacity: 0.16,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
   },
   recommendationSkeletonCard: {
     padding: 18,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
     gap: 14,
   },
   recommendationSkeletonHeader: {
@@ -1239,19 +1240,19 @@ const styles = StyleSheet.create({
   skeletonLine: {
     height: 12,
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   skeletonIcon: {
     width: 18,
     height: 18,
     borderRadius: 6,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   skeletonPill: {
     width: 68,
     height: 26,
     borderRadius: 999,
-    backgroundColor: '#EEF2F7',
+    backgroundColor: AppColors.border.soft,
   },
   skeletonParagraph: {
     gap: 8,
@@ -1267,12 +1268,12 @@ const styles = StyleSheet.create({
     height: 74,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5EAF3',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.divider,
+    backgroundColor: AppColors.surface.subtle,
   },
   skeletonFooterRow: {
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
     paddingTop: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1289,15 +1290,15 @@ const styles = StyleSheet.create({
     width: 116,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   emptyCard: {
     minHeight: 220,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderStyle: 'dashed',
-    borderColor: '#DCE5F2',
+    borderColor: AppColors.border.default,
   },
   emptyIconWrap: {
     width: 52,
@@ -1305,28 +1306,28 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
     marginBottom: 14,
   },
   emptyTitle: {
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '800',
-    color: '#1F2937',
+    color: AppColors.text.strong,
   },
   emptySubtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   recommendationCard: {
     padding: 0,
     overflow: 'hidden',
-    borderColor: '#E8EDF5',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.resourceStatus.stable.track,
+    backgroundColor: AppColors.surface.card,
     borderRadius: 16,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.08,
     shadowRadius: 28,
@@ -1378,7 +1379,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '900',
-    color: '#1F2937',
+    color: AppColors.text.strong,
   },
   headerIndicators: {
     alignItems: 'flex-end',
@@ -1388,22 +1389,22 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontSize: 14,
     lineHeight: 22,
-    color: '#67788F',
+    color: AppColors.text.soft,
   },
   statusPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: '#E0E7FF',
+    borderColor: AppColors.border.brandSoft,
   },
   statusPillLabel: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   signalGrid: {
     marginTop: 14,
@@ -1418,12 +1419,12 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E8EDF5',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.resourceStatus.stable.track,
+    backgroundColor: AppColors.surface.subtle,
   },
   archivedSignalCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.42)',
-    borderColor: 'rgba(255, 255, 255, 0.24)',
+    backgroundColor: AppColors.modal.glassSubtle,
+    borderColor: AppColors.modal.glassBorder,
   },
   signalCardWide: {
     flexBasis: 280,
@@ -1435,7 +1436,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 13,
     fontWeight: '800',
-    color: '#7387A5',
+    color: AppColors.text.soft,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     marginBottom: 5,
@@ -1444,13 +1445,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '900',
-    color: '#273449',
+    color: AppColors.text.body,
   },
   contextStrip: {
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -1465,13 +1466,13 @@ const styles = StyleSheet.create({
   contextLine: {
     fontSize: 12,
     lineHeight: 17,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   cardFooter: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1490,8 +1491,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   cardActionPrimary: {
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
   cardActionLabel: {
     fontSize: 13,
@@ -1499,7 +1500,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardActionLabelPrimary: {
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
   },
 });
 

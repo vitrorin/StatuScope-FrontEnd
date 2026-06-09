@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface TestItem {
   label: string;
@@ -21,7 +22,7 @@ export function RecommendedTestsCard({
   return (
     <View style={[styles.container, style]}>
       <View style={styles.header}>
-        <Feather name="activity" size={12} color="#0003B8" />
+        <Feather name="activity" size={12} color={AppColors.brand.primary} />
         <Text style={styles.title}>{title}</Text>
       </View>
 
@@ -32,7 +33,7 @@ export function RecommendedTestsCard({
               <Text style={styles.label}>{test.label}</Text>
               {test.secondaryText ? <Text style={styles.secondary}>{test.secondaryText}</Text> : null}
             </View>
-            <Feather name="plus-circle" size={12} color="#CBD5E1" />
+            <Feather name="plus-circle" size={12} color={AppColors.border.strong} />
           </View>
         ))}
       </View>
@@ -42,12 +43,12 @@ export function RecommendedTestsCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#DCE6F5',
+    borderColor: AppColors.border.panel,
     padding: 18,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
     shadowRadius: 24,
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
@@ -74,7 +75,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E6EDF8',
@@ -89,12 +90,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   secondary: {
     marginTop: 2,
     fontSize: 12,
     lineHeight: 17,
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
 });

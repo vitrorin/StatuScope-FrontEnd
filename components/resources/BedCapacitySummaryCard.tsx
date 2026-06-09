@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
+import { AppColors } from '@/constants/theme';
 
 export type BedCapacityVariant = 'default' | 'warning' | 'critical' | 'highlighted';
 
@@ -21,20 +22,20 @@ export interface BedCapacitySummaryCardProps {
 
 const variantStyles = {
   default: {
-    valueColor: '#111827',
-    accentColor: '#0003B8',
+    valueColor: AppColors.text.strong,
+    accentColor: AppColors.brand.primary,
   },
   warning: {
-    valueColor: '#D97706',
-    accentColor: '#F59E0B',
+    valueColor: AppColors.status.warningText,
+    accentColor: AppColors.status.warning,
   },
   critical: {
-    valueColor: '#DC2626',
-    accentColor: '#EF4444',
+    valueColor: AppColors.status.danger,
+    accentColor: AppColors.status.dangerBright,
   },
   highlighted: {
-    valueColor: '#1E40AF',
-    accentColor: '#0003B8',
+    valueColor: AppColors.status.infoDark,
+    accentColor: AppColors.brand.primary,
   },
 };
 
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#6B7280',
+    color: AppColors.table.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
@@ -104,12 +105,12 @@ const styles = StyleSheet.create({
   unitText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginLeft: 4,
   },
   trendText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginTop: 4,
   },
   progressContainer: {

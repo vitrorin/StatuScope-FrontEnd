@@ -38,6 +38,7 @@ import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboardLocalization';
 import { aggregateOutbreakColor, diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
 import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 const navigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -258,7 +259,7 @@ function buildDiseaseRows(
       count: formatNumber(disease.caseCount),
     }),
     progress: disease.progress,
-    barColor: '#1718C7',
+    barColor: AppColors.brand.action,
     barHeight: 12,
   }));
 }
@@ -368,10 +369,10 @@ function getRadiusBounds(
 }
 
 function metricAccentColor(status?: DoctorDashboardMetric['status']) {
-  if (status === 'danger') return '#1E40AF';
-  if (status === 'warning') return '#3B82F6';
-  if (status === 'positive') return '#93C5FD';
-  return '#64748B';
+  if (status === 'danger') return AppColors.status.infoDark;
+  if (status === 'warning') return AppColors.roleTone.doctor.accent;
+  if (status === 'positive') return AppColors.auth.radarBlue;
+  return AppColors.text.secondary;
 }
 
 function metricIcon(metric: DoctorDashboardMetric, isLoading = false) {
@@ -403,7 +404,7 @@ function RetryOverlay({
   return (
     <View style={styles.retryOverlay}>
       <TouchableOpacity style={styles.retryButton} activeOpacity={0.82} onPress={onRetry}>
-        <Feather name="refresh-cw" size={18} color="#0003B8" />
+        <Feather name="refresh-cw" size={18} color={AppColors.brand.primary} />
         <Text style={styles.retryText}>{label}</Text>
       </TouchableOpacity>
     </View>
@@ -812,10 +813,10 @@ export function DoctorDashboard() {
               }))}
               showControls
               legendItems={[
-                { label: t('doctor.dashboard.map.highRisk'), color: '#EF4444' },
-                { label: t('doctor.dashboard.map.emerging'), color: '#F97316' },
-                { label: t('doctor.dashboard.map.lowRisk'), color: '#22C55E' },
-                { label: t('doctor.dashboard.map.hospitalNode'), color: '#0003B8' },
+                { label: t('doctor.dashboard.map.highRisk'), color: AppColors.status.dangerBright },
+                { label: t('doctor.dashboard.map.emerging'), color: AppColors.status.warningBright },
+                { label: t('doctor.dashboard.map.lowRisk'), color: AppColors.status.successBright },
+                { label: t('doctor.dashboard.map.hospitalNode'), color: AppColors.brand.primary },
               ]}
               footerTextLeft="© OpenStreetMap contributors"
               footerTextRight={formatSyncTime(mapState.data?.generatedAt, t)}
@@ -837,13 +838,13 @@ export function DoctorDashboard() {
                 latitude: zone.latitude,
                 longitude: zone.longitude,
                 borderColor: zone.borderColor,
-                fillColor: '#FFFFFF',
+                fillColor: AppColors.surface.card,
                 icon:
-                  zone.borderColor === '#0003B8' ? (
-                    <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
-                  ) : zone.borderColor === '#F97316' ? (
+                  zone.borderColor === AppColors.brand.primary ? (
+                    <MaterialCommunityIcons name="hospital-box-outline" size={12} color={AppColors.brand.primary} />
+                  ) : zone.borderColor === AppColors.status.warningBright ? (
                     <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
-                  ) : zone.borderColor === '#22C55E' ? (
+                  ) : zone.borderColor === AppColors.status.successBright ? (
                     <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
                   ) : (
                     <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />
@@ -899,7 +900,7 @@ export function DoctorDashboard() {
                         activeOpacity={0.82}
                         onPress={() => setIsMoreAlertsOpen(true)}
                       >
-                        <Feather name="list" size={17} color="#0003B8" />
+                        <Feather name="list" size={17} color={AppColors.brand.primary} />
                         <Text style={styles.moreAlertsText}>{t('doctor.dashboard.alerts.showMore')}</Text>
                         <View style={styles.moreAlertsBadge}>
                           <Text style={styles.moreAlertsBadgeText}>{remainingAlerts.length}</Text>
@@ -1055,14 +1056,14 @@ function StateOutbreakExplorer({
     states.map((state) => [stateLookupKey(state.stateName), state]),
   ), [states]);
   const selectedBoundary = useMemo(() => getStateBoundary(selectedState?.stateName), [selectedState?.stateName]);
-  const selectedStateColor = '#0003B8';
+  const selectedStateColor = AppColors.brand.primary;
   const selectorPolygons = useMemo<RadarMapPolygon[]>(() => mexicoStateBoundaries.map((boundary) => {
     const state = statesByName.get(stateLookupKey(boundary.name));
     return {
       id: boundary.id,
       geometry: boundary.geometry,
-      fillColor: state ? 'rgba(0, 3, 184, 0.05)' : 'rgba(100, 116, 139, 0.04)',
-      strokeColor: state ? 'rgba(0, 3, 184, 0.62)' : 'rgba(100, 116, 139, 0.24)',
+      fillColor: state ? withAlpha(AppColors.brand.primary, 0.05) : withAlpha(AppColors.text.secondary, 0.04),
+      strokeColor: state ? withAlpha(AppColors.brand.primary, 0.62) : withAlpha(AppColors.text.secondary, 0.24),
       strokeWidth: state && state.outbreakCount > 0 ? 1.3 : 1,
     };
   }), [statesByName]);
@@ -1095,12 +1096,12 @@ function StateOutbreakExplorer({
             <View style={styles.stateExplorerActions}>
               {selectedState ? (
                 <TouchableOpacity style={styles.stateExplorerSecondaryButton} onPress={onBack} activeOpacity={0.75}>
-                  <Feather name="arrow-left" size={16} color="#0003B8" />
+                  <Feather name="arrow-left" size={16} color={AppColors.brand.primary} />
                   <Text style={styles.stateExplorerSecondaryText}>{t('doctor.dashboard.map.backToStates')}</Text>
                 </TouchableOpacity>
               ) : null}
               <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -1137,10 +1138,10 @@ function StateOutbreakExplorer({
                   latitude: zone.latitude,
                   longitude: zone.longitude,
                   borderColor: zone.borderColor,
-                  fillColor: '#FFFFFF',
-                  icon: zone.borderColor === '#22C55E'
+                  fillColor: AppColors.surface.card,
+                  icon: zone.borderColor === AppColors.status.successBright
                     ? <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
-                    : zone.borderColor === '#F97316'
+                    : zone.borderColor === AppColors.status.warningBright
                       ? <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
                       : <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />,
                   onPress: () => onZonePress(zone),
@@ -1173,10 +1174,10 @@ function StateOutbreakExplorer({
                 id: state.stateId,
                 latitude: state.latitude,
                 longitude: state.longitude,
-                borderColor: '#0003B8',
-                fillColor: '#FFFFFF',
+                borderColor: AppColors.brand.primary,
+                fillColor: AppColors.surface.card,
                 label: shortStateName(state.stateName),
-                icon: <Feather name="map-pin" size={13} color="#0003B8" />,
+                icon: <Feather name="map-pin" size={13} color={AppColors.brand.primary} />,
                 onPress: () => onSelectState(state),
               }))}
             />
@@ -1211,7 +1212,7 @@ function MoreAlertsOverlay({
               <Text style={styles.stateExplorerTitle}>{t('doctor.dashboard.alerts.moreTitle')}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
@@ -1244,13 +1245,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
     borderRadius: 24,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.08)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000F6B',
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1266,21 +1267,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   heroTitle: {
     fontSize: 26,
     lineHeight: 34,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 8,
     maxWidth: 720,
   },
   heroDescription: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#475569',
+    color: AppColors.text.body,
     maxWidth: 760,
   },
   radiusControlGroup: {
@@ -1292,7 +1293,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
     fontWeight: '900',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -1306,16 +1307,16 @@ const styles = StyleSheet.create({
     minWidth: 90,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.18)',
-    backgroundColor: '#FFFFFF',
+    borderColor: withAlpha(AppColors.brand.primary, 0.18),
+    backgroundColor: AppColors.surface.card,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radiusSegmentActive: {
-    backgroundColor: '#0003B8',
-    borderColor: '#0003B8',
-    shadowColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
+    borderColor: AppColors.brand.primary,
+    shadowColor: AppColors.brand.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.22,
     shadowRadius: 18,
@@ -1325,10 +1326,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   radiusSegmentTextActive: {
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
   },
   metricsRow: {
     flexDirection: 'row',
@@ -1349,7 +1350,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(248, 250, 252, 0.72)',
+    backgroundColor: AppColors.surface.subtleTranslucent,
   },
   retryButton: {
     flexDirection: 'row',
@@ -1358,10 +1359,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.14)',
-    shadowColor: '#0F172A',
+    borderColor: withAlpha(AppColors.brand.primary, 0.14),
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -1371,11 +1372,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   skeletonLine: {
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   skeletonSpaced: {
     marginTop: 14,
@@ -1393,9 +1394,9 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FEFFFF',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.frost,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1406,8 +1407,8 @@ const styles = StyleSheet.create({
     height: 560,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.05)',
-    backgroundColor: '#E2E8F0',
+    borderColor: withAlpha(AppColors.brand.primary, 0.05),
+    backgroundColor: AppColors.border.default,
     overflow: 'hidden',
   },
   skeletonMapOverlay: {
@@ -1427,20 +1428,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   skeletonMapOverlayBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: 'rgba(0, 3, 184, 0.08)',
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.08),
   },
   skeletonMapOverlayBadgeText: {
     fontSize: 10,
     lineHeight: 12,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   skeletonPinLarge: {
     position: 'absolute',
@@ -1458,9 +1459,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 999,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderColor: AppColors.border.strong,
   },
   skeletonMapFooter: {
     position: 'absolute',
@@ -1472,19 +1473,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   alertSkeletonItem: {
     minHeight: 96,
     gap: 12,
     padding: 20,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderLeftWidth: 4,
-    borderLeftColor: '#E2E8F0',
+    borderLeftColor: AppColors.border.default,
   },
   breakdownSkeleton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   breakdownSkeletonHeader: {
     marginBottom: 16,
@@ -1493,13 +1494,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   sectionHeaderRule: {
     width: 72,
     height: 3,
     borderRadius: 999,
-    backgroundColor: 'rgba(0, 3, 184, 0.14)',
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.14),
     marginTop: 10,
   },
   breakdownSkeletonRows: {
@@ -1517,7 +1518,7 @@ const styles = StyleSheet.create({
   breakdownSkeletonSummary: {
     paddingTop: 22,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: AppColors.surface.muted,
     marginBottom: 18,
     gap: 14,
   },
@@ -1527,13 +1528,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 3, 184, 0.10)',
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.1),
   },
   breakdownSkeletonButtonText: {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   loadingBanner: {
     flexDirection: 'row',
@@ -1542,35 +1543,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.12)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.12),
   },
   loadingText: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
-    color: '#000F6B',
+    color: AppColors.shadow.blue,
   },
   errorBanner: {
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: AppColors.status.infoSoft,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: AppColors.status.infoSoft,
   },
   errorTitle: {
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#1E3A8A',
+    color: AppColors.status.infoDeep,
   },
   errorText: {
     marginTop: 4,
     fontSize: 13,
     lineHeight: 20,
-    color: '#1D4ED8',
+    color: AppColors.brand.link,
   },
   mainGrid: {
     flexDirection: 'row',
@@ -1583,12 +1584,12 @@ const styles = StyleSheet.create({
   },
   alertsPanel: {
     flexShrink: 0,
-    backgroundColor: '#FCFDFE',
+    backgroundColor: AppColors.surface.cardSoft,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1600,13 +1601,13 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
   },
   alertsTitle: {
     fontSize: 18,
     lineHeight: 28,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   alertsList: {
     paddingHorizontal: 24,
@@ -1623,8 +1624,8 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.16)',
-    backgroundColor: '#EEF2FF',
+    borderColor: withAlpha(AppColors.brand.primary, 0.16),
+    backgroundColor: AppColors.surface.brandSoft,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1634,7 +1635,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   moreAlertsBadge: {
     minWidth: 26,
@@ -1643,13 +1644,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   moreAlertsBadgeText: {
     fontSize: 12,
     lineHeight: 14,
     fontWeight: '900',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   breakdownGrid: {
     flexDirection: 'row',
@@ -1672,16 +1673,16 @@ const styles = StyleSheet.create({
   },
   stateExplorerBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.38)',
+    backgroundColor: withAlpha(AppColors.text.primary, 0.38),
   },
   stateExplorerCard: {
     flex: 1,
     overflow: 'hidden',
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.16,
     shadowRadius: 34,
@@ -1696,13 +1697,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
   },
   stateExplorerEyebrow: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
@@ -1711,7 +1712,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   stateExplorerActions: {
     flexDirection: 'row',
@@ -1726,20 +1727,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.14)',
-    backgroundColor: '#F8FAFC',
+    borderColor: withAlpha(AppColors.brand.primary, 0.14),
+    backgroundColor: AppColors.surface.subtle,
   },
   stateExplorerSecondaryText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   stateExplorerError: {
     flex: 1,
     minHeight: 620,
     position: 'relative',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
   },
   moreAlertsOverlay: {
     flex: 1,
@@ -1753,10 +1754,10 @@ const styles = StyleSheet.create({
     maxHeight: '86%',
     overflow: 'hidden',
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.16,
     shadowRadius: 42,
@@ -1767,7 +1768,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1784,8 +1785,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
 });
 

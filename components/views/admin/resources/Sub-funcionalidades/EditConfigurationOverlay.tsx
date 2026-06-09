@@ -15,6 +15,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { DepartmentResourceItem, ResourceConfiguration } from '@/components/views/admin/resources/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 type ConfigurationTab = 'capacity' | 'staff' | 'specialists' | 'departments';
 
@@ -91,7 +92,7 @@ export function EditConfigurationOverlay({
             </View>
 
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -216,7 +217,7 @@ export function EditConfigurationOverlay({
                   ))}
                 </View>
                 <View style={styles.departmentHint}>
-                  <MaterialCommunityIcons name="information-outline" size={16} color="#1718C7" />
+                  <MaterialCommunityIcons name="information-outline" size={16} color={AppColors.brand.action} />
                   <Text style={styles.departmentHintText}>
                     {isSpanish(language)
                       ? 'La edición detallada de departamentos se encuentra en la acción Administrar de la tabla principal de recursos.'
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -266,8 +267,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E4EAF4',
+    backgroundColor: AppColors.surface.card,
+    borderColor: AppColors.border.default,
     shadowOpacity: 0.12,
     shadowRadius: 30,
     elevation: 12,
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
@@ -289,20 +290,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    color: '#1718C7',
+    color: AppColors.brand.action,
     marginBottom: 8,
   },
   title: {
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
     maxWidth: 580,
   },
   closeButton: {
@@ -312,8 +313,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
   tabsRow: {
     flexDirection: 'row',
@@ -326,22 +327,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 999,
-    backgroundColor: '#F6F8FC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
   },
   tabActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
+    backgroundColor: AppColors.surface.brandSoft,
+    borderColor: AppColors.border.brandMuted,
   },
   tabLabel: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   tabLabelActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   formContent: {
     paddingHorizontal: 26,
@@ -356,7 +357,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   grid: {
     flexDirection: 'row',
@@ -370,19 +371,19 @@ const styles = StyleSheet.create({
   inputContainer: {
     height: 50,
     borderRadius: 12,
-    borderColor: '#DCE3EE',
+    borderColor: AppColors.border.default,
   },
   infoCard: {
     padding: 16,
     borderRadius: 16,
-    backgroundColor: '#F8FAFF',
-    borderColor: '#E0E7FF',
+    backgroundColor: AppColors.surface.raised,
+    borderColor: AppColors.border.brandSoft,
   },
   infoTitle: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 6,
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   departmentList: {
     gap: 12,
@@ -409,25 +410,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     flex: 1,
   },
   departmentStatus: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   departmentMeta: {
     fontSize: 12,
     lineHeight: 18,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   departmentNote: {
     marginTop: 8,
     fontSize: 13,
     lineHeight: 20,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   departmentHint: {
     flexDirection: 'row',
@@ -435,15 +436,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 14,
     borderRadius: 14,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: '#E0E7FF',
+    borderColor: AppColors.border.brandSoft,
   },
   departmentHintText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   footer: {
     flexDirection: 'row',
@@ -453,14 +454,14 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
   },
   footerButton: {
     minWidth: 150,
   },
   primaryButton: {
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
 });
 

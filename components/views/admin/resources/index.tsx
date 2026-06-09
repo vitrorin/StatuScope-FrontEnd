@@ -53,6 +53,7 @@ import { initialsFromName } from '@/lib/format';
 import { useTranslation } from '@/i18n';
 import type { AppLanguage } from '@/i18n/language';
 import { getHospitalAdminLabel, isSpanish } from '@/components/views/admin/localization';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 type ResourceKpiTone = 'critical' | 'warning' | 'normal' | 'info';
@@ -280,7 +281,7 @@ export function AdminResources() {
         <UtilizationCell
           value={`${utilization}%`}
           progress={utilization}
-          color={department.status === 'Critical' ? '#F04B4B' : department.status === 'Stable' ? '#1718C7' : '#F2B300'}
+          color={department.status === 'Critical' ? AppColors.status.dangerAccent : department.status === 'Stable' ? AppColors.brand.action : AppColors.status.warningText}
         />
       ),
       status: (
@@ -322,7 +323,7 @@ export function AdminResources() {
         <UtilizationCell
           value={`${onShift}/${headcount}`}
           progress={coverage}
-          color={coverage < 35 ? '#F04B4B' : coverage < 55 ? '#F59E0B' : '#1718C7'}
+          color={coverage < 35 ? AppColors.status.dangerAccent : coverage < 55 ? AppColors.status.warning : AppColors.brand.action}
         />
       ),
       onCall: profile.onCallCount,
@@ -396,7 +397,7 @@ export function AdminResources() {
                   <CardBase style={styles.staffingPanel}>
                     <View style={styles.panelHeader}>
                       <View style={styles.panelHeaderTitle}>
-                        <MaterialCommunityIcons name="account-group-outline" size={18} color="#1718C7" />
+                        <MaterialCommunityIcons name="account-group-outline" size={18} color={AppColors.brand.action} />
                         <Text style={styles.panelTitle}>{isSpanish(language) ? 'Personal (Turno activo)' : 'Staffing (Active Shift)'}</Text>
                       </View>
                       <View style={styles.tableActions}>
@@ -413,9 +414,9 @@ export function AdminResources() {
                         subtitle={isSpanish(language) ? `${resourceConfiguration.doctors} doctores configurados` : `${resourceConfiguration.doctors} total doctors configured`}
                         value={String(summary?.doctorsOnShift ?? 0)}
                         variant="doctor"
-                        valueColor="#0F172A"
-                        icon={<MaterialCommunityIcons name="stethoscope" size={16} color="#4B7BFF" />}
-                        iconBackgroundColor="#EAF1FF"
+                        valueColor={AppColors.text.primary}
+                        icon={<MaterialCommunityIcons name="stethoscope" size={16} color={AppColors.roleTone.doctor.accent} />}
+                        iconBackgroundColor={AppColors.roleTone.doctor.background}
                         style={styles.staffingItem}
                       />
                       <StaffingStatusCard
@@ -423,9 +424,9 @@ export function AdminResources() {
                         subtitle={isSpanish(language) ? `${resourceConfiguration.nurses} personal de enfermería configurado` : `${resourceConfiguration.nurses} nursing staff configured`}
                         value={String(summary?.nursesOnShift ?? 0)}
                         variant="nurse"
-                        valueColor="#0F172A"
-                        icon={<MaterialCommunityIcons name="medical-bag" size={16} color="#35C86B" />}
-                        iconBackgroundColor="#E8FBEE"
+                        valueColor={AppColors.text.primary}
+                        icon={<MaterialCommunityIcons name="medical-bag" size={16} color={AppColors.roleTone.nurse.accent} />}
+                        iconBackgroundColor={AppColors.roleTone.nurse.background}
                         style={styles.staffingItem}
                       />
                       <StaffingStatusCard
@@ -433,10 +434,10 @@ export function AdminResources() {
                         subtitle={isSpanish(language) ? `${staffingRaw.length} perfiles de especialidad monitoreados` : `${staffingRaw.length} specialty profiles tracked`}
                         value={String(totalSpecialists).padStart(2, '0')}
                         variant="specialist"
-                        highlightColor="#FACC15"
-                        valueColor="#0F172A"
-                        icon={<MaterialCommunityIcons name="sprout" size={16} color="#F2B300" />}
-                        iconBackgroundColor="#FFF6D9"
+                        highlightColor={AppColors.status.warning}
+                        valueColor={AppColors.text.primary}
+                        icon={<MaterialCommunityIcons name="sprout" size={16} color={AppColors.status.warningText} />}
+                        iconBackgroundColor={AppColors.status.warningSoft}
                         style={styles.staffingItem}
                       />
                     </View>
@@ -445,7 +446,7 @@ export function AdminResources() {
                   <CardBase style={styles.tablePanel}>
                     <View style={styles.tableHeader}>
                       <View style={styles.tableHeaderTitle}>
-                        <MaterialCommunityIcons name="account-badge-outline" size={17} color="#1718C7" />
+                        <MaterialCommunityIcons name="account-badge-outline" size={17} color={AppColors.brand.action} />
                         <Text style={styles.tableTitle} numberOfLines={1}>{isSpanish(language) ? 'Perfiles de personal' : 'Staffing Profiles'}</Text>
                       </View>
                     </View>
@@ -467,7 +468,7 @@ export function AdminResources() {
                   <CardBase style={styles.inventoryPanel}>
                     <View style={styles.panelHeader}>
                       <View style={styles.panelHeaderTitle}>
-                        <MaterialCommunityIcons name="clipboard-pulse-outline" size={18} color="#1718C7" />
+                        <MaterialCommunityIcons name="clipboard-pulse-outline" size={18} color={AppColors.brand.action} />
                         <Text style={styles.panelTitle}>{isSpanish(language) ? 'Inventario crítico' : 'Critical Inventory'}</Text>
                       </View>
                       <View style={styles.tableActions}>
@@ -497,14 +498,14 @@ export function AdminResources() {
                           key={item.id}
                           title={item.title}
                           valueText={item.valueText}
-                          valueTextColor={item.tone === 'critical' ? '#F04B4B' : undefined}
+                          valueTextColor={item.tone === 'critical' ? AppColors.status.dangerAccent : undefined}
                           progress={item.progress}
                           variant={item.tone === 'critical' ? 'critical' : item.tone === 'low' ? 'warning' : 'normal'}
                           icon={
                             <MaterialCommunityIcons
                               name={item.category.toLowerCase().includes('oxygen') ? 'molecule' : item.category.toLowerCase().includes('vaccine') ? 'needle' : 'medical-bag'}
                               size={14}
-                              color={item.tone === 'critical' ? '#F04B4B' : item.tone === 'low' ? '#F59E0B' : '#1718C7'}
+                              color={item.tone === 'critical' ? AppColors.status.dangerAccent : item.tone === 'low' ? AppColors.status.warning : AppColors.brand.action}
                             />
                           }
                           actionLabel={isSpanish(language)
@@ -512,8 +513,8 @@ export function AdminResources() {
                             : (item.tone === 'critical' ? 'Order More Now' : item.tone === 'low' ? 'Order Refill' : 'Manage Item')}
                           actionPlacement="below"
                           actionVariant="secondary"
-                          progressFillColor={item.tone === 'critical' ? '#F04B4B' : item.tone === 'low' ? '#F59E0B' : '#1718C7'}
-                          progressTrackColor={item.tone === 'critical' ? '#F9D8D8' : item.tone === 'low' ? '#FEF3C7' : '#E8EDF5'}
+                          progressFillColor={item.tone === 'critical' ? AppColors.status.dangerAccent : item.tone === 'low' ? AppColors.status.warning : AppColors.brand.action}
+                          progressTrackColor={item.tone === 'critical' ? '#F9D8D8' : item.tone === 'low' ? AppColors.status.warningSoft : AppColors.resourceStatus.stable.track}
                           onAction={() => handleInventoryAction(item)}
                           style={styles.inventoryItem}
                         />
@@ -535,7 +536,7 @@ export function AdminResources() {
                   <CardBase style={styles.tablePanel}>
                     <View style={styles.tableHeader}>
                       <View style={styles.tableHeaderTitle}>
-                        <MaterialCommunityIcons name="bed-outline" size={17} color="#1718C7" />
+                        <MaterialCommunityIcons name="bed-outline" size={17} color={AppColors.brand.action} />
                         <Text style={styles.tableTitle} numberOfLines={1}>{isSpanish(language) ? 'Disponibilidad de camas por departamento' : 'Bed Availability by Department'}</Text>
                       </View>
                       <View style={styles.tableActions}>
@@ -551,7 +552,7 @@ export function AdminResources() {
                         <Button
                           variant="secondary"
                           size="icon"
-                          leadingIcon={<Feather name="refresh-cw" size={14} color="#94A3B8" />}
+                          leadingIcon={<Feather name="refresh-cw" size={14} color={AppColors.text.muted} />}
                           style={styles.iconButton}
                           onPress={() => void loadResources()}
                         />
@@ -871,7 +872,7 @@ function InventoryCatalogOverlay({
               <Text style={styles.modalTitle}>{es ? 'Productos por prioridad de reposición' : 'Items by Refill Priority'}</Text>
             </View>
             <TouchableOpacity style={styles.modalCloseButton} activeOpacity={0.75} onPress={onClose}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -986,16 +987,16 @@ function inventoryUrgencyScore(item: InventoryResourceItem) {
 }
 
 function inventoryCatalogTone(item: InventoryResourceItem): { color: string; background: string; track: string } {
-  if (item.tone === 'critical') return { color: '#EF4444', background: '#FEF2F2', track: '#FECACA' };
-  if (item.tone === 'low') return { color: '#F59E0B', background: '#FFFBEB', track: '#FDE68A' };
-  return { color: '#1718C7', background: '#EEF2FF', track: '#E8EDF5' };
+  if (item.tone === 'critical') return { color: AppColors.status.dangerBright, background: AppColors.status.dangerSoft, track: AppColors.status.dangerBorder };
+  if (item.tone === 'low') return { color: AppColors.status.warning, background: AppColors.status.warningWash, track: AppColors.status.warningBorder };
+  return { color: AppColors.brand.action, background: AppColors.surface.brandSoft, track: AppColors.resourceStatus.stable.track };
 }
 
 function resourceKpiTone(tone: ResourceKpiTone): { accent: string; background: string } {
-  if (tone === 'critical') return { accent: '#EF4444', background: '#FEF2F2' };
-  if (tone === 'warning') return { accent: '#F97316', background: '#FFF7ED' };
-  if (tone === 'info') return { accent: '#0891B2', background: '#ECFEFF' };
-  return { accent: '#22C55E', background: '#F0FDF4' };
+  if (tone === 'critical') return { accent: AppColors.status.dangerBright, background: AppColors.status.dangerSoft };
+  if (tone === 'warning') return { accent: AppColors.status.warningBright, background: AppColors.status.warningPanel };
+  if (tone === 'info') return { accent: AppColors.resourceStatus.info.accent, background: AppColors.resourceStatus.info.background };
+  return { accent: AppColors.status.successBright, background: AppColors.status.successWash };
 }
 
 function mapDepartment(item: HospitalDepartmentResourceResponse): DepartmentResourceItem {
@@ -1129,7 +1130,7 @@ function UtilizationCell({
 }) {
   return (
     <View style={styles.utilizationCell}>
-      <ProgressBar value={progress} color={color} trackColor="#E9EDF6" style={styles.utilizationBar} />
+      <ProgressBar value={progress} color={color} trackColor={AppColors.resourceStatus.stable.track} style={styles.utilizationBar} />
       <Text style={styles.utilizationValue}>{value}</Text>
     </View>
   );
@@ -1147,13 +1148,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
     borderRadius: 24,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.08)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000F6B',
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1169,21 +1170,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   heroTitle: {
     fontSize: 26,
     lineHeight: 34,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 8,
     maxWidth: 720,
   },
   heroDescription: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#475569',
+    color: AppColors.text.body,
     maxWidth: 760,
   },
   sectionHeader: {
@@ -1200,29 +1201,29 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   sectionAction: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   errorCard: {
-    borderColor: '#FDD2D2',
-    backgroundColor: '#FFF7F7',
+    borderColor: AppColors.status.dangerBorder,
+    backgroundColor: AppColors.clinicalSeverity.critical.card,
   },
   errorTitle: {
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#991B1B',
+    color: AppColors.status.dangerDeep,
   },
   errorText: {
     marginTop: 8,
     fontSize: 13,
     lineHeight: 20,
-    color: '#B91C1C',
+    color: AppColors.status.dangerDark,
   },
   loadingCard: {
     alignItems: 'center',
@@ -1232,23 +1233,23 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   skeletonLine: {
     borderRadius: 999,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
   },
   skeletonIcon: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
   },
   skeletonKpiIcon: {
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
   },
   skeletonKpiValue: {
     marginTop: 8,
@@ -1280,13 +1281,13 @@ const styles = StyleSheet.create({
     padding: 11,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   compactKpiSkeletonCard: {
-    borderLeftColor: '#E2E8F0',
+    borderLeftColor: AppColors.border.default,
   },
   compactKpiIcon: {
     width: 34,
@@ -1303,7 +1304,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   compactKpiValueRow: {
     flexDirection: 'row',
@@ -1315,20 +1316,20 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 26,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   compactKpiSuffix: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     marginBottom: 3,
   },
   compactKpiHelper: {
     marginTop: 2,
     fontSize: 11,
     lineHeight: 15,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   alertsColumn: {
     gap: 12,
@@ -1361,7 +1362,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#EDF2F7',
+    borderBottomColor: AppColors.modal.headerBorder,
   },
   panelHeaderTitle: {
     flexDirection: 'row',
@@ -1372,11 +1373,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   liveBadge: {
     borderRadius: 8,
-    backgroundColor: '#E9EAFE',
+    backgroundColor: AppColors.surface.brandSoft,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
@@ -1384,7 +1385,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 12,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   panelBody: {
     paddingHorizontal: 14,
@@ -1397,13 +1398,13 @@ const styles = StyleSheet.create({
     minHeight: 92,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E3E8F2',
+    borderColor: AppColors.border.default,
   },
   inventoryAction: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '700',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   inventoryList: {
     paddingHorizontal: 14,
@@ -1416,11 +1417,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#DCE4F0',
+    borderColor: AppColors.border.default,
     borderRadius: 12,
     shadowOpacity: 0,
     elevation: 0,
-    backgroundColor: '#FCFDFF',
+    backgroundColor: AppColors.surface.cardSoft,
   },
   inventoryMoreButton: {
     minHeight: 38,
@@ -1429,8 +1430,8 @@ const styles = StyleSheet.create({
     padding: 0,
     overflow: 'hidden',
     height: 440,
-    borderColor: '#DCE6F3',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.modal.border,
+    shadowColor: AppColors.text.primary,
     shadowOpacity: 0.04,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
@@ -1443,8 +1444,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 0,
     borderBottomWidth: 1,
-    borderBottomColor: '#EDF2F7',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: AppColors.modal.headerBorder,
+    backgroundColor: AppColors.surface.card,
   },
   tableTitle: {
     flex: 1,
@@ -1452,7 +1453,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   tableHeaderTitle: {
     flex: 1,
@@ -1482,13 +1483,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   departmentLevel: {
     marginTop: 2,
     fontSize: 11,
     lineHeight: 14,
-    color: '#97A6BA',
+    color: AppColors.text.muted,
   },
   utilizationCell: {
     flexDirection: 'row',
@@ -1503,7 +1504,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   centeredStatusCell: {
     width: '100%',
@@ -1513,11 +1514,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.42)',
+    backgroundColor: AppColors.modal.darkBackdrop,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -1527,10 +1528,10 @@ const styles = StyleSheet.create({
     maxWidth: 820,
     maxHeight: '86%',
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#DCE6F3',
+    borderColor: AppColors.modal.border,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1539,13 +1540,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EDF2F7',
+    borderBottomColor: AppColors.modal.headerBorder,
   },
   modalEyebrow: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '900',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
   },
   modalTitle: {
@@ -1553,7 +1554,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 26,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   modalCloseButton: {
     width: 36,
@@ -1562,8 +1563,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#DDE6F4',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.modal.border,
+    backgroundColor: AppColors.surface.card,
   },
   inventoryCatalogScroll: {
     maxHeight: 560,
@@ -1575,10 +1576,10 @@ const styles = StyleSheet.create({
   inventoryCatalogItem: {
     borderWidth: 1,
     borderLeftWidth: 4,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     borderRadius: 14,
     padding: 14,
-    backgroundColor: '#FCFDFF',
+    backgroundColor: AppColors.surface.cardSoft,
     gap: 10,
   },
   inventoryCatalogHeader: {
@@ -1609,13 +1610,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   inventoryCatalogMeta: {
     marginTop: 2,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   inventoryCatalogProgressRow: {
     marginTop: 9,
@@ -1632,7 +1633,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#334155',
+    color: AppColors.text.body,
   },
   inventoryCatalogAction: {
     alignItems: 'flex-end',

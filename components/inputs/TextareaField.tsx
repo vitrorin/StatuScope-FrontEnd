@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface TextareaFieldProps {
   label?: string;
@@ -27,14 +28,14 @@ export function TextareaField({
   const [isFocused, setIsFocused] = useState(false);
 
   const getBorderColor = () => {
-    if (error) return '#EF4444';
-    if (isFocused) return '#1D4ED8';
-    return '#E5E7EB';
+    if (error) return AppColors.status.dangerBright;
+    if (isFocused) return AppColors.brand.link;
+    return AppColors.border.muted;
   };
 
   const getBackgroundColor = () => {
-    if (disabled) return '#F9FAFB';
-    return '#FFFFFF';
+    if (disabled) return AppColors.surface.disabled;
+    return AppColors.surface.card;
   };
 
   return (
@@ -61,7 +62,7 @@ export function TextareaField({
             disabled && styles.textareaTextDisabled,
           ]}
           placeholder={placeholder}
-          placeholderTextColor={disabled ? '#D1D5DB' : '#94A3B8'}
+          placeholderTextColor={disabled ? AppColors.border.strong : AppColors.text.muted}
           value={value}
           onChangeText={onChangeText}
           onFocus={() => setIsFocused(true)}
@@ -89,44 +90,44 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    color: AppColors.text.body,
     marginBottom: 8,
   },
   labelDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
   textareaContainer: {
     borderWidth: 1,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     width: '100%',
     minHeight: 120,
   },
   textareaFocused: {
-    borderColor: '#0003B8',
+    borderColor: AppColors.brand.primary,
   },
   textareaDisabled: {
-    backgroundColor: '#F9FAFB',
-    borderColor: '#E5E7EB',
+    backgroundColor: AppColors.surface.disabled,
+    borderColor: AppColors.border.muted,
   },
   textarea: {
     flex: 1,
     fontSize: 16,
-    color: '#111827',
+    color: AppColors.text.strong,
     padding: 16,
     lineHeight: 24,
   },
   textareaTextDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
   hintText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginTop: 6,
   },
   errorText: {
     fontSize: 12,
-    color: '#EF4444',
+    color: AppColors.status.dangerBright,
     marginTop: 6,
   },
 });

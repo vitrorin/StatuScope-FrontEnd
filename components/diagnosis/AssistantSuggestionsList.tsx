@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { AssistantSuggestion } from '@/lib/diagnosisAssistant';
+import { AppColors } from '@/constants/theme';
 
 export interface AssistantSuggestionsListProps {
   suggestions: AssistantSuggestion[];
@@ -13,10 +14,10 @@ export interface AssistantSuggestionsListProps {
 }
 
 const RISK_COLORS: Record<string, { background: string; text: string }> = {
-  HIGH: { background: '#FEE2E2', text: '#B91C1C' },
-  MEDIUM: { background: '#FEF3C7', text: '#B45309' },
-  LOW: { background: '#DBEAFE', text: '#1D4ED8' },
-  NONE: { background: '#F1F5F9', text: '#475569' },
+  HIGH: { background: AppColors.status.dangerBorder, text: AppColors.status.dangerDark },
+  MEDIUM: { background: AppColors.status.warningSoft, text: AppColors.status.warningStrong },
+  LOW: { background: AppColors.status.infoSoft, text: AppColors.brand.link },
+  NONE: { background: AppColors.surface.muted, text: AppColors.text.body },
 };
 
 function formatConfidence(confidence?: number | null): string | null {
@@ -84,15 +85,15 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
     gap: 12,
   },
   heading: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     height: 22,
     paddingHorizontal: 6,
     borderRadius: 11,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -117,26 +118,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   displayName: {
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   primaryTag: {
     fontSize: 12,
     lineHeight: 18,
     fontWeight: '600',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   confidence: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   riskBadge: {
     alignSelf: 'flex-start',
@@ -154,6 +155,6 @@ const styles = StyleSheet.create({
   rationale: {
     fontSize: 13,
     lineHeight: 19,
-    color: '#334155',
+    color: AppColors.text.body,
   },
 });

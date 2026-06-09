@@ -2,6 +2,7 @@ import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { ViewStyle } from 'react-native';
 import { IconButton } from '../foundation/IconButton';
+import { AppColors } from '@/constants/theme';
 
 export type MapControlButtonVariant = 'default' | 'primary' | 'ghost';
 
@@ -27,7 +28,7 @@ export function MapControlButton({
 
   return (
     <IconButton
-      icon={<Feather name={iconName} size={18} color="#475569" />}
+      icon={<Feather name={iconName} size={18} color={AppColors.text.body} />}
       variant={mappedVariant}
       onPress={onPress}
       disabled={disabled}

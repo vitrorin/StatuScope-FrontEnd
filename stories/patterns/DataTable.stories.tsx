@@ -1,13 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { Text, View } from 'react-native';
 import { DataTable } from '../../components/resources/DataTable';
+import { AppColors } from '@/constants/theme';
 
 const meta = {
   title: 'Patterns/DataTable',
   component: DataTable,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <Story />
       </View>
     ),
@@ -61,17 +62,17 @@ export const WithStatusBadges: Story = {
     rows: [
       { 
         department: 'Intensive Care (ICU)', 
-        status: <Text style={{ fontSize: 10, fontWeight: '600', color: '#DC2626', backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>CRITICAL</Text>,
+        status: <Text style={{ fontSize: 10, fontWeight: '600', color: AppColors.status.danger, backgroundColor: AppColors.status.dangerBorder, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>CRITICAL</Text>,
         beds: '17/20' 
       },
       { 
         department: 'Emergency Dept (ED)', 
-        status: <Text style={{ fontSize: 10, fontWeight: '600', color: '#D97706', backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>WARNING</Text>,
+        status: <Text style={{ fontSize: 10, fontWeight: '600', color: AppColors.status.warningText, backgroundColor: AppColors.status.warningSoft, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>WARNING</Text>,
         beds: '27/35' 
       },
       { 
         department: 'General Ward', 
-        status: <Text style={{ fontSize: 10, fontWeight: '600', color: '#16A34A', backgroundColor: '#DCFCE7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>STABLE</Text>,
+        status: <Text style={{ fontSize: 10, fontWeight: '600', color: AppColors.status.success, backgroundColor: AppColors.status.successSoft, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>STABLE</Text>,
         beds: '47/65' 
       },
     ],
@@ -90,17 +91,17 @@ export const WithActions: Story = {
       { 
         name: 'MRI Scanner A', 
         type: 'Equipment',
-        actions: <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '500' }}>View</Text>
+        actions: <Text style={{ fontSize: 12, color: AppColors.brand.link, fontWeight: '500' }}>View</Text>
       },
       { 
         name: 'X-Ray Unit B', 
         type: 'Equipment',
-        actions: <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '500' }}>View</Text>
+        actions: <Text style={{ fontSize: 12, color: AppColors.brand.link, fontWeight: '500' }}>View</Text>
       },
       { 
         name: 'Lab Analyzer', 
         type: 'Equipment',
-        actions: <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '500' }}>View</Text>
+        actions: <Text style={{ fontSize: 12, color: AppColors.brand.link, fontWeight: '500' }}>View</Text>
       },
     ],
     compact: false,

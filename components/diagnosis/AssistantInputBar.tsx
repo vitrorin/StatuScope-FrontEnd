@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, TextInput, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface AssistantInputBarProps {
   placeholder?: string;
@@ -26,7 +27,7 @@ export function AssistantInputBar({
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor="#6B7280"
+        placeholderTextColor={AppColors.table.muted}
         value={value}
         onChangeText={onChangeText}
         editable={!disabled}
@@ -41,7 +42,7 @@ export function AssistantInputBar({
           disabled={disabled || !value}
           activeOpacity={0.75}
         >
-          <Feather name="send" size={14} color="#FFFFFF" />
+          <Feather name="send" size={14} color={AppColors.surface.card} />
         </TouchableOpacity>
       ) : null}
     </View>
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.surface.muted,
     borderRadius: 12,
     paddingLeft: 16,
     paddingRight: 8,
@@ -60,13 +61,13 @@ const styles = StyleSheet.create({
     height: 52,
   },
   containerDisabled: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
   },
   input: {
     flex: 1,
     fontSize: 15,
     lineHeight: 22,
-    color: '#0F172A',
+    color: AppColors.text.primary,
     paddingVertical: 0,
     height: 36,
   },
@@ -74,12 +75,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
   },
   sendButtonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: AppColors.border.strong,
   },
 });

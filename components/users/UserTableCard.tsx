@@ -4,6 +4,7 @@ import { StatusBadge } from '../feedback/StatusBadge';
 import { CardBase } from '../patterns/CardBase';
 import { PaginationControl } from './PaginationControl';
 import { UserAvatarBadge } from './UserAvatarBadge';
+import { AppColors } from '@/constants/theme';
 
 export type UserStatusVariant = 'success' | 'warning' | 'neutral' | 'info';
 
@@ -90,23 +91,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: AppColors.text.strong,
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: AppColors.border.muted,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: AppColors.surface.disabled,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: AppColors.border.muted,
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
   headerCell: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6B7280',
+    color: AppColors.table.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -115,11 +116,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: AppColors.surface.control,
     alignItems: 'center',
   },
   rowAlternate: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: AppColors.table.rowAlt,
   },
   cell: {
     paddingRight: 12,
@@ -147,14 +148,14 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   emailText: {
     fontSize: 13,
-    color: '#6B7280',
+    color: AppColors.table.muted,
   },
   roleBadge: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -162,16 +163,16 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   pcIdText: {
     fontSize: 13,
-    color: '#6B7280',
+    color: AppColors.table.muted,
   },
   paginationContainer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: AppColors.border.muted,
     alignItems: 'center',
   },
 });

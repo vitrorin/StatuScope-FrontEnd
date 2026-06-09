@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface MapLegendItem {
   label: string;
@@ -61,13 +62,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     lineHeight: 16,
-    color: '#6B7280',
+    color: AppColors.table.muted,
   },
   value: {
     fontSize: 11,
     lineHeight: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: AppColors.text.strong,
     marginLeft: 6,
   },
 });

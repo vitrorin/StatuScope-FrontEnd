@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export type AlertCardVariant = 'critical' | 'warning' | 'success' | 'info' | 'neutral';
 
@@ -14,37 +15,37 @@ export interface AlertCardProps {
 const variantStyles = {
   critical: {
     bar: '#F05252',
-    background: '#FEF2F2',
-    title: '#991B1B',
-    text: '#B91C1C',
+    background: AppColors.status.dangerSoft,
+    title: AppColors.status.dangerDeep,
+    text: AppColors.status.dangerDark,
     icon: 'alert-circle' as const,
   },
   warning: {
-    bar: '#F59E0B',
-    background: '#FFFBEB',
-    title: '#92400E',
-    text: '#B45309',
+    bar: AppColors.status.warning,
+    background: AppColors.status.warningWash,
+    title: AppColors.status.warningLabel,
+    text: AppColors.status.warningStrong,
     icon: 'alert-triangle' as const,
   },
   success: {
-    bar: '#22C55E',
-    background: '#F0FDF4',
-    title: '#166534',
-    text: '#15803D',
+    bar: AppColors.status.successBright,
+    background: AppColors.status.successWash,
+    title: AppColors.status.successText,
+    text: AppColors.status.successStrong,
     icon: 'check-circle' as const,
   },
   info: {
     bar: '#3D7FFF',
-    background: '#EFF6FF',
-    title: '#1D4ED8',
-    text: '#2563EB',
+    background: AppColors.status.infoSoft,
+    title: AppColors.brand.link,
+    text: AppColors.status.info,
     icon: 'info' as const,
   },
   neutral: {
-    bar: '#8A9AAF',
-    background: '#F8FAFC',
-    title: '#334155',
-    text: '#475569',
+    bar: AppColors.text.muted,
+    background: AppColors.surface.subtle,
+    title: AppColors.text.body,
+    text: AppColors.text.body,
     icon: 'refresh-cw' as const,
   },
 };

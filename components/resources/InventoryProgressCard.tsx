@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Button, ButtonVariant } from '../foundation/Button';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
+import { AppColors } from '@/constants/theme';
 
 export type InventoryVariant = 'normal' | 'warning' | 'critical';
 
@@ -25,19 +26,19 @@ export interface InventoryProgressCardProps {
 
 const variantStyles = {
   normal: {
-    progressBg: '#E5E7EB',
-    progressFill: '#22C55E',
-    statusText: '#6B7280',
+    progressBg: AppColors.border.muted,
+    progressFill: AppColors.status.successBright,
+    statusText: AppColors.table.muted,
   },
   warning: {
-    progressBg: '#FEF3C7',
-    progressFill: '#F59E0B',
-    statusText: '#D97706',
+    progressBg: AppColors.status.warningSoft,
+    progressFill: AppColors.status.warning,
+    statusText: AppColors.status.warningText,
   },
   critical: {
-    progressBg: '#FEE2E2',
-    progressFill: '#EF4444',
-    statusText: '#DC2626',
+    progressBg: AppColors.status.dangerBorder,
+    progressFill: AppColors.status.dangerBright,
+    statusText: AppColors.status.danger,
   },
 };
 
@@ -122,12 +123,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   valueText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
+    color: AppColors.table.muted,
   },
   progressContainer: {
     marginBottom: 12,

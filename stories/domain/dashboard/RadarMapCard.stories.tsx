@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { AppColors } from '@/constants/theme';
 
 import { View } from 'react-native';
 import { RadarMapCard } from '../../../components/dashboard/RadarMapCard';
@@ -8,7 +9,7 @@ const meta = {
   component: RadarMapCard,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ maxWidth: 600 }}>
           <Story />
         </View>
@@ -27,9 +28,9 @@ export const DoctorDashboardMap: Story = {
     title: 'Radar Map Card',
     subtitle: 'Doctor Dashboard Map',
     legendItems: [
-      { label: 'High Risk', color: '#EF4444' },
-      { label: 'Moderate', color: '#F59E0B' },
-      { label: 'Low Risk', color: '#22C55E' },
+      { label: 'High Risk', color: AppColors.status.dangerBright },
+      { label: 'Moderate', color: AppColors.status.warning },
+      { label: 'Low Risk', color: AppColors.status.successBright },
     ],
   },
 };
@@ -39,9 +40,9 @@ export const AnalyticsRadar: Story = {
     title: 'Radar Map Card',
     subtitle: 'Analytics Radar',
     legendItems: [
-      { label: 'COVID-19 Clusters', color: '#EF4444' },
-      { label: 'Influenza', color: '#F59E0B' },
-      { label: 'Hospital Density', color: '#1D4ED8' },
+      { label: 'COVID-19 Clusters', color: AppColors.status.dangerBright },
+      { label: 'Influenza', color: AppColors.status.warning },
+      { label: 'Hospital Density', color: AppColors.brand.link },
     ],
     showControls: true,
   },
@@ -52,16 +53,16 @@ export const WithOverlayPanel: Story = {
     title: 'Radar Map Card',
     subtitle: 'With Overlay Panel',
     legendItems: [
-      { label: 'High Risk', color: '#EF4444' },
-      { label: 'Moderate', color: '#F59E0B' },
-      { label: 'Low Risk', color: '#22C55E' },
+      { label: 'High Risk', color: AppColors.status.dangerBright },
+      { label: 'Moderate', color: AppColors.status.warning },
+      { label: 'Low Risk', color: AppColors.status.successBright },
     ],
     showOverlayPanel: true,
     overlayTitle: 'Domain/Dashboard/RadarMapCard',
     overlayItems: [
-      { label: 'Influenza A', value: '124', color: '#EF4444' },
-      { label: 'COVID-19', value: '89', color: '#F59E0B' },
-      { label: 'Dengue', value: '45', color: '#1D4ED8' },
+      { label: 'Influenza A', value: '124', color: AppColors.status.dangerBright },
+      { label: 'COVID-19', value: '89', color: AppColors.status.warning },
+      { label: 'Dengue', value: '45', color: AppColors.brand.link },
     ],
   },
 };
@@ -71,9 +72,9 @@ export const WithControls: Story = {
     title: 'Radar Map Card',
     subtitle: 'With Controls',
     legendItems: [
-      { label: 'High Risk', color: '#EF4444' },
-      { label: 'Moderate', color: '#F59E0B' },
-      { label: 'Low Risk', color: '#22C55E' },
+      { label: 'High Risk', color: AppColors.status.dangerBright },
+      { label: 'Moderate', color: AppColors.status.warning },
+      { label: 'Low Risk', color: AppColors.status.successBright },
     ],
     showControls: true,
     showOverlayPanel: true,
@@ -90,9 +91,9 @@ export const WithFooterLegend: Story = {
     title: 'Radar Map Card',
     subtitle: 'With Footer Legend',
     legendItems: [
-      { label: 'High Risk', color: '#EF4444' },
-      { label: 'Moderate', color: '#F59E0B' },
-      { label: 'Low Risk', color: '#22C55E' },
+      { label: 'High Risk', color: AppColors.status.dangerBright },
+      { label: 'Moderate', color: AppColors.status.warning },
+      { label: 'Low Risk', color: AppColors.status.successBright },
     ],
     footerTextLeft: 'Last updated: 2 min ago',
     footerTextRight: 'Data source: Regional Health API',

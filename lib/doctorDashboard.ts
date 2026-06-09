@@ -1,6 +1,6 @@
 import { api } from './api';
 
-function radiusQuery(radiusKm?: number) {
+export function radiusQuery(radiusKm?: number) {
   return typeof radiusKm === 'number' ? `?radiusKm=${encodeURIComponent(String(radiusKm))}` : '';
 }
 

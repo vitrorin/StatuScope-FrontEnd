@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface TableColumn {
   key: string;
@@ -87,10 +88,10 @@ export function DataTable({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: AppColors.border.muted,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -99,10 +100,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   header: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: AppColors.surface.disabled,
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: AppColors.border.muted,
   },
   headerCompact: {
     paddingVertical: 10,
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6B7280',
+    color: AppColors.table.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -128,13 +129,13 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: AppColors.surface.control,
   },
   rowCompact: {
     paddingVertical: 10,
   },
   rowAlternate: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: AppColors.table.rowAlt,
   },
   cell: {
     flex: 1,
@@ -146,7 +147,7 @@ const styles = StyleSheet.create({
   },
   cellText: {
     fontSize: 14,
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   cellTextCompact: {
     fontSize: 13,

@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface MiniMetricCardProps {
   label: string;
@@ -12,10 +13,10 @@ export interface MiniMetricCardProps {
 }
 
 const trendColors = {
-  positive: '#22C55E',
-  danger: '#EF4444',
-  warning: '#F59E0B',
-  neutral: '#6B7280',
+  positive: AppColors.status.successBright,
+  danger: AppColors.status.dangerBright,
+  warning: AppColors.status.warning,
+  neutral: AppColors.table.muted,
 };
 
 export function MiniMetricCard({
@@ -42,7 +43,7 @@ export function MiniMetricCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 14,
     padding: 14,
     shadowColor: '#000',
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#94A3B8',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -66,11 +67,11 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   supportingText: {
     fontSize: 11,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginTop: 4,
   },
   trend: {

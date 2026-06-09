@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { AppColors } from '@/constants/theme';
 
 export interface CheckboxFieldProps {
   label: string;
@@ -45,7 +46,7 @@ export function CheckboxField({
             checkboxStyle,
           ]}
         >
-          {checked ? <Feather name="check" size={12} color="#FFFFFF" /> : null}
+          {checked ? <Feather name="check" size={12} color={AppColors.surface.card} /> : null}
         </View>
         <Text style={[styles.label, labelStyle, disabled && styles.labelDisabled]}>{label}</Text>
       </TouchableOpacity>
@@ -70,35 +71,35 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.strong,
+    backgroundColor: AppColors.surface.card,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   checkboxChecked: {
-    backgroundColor: '#1D4ED8',
-    borderColor: '#1D4ED8',
+    backgroundColor: AppColors.brand.link,
+    borderColor: AppColors.brand.link,
   },
   checkboxDisabled: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#E5E7EB',
+    backgroundColor: AppColors.surface.control,
+    borderColor: AppColors.border.muted,
   },
   label: {
     fontSize: 14,
-    color: '#374151',
+    color: AppColors.text.body,
     flex: 1,
   },
   labelDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
   helperText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginTop: 6,
     marginLeft: 32,
   },
   helperTextDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
 });

@@ -8,6 +8,7 @@ import { InputField } from '../inputs/InputField';
 import { SelectField } from '../inputs/SelectField';
 import { TextareaField } from '../inputs/TextareaField';
 import { CardBase } from '../patterns/CardBase';
+import { AppColors } from '@/constants/theme';
 
 export type FileUploadState = 'empty' | 'dragging' | 'uploaded' | 'error';
 
@@ -172,7 +173,7 @@ export function PatientEvaluationForm({
 
         {showSecondaryAction ? (
           <IconButton
-            icon={<Feather name="clipboard" size={12} color="#64748B" />}
+            icon={<Feather name="clipboard" size={12} color={AppColors.text.secondary} />}
             variant="secondary"
             disabled={secondaryButtonDisabled}
             onPress={onSecondaryActionPress}
@@ -190,13 +191,13 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   header: {
-    backgroundColor: '#FAFCFF',
+    backgroundColor: AppColors.surface.cardTint,
     borderTopLeftRadius: 14,
     borderTopRightRadius: 14,
     borderTopWidth: 4,
-    borderTopColor: '#0003B8',
+    borderTopColor: AppColors.brand.primary,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 22,
@@ -205,18 +206,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 30,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 4,
   },
   meta: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   fields: {
     gap: 24,
     padding: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   row: {
     flexDirection: 'row',
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -243,8 +244,8 @@ const styles = StyleSheet.create({
   fieldInputContainer: {
     height: 42,
     borderRadius: 10,
-    borderColor: '#D9E2F0',
-    backgroundColor: '#FCFDFE',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.cardSoft,
     paddingHorizontal: 13,
   },
   actions: {
@@ -252,19 +253,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: AppColors.surface.muted,
     paddingHorizontal: 16,
     paddingTop: 17,
     paddingBottom: 16,
-    backgroundColor: '#FAFCFF',
+    backgroundColor: AppColors.surface.cardTint,
   },
   primaryButton: {
     flex: 1,
     minHeight: 49,
     borderRadius: 10,
     borderWidth: 0,
-    backgroundColor: '#0003B8',
-    shadowColor: '#000000',
+    backgroundColor: AppColors.brand.primary,
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 10,
@@ -280,7 +281,7 @@ const styles = StyleSheet.create({
     minWidth: 44,
     minHeight: 44,
     borderRadius: 10,
-    borderColor: '#D9E2F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
 });

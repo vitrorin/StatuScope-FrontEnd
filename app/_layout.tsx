@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import { AppColors } from '@/constants/theme';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -62,7 +63,7 @@ export default function RootLayout() {
         <I18nProvider>
           <AuthProvider>
             <AuthGate>
-              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F5F5F8' } }}>
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: AppColors.surface.page } }}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="login" />
                 <Stack.Screen name="register" />

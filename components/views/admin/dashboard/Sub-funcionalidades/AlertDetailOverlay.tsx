@@ -4,6 +4,7 @@ import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'reac
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardAlert } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
+import { AppColors } from '@/constants/theme';
 
 interface AlertDetailOverlayProps {
   visible: boolean;
@@ -25,7 +26,7 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
   const rows = [
     { label: t('doctor.dashboard.alerts.activeCasesLabel'), value: activeCasesText, icon: 'activity' as const, color: accent },
     { label: t('doctor.dashboard.overlays.municipality'), value: alert.municipalityName ?? alert.area ?? alert.department, icon: 'map-pin' as const, color: '#3D7FFF' },
-    { label: t('doctor.dashboard.overlays.state'), value: alert.stateName ?? alert.area ?? alert.department, icon: 'map' as const, color: '#8B5CF6' },
+    { label: t('doctor.dashboard.overlays.state'), value: alert.stateName ?? alert.area ?? alert.department, icon: 'map' as const, color: AppColors.brand.purple },
     { label: t('doctor.dashboard.overlays.status'), value: statusLabel, icon: 'check-circle' as const, color: statusAccent(alert.variant) },
     { label: t('doctor.dashboard.overlays.priority'), value: alert.priority, icon: 'flag' as const, color: priorityAccent(alert.variant) },
   ];
@@ -42,7 +43,7 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
               <Text style={styles.subtitle}>{alert.description}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -96,23 +97,23 @@ function MetricStat({ label, value, accentColor }: { label: string; value: strin
 }
 
 function accentColor(variant: AdminDashboardAlert['variant']) {
-  if (variant === 'critical') return '#EF4444';
-  if (variant === 'warning') return '#F59E0B';
-  if (variant === 'success') return '#22C55E';
-  if (variant === 'neutral') return '#64748B';
-  return '#0003B8';
+  if (variant === 'critical') return AppColors.status.dangerBright;
+  if (variant === 'warning') return AppColors.status.warning;
+  if (variant === 'success') return AppColors.status.successBright;
+  if (variant === 'neutral') return AppColors.text.secondary;
+  return AppColors.brand.primary;
 }
 
 function statusAccent(variant: AdminDashboardAlert['variant']) {
-  if (variant === 'critical') return '#EF4444';
-  if (variant === 'warning') return '#F59E0B';
-  return '#22C55E';
+  if (variant === 'critical') return AppColors.status.dangerBright;
+  if (variant === 'warning') return AppColors.status.warning;
+  return AppColors.status.successBright;
 }
 
 function priorityAccent(variant: AdminDashboardAlert['variant']) {
-  if (variant === 'critical') return '#DC2626';
-  if (variant === 'warning') return '#EA580C';
-  return '#2563EB';
+  if (variant === 'critical') return AppColors.status.danger;
+  if (variant === 'warning') return AppColors.clinicalSeverity.high.accent;
+  return AppColors.status.info;
 }
 
 function diseaseFromTitle(title: string) {
@@ -124,14 +125,14 @@ function diseaseFromTitle(title: string) {
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.74)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: AppColors.modal.backdrop },
   dialog: { width: '100%', maxWidth: 680, borderRadius: 24, padding: 0, overflow: 'hidden' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: '#EEF2F7' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft },
   headerCopy: { flex: 1 },
-  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#1718C7', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
-  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
-  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.brand.action, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
+  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: AppColors.text.soft },
+  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: AppColors.border.default },
   body: { padding: 24, gap: 20 },
   metricsGrid: { flexDirection: 'row', gap: 12 },
   statCard: {
@@ -142,21 +143,21 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   statAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  statLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#8A9AAF', textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
-  insightsSection: { borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', overflow: 'hidden' },
-  insightsHeader: { minHeight: 56, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EEF2F7', justifyContent: 'center' },
-  insightsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
+  statLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.text.muted, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
+  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
+  insightsSection: { borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, overflow: 'hidden' },
+  insightsHeader: { minHeight: 56, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft, justifyContent: 'center' },
+  insightsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
   insightsList: { padding: 12, gap: 10 },
   insightRow: {
     minHeight: 64,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
+    borderColor: AppColors.border.soft,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -164,8 +165,8 @@ const styles = StyleSheet.create({
   },
   insightRank: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   insightCopy: { flex: 1, minWidth: 0 },
-  insightTitle: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 },
-  insightLocation: { marginTop: 5, fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#0F172A' },
+  insightTitle: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.text.secondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  insightLocation: { marginTop: 5, fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.text.primary },
 });
 
 export default AlertDetailOverlay;

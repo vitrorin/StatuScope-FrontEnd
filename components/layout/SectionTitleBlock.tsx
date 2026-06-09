@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface SectionTitleBlockProps {
   eyebrow?: string;
@@ -51,7 +52,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#1D4ED8',
+    color: AppColors.brand.link,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 6,
@@ -59,12 +60,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#111827',
+    color: AppColors.text.strong,
     lineHeight: 34,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginTop: 8,
     lineHeight: 20,
   },

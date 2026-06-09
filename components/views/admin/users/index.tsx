@@ -39,6 +39,7 @@ import {
   OperationalContactResponse,
   updateOperationalContact,
 } from '@/lib/adminOperational';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 const roleFilters: ('All' | UserRole)[] = [
   'All',
@@ -227,7 +228,7 @@ export function AdminUsers() {
                   : (isSpanish(language) ? 'Agregar contacto' : 'Add Contact')}
                 variant="primary"
                 size="lg"
-                leadingIcon={<Feather name={activeSection === 'users' ? 'user-plus' : 'mail'} size={15} color="#FFFFFF" />}
+                leadingIcon={<Feather name={activeSection === 'users' ? 'user-plus' : 'mail'} size={15} color={AppColors.surface.card} />}
                 style={styles.createButton}
                 onPress={primaryAction}
               />
@@ -270,7 +271,7 @@ export function AdminUsers() {
                     setSearchQuery(text);
                     setCurrentPage(1);
                   }}
-                  leftIcon={<Feather name="search" size={16} color="#94A3B8" />}
+                  leftIcon={<Feather name="search" size={16} color={AppColors.text.muted} />}
                   inputContainerStyle={styles.searchInputContainer}
                   style={styles.searchField}
                 />
@@ -278,7 +279,7 @@ export function AdminUsers() {
                   label={isSpanish(language) ? 'Filtros' : 'Filters'}
                   variant="secondary"
                   size="md"
-                  leadingIcon={<Feather name="sliders" size={15} color="#64748B" />}
+                  leadingIcon={<Feather name="sliders" size={15} color={AppColors.text.secondary} />}
                   style={styles.filterToggleButton}
                   onPress={() => setIsFiltersOpen((current) => !current)}
                   disabled={activeSection !== 'users'}
@@ -492,21 +493,21 @@ export function AdminUsers() {
                 title={isSpanish(language) ? 'Administradores' : 'Administrators'}
                 value={String(administratorCount)}
                 variant="info"
-                icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color="#1718C7" />}
+                icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color={AppColors.brand.action} />}
                 style={styles.summaryCard}
                   />
                   <SummaryCountCard
                 title={isSpanish(language) ? 'Personal medico' : 'Medical Staff'}
                 value={String(medicalStaffCount)}
                 variant="info"
-                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color="#5B63E2" />}
+                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color={AppColors.brand.purple} />}
                 style={styles.summaryCard}
                   />
                   <SummaryCountCard
                 title={isSpanish(language) ? 'Usuarios inactivos' : 'Inactive Users'}
                 value={String(inactiveUsersCount)}
                 variant="neutral"
-                icon={<MaterialCommunityIcons name="account-off-outline" size={15} color="#94A3B8" />}
+                icon={<MaterialCommunityIcons name="account-off-outline" size={15} color={AppColors.text.muted} />}
                 style={styles.summaryCard}
                   />
                 </>
@@ -516,21 +517,21 @@ export function AdminUsers() {
                     title={isSpanish(language) ? 'Asignables' : 'Assignable'}
                     value={String(assignableContactCount)}
                     variant="info"
-                    icon={<MaterialCommunityIcons name="clipboard-account-outline" size={15} color="#1718C7" />}
+                    icon={<MaterialCommunityIcons name="clipboard-account-outline" size={15} color={AppColors.brand.action} />}
                     style={styles.summaryCard}
                   />
                   <SummaryCountCard
                     title={isSpanish(language) ? 'Notificables' : 'Notifiable'}
                     value={String(notifiableContactCount)}
                     variant="info"
-                    icon={<MaterialCommunityIcons name="email-outline" size={15} color="#5B63E2" />}
+                    icon={<MaterialCommunityIcons name="email-outline" size={15} color={AppColors.brand.purple} />}
                     style={styles.summaryCard}
                   />
                   <SummaryCountCard
                     title={isSpanish(language) ? 'Contactos inactivos' : 'Inactive Contacts'}
                     value={String(inactiveContactCount)}
                     variant="neutral"
-                    icon={<MaterialCommunityIcons name="account-cancel-outline" size={15} color="#94A3B8" />}
+                    icon={<MaterialCommunityIcons name="account-cancel-outline" size={15} color={AppColors.text.muted} />}
                     style={styles.summaryCard}
                   />
                 </>
@@ -653,13 +654,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
     borderRadius: 24,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.08)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000F6B',
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -675,28 +676,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   heroTitle: {
     fontSize: 26,
     lineHeight: 34,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 8,
     maxWidth: 720,
   },
   heroDescription: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#475569',
+    color: AppColors.text.body,
     maxWidth: 760,
   },
   createButton: {
     minHeight: 40,
     borderRadius: 12,
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
     paddingHorizontal: 18,
   },
   filterCard: {
@@ -709,9 +710,9 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     padding: 4,
     borderRadius: 14,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.surface.muted,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   sectionSwitchButton: {
     paddingHorizontal: 14,
@@ -719,8 +720,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   sectionSwitchButtonActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
+    backgroundColor: AppColors.surface.card,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 14,
@@ -730,10 +731,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   sectionSwitchTextActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   searchRow: {
     flexDirection: 'row',
@@ -752,7 +753,7 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     height: 46,
     borderRadius: 12,
-    borderColor: '#DCE3EE',
+    borderColor: AppColors.border.default,
   },
   filterSection: {
     gap: 10,
@@ -761,7 +762,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
@@ -774,22 +775,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#F6F8FC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
   },
   filterChipActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
+    backgroundColor: AppColors.surface.brandSoft,
+    borderColor: AppColors.border.brandMuted,
   },
   filterChipText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   filterChipTextActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   errorCard: {
     borderRadius: 14,
@@ -800,12 +801,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#B91C1C',
+    color: AppColors.status.dangerDark,
   },
   errorText: {
     fontSize: 13,
     lineHeight: 20,
-    color: '#7F1D1D',
+    color: AppColors.status.dangerDark,
   },
   loadingCard: {
     borderRadius: 14,
@@ -817,13 +818,13 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 14,
     lineHeight: 18,
-    color: '#334155',
+    color: AppColors.text.body,
     fontWeight: '600',
   },
   tableCard: {
     padding: 0,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   tableHeader: {
     flexDirection: 'row',
@@ -831,7 +832,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   headerCell: {
     fontSize: 12,
@@ -839,7 +840,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.7,
     textTransform: 'uppercase',
-    color: '#7C8CA4',
+    color: AppColors.text.soft,
   },
   tableRow: {
     flexDirection: 'row',
@@ -847,7 +848,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   tableRowLast: {
     borderBottomWidth: 0,
@@ -877,18 +878,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#1F2937',
+    color: AppColors.text.strong,
   },
   contactMeta: {
     marginTop: 2,
     fontSize: 12,
     lineHeight: 16,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   emailText: {
     fontSize: 14,
     lineHeight: 18,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   roleBadge: {
     alignSelf: 'flex-start',
@@ -897,7 +898,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   roleBadgeNeutral: {
-    backgroundColor: '#EFF2F6',
+    backgroundColor: AppColors.surface.control,
   },
   roleBadgeInfo: {
     backgroundColor: '#EEF0FF',
@@ -908,10 +909,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   roleBadgeTextNeutral: {
-    color: '#7C8CA4',
+    color: AppColors.text.soft,
   },
   roleBadgeTextInfo: {
-    color: '#6A68F5',
+    color: AppColors.brand.purple,
   },
   emptyState: {
     alignItems: 'center',
@@ -919,23 +920,23 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     paddingHorizontal: 24,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
   },
   emptyStateTitle: {
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   emptyStateSubtitle: {
     marginTop: 6,
     fontSize: 13,
     lineHeight: 20,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   tableFooter: {
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
     paddingHorizontal: 20,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -945,18 +946,18 @@ const styles = StyleSheet.create({
   tableFooterText: {
     fontSize: 14,
     lineHeight: 18,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   usersSkeletonLine: {
     height: 12,
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   usersSkeletonAvatar: {
     width: 38,
     height: 38,
     borderRadius: 14,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   usersSkeletonNameStack: {
     gap: 7,
@@ -965,7 +966,7 @@ const styles = StyleSheet.create({
     width: 128,
     height: 28,
     borderRadius: 999,
-    backgroundColor: '#EEF2F7',
+    backgroundColor: AppColors.border.soft,
   },
   usersSkeletonStatus: {
     width: 82,
@@ -978,7 +979,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 12,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   summaryRow: {
     flexDirection: 'row',

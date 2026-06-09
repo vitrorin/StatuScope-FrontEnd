@@ -37,6 +37,7 @@ import { DiagnosisDiseaseOption, searchDiagnosisDiseases } from '@/lib/diagnosis
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { useTranslation } from '@/i18n';
 import { AppLanguage } from '@/i18n/language';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 const navigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -292,37 +293,37 @@ function localAlertTone(riskLevel: string | null | undefined) {
   const normalized = riskLevel?.trim().toUpperCase();
   if (normalized === 'HIGH') {
     return {
-      cardBackground: '#FFF7F7',
-      cardBorder: '#FECACA',
-      badgeBackground: '#FFE4E6',
-      badgeText: '#9F1239',
-      accent: '#E11D48',
+      cardBackground: AppColors.clinicalSeverity.critical.card,
+      cardBorder: AppColors.status.dangerBorder,
+      badgeBackground: AppColors.clinicalSeverity.critical.badge,
+      badgeText: AppColors.clinicalSeverity.critical.text,
+      accent: AppColors.clinicalSeverity.critical.accent,
     };
   }
   if (normalized === 'MEDIUM') {
     return {
-      cardBackground: '#FFFBF0',
-      cardBorder: '#FED7AA',
-      badgeBackground: '#FFEDD5',
-      badgeText: '#9A3412',
-      accent: '#EA580C',
+      cardBackground: AppColors.clinicalSeverity.high.card,
+      cardBorder: AppColors.clinicalSeverity.high.border,
+      badgeBackground: AppColors.clinicalSeverity.high.badge,
+      badgeText: AppColors.clinicalSeverity.high.text,
+      accent: AppColors.clinicalSeverity.high.accent,
     };
   }
   if (normalized === 'LOW') {
     return {
-      cardBackground: '#F0F9FF',
-      cardBorder: '#BAE6FD',
-      badgeBackground: '#E0F2FE',
-      badgeText: '#075985',
-      accent: '#0284C7',
+      cardBackground: AppColors.clinicalSeverity.moderate.card,
+      cardBorder: AppColors.clinicalSeverity.moderate.border,
+      badgeBackground: AppColors.clinicalSeverity.moderate.badge,
+      badgeText: AppColors.clinicalSeverity.moderate.text,
+      accent: AppColors.clinicalSeverity.moderate.accent,
     };
   }
   return {
-    cardBackground: '#F8FAFC',
-    cardBorder: '#CBD5E1',
-    badgeBackground: '#F1F5F9',
-    badgeText: '#475569',
-    accent: '#64748B',
+    cardBackground: AppColors.surface.subtle,
+    cardBorder: AppColors.border.strong,
+    badgeBackground: AppColors.surface.muted,
+    badgeText: AppColors.text.body,
+    accent: AppColors.text.secondary,
   };
 }
 
@@ -969,7 +970,7 @@ export function DoctorDiagnosis() {
                 <View style={styles.chatHeader}>
                   <View style={styles.chatTitleGroup}>
                     <View style={styles.chatIconWrap}>
-                      <MaterialCommunityIcons name="brain" size={18} color="#0003B8" />
+                      <MaterialCommunityIcons name="brain" size={18} color={AppColors.brand.primary} />
                     </View>
 
                     <View style={styles.chatCopy}>
@@ -995,7 +996,7 @@ export function DoctorDiagnosis() {
                 >
                   {chatHistory.length === 0 ? (
                     <View style={styles.emptyState}>
-                      <MaterialCommunityIcons name="stethoscope" size={24} color="#0003B8" />
+                      <MaterialCommunityIcons name="stethoscope" size={24} color={AppColors.brand.primary} />
                       <Text style={styles.emptyTitle}>{t('doctor.diagnosis.assistant.emptyTitle')}</Text>
                       <Text style={styles.emptyText}>
                         {t('doctor.diagnosis.assistant.emptyText')}
@@ -1017,7 +1018,7 @@ export function DoctorDiagnosis() {
                       ) : (
                         <View key={messageKey} style={styles.responseRow}>
                           <View style={styles.assistantAvatar}>
-                            <MaterialCommunityIcons name="robot-excited-outline" size={16} color="#FFFFFF" />
+                            <MaterialCommunityIcons name="robot-excited-outline" size={16} color={AppColors.surface.card} />
                           </View>
 
                           <View style={styles.responseStack}>
@@ -1094,7 +1095,7 @@ export function DoctorDiagnosis() {
 
                   {isAssistantLoading ? (
                     <View style={styles.loadingRow}>
-                      <ActivityIndicator color="#0003B8" />
+                      <ActivityIndicator color={AppColors.brand.primary} />
                       <Text style={styles.loadingText}>{t('doctor.diagnosis.assistant.consulting')}</Text>
                     </View>
                   ) : null}
@@ -1141,7 +1142,7 @@ export function DoctorDiagnosis() {
                           <Feather
                             name={isFinalizeExpanded ? 'chevron-up' : 'chevron-down'}
                             size={16}
-                            color="#64748B"
+                            color={AppColors.text.secondary}
                           />
                         </View>
                       </View>
@@ -1165,7 +1166,7 @@ export function DoctorDiagnosis() {
                                 {t('doctor.diagnosis.finalize.currentRecommendation')}
                               </Text>
                               {finalizeChoice === 'ai' ? (
-                                <Feather name="check-circle" size={17} color="#0003B8" />
+                                <Feather name="check-circle" size={17} color={AppColors.brand.primary} />
                               ) : null}
                             </View>
                             <View style={styles.suggestionSummaryRow}>
@@ -1197,7 +1198,7 @@ export function DoctorDiagnosis() {
                                 {t('doctor.diagnosis.finalize.selectAnotherDisease')}
                               </Text>
                               {finalizeChoice === 'catalog' ? (
-                                <Feather name="check-circle" size={17} color="#0003B8" />
+                                <Feather name="check-circle" size={17} color={AppColors.brand.primary} />
                               ) : null}
                             </View>
 
@@ -1230,7 +1231,7 @@ export function DoctorDiagnosis() {
                                   }
                                 }, 120);
                               }}
-                              leftIcon={<Feather name="search" size={16} color="#64748B" />}
+                              leftIcon={<Feather name="search" size={16} color={AppColors.text.secondary} />}
                               style={styles.diseaseSearchField}
                               inputContainerStyle={styles.diseaseSearchInputContainer}
                             />
@@ -1264,7 +1265,7 @@ export function DoctorDiagnosis() {
                                         </Text>
                                       </View>
                                       {option.id === selectedDiseaseId ? (
-                                        <Feather name="check-circle" size={16} color="#0003B8" />
+                                        <Feather name="check-circle" size={16} color={AppColors.brand.primary} />
                                       ) : null}
                                     </TouchableOpacity>
                                   );
@@ -1292,7 +1293,7 @@ export function DoctorDiagnosis() {
                                     </Text>
                                   </View>
                                   {selectedDiseaseId === OTHER_DISEASE_ID ? (
-                                    <Feather name="check-circle" size={16} color="#0003B8" />
+                                    <Feather name="check-circle" size={16} color={AppColors.brand.primary} />
                                   ) : null}
                                 </TouchableOpacity>
                               </ScrollView>
@@ -1343,14 +1344,14 @@ export function DoctorDiagnosis() {
 
                         {isSubmittingFeedback ? (
                           <View style={styles.feedbackInfoBanner}>
-                            <ActivityIndicator size="small" color="#0003B8" />
+                            <ActivityIndicator size="small" color={AppColors.brand.primary} />
                             <Text style={styles.feedbackInfoText}>{t('doctor.diagnosis.feedback.saving')}</Text>
                           </View>
                         ) : null}
 
                         {feedbackSuccess ? (
                           <View style={styles.feedbackSuccessBanner}>
-                            <Feather name="check-circle" size={16} color="#166534" />
+                            <Feather name="check-circle" size={16} color={AppColors.status.successText} />
                             <Text style={styles.feedbackSuccessText}>{feedbackSuccess}</Text>
                           </View>
                         ) : null}
@@ -1428,7 +1429,7 @@ function DiagnosisLocalAlertOverlay({
               ) : null}
             </View>
             <TouchableOpacity style={styles.alertDialogCloseButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -1534,13 +1535,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
     borderRadius: 24,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.08)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000F6B',
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1556,21 +1557,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   heroTitle: {
     fontSize: 26,
     lineHeight: 34,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 8,
     maxWidth: 720,
   },
   heroDescription: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#475569',
+    color: AppColors.text.body,
     maxWidth: 760,
   },
   heroBadge: {
@@ -1580,21 +1581,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 999,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   heroBadgeDot: {
     width: 10,
     height: 10,
     borderRadius: 999,
-    backgroundColor: '#22C55E',
+    backgroundColor: AppColors.status.successBright,
   },
   heroBadgeText: {
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '600',
-    color: '#334155',
+    color: AppColors.text.body,
   },
   workspace: {
     flexDirection: 'row',
@@ -1606,8 +1607,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
+    backgroundColor: AppColors.status.dangerSoft,
+    color: AppColors.status.dangerDark,
     fontSize: 13,
     lineHeight: 20,
     fontWeight: '600',
@@ -1628,8 +1629,8 @@ const styles = StyleSheet.create({
     padding: 0,
     overflow: 'hidden',
     borderRadius: 24,
-    borderColor: 'rgba(148, 163, 184, 0.24)',
-    shadowColor: '#000F6B',
+    borderColor: withAlpha(AppColors.text.muted, 0.24),
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.08,
     shadowRadius: 28,
@@ -1642,8 +1643,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    backgroundColor: '#FCFDFF',
+    borderBottomColor: AppColors.surface.muted,
+    backgroundColor: AppColors.surface.cardSoft,
   },
   chatTitleGroup: {
     flexDirection: 'row',
@@ -1656,7 +1657,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 3, 184, 0.08)',
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.08),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1667,13 +1668,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 26,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   chatSubtitle: {
     marginTop: 2,
     fontSize: 13,
     lineHeight: 19,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   liveBadge: {
     flexDirection: 'row',
@@ -1682,27 +1683,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: AppColors.status.successSoft,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: AppColors.status.successBorder,
   },
   liveBadgeDot: {
     width: 6,
     height: 6,
     borderRadius: 999,
-    backgroundColor: '#16A34A',
+    backgroundColor: AppColors.status.success,
   },
   liveBadgeText: {
     fontSize: 11,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#15803D',
+    color: AppColors.status.successStrong,
     textTransform: 'uppercase',
   },
   chatBody: {
     flex: 1,
     minHeight: 0,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
   },
   chatBodyContent: {
     padding: 26,
@@ -1721,15 +1722,15 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
   emptyTitle: {
     marginTop: 12,
     fontSize: 17,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     textAlign: 'center',
   },
   emptyText: {
@@ -1737,7 +1738,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     fontSize: 14,
     lineHeight: 22,
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textAlign: 'center',
   },
   responseRow: {
@@ -1749,13 +1750,13 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 999,
-    backgroundColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
     borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.95)',
-    shadowColor: '#0003B8',
+    borderColor: withAlpha(AppColors.neutral.white, 0.95),
+    shadowColor: AppColors.brand.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 18,
@@ -1766,21 +1767,21 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   responseCard: {
-    borderColor: 'rgba(148, 163, 184, 0.2)',
+    borderColor: withAlpha(AppColors.text.muted, 0.2),
   },
   localAlertsPanel: {
     padding: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
     gap: 10,
   },
   localAlertsHeading: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -1791,7 +1792,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     gap: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   localAlertCardSelected: {
     borderWidth: 2,
@@ -1814,7 +1815,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   localAlertRiskBadge: {
     paddingHorizontal: 8,
@@ -1830,18 +1831,18 @@ const styles = StyleSheet.create({
   localAlertRationale: {
     fontSize: 13,
     lineHeight: 19,
-    color: '#334155',
+    color: AppColors.text.body,
   },
   localAlertSummary: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#475569',
+    color: AppColors.text.body,
   },
   localAlertDetail: {
     marginTop: 6,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: AppColors.border.default,
     gap: 10,
   },
   localAlertDetailBlock: {
@@ -1851,12 +1852,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#334155',
+    color: AppColors.text.body,
   },
   localAlertDetailText: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#475569',
+    color: AppColors.text.body,
   },
   localAlertMunicipalityRow: {
     flexDirection: 'row',
@@ -1867,13 +1868,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-    color: '#0F172A',
+    color: AppColors.text.primary,
     fontWeight: '600',
   },
   localAlertCases: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#475569',
+    color: AppColors.text.body,
     fontWeight: '600',
   },
   alertOverlay: {
@@ -1884,7 +1885,7 @@ const styles = StyleSheet.create({
   },
   alertOverlayBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   alertDialog: {
     width: '100%',
@@ -1901,7 +1902,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   alertDialogCopy: {
     flex: 1,
@@ -1910,7 +1911,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -1919,13 +1920,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   alertDialogSubtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   alertDialogCloseButton: {
     width: 40,
@@ -1934,7 +1935,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   alertDialogBody: {
     padding: 24,
@@ -1952,7 +1953,7 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   alertDialogMetricAccent: {
     position: 'absolute',
@@ -1965,7 +1966,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
@@ -1974,13 +1975,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   alertDialogInsightsSection: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
   },
   alertDialogInsightsHeader: {
@@ -1988,14 +1989,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
     justifyContent: 'center',
   },
   alertDialogInsightsTitle: {
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   alertDialogInsightsList: {
     padding: 12,
@@ -2004,9 +2005,9 @@ const styles = StyleSheet.create({
   alertInsightRow: {
     minHeight: 64,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
+    borderColor: AppColors.border.soft,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -2028,7 +2029,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -2037,7 +2038,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   loadingRow: {
     alignSelf: 'flex-start',
@@ -2047,22 +2048,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   loadingText: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
-    color: '#334155',
+    color: AppColors.text.body,
   },
   errorText: {
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
+    backgroundColor: AppColors.status.dangerSoft,
+    color: AppColors.status.dangerDark,
     fontSize: 13,
     lineHeight: 20,
     fontWeight: '600',
@@ -2081,10 +2082,10 @@ const styles = StyleSheet.create({
   },
   chatFooter: {
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: AppColors.surface.muted,
     paddingHorizontal: 18,
     paddingVertical: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     gap: 14,
   },
   testsCard: {
@@ -2092,7 +2093,7 @@ const styles = StyleSheet.create({
   },
   finalizeSection: {
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: AppColors.border.default,
     paddingTop: 14,
   },
   finalizeHeader: {
@@ -2112,13 +2113,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   finalizeSubtitle: {
     marginTop: 4,
     fontSize: 13,
     lineHeight: 19,
-    color: '#64748B',
+    color: AppColors.text.secondary,
     maxWidth: 560,
   },
   finalizeChevronWrap: {
@@ -2131,26 +2132,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: AppColors.status.successSoft,
   },
   feedbackStatusChipText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#166534',
+    color: AppColors.status.successText,
   },
   finalizedBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   finalizedBadgeText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   diseaseSearchField: {
     marginBottom: 10,
@@ -2170,14 +2171,14 @@ const styles = StyleSheet.create({
     minHeight: 206,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#DCE6F5',
+    borderColor: AppColors.border.panel,
   },
   finalizeChoiceCardSelected: {
     borderWidth: 2,
-    borderColor: '#0003B8',
-    backgroundColor: '#F8FAFF',
+    borderColor: AppColors.brand.primary,
+    backgroundColor: AppColors.surface.raised,
   },
   finalizeChoiceCardDisabled: {
     opacity: 0.56,
@@ -2194,15 +2195,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: '#DCE6F5',
+    borderColor: AppColors.border.panel,
   },
   suggestionSummaryEyebrow: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
     marginBottom: 6,
   },
@@ -2217,26 +2218,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   suggestionSummaryConfidence: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   suggestionSummaryMeta: {
     marginTop: 4,
     fontSize: 12,
     lineHeight: 16,
-    color: '#475569',
+    color: AppColors.text.body,
     fontWeight: '600',
   },
   suggestionSummaryRationale: {
     marginTop: 6,
     fontSize: 13,
     lineHeight: 18,
-    color: '#334155',
+    color: AppColors.text.body,
   },
   selectedDiseasePill: {
     alignSelf: 'stretch',
@@ -2245,22 +2246,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 14,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: '#DCE6F5',
+    borderColor: AppColors.border.panel,
   },
   selectedDiseaseLabel: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
   },
   selectedDiseaseValue: {
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   customDiseaseField: {
     marginTop: 6,
@@ -2270,11 +2271,11 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 12,
     paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   diseaseResultsList: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     borderRadius: 14,
     overflow: 'hidden',
     maxHeight: 154,
@@ -2284,20 +2285,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   diseaseResultRowLast: {
     borderBottomWidth: 0,
   },
   diseaseResultRowSelected: {
-    backgroundColor: '#F4F7FF',
+    backgroundColor: AppColors.surface.brandPanel,
     borderLeftWidth: 4,
-    borderLeftColor: '#0003B8',
+    borderLeftColor: AppColors.brand.primary,
   },
   diseaseResultCopy: {
     flex: 1,
@@ -2306,17 +2307,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   diseaseResultNameSelected: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     fontWeight: '800',
   },
   diseaseResultCode: {
     marginTop: 2,
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   feedbackNotesField: {
     marginBottom: 0,
@@ -2329,15 +2330,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: AppColors.border.brandSubtle,
   },
   feedbackInfoText: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
-    color: '#1E3A8A',
+    color: AppColors.status.infoDeep,
   },
   feedbackSuccessBanner: {
     marginTop: 10,
@@ -2347,15 +2348,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: AppColors.status.successSoft,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: AppColors.status.successBorder,
   },
   feedbackSuccessText: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
-    color: '#166534',
+    color: AppColors.status.successText,
   },
   finalizeActions: {
     flexDirection: 'row',
@@ -2366,11 +2367,11 @@ const styles = StyleSheet.create({
     minHeight: 46,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#0003B8',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.brand.primary,
+    backgroundColor: AppColors.surface.card,
   },
   confirmButtonLabel: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
@@ -2379,11 +2380,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 46,
     borderRadius: 12,
-    backgroundColor: '#E8EEF7',
+    backgroundColor: AppColors.surface.neutralWash,
     borderWidth: 0,
   },
   rejectButtonLabel: {
-    color: '#334155',
+    color: AppColors.text.body,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
@@ -2392,7 +2393,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 46,
     borderRadius: 12,
-    backgroundColor: '#0003B8',
-    borderColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
+    borderColor: AppColors.brand.primary,
   },
 });

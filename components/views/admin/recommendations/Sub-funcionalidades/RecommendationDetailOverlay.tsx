@@ -13,6 +13,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { RecommendationFeedItem } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
 import { getRecommendationSourceLabel, isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface RecommendationDetailOverlayProps {
   visible: boolean;
@@ -41,7 +42,7 @@ export function RecommendationDetailOverlay({
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -91,7 +92,7 @@ export function RecommendationDetailOverlay({
               <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Acciones recomendadas' : 'Recommended Actions'}</Text>
               {item.recommendedActions.map((action) => (
                 <View key={action} style={styles.actionRow}>
-                  <Feather name="check-circle" size={15} color="#1718C7" />
+                  <Feather name="check-circle" size={15} color={AppColors.brand.action} />
                   <Text style={styles.bulletText}>{action}</Text>
                 </View>
               ))}
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   headerCopy: {
     flex: 1,
@@ -166,20 +167,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    color: '#1718C7',
+    color: AppColors.brand.action,
     marginBottom: 8,
   },
   title: {
     fontSize: 24,
     lineHeight: 32,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -192,8 +193,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
   content: {
     padding: 24,
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 23,
     fontWeight: '600',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   sectionCard: {
     borderRadius: 18,
@@ -231,14 +232,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 12,
   },
   sectionLabel: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   bulletRow: {
     flexDirection: 'row',
@@ -267,34 +268,34 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 999,
-    backgroundColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
     marginTop: 6,
   },
   bulletText: {
     flex: 1,
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   auditRow: {
     flexDirection: 'row',
     gap: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
   },
   auditTime: {
     width: 110,
     fontSize: 12,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
   },
   auditLabel: {
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-    color: '#526174',
+    color: AppColors.text.body,
   },
 });
 

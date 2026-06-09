@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface CardBaseProps {
   children: React.ReactNode;
@@ -12,12 +13,12 @@ export function CardBase({ children, style }: CardBaseProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FCFDFE',
+    backgroundColor: AppColors.surface.cardSoft,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     padding: 16,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 24,

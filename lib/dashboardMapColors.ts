@@ -1,8 +1,10 @@
-export const HOSPITAL_NODE_COLOR = '#0003B8';
-export const HIGH_SEVERITY_COLOR = '#EF4444';
-export const MODERATE_SEVERITY_COLOR = '#F97316';
-export const LOW_SEVERITY_COLOR = '#22C55E';
-export const INACTIVE_COLOR = '#64748B';
+import { AppColors, withAlpha } from '@/constants/theme';
+
+export const HOSPITAL_NODE_COLOR = AppColors.brand.primary;
+export const HIGH_SEVERITY_COLOR = AppColors.status.dangerBright;
+export const MODERATE_SEVERITY_COLOR = AppColors.status.warningBright;
+export const LOW_SEVERITY_COLOR = AppColors.status.successBright;
+export const INACTIVE_COLOR = AppColors.text.secondary;
 
 interface ZoneSeverityInput {
   id?: string | null;
@@ -68,11 +70,11 @@ export function aggregateOutbreakColor(item: AggregateSeverityInput): string {
 }
 
 export function severityFillColor(color: string): string {
-  if (color === HIGH_SEVERITY_COLOR) return 'rgba(239, 68, 68, 0.10)';
-  if (color === MODERATE_SEVERITY_COLOR) return 'rgba(249, 115, 22, 0.10)';
-  if (color === LOW_SEVERITY_COLOR) return 'rgba(34, 197, 94, 0.10)';
-  if (color === HOSPITAL_NODE_COLOR) return 'rgba(0, 3, 184, 0.10)';
-  return 'rgba(100, 116, 139, 0.04)';
+  if (color === HIGH_SEVERITY_COLOR) return withAlpha(AppColors.status.dangerBright, 0.10);
+  if (color === MODERATE_SEVERITY_COLOR) return withAlpha(AppColors.status.warningBright, 0.10);
+  if (color === LOW_SEVERITY_COLOR) return withAlpha(AppColors.status.successBright, 0.10);
+  if (color === HOSPITAL_NODE_COLOR) return withAlpha(AppColors.brand.primary, 0.10);
+  return withAlpha(AppColors.text.secondary, 0.04);
 }
 
 function normalizeSeverityText(value: string | null | undefined): string {

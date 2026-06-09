@@ -15,6 +15,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { StaffingProfileItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface StaffingManageOverlayProps {
   visible: boolean;
@@ -77,7 +78,7 @@ export function StaffingManageOverlay({
               <Text style={styles.subtitle}>{isSpanish(language) ? 'Crea, actualiza y elimina perfiles de personal del hospital.' : 'Create, update, and remove real staffing profiles from the hospital database.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -228,13 +229,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -243,13 +244,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   scrollContentWrapper: {
     flex: 1,
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
   listPane: {
     width: 320,
     borderRightWidth: 1,
-    borderRightColor: '#EEF2F7',
+    borderRightColor: AppColors.border.soft,
     padding: 20,
   },
   listHeader: {
@@ -282,33 +283,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   profileList: {
     gap: 10,
   },
   profileCard: {
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   profileCardActive: {
-    borderColor: '#C9D1FF',
-    backgroundColor: '#F8FAFF',
+    borderColor: AppColors.border.brandMuted,
+    backgroundColor: AppColors.surface.raised,
   },
   profileName: {
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   profileMeta: {
     marginTop: 4,
     fontSize: 12,
     lineHeight: 18,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   formPane: {
     flex: 1,
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 16,
   },
   row: {
@@ -343,8 +344,8 @@ const styles = StyleSheet.create({
   primaryButton: {
     marginLeft: 'auto',
     minWidth: 160,
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
 });
 

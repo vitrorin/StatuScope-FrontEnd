@@ -43,6 +43,7 @@ import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboar
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { aggregateOutbreakColor, diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
 import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -294,7 +295,7 @@ export function AdminDashboard() {
                 label={isSpanish(language) ? 'Exportar reporte' : 'Export Report'}
                 size="sm"
                 variant="secondary"
-                leadingIcon={<Feather name="download" size={12} color="#334155" />}
+                leadingIcon={<Feather name="download" size={12} color={AppColors.text.body} />}
                 style={styles.secondaryAction}
                 onPress={() => setIsExportOpen(true)}
               />
@@ -370,10 +371,10 @@ export function AdminDashboard() {
                       }))}
                       showControls
                       legendItems={[
-                        { label: t('doctor.dashboard.map.highRisk'), color: '#EF4444' },
-                        { label: t('doctor.dashboard.map.emerging'), color: '#F97316' },
-                        { label: t('doctor.dashboard.map.lowRisk'), color: '#22C55E' },
-                        { label: t('doctor.dashboard.map.hospitalNode'), color: '#0003B8' },
+                        { label: t('doctor.dashboard.map.highRisk'), color: AppColors.status.dangerBright },
+                        { label: t('doctor.dashboard.map.emerging'), color: AppColors.status.warningBright },
+                        { label: t('doctor.dashboard.map.lowRisk'), color: AppColors.status.successBright },
+                        { label: t('doctor.dashboard.map.hospitalNode'), color: AppColors.brand.primary },
                       ]}
                       footerTextLeft="© OpenStreetMap contributors"
                       footerTextRight={formatSyncTime(mapState.data?.generatedAt, t)}
@@ -396,13 +397,13 @@ export function AdminDashboard() {
                         latitude: zone.latitude,
                         longitude: zone.longitude,
                         borderColor: zone.borderColor,
-                        fillColor: '#FFFFFF',
+                        fillColor: AppColors.surface.card,
                         icon:
-                          zone.borderColor === '#0003B8' ? (
-                            <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
-                          ) : zone.borderColor === '#F97316' ? (
+                          zone.borderColor === AppColors.brand.primary ? (
+                            <MaterialCommunityIcons name="hospital-box-outline" size={12} color={AppColors.brand.primary} />
+                          ) : zone.borderColor === AppColors.status.warningBright ? (
                             <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
-                          ) : zone.borderColor === '#22C55E' ? (
+                          ) : zone.borderColor === AppColors.status.successBright ? (
                             <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
                           ) : (
                             <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />
@@ -536,7 +537,7 @@ function OverviewMetricCard({
 
   return (
     <TouchableOpacity activeOpacity={0.84} onPress={onPress} disabled={!onPress || isLoading}>
-      <CardBase style={[styles.metricCard, { borderColor: palette.border, backgroundColor: '#FFFFFF' }, style]}>
+      <CardBase style={[styles.metricCard, { borderColor: palette.border, backgroundColor: AppColors.surface.card }, style]}>
         <View style={[styles.metricAccent, { backgroundColor: palette.accent }]} />
         <View style={styles.metricHeader}>
           {isLoading ? <SkeletonLine width="48%" height={16} /> : <Text style={styles.metricTitle}>{title}</Text>}
@@ -658,7 +659,7 @@ function ContextualAlertsPanel({
             activeOpacity={0.82}
             onPress={onOpenMore}
           >
-            <Feather name="list" size={17} color="#0003B8" />
+            <Feather name="list" size={17} color={AppColors.brand.primary} />
             <Text style={styles.moreAlertsText}>{language === 'es' ? 'Mostrar mas brotes' : 'Show more outbreaks'}</Text>
             <View style={styles.moreAlertsBadge}>
               <Text style={styles.moreAlertsBadgeText}>{remainingCount}</Text>
@@ -750,7 +751,7 @@ function PriorityActionsCard({
         </View>
         {!isLoading && remainingCount > 0 ? (
           <TouchableOpacity style={styles.moreAlertsButton} activeOpacity={0.78} onPress={onOpenMore}>
-            <Feather name="list" size={15} color="#0003B8" />
+            <Feather name="list" size={15} color={AppColors.brand.primary} />
             <Text style={styles.showMoreActionsText}>
               {language === 'es' ? 'Mostrar mas recomendaciones' : 'Show more recommendations'}
             </Text>
@@ -788,7 +789,7 @@ function MoreAlertsOverlay({
               <Text style={styles.moreAlertsTitle}>{language === 'es' ? 'Mas brotes contextuales' : 'More contextual outbreaks'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
@@ -819,7 +820,7 @@ function RetryOverlay({
   return (
     <View style={styles.retryOverlay}>
       <TouchableOpacity style={styles.retryButton} activeOpacity={0.82} onPress={onRetry}>
-        <Feather name="refresh-cw" size={18} color="#0003B8" />
+        <Feather name="refresh-cw" size={18} color={AppColors.brand.primary} />
         <Text style={styles.retryText}>{label}</Text>
       </TouchableOpacity>
     </View>
@@ -850,7 +851,7 @@ function MoreRecommendationsOverlay({
               <Text style={styles.moreAlertsTitle}>{language === 'es' ? 'Mas recomendaciones hospitalarias' : 'More hospital recommendations'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
@@ -929,7 +930,7 @@ function HospitalRecommendationOverlay({
               <Text style={styles.recommendationModalTitle}>{title}</Text>
             </View>
             <TouchableOpacity style={styles.recommendationModalClose} activeOpacity={0.75} onPress={onClose}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -1020,14 +1021,14 @@ function StateOutbreakExplorer({
     states.map((state) => [stateLookupKey(state.stateName), state]),
   ), [states]);
   const selectedBoundary = useMemo(() => getStateBoundary(selectedState?.stateName), [selectedState?.stateName]);
-  const selectedStateColor = '#0003B8';
+  const selectedStateColor = AppColors.brand.primary;
   const selectorPolygons = useMemo<RadarMapPolygon[]>(() => mexicoStateBoundaries.map((boundary) => {
     const state = statesByName.get(stateLookupKey(boundary.name));
     return {
       id: boundary.id,
       geometry: boundary.geometry,
-      fillColor: state ? 'rgba(0, 3, 184, 0.05)' : 'rgba(100, 116, 139, 0.04)',
-      strokeColor: state ? 'rgba(0, 3, 184, 0.62)' : 'rgba(100, 116, 139, 0.24)',
+      fillColor: state ? withAlpha(AppColors.brand.primary, 0.05) : withAlpha(AppColors.text.secondary, 0.04),
+      strokeColor: state ? withAlpha(AppColors.brand.primary, 0.62) : withAlpha(AppColors.text.secondary, 0.24),
       strokeWidth: state && state.outbreakCount > 0 ? 1.3 : 1,
     };
   }), [statesByName]);
@@ -1060,12 +1061,12 @@ function StateOutbreakExplorer({
             <View style={styles.stateExplorerActions}>
               {selectedState ? (
                 <TouchableOpacity style={styles.stateExplorerSecondaryButton} onPress={onBack} activeOpacity={0.75}>
-                  <Feather name="arrow-left" size={16} color="#0003B8" />
+                  <Feather name="arrow-left" size={16} color={AppColors.brand.primary} />
                   <Text style={styles.stateExplorerSecondaryText}>{t('doctor.dashboard.map.backToStates')}</Text>
                 </TouchableOpacity>
               ) : null}
               <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -1102,10 +1103,10 @@ function StateOutbreakExplorer({
                   latitude: zone.latitude,
                   longitude: zone.longitude,
                   borderColor: zone.borderColor,
-                  fillColor: '#FFFFFF',
-                  icon: zone.borderColor === '#22C55E'
+                  fillColor: AppColors.surface.card,
+                  icon: zone.borderColor === AppColors.status.successBright
                     ? <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
-                    : zone.borderColor === '#F97316'
+                    : zone.borderColor === AppColors.status.warningBright
                       ? <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
                       : <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />,
                   onPress: () => onZonePress(zone),
@@ -1138,10 +1139,10 @@ function StateOutbreakExplorer({
                 id: state.stateId,
                 latitude: state.latitude,
                 longitude: state.longitude,
-                borderColor: '#0003B8',
-                fillColor: '#FFFFFF',
+                borderColor: AppColors.brand.primary,
+                fillColor: AppColors.surface.card,
                 label: shortStateName(state.stateName),
-                icon: <Feather name="map-pin" size={13} color="#0003B8" />,
+                icon: <Feather name="map-pin" size={13} color={AppColors.brand.primary} />,
                 onPress: () => onSelectState(state),
               }))}
             />
@@ -1377,7 +1378,7 @@ function buildOutbreakMetricInsights(
           count: (alert.caseCount ?? 0).toLocaleString(),
         }),
       severity: alert.confirmationStatus ? statusLabel(alert.confirmationStatus, t) : translateDashboardValue(t, alert.priority),
-      color: alert.variant === 'critical' ? '#EF4444' : alert.variant === 'warning' ? '#F59E0B' : '#2563EB',
+      color: alert.variant === 'critical' ? AppColors.status.dangerBright : alert.variant === 'warning' ? AppColors.status.warning : AppColors.status.info,
       meta: alert.confirmationStatus ? statusLabel(alert.confirmationStatus, t) : translateDashboardValue(t, alert.priority),
       count: alert.caseCount ?? 0,
     }))
@@ -1388,7 +1389,7 @@ function buildOutbreakMetricInsights(
         count: alert.caseCount.toLocaleString(),
       }),
       severity: translateDashboardValue(t, alert.severity),
-      color: alert.severity === 'HIGH' ? '#EF4444' : alert.severity === 'MEDIUM' ? '#F59E0B' : '#2563EB',
+      color: alert.severity === 'HIGH' ? AppColors.status.dangerBright : alert.severity === 'MEDIUM' ? AppColors.status.warning : AppColors.status.info,
       meta: translateDashboardValue(t, alert.severity),
       count: alert.caseCount,
     }));
@@ -1411,7 +1412,7 @@ function buildFallbackMetricInsights(
       location: summary.hospitalName,
       cases: translateDashboardValue(t, metric.value),
       severity: translateDashboardValue(t, metric.status ?? 'Stable'),
-      color: '#0003B8',
+      color: AppColors.brand.primary,
       meta: language === 'es' ? 'Seguimiento operativo' : 'Operational follow-up',
     }),
   ]);
@@ -1870,34 +1871,34 @@ function localizeAdminMetricSubtitle(subtitle: string, language: 'en' | 'es') {
 
 function severityToColor(value: string) {
   const normalized = value.toUpperCase();
-  if (normalized === 'CRITICAL') return '#DC2626';
-  if (normalized === 'HIGH') return '#EF4444';
-  if (normalized === 'MEDIUM') return '#F59E0B';
-  return '#2563EB';
+  if (normalized === 'CRITICAL') return AppColors.status.danger;
+  if (normalized === 'HIGH') return AppColors.status.dangerBright;
+  if (normalized === 'MEDIUM') return AppColors.status.warning;
+  return AppColors.status.info;
 }
 
 function severityToSoftColor(value: string) {
   const normalized = value.toUpperCase();
-  if (normalized === 'CRITICAL') return '#FEF2F2';
-  if (normalized === 'HIGH') return '#FEF2F2';
-  if (normalized === 'MEDIUM') return '#FFFBEB';
-  return '#EFF6FF';
+  if (normalized === 'CRITICAL') return AppColors.status.dangerSoft;
+  if (normalized === 'HIGH') return AppColors.status.dangerSoft;
+  if (normalized === 'MEDIUM') return AppColors.status.warningWash;
+  return AppColors.status.infoSoft;
 }
 
 function severityToBorderColor(value: string) {
   const normalized = value.toUpperCase();
-  if (normalized === 'CRITICAL') return 'rgba(220, 38, 38, 0.34)';
-  if (normalized === 'HIGH') return 'rgba(239, 68, 68, 0.28)';
-  if (normalized === 'MEDIUM') return 'rgba(245, 158, 11, 0.28)';
-  return 'rgba(37, 99, 235, 0.2)';
+  if (normalized === 'CRITICAL') return withAlpha(AppColors.status.danger, 0.34);
+  if (normalized === 'HIGH') return withAlpha(AppColors.status.dangerBright, 0.28);
+  if (normalized === 'MEDIUM') return withAlpha(AppColors.status.warning, 0.28);
+  return withAlpha(AppColors.status.info, 0.2);
 }
 
 function severityTone(value: string) {
   const normalized = value.toUpperCase();
-  if (normalized === 'CRITICAL') return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
-  if (normalized === 'HIGH') return { accent: '#EA580C', soft: '#FFF7ED', border: '#FED7AA' };
-  if (normalized === 'MEDIUM' || normalized === 'MODERATE') return { accent: '#2563EB', soft: '#EFF6FF', border: '#BFDBFE' };
-  return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+  if (normalized === 'CRITICAL') return { accent: AppColors.status.danger, soft: AppColors.status.dangerSoft, border: AppColors.status.dangerBorder };
+  if (normalized === 'HIGH') return { accent: AppColors.clinicalSeverity.high.accent, soft: AppColors.status.warningPanel, border: AppColors.clinicalSeverity.high.border };
+  if (normalized === 'MEDIUM' || normalized === 'MODERATE') return { accent: AppColors.status.info, soft: AppColors.status.infoSoft, border: AppColors.status.infoSoft };
+  return { accent: AppColors.status.success, soft: AppColors.status.successWash, border: AppColors.status.successBorder };
 }
 
 function severityRank(value: string) {
@@ -1954,18 +1955,18 @@ function normalizeRecommendationText(value: string) {
 function recommendedActionCategoryTone(type: string) {
   const normalized = type.toUpperCase();
   if (normalized === 'BED_CAPACITY') {
-    return { accent: '#0891B2', soft: '#ECFEFF', border: 'rgba(8, 145, 178, 0.24)' };
+    return { accent: AppColors.resourceStatus.info.accent, soft: AppColors.resourceStatus.info.background, border: AppColors.recommendationCategory.medical.border };
   }
   if (normalized === 'STAFFING') {
-    return { accent: '#7C3AED', soft: '#F5F3FF', border: 'rgba(124, 58, 237, 0.24)' };
+    return { accent: AppColors.recommendationCategory.logistics.accent, soft: AppColors.recommendationCategory.logistics.soft, border: AppColors.recommendationCategory.logistics.border };
   }
   if (normalized === 'SUPPLY') {
-    return { accent: '#9333EA', soft: '#FAF5FF', border: 'rgba(147, 51, 234, 0.24)' };
+    return { accent: AppColors.recommendationCategory.staffing.accent, soft: '#FAF5FF', border: AppColors.recommendationCategory.staffing.border };
   }
   if (normalized === 'LOCAL_EPIDEMIOLOGY' || normalized.startsWith('EPIDEMIOLOGY')) {
-    return { accent: '#9F1239', soft: '#FFF1F2', border: 'rgba(159, 18, 57, 0.24)' };
+    return { accent: AppColors.clinicalSeverity.critical.text, soft: AppColors.status.dangerPanel, border: AppColors.recommendationCategory.critical.border };
   }
-  return { accent: '#475569', soft: '#F8FAFC', border: 'rgba(71, 85, 105, 0.22)' };
+  return { accent: AppColors.text.body, soft: AppColors.surface.subtle, border: withAlpha(AppColors.text.body, 0.22) };
 }
 
 function actionIcon(type: string, color: string) {
@@ -2000,12 +2001,12 @@ function localizeActionStatus(status: string, language: 'en' | 'es') {
 
 function actionStatusTone(status: string) {
   const normalized = status.toUpperCase();
-  if (normalized === 'NEW') return { accent: '#1718C7', soft: '#EEF2FF', border: '#C7D2FE' };
+  if (normalized === 'NEW') return { accent: AppColors.brand.action, soft: AppColors.surface.brandSoft, border: AppColors.border.brandSubtle };
   if (normalized === 'ASSIGNED' || normalized === 'ACCEPTED' || normalized === 'IN_PROGRESS' || normalized === 'COMPLETED') {
-    return { accent: '#16A34A', soft: '#F0FDF4', border: '#BBF7D0' };
+    return { accent: AppColors.status.success, soft: AppColors.status.successWash, border: AppColors.status.successBorder };
   }
-  if (normalized === 'REJECTED' || normalized === 'DISMISSED') return { accent: '#DC2626', soft: '#FEF2F2', border: '#FECACA' };
-  return { accent: '#475569', soft: '#F8FAFC', border: '#E2E8F0' };
+  if (normalized === 'REJECTED' || normalized === 'DISMISSED') return { accent: AppColors.status.danger, soft: AppColors.status.dangerSoft, border: AppColors.status.dangerBorder };
+  return { accent: AppColors.text.body, soft: AppColors.surface.subtle, border: AppColors.border.default };
 }
 
 function deriveMetricTone(metricId: string | undefined, status: string, value?: string): AdminDashboardMetric['tone'] {
@@ -2041,49 +2042,49 @@ function metricToneLabel(
 }
 
 function toneToColor(tone: AdminDashboardMetric['tone']) {
-  if (tone === 'critical') return '#EF4444';
-  if (tone === 'warning') return '#F59E0B';
-  if (tone === 'positive') return '#22C55E';
-  if (tone === 'info') return '#0EA5E9';
-  return '#64748B';
+  if (tone === 'critical') return AppColors.status.dangerBright;
+  if (tone === 'warning') return AppColors.status.warning;
+  if (tone === 'positive') return AppColors.status.successBright;
+  if (tone === 'info') return AppColors.status.infoBright;
+  return AppColors.text.secondary;
 }
 
 function metricTonePalette(tone: AdminDashboardMetric['tone'] = 'default', fallbackAccent?: string) {
   const palettes = {
     critical: {
-      accent: '#EF4444',
-      border: 'rgba(239, 68, 68, 0.24)',
-      label: '#991B1B',
-      value: '#7F1D1D',
-      track: '#FEE2E2',
+      accent: AppColors.status.dangerBright,
+      border: withAlpha(AppColors.status.dangerBright, 0.24),
+      label: AppColors.status.dangerDeep,
+      value: AppColors.status.dangerDark,
+      track: AppColors.status.dangerBorder,
     },
     warning: {
-      accent: '#F59E0B',
-      border: 'rgba(245, 158, 11, 0.26)',
-      label: '#92400E',
-      value: '#78350F',
-      track: '#FEF3C7',
+      accent: AppColors.status.warning,
+      border: withAlpha(AppColors.status.warning, 0.26),
+      label: AppColors.status.warningLabel,
+      value: AppColors.status.warningValue,
+      track: AppColors.status.warningSoft,
     },
     positive: {
-      accent: '#22C55E',
-      border: 'rgba(34, 197, 94, 0.24)',
-      label: '#166534',
-      value: '#14532D',
-      track: '#DCFCE7',
+      accent: AppColors.status.successBright,
+      border: withAlpha(AppColors.status.successBright, 0.24),
+      label: AppColors.status.successText,
+      value: AppColors.status.successDeep,
+      track: AppColors.status.successSoft,
     },
     info: {
-      accent: '#0EA5E9',
-      border: 'rgba(14, 165, 233, 0.22)',
-      label: '#0369A1',
-      value: '#0F172A',
-      track: '#E0F2FE',
+      accent: AppColors.status.infoBright,
+      border: withAlpha(AppColors.status.info, 0.22),
+      label: AppColors.status.infoText,
+      value: AppColors.text.primary,
+      track: AppColors.clinicalSeverity.moderate.badge,
     },
     default: {
-      accent: fallbackAccent ?? '#64748B',
-      border: '#E2E8F0',
-      label: '#64748B',
-      value: '#0F172A',
-      track: '#E2E8F0',
+      accent: fallbackAccent ?? AppColors.text.secondary,
+      border: AppColors.border.default,
+      label: AppColors.text.secondary,
+      value: AppColors.text.primary,
+      track: AppColors.border.default,
     },
   };
 
@@ -2102,13 +2103,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
     borderRadius: 24,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.08)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000F6B',
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -2124,21 +2125,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   heroTitle: {
     fontSize: 26,
     lineHeight: 34,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 8,
     maxWidth: 720,
   },
   heroDescription: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#475569',
+    color: AppColors.text.body,
     maxWidth: 760,
   },
   heroActions: {
@@ -2156,24 +2157,24 @@ const styles = StyleSheet.create({
   errorCard: {
     borderRadius: 16,
     padding: 16,
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: AppColors.status.infoSoft,
+    borderColor: AppColors.status.infoSoft,
   },
   errorTitle: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#1E3A8A',
+    color: AppColors.status.infoDeep,
   },
   errorText: {
     marginTop: 6,
     fontSize: 13,
     lineHeight: 20,
-    color: '#1D4ED8',
+    color: AppColors.brand.link,
   },
   skeletonLine: {
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   skeletonSpacedSmall: {
     marginTop: 8,
@@ -2182,7 +2183,7 @@ const styles = StyleSheet.create({
     width: 54,
     height: 24,
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   topCardsRow: {
     flexDirection: 'row',
@@ -2199,7 +2200,7 @@ const styles = StyleSheet.create({
     paddingTop: 22,
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.10,
     shadowRadius: 30,
@@ -2225,7 +2226,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '700',
     letterSpacing: 0,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   metricBadgePill: {
     flexShrink: 0,
@@ -2268,20 +2269,20 @@ const styles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 38,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   metricValueUnit: {
     flexShrink: 1,
     fontSize: 32,
     lineHeight: 38,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   metricSubtitle: {
     marginTop: 12,
     fontSize: 12,
     lineHeight: 18,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   skeletonSubtitleBlock: {
     marginTop: 12,
@@ -2310,7 +2311,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(248, 250, 252, 0.72)',
+    backgroundColor: AppColors.surface.subtleTranslucent,
   },
   retryButton: {
     flexDirection: 'row',
@@ -2320,9 +2321,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.14)',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
+    borderColor: withAlpha(AppColors.brand.primary, 0.14),
+    backgroundColor: AppColors.surface.card,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -2332,16 +2333,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   mapSkeleton: {
     flex: 1,
     height: 560,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.05)',
-    backgroundColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: withAlpha(AppColors.brand.primary, 0.05),
+    backgroundColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -2354,12 +2355,12 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     display: 'flex',
     padding: 16,
-    backgroundColor: '#FCFDFE',
+    backgroundColor: AppColors.surface.cardSoft,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -2373,19 +2374,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
   },
   alertsTitle: {
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   sectionHeaderRule: {
     width: 42,
     height: 3,
     borderRadius: 999,
-    backgroundColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
     marginTop: 10,
   },
   alertsList: {
@@ -2406,8 +2407,8 @@ const styles = StyleSheet.create({
     minHeight: 96,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.soft,
+    backgroundColor: AppColors.surface.subtle,
     padding: 14,
     gap: 10,
     justifyContent: 'center',
@@ -2425,7 +2426,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     minHeight: 560,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
   },
   caseHeader: {
@@ -2439,14 +2440,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   caseSectionLabel: {
     marginBottom: 12,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#7387A5',
+    color: AppColors.text.soft,
     letterSpacing: 0.9,
     textTransform: 'uppercase',
   },
@@ -2463,22 +2464,22 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     gap: 12,
   },
   actionSkeletonItem: {
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.soft,
+    backgroundColor: AppColors.surface.subtle,
     gap: 12,
   },
   skeletonActionIcon: {
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   actionMetricTopRow: {
     flexDirection: 'row',
@@ -2500,7 +2501,7 @@ const styles = StyleSheet.create({
   actionMetricMeta: {
     fontSize: 12,
     lineHeight: 16,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   actionMetricBadges: {
     flexDirection: 'row',
@@ -2523,7 +2524,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '900',
-    color: '#526174',
+    color: AppColors.text.body,
     textTransform: 'uppercase',
   },
   actionPriorityValue: {
@@ -2547,8 +2548,8 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
-    backgroundColor: '#EEF2FF',
+    borderColor: AppColors.border.brandSubtle,
+    backgroundColor: AppColors.surface.brandSoft,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2558,7 +2559,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   showMoreActionsCount: {
     minWidth: 24,
@@ -2566,13 +2567,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   showMoreActionsCountText: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '900',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   recommendationModalOverlay: {
     flex: 1,
@@ -2582,17 +2583,17 @@ const styles = StyleSheet.create({
   },
   recommendationModalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.28)',
+    backgroundColor: withAlpha(AppColors.text.primary, 0.28),
   },
   recommendationModalCard: {
     width: '100%',
     maxWidth: 620,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#DDE5F2',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.panelStrong,
+    backgroundColor: AppColors.surface.card,
     padding: 22,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOpacity: 0.18,
     shadowRadius: 28,
     shadowOffset: { width: 0, height: 18 },
@@ -2618,30 +2619,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '900',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
   },
   recommendationModalTitle: {
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   recommendationModalClose: {
     width: 36,
     height: 36,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#DDE5F2',
+    borderColor: AppColors.border.panelStrong,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   recommendationModalDescription: {
     marginTop: 16,
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   recommendationModalSignalRow: {
     marginTop: 18,
@@ -2654,8 +2655,8 @@ const styles = StyleSheet.create({
     minWidth: 190,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#DDE5F2',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.panelStrong,
+    backgroundColor: AppColors.surface.subtle,
     padding: 14,
     gap: 6,
   },
@@ -2663,20 +2664,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '900',
-    color: '#8A9AB2',
+    color: AppColors.text.soft,
     textTransform: 'uppercase',
   },
   recommendationModalSignalValue: {
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   recommendationModalActionBlock: {
     marginTop: 18,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#DDE5F2',
+    borderColor: AppColors.border.panelStrong,
     padding: 14,
     gap: 10,
   },
@@ -2684,7 +2685,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   recommendationModalStep: {
     flexDirection: 'row',
@@ -2698,7 +2699,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     flexShrink: 0,
   },
   recommendationModalStepNumberText: {
@@ -2710,7 +2711,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
-    color: '#526174',
+    color: AppColors.text.body,
     fontWeight: '700',
   },
   recommendationModalButton: {
@@ -2722,21 +2723,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
     fontWeight: '600',
-    color: '#243347',
+    color: AppColors.text.body,
   },
   caseMetricValue: {
     fontSize: 13,
     lineHeight: 17,
     fontWeight: '800',
-    color: '#475569',
+    color: AppColors.text.body,
   },
   moreAlertsButton: {
     minHeight: 52,
     width: '100%',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.16)',
-    backgroundColor: '#EEF2FF',
+    borderColor: withAlpha(AppColors.brand.primary, 0.16),
+    backgroundColor: AppColors.surface.brandSoft,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2746,7 +2747,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   moreAlertsBadge: {
     minWidth: 26,
@@ -2755,13 +2756,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   moreAlertsBadgeText: {
     fontSize: 12,
     lineHeight: 14,
     fontWeight: '900',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   moreAlertsOverlay: {
     flex: 1,
@@ -2771,7 +2772,7 @@ const styles = StyleSheet.create({
   },
   moreAlertsBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.38)',
+    backgroundColor: withAlpha(AppColors.text.primary, 0.38),
   },
   moreAlertsCard: {
     width: '100%',
@@ -2779,10 +2780,10 @@ const styles = StyleSheet.create({
     maxHeight: '86%',
     overflow: 'hidden',
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.16,
     shadowRadius: 42,
@@ -2793,7 +2794,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -2805,22 +2806,22 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   moreAlertsTitle: {
     marginTop: 4,
     fontSize: 20,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   closeButton: {
     width: 38,
     height: 38,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2835,16 +2836,16 @@ const styles = StyleSheet.create({
   },
   stateExplorerBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.38)',
+    backgroundColor: withAlpha(AppColors.text.primary, 0.38),
   },
   stateExplorerCard: {
     flex: 1,
     overflow: 'hidden',
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.16,
     shadowRadius: 34,
@@ -2859,13 +2860,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
   },
   stateExplorerEyebrow: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
@@ -2874,7 +2875,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   stateExplorerActions: {
     flexDirection: 'row',
@@ -2889,20 +2890,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.14)',
-    backgroundColor: '#F8FAFC',
+    borderColor: withAlpha(AppColors.brand.primary, 0.14),
+    backgroundColor: AppColors.surface.subtle,
   },
   stateExplorerSecondaryText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   stateExplorerError: {
     flex: 1,
     minHeight: 620,
     position: 'relative',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
   },
 });
 
