@@ -30,11 +30,11 @@ import {
   DoctorDashboardAlertResponse,
   DoctorDashboardMetricResponse,
   DoctorDashboardStateMapItem,
-  getDoctorDashboardAlerts,
-  getDoctorDashboardMap,
-  getDoctorDashboardMetrics,
-  getDoctorDashboardStateMap,
-  getDoctorDashboardStateOutbreakMap,
+  getAdminEpidemiologyAlerts,
+  getAdminEpidemiologyMap,
+  getAdminEpidemiologyMetrics,
+  getAdminEpidemiologyStateMap,
+  getAdminEpidemiologyStateOutbreakMap,
 } from '@/lib/doctorDashboard';
 import { initialsFromName } from '@/lib/format';
 import { useTranslation } from '@/i18n';
@@ -113,7 +113,7 @@ export function AdminDashboard() {
   const loadMap = useCallback(async () => {
     setMapState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const data = await getDoctorDashboardMap(selectedRadiusKm);
+      const data = await getAdminEpidemiologyMap(selectedRadiusKm);
       setMapState({ status: 'success', data, error: null });
     } catch (nextError) {
       setMapState((current) => ({
@@ -127,7 +127,7 @@ export function AdminDashboard() {
   const loadAlerts = useCallback(async () => {
     setAlertsState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const data = await getDoctorDashboardAlerts(selectedRadiusKm);
+      const data = await getAdminEpidemiologyAlerts(selectedRadiusKm);
       setAlertsState({ status: 'success', data, error: null });
     } catch (nextError) {
       setAlertsState((current) => ({
@@ -141,7 +141,7 @@ export function AdminDashboard() {
   const loadDoctorMetrics = useCallback(async () => {
     setDoctorMetricsState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const data = await getDoctorDashboardMetrics(selectedRadiusKm);
+      const data = await getAdminEpidemiologyMetrics(selectedRadiusKm);
       setDoctorMetricsState({ status: 'success', data, error: null });
     } catch (nextError) {
       setDoctorMetricsState((current) => ({
@@ -155,7 +155,7 @@ export function AdminDashboard() {
   const loadStateMap = useCallback(async () => {
     setStateMapState((current) => ({ ...current, status: 'loading', error: null }));
     try {
-      const data = await getDoctorDashboardStateMap();
+      const data = await getAdminEpidemiologyStateMap();
       setStateMapState({ status: 'success', data, error: null });
     } catch (nextError) {
       setStateMapState((current) => ({
@@ -170,7 +170,7 @@ export function AdminDashboard() {
     setSelectedState(state);
     setStateOutbreakMapState({ status: 'loading', data: null, error: null });
     try {
-      const data = await getDoctorDashboardStateOutbreakMap(state.stateId);
+      const data = await getAdminEpidemiologyStateOutbreakMap(state.stateId);
       setStateOutbreakMapState({ status: 'success', data, error: null });
     } catch (nextError) {
       setStateOutbreakMapState((current) => ({

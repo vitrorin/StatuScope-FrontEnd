@@ -46,6 +46,7 @@ export function SystemDashboard() {
   const [isActivityExpanded, setIsActivityExpanded] = useState(false);
   const [isHospitalMapHovered, setIsHospitalMapHovered] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [mainGridWidth, setMainGridWidth] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const sidebarItems = useMemo(() => getSystemSidebarItems(language), [language]);
@@ -82,6 +83,11 @@ export function SystemDashboard() {
       setLoading(false);
     }
   }, [es]);
+  const handleMainGridLayout = useCallback((event: { nativeEvent: { layout: { width: number } } }) => {
+    const nextWidth = event.nativeEvent.layout.width;
+    setMainGridWidth((currentWidth) => (Math.abs(currentWidth - nextWidth) > 1 ? nextWidth : currentWidth));
+  }, []);
+  const mainPanelWidth = mainGridWidth > 0 ? (mainGridWidth - 14) / 2 : undefined;
 
   useEffect(() => {
     void loadSummary();
@@ -148,8 +154,8 @@ export function SystemDashboard() {
               ))}
             </View>
 
-            <View style={styles.mainGrid}>
-              <View style={styles.regionalMapPanel}>
+            <View style={styles.mainGrid} onLayout={handleMainGridLayout}>
+              <View style={[styles.regionalMapPanel, mainPanelWidth ? { width: mainPanelWidth } : styles.mainPanelFallback]}>
                 <RadarMapCard
                   title={es ? 'Mapa de sucursales por estado' : 'Branch Map by State'}
                   subtitle={es ? 'Estados con mayor presencia hospitalaria' : 'States with the largest hospital footprint'}
@@ -163,7 +169,7 @@ export function SystemDashboard() {
                   }))}
                   showControls
                   showFooter={false}
-                  mapHeight={326}
+                  mapHeight={388}
                   fitMapToCard
                   mapCenterLatitude={23.6345}
                   mapCenterLongitude={-102.5528}
@@ -204,7 +210,7 @@ export function SystemDashboard() {
                 */}
               </View>
 
-              <CardBase style={[styles.panel, styles.activityPanel]}>
+              <CardBase style={[styles.panel, styles.activityPanel, mainPanelWidth ? { width: mainPanelWidth } : styles.mainPanelFallback]}>
                 <View style={styles.panelHeader}>
                   <View>
                     <Text style={styles.panelTitle}>{es ? 'Tendencia de actividad de usuarios' : 'User Activity Trend'}</Text>
@@ -330,6 +336,7 @@ function ActivityTrendChart({
   const adminTotal = points.reduce((sum, point) => sum + (point.adminValue ?? 0), 0);
   const doctorTotal = points.reduce((sum, point) => sum + (point.doctorValue ?? 0), 0);
   const peak = points.reduce((current, point) => point.value > current.value ? point : current, points[0] ?? { label: '', value: 0, adminValue: 0, doctorValue: 0 });
+  const peakLabel = formatActivityPointLabel(peak, es);
 
   return (
     <View style={styles.activityWrap}>
@@ -347,16 +354,17 @@ function ActivityTrendChart({
         <View style={styles.activityPeakCard}>
           <Text style={styles.activityPeakLabel}>{es ? 'Pico semanal' : 'Weekly peak'}</Text>
           <Text style={styles.activityPeakValue}>{peak.value}</Text>
-          <Text style={styles.activityPeakDay}>{peak.label}</Text>
+          <Text style={styles.activityPeakDay}>{peakLabel.compact}</Text>
         </View>
       </View>
 
       <View style={styles.activityChart}>
         {points.map((point) => {
-          const adminHeight = Math.max(8, ((point.adminValue ?? 0) / max) * 156);
-          const doctorHeight = Math.max(8, ((point.doctorValue ?? 0) / max) * 156);
+          const adminHeight = Math.max(8, ((point.adminValue ?? 0) / max) * 148);
+          const doctorHeight = Math.max(8, ((point.doctorValue ?? 0) / max) * 148);
+          const pointLabel = formatActivityPointLabel(point, es);
           return (
-            <View key={point.label} style={styles.activityDay}>
+            <View key={point.date ?? point.label} style={styles.activityDay}>
               <Text style={styles.activityDayTotal}>{point.value}</Text>
               <View style={styles.activityColumnPair}>
                 <View style={styles.activityMiniColumnWrap}>
@@ -370,7 +378,8 @@ function ActivityTrendChart({
                 <Text style={styles.activitySplitText}>{point.adminValue ?? 0}</Text>
                 <Text style={styles.activitySplitText}>{point.doctorValue ?? 0}</Text>
               </View>
-              <Text style={styles.barLabel}>{point.label}</Text>
+              <Text style={styles.activityDateLabel}>{pointLabel.date}</Text>
+              <Text style={styles.barLabel}>{pointLabel.weekday}</Text>
             </View>
           );
         })}
@@ -381,6 +390,42 @@ function ActivityTrendChart({
       </View>
     </View>
   );
+}
+
+function activityPointDate(point: SystemDashboardSummaryResponse['userActivity'][number]) {
+  if (!point.date) return null;
+  const [year, month, day] = point.date.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function formatActivityPointLabel(
+  point: SystemDashboardSummaryResponse['userActivity'][number],
+  es: boolean,
+) {
+  const date = activityPointDate(point);
+  if (!date) {
+    return {
+      weekday: point.label,
+      date: point.label,
+      compact: point.label,
+      full: point.label,
+    };
+  }
+  const locale = es ? 'es-MX' : 'en-US';
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' })
+    .format(date)
+    .replace('.', '')
+    .toUpperCase();
+  const dateLabel = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' })
+    .format(date)
+    .replace('.', '');
+  return {
+    weekday,
+    date: dateLabel,
+    compact: `${weekday} · ${dateLabel}`,
+    full: `${weekday} ${dateLabel}`,
+  };
 }
 
 function MetricCard({ metric, es }: { metric: SystemMetricResponse; es: boolean }) {
@@ -582,7 +627,6 @@ function HospitalMapExpandedModal({
         longitude: hospital.longitude,
         borderColor: hasOutbreaks ? '#B42318' : '#1718C7',
         fillColor: hasOutbreaks ? '#FEF3F2' : '#EEF1FF',
-        label: hospital.name,
         icon: (
           <MaterialCommunityIcons
             name="hospital-box-outline"
@@ -973,23 +1017,28 @@ function DashboardSkeleton() {
         ))}
       </View>
       <View style={styles.mainGrid}>
-        <CardBase style={[styles.panel, styles.regionalMapPanel, styles.skeletonTall]}>
+        <CardBase style={[styles.panel, styles.skeletonMainPanel]}>
           <View style={styles.skeletonPanelTitle} />
           <View style={styles.skeletonMapBlob} />
         </CardBase>
-        <CardBase style={[styles.panel, styles.activityPanel, styles.skeletonTall]}>
-          <View style={styles.skeletonPanelTitle} />
+        <CardBase style={[styles.panel, styles.skeletonMainPanel]}>
+          <View style={styles.skeletonHeaderRow}>
+            <View>
+              <View style={styles.skeletonPanelTitle} />
+              <View style={styles.skeletonPanelSubtitle} />
+            </View>
+            <View style={styles.skeletonPill} />
+          </View>
+          <View style={styles.skeletonSummaryRow}>
+            <View style={styles.skeletonSummaryCard} />
+            <View style={styles.skeletonSummaryCard} />
+            <View style={styles.skeletonPeakCard} />
+          </View>
           <View style={styles.skeletonChartRow}>
             {Array.from({ length: 7 }).map((_, index) => <View key={index} style={[styles.skeletonChartBar, { height: 70 + index * 12 }]} />)}
           </View>
         </CardBase>
       </View>
-      <CardBase style={[styles.panel, styles.skeletonEvents]}>
-        <View style={styles.skeletonPanelTitle} />
-        <View style={styles.skeletonListLine} />
-        <View style={styles.skeletonListLine} />
-        <View style={styles.skeletonListLine} />
-      </CardBase>
     </>
   );
 }
@@ -1168,7 +1217,7 @@ function buildSystemReportPdf(summary: SystemDashboardSummaryResponse, es: boole
     [es ? 'Dia' : 'Day', es ? 'Total' : 'Total', es ? 'Admins' : 'Admins', es ? 'Doctores' : 'Doctors'],
     [160, 90, 120, 146],
     summary.userActivity.map((point) => [
-      point.label,
+      formatActivityPointLabel(point, es).full,
       formatPdfNumber(point.value),
       formatPdfNumber(point.adminValue ?? 0),
       formatPdfNumber(point.doctorValue ?? 0),
@@ -1451,8 +1500,8 @@ const styles = StyleSheet.create({
   title: { marginTop: 8, fontSize: 30, lineHeight: 38, fontWeight: '900', color: '#0F172A' },
   subtitle: { marginTop: 6, fontSize: 16, lineHeight: 24, color: '#64748B', maxWidth: 760 },
   heroActions: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
-  metricsGrid: { flexDirection: 'row', gap: 14, flexWrap: 'wrap' },
-  metricTouchable: { flex: 1, minWidth: 220 },
+  metricsGrid: { width: '100%', flexDirection: 'row', gap: 14, flexWrap: 'wrap' },
+  metricTouchable: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 220 },
   metricCard: {
     flex: 1,
     minWidth: 220,
@@ -1473,11 +1522,12 @@ const styles = StyleSheet.create({
   metricIconBox: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   metricValue: { flex: 1, minWidth: 0, fontSize: 30, lineHeight: 36, fontWeight: '900', color: '#0F172A' },
   metricDetail: { marginTop: 12, fontSize: 12, lineHeight: 18, color: '#64748B' },
-  mainGrid: { flexDirection: 'row', gap: 16, alignItems: 'stretch' },
+  mainGrid: { width: '100%', minHeight: 520, flexDirection: 'row', gap: 14, alignItems: 'stretch' },
+  mainPanelFallback: { flex: 1 },
   panel: { borderRadius: 18, padding: 24, backgroundColor: '#FFFFFF' },
-  activityPanel: { flex: 1, minWidth: 360 },
+  activityPanel: { flexGrow: 0, flexShrink: 0, minWidth: 0, justifyContent: 'space-between' },
   regionalPanel: { flex: 1, minWidth: 280 },
-  regionalMapPanel: { flex: 1, minWidth: 360, gap: 12 },
+  regionalMapPanel: { flexGrow: 0, flexShrink: 0, minWidth: 0, gap: 12 },
   panelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 },
   panelHeaderActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   panelTitle: { fontSize: 17, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
@@ -1485,7 +1535,7 @@ const styles = StyleSheet.create({
   rangePill: { borderWidth: 1, borderColor: '#DADCFB', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#F6F7FF' },
   rangeText: { fontSize: 12, fontWeight: '800', color: '#1718C7' },
   expandButton: { width: 34, height: 34, borderRadius: 12, borderWidth: 1, borderColor: '#DADCFB', backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  activityWrap: { marginTop: 20, gap: 18 },
+  activityWrap: { marginTop: 18, gap: 18, flex: 1 },
   activitySummaryRow: { flexDirection: 'row', gap: 10 },
   activitySummaryCard: {
     flex: 1,
@@ -1511,11 +1561,11 @@ const styles = StyleSheet.create({
   activityPeakLabel: { fontSize: 11, lineHeight: 14, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
   activityPeakValue: { marginTop: 7, fontSize: 24, lineHeight: 28, fontWeight: '900', color: '#1718C7' },
   activityPeakDay: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: '900', color: '#64748B' },
-  activityChart: { height: 218, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 },
-  activityDay: { flex: 1, alignItems: 'center', gap: 8 },
+  activityChart: { minHeight: 248, marginTop: 10, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 },
+  activityDay: { flex: 1, alignItems: 'center', gap: 7 },
   activityDayTotal: { fontSize: 12, lineHeight: 16, fontWeight: '900', color: '#0F172A' },
-  activityColumnPair: { height: 160, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 5 },
-  activityMiniColumnWrap: { width: 15, height: 160, justifyContent: 'flex-end', borderRadius: 999, backgroundColor: '#EEF2F7', overflow: 'hidden' },
+  activityColumnPair: { height: 152, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 5 },
+  activityMiniColumnWrap: { width: 15, height: 152, justifyContent: 'flex-end', borderRadius: 999, backgroundColor: '#EEF2F7', overflow: 'hidden' },
   activityColumn: {
     width: '100%',
     minHeight: 8,
@@ -1525,6 +1575,7 @@ const styles = StyleSheet.create({
   doctorSegment: { backgroundColor: '#007C89' },
   activityDaySplit: { flexDirection: 'row', gap: 4 },
   activitySplitText: { minWidth: 18, textAlign: 'center', fontSize: 10, lineHeight: 12, fontWeight: '800', color: '#64748B' },
+  activityDateLabel: { marginTop: -2, fontSize: 10, lineHeight: 12, fontWeight: '900', color: '#64748B', textTransform: 'uppercase' },
   activityLegend: { flexDirection: 'row', gap: 16, justifyContent: 'center', flexWrap: 'wrap' },
   activityLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   activityLegendSwatch: { width: 10, height: 10, borderRadius: 999 },
@@ -1682,16 +1733,20 @@ const styles = StyleSheet.create({
   errorTitle: { fontSize: 18, fontWeight: '800', color: '#991B1B' },
   errorText: { color: '#64748B' },
   skeletonCard: { backgroundColor: '#F8FAFC' },
-  skeletonTall: { height: 300, backgroundColor: '#F8FAFC', gap: 18 },
-  skeletonEvents: { height: 220, backgroundColor: '#F8FAFC', gap: 14 },
+  skeletonMainPanel: { flex: 1, minWidth: 0, minHeight: 520, backgroundColor: '#F8FAFC', gap: 18 },
   skeletonMetricHeader: { width: '52%', height: 14, borderRadius: 999, backgroundColor: '#E8EEF6' },
   skeletonMetricValue: { marginTop: 28, width: 96, height: 34, borderRadius: 999, backgroundColor: '#E1E8F3' },
   skeletonMetricLine: { marginTop: 18, width: '82%', height: 12, borderRadius: 999, backgroundColor: '#E8EEF6' },
   skeletonPanelTitle: { width: 190, height: 16, borderRadius: 999, backgroundColor: '#E1E8F3' },
-  skeletonChartRow: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingTop: 30 },
-  skeletonChartBar: { flex: 1, borderRadius: 999, backgroundColor: '#E1E8F3' },
-  skeletonMapBlob: { flex: 1, borderRadius: 22, backgroundColor: '#E8EEF6' },
-  skeletonListLine: { width: '100%', height: 42, borderRadius: 16, backgroundColor: '#E8EEF6' },
+  skeletonPanelSubtitle: { marginTop: 10, width: 260, height: 12, borderRadius: 999, backgroundColor: '#E8EEF6' },
+  skeletonHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 },
+  skeletonPill: { width: 118, height: 32, borderRadius: 999, backgroundColor: '#E8EEF6' },
+  skeletonSummaryRow: { flexDirection: 'row', gap: 10 },
+  skeletonSummaryCard: { flex: 1, height: 90, borderRadius: 16, backgroundColor: '#E8EEF6' },
+  skeletonPeakCard: { width: 118, height: 90, borderRadius: 16, backgroundColor: '#E1E8F3' },
+  skeletonChartRow: { flex: 1, minHeight: 248, flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingTop: 28 },
+  skeletonChartBar: { flex: 1, maxWidth: 44, borderRadius: 999, backgroundColor: '#E1E8F3' },
+  skeletonMapBlob: { flex: 1, minHeight: 388, borderRadius: 18, backgroundColor: '#E8EEF6' },
 });
 
 export default SystemDashboard;

@@ -42,13 +42,9 @@ import {
   isSpanish,
 } from '@/components/views/admin/localization';
 
-const tabs: { label: string; value: RecommendationTab }[] = [
-  { label: 'Active Alerts', value: 'active' },
-  { label: 'High Urgency', value: 'high' },
-  { label: 'Assigned', value: 'assigned' },
-  { label: 'Unassigned', value: 'unassigned' },
-  { label: 'Archive', value: 'archive' },
-];
+type AdminRecommendationsTranslator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+
+const tabs: RecommendationTab[] = ['active', 'high', 'assigned', 'unassigned', 'archive'];
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -56,7 +52,7 @@ export function AdminRecommendations() {
   const router = useRouter();
   const params = useLocalSearchParams<{ focus?: string }>();
   const { logout, profile } = useAuth();
-  const { language } = useTranslation();
+  const { language, t } = useTranslation();
   const scrollRef = useRef<ScrollView | null>(null);
   const itemOffsetsRef = useRef<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState<RecommendationTab>('active');
@@ -80,13 +76,13 @@ export function AdminRecommendations() {
     setToast(null);
     try {
       const data = await listAdminRecommendations();
-      setRecommendations(data.map((item) => mapRecommendation(item, language)));
+      setRecommendations(data.map((item) => mapRecommendation(item, language, t)));
       setLoadState('success');
     } catch (nextError) {
       setLoadState('error');
       setError(nextError instanceof Error ? nextError.message : isSpanish(language) ? 'No se pudieron cargar las recomendaciones.' : 'Unable to load recommendations.');
     }
-  }, [language]);
+  }, [language, t]);
 
   const loadOperationalContacts = useCallback(async () => {
     try {
@@ -121,10 +117,10 @@ export function AdminRecommendations() {
 
   const refreshRecommendation = useCallback(async (id: string) => {
     const detail = await getAdminRecommendationDetail(id);
-    const mapped = mapRecommendation(detail, language);
+    const mapped = mapRecommendation(detail, language, t);
     setRecommendations((current) => current.map((item) => (item.id === id ? mapped : item)));
     return { detail, mapped };
-  }, [language]);
+  }, [language, t]);
 
   const handleStatusChange = useCallback(async (id: string, status: RecommendationStatus) => {
     setActionBusyId(id);
@@ -277,16 +273,16 @@ export function AdminRecommendations() {
 
             <View style={styles.tabsRow}>
               {tabs.map((tab) => {
-                const isActive = tab.value === activeTab;
-                const badgeValue = tabBadges[tab.value];
+                const isActive = tab === activeTab;
+                const badgeValue = tabBadges[tab];
                 return (
                   <TouchableOpacity
-                    key={tab.value}
+                    key={tab}
                     style={[styles.tabItem, isActive && styles.tabItemActive]}
-                    onPress={() => setActiveTab(tab.value)}
+                    onPress={() => setActiveTab(tab)}
                     activeOpacity={0.75}
                   >
-                    <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{localizeTabLabel(tab.value, language)}</Text>
+                    <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{localizeTabLabel(tab, t)}</Text>
                     <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
                       <Text style={[styles.tabBadgeText, !isActive && styles.tabBadgeTextInactive]}>{badgeValue}</Text>
                     </View>
@@ -310,6 +306,7 @@ export function AdminRecommendations() {
                     <AdminRecommendationCard
                       item={item}
                       language={language}
+                      translator={t}
                       onOpenDetail={async () => {
                         setDetailId(item.id);
                         try {
@@ -319,14 +316,12 @@ export function AdminRecommendations() {
                         }
                       }}
                       onAction={(actionLabel) => {
-                        if (
-                          actionLabel === (isSpanish(language) ? 'Asignar tarea' : 'Assign task') ||
-                          actionLabel === (isSpanish(language) ? 'Reasignar tarea' : 'Reassign task')
-                        ) setTaskId(item.id);
-                        if (actionLabel === (isSpanish(language) ? 'Notificar personal' : 'Notify staff')) setNotifyId(item.id);
-                        if (actionLabel === (isSpanish(language) ? 'Pedir insumos' : 'Order supplies')) setSupplyId(item.id);
-                        if (actionLabel === (isSpanish(language) ? 'Completar' : 'Complete')) void handleStatusChange(item.id, 'completed');
-                        if (actionLabel === (isSpanish(language) ? 'Descartar' : 'Dismiss')) setDismissId(item.id);
+                        const actionLabels = adminRecommendationActionLabels(t);
+                        if (actionLabel === actionLabels.assignTask || actionLabel === actionLabels.reassignTask) setTaskId(item.id);
+                        if (actionLabel === actionLabels.notifyStaff) setNotifyId(item.id);
+                        if (actionLabel === actionLabels.orderSupplies) setSupplyId(item.id);
+                        if (actionLabel === actionLabels.complete) void handleStatusChange(item.id, 'completed');
+                        if (actionLabel === actionLabels.dismiss) setDismissId(item.id);
                       }}
                     />
                   </View>
@@ -494,11 +489,13 @@ function RecommendationsSkeleton() {
 function AdminRecommendationCard({
   item,
   language,
+  translator,
   onOpenDetail,
   onAction,
 }: {
   item: RecommendationFeedItem;
   language: 'en' | 'es';
+  translator: AdminRecommendationsTranslator;
   onOpenDetail: () => void;
   onAction: (actionLabel: string) => void;
 }) {
@@ -549,7 +546,7 @@ function AdminRecommendationCard({
         <View style={styles.signalGrid}>
           <View style={[styles.signalCard, styles.prioritySignalCard, archiveTone ? styles.archivedSignalCard : { backgroundColor: displayPriorityTone.soft, borderColor: displayPriorityTone.border }]}>
             <Text style={styles.signalLabel}>{language === 'es' ? 'Prioridad calculada' : 'Calculated priority'}</Text>
-            <Text style={[styles.signalValue, { color: displayPriorityTone.accent }]}>{getSeverityLabel(item.backendSeverity, language)}</Text>
+            <Text style={[styles.signalValue, { color: displayPriorityTone.accent }]}>{getSeverityLabel(item.backendSeverity, translator)}</Text>
           </View>
           <View style={[styles.signalCard, archiveTone && styles.archivedSignalCard]}>
             <Text style={styles.signalLabel}>{language === 'es' ? 'Ventana' : 'Window'}</Text>
@@ -678,17 +675,118 @@ function recommendationStatusTone(status: RecommendationStatus) {
   return { accent: '#475569', soft: '#F8FAFC', border: '#E2E8F0' };
 }
 
-function mapRecommendation(item: OperationalRecommendationResponse, language: 'en' | 'es'): RecommendationFeedItem {
+const recommendationTitleKeys: Record<string, string> = {
+  'Expand Monitored Bed Capacity': 'admin.recommendations.fallbacks.titles.expandMonitoredBedCapacity',
+  'Monitor Bed Occupancy Trend': 'admin.recommendations.fallbacks.titles.monitorBedOccupancyTrend',
+  'Increase Emergency Physician Staffing': 'admin.recommendations.fallbacks.titles.increaseEmergencyPhysicianStaffing',
+  'ICU Capacity Critical - Activate Surge Protocol': 'admin.recommendations.fallbacks.titles.activateIcuSurgeProtocol',
+  'Review Local Epidemiology Response': 'admin.recommendations.fallbacks.titles.reviewLocalEpidemiologyResponse',
+  'Implement Respiratory Isolation Measures': 'admin.recommendations.fallbacks.titles.implementRespiratoryIsolation',
+  'Replenish Critical Protective and Respiratory Supplies': 'admin.recommendations.fallbacks.titles.replenishCriticalRespiratorySupplies',
+  'Review PPE Stock Levels': 'admin.recommendations.fallbacks.titles.reviewPpeStockLevels',
+};
+
+const recommendationDescriptionKeys: Record<string, string> = {
+  'Expand Monitored Bed Capacity': 'admin.recommendations.fallbacks.descriptions.expandMonitoredBedCapacity',
+  'Monitor Bed Occupancy Trend': 'admin.recommendations.fallbacks.descriptions.monitorBedOccupancyTrend',
+  'Increase Emergency Physician Staffing': 'admin.recommendations.fallbacks.descriptions.increaseEmergencyPhysicianStaffing',
+  'ICU Capacity Critical - Activate Surge Protocol': 'admin.recommendations.fallbacks.descriptions.activateIcuSurgeProtocol',
+  'Review Local Epidemiology Response': 'admin.recommendations.fallbacks.descriptions.reviewLocalEpidemiologyResponse',
+  'Implement Respiratory Isolation Measures': 'admin.recommendations.fallbacks.descriptions.implementRespiratoryIsolation',
+  'Replenish Critical Protective and Respiratory Supplies': 'admin.recommendations.fallbacks.descriptions.replenishCriticalRespiratorySupplies',
+  'Review PPE Stock Levels': 'admin.recommendations.fallbacks.descriptions.reviewPpeStockLevels',
+};
+
+const recommendationImpactKeys: Record<string, string> = {
+  'Reduce patient wait times and prevent diversion': 'admin.recommendations.fallbacks.impacts.reducePatientWaitTimes',
+  'Prevent critical bed shortage': 'admin.recommendations.fallbacks.impacts.preventCriticalBedShortage',
+  'Improve patient throughput during outbreak surge': 'admin.recommendations.fallbacks.impacts.improvePatientThroughput',
+  'Prevent ICU overflow and ensure critical care availability': 'admin.recommendations.fallbacks.impacts.preventIcuOverflow',
+  'Reduce risk of influenza transmission to staff and patients within the hospital': 'admin.recommendations.fallbacks.impacts.reduceRespiratoryTransmission',
+  'Ensure uninterrupted staff protection and maintain readiness for respiratory surge': 'admin.recommendations.fallbacks.impacts.ensureStaffProtection',
+  'Avoid PPE stockout during active outbreak period': 'admin.recommendations.fallbacks.impacts.avoidPpeStockout',
+};
+
+const recommendationUrgencyKeys: Record<string, string> = {
+  Immediately: 'admin.recommendations.fallbacks.urgency.immediately',
+  'Within 12 hours': 'admin.recommendations.fallbacks.urgency.within12Hours',
+  'Within 24 hours': 'admin.recommendations.fallbacks.urgency.within24Hours',
+  'Within 48 hours': 'admin.recommendations.fallbacks.urgency.within48Hours',
+};
+
+const recommendationCategoryKeys: Record<string, string> = {
+  SUPPLY: 'admin.recommendations.categories.supply',
+  'BED CAPACITY': 'admin.recommendations.categories.bedCapacity',
+  BED_CAPACITY: 'admin.recommendations.categories.bedCapacity',
+  STAFFING: 'admin.recommendations.categories.staffing',
+  ISOLATION: 'admin.recommendations.categories.localEpidemiology',
+  LOCAL_EPIDEMIOLOGY: 'admin.recommendations.categories.localEpidemiology',
+  EPIDEMIOLOGY_HOSPITAL: 'admin.recommendations.categories.hospitalEpidemiology',
+  EPIDEMIOLOGY_MUNICIPAL: 'admin.recommendations.categories.municipalEpidemiology',
+};
+
+const recommendationListKeys: Record<string, string> = {
+  'General Ward': 'admin.recommendations.fallbacks.list.generalWard',
+  ICU: 'admin.recommendations.fallbacks.list.icu',
+  'Intensive Care Unit': 'admin.recommendations.fallbacks.list.intensiveCareUnit',
+  'Emergency Department': 'admin.recommendations.fallbacks.list.emergencyDepartment',
+  'Respiratory Ward': 'admin.recommendations.fallbacks.list.respiratoryWard',
+  'Isolation Rooms': 'admin.recommendations.fallbacks.list.isolationRooms',
+  'N95 Respirator Masks': 'admin.recommendations.fallbacks.list.n95RespiratorMasks',
+  'Isolation Gowns': 'admin.recommendations.fallbacks.list.isolationGowns',
+  'Central Supply': 'admin.recommendations.fallbacks.list.centralSupply',
+  'Emergency Physicians': 'admin.recommendations.fallbacks.list.emergencyPhysicians',
+  'Open additional monitored beds to prevent capacity overflow.': 'admin.recommendations.fallbacks.list.openMonitoredBeds',
+  'Reconfirm discharge readiness for stable patients': 'admin.recommendations.fallbacks.list.reconfirmDischargeReadiness',
+  'Activate ICU surge protocol': 'admin.recommendations.fallbacks.list.activateIcuSurgeProtocol',
+  'Assign respiratory-capable overflow beds': 'admin.recommendations.fallbacks.list.assignRespiratoryOverflowBeds',
+  'Expedite eligible ICU discharges': 'admin.recommendations.fallbacks.list.expediteIcuDischarges',
+  'Replenish PPE and respiratory supplies': 'admin.recommendations.fallbacks.list.replenishPpeAndRespiratorySupplies',
+  'Notify central supply coordinator': 'admin.recommendations.fallbacks.list.notifyCentralSupplyCoordinator',
+  'Prepare 48-hour consumption buffer': 'admin.recommendations.fallbacks.list.prepareConsumptionBuffer',
+  'Establish respiratory isolation zones': 'admin.recommendations.fallbacks.list.establishRespiratoryIsolationZones',
+  'Assign dedicated staff flow for suspected respiratory cases': 'admin.recommendations.fallbacks.list.assignDedicatedStaffFlow',
+  'Review PPE burn rate before next shift': 'admin.recommendations.fallbacks.list.reviewPpeBurnRate',
+};
+
+function translateLookup(
+  t: AdminRecommendationsTranslator,
+  keys: Record<string, string>,
+  value: string,
+  fallback: string,
+) {
+  const key = keys[value];
+  if (!key) return fallback;
+  const translated = t(key);
+  return translated === key ? fallback : translated;
+}
+
+function adminRecommendationActionLabels(t: AdminRecommendationsTranslator) {
+  return {
+    assignTask: t('admin.recommendations.actions.assignTask'),
+    reassignTask: t('admin.recommendations.actions.reassignTask'),
+    notifyStaff: t('admin.recommendations.actions.notifyStaff'),
+    orderSupplies: t('admin.recommendations.actions.orderSupplies'),
+    complete: t('admin.recommendations.actions.complete'),
+    dismiss: t('admin.recommendations.actions.dismiss'),
+  };
+}
+
+function mapRecommendation(
+  item: OperationalRecommendationResponse,
+  language: 'en' | 'es',
+  t: AdminRecommendationsTranslator,
+): RecommendationFeedItem {
   const severity = mapSeverity(item.severity);
   const status = mapStatus(item.status);
-  const content = selectRecommendationContent(item, language);
+  const content = selectRecommendationContent(item, language, t);
   const activeTask = (item.tasks ?? []).find((task) => task.status !== 'COMPLETED' && task.status !== 'CANCELLED') ?? item.tasks?.[0];
   return {
     id: item.id,
     type: item.type,
     severity,
     backendSeverity: normalizeBackendSeverity(item.severity),
-    category: localizeRecommendationCategory(item.category || item.type.replace(/_/g, ' '), item.type, language),
+    category: localizeRecommendationCategory(item.category || item.type.replace(/_/g, ' '), item.type, t),
     title: content.title,
     description: content.description,
     createdByMode: item.createdByMode,
@@ -696,12 +794,12 @@ function mapRecommendation(item: OperationalRecommendationResponse, language: 'e
       { label: formatLastUpdatedLabel(item.updatedAt ?? item.createdAt, language), icon: <Feather name="clock" size={13} color="#7C8CA4" /> },
     ],
     accentColor: severity === 'high' ? '#F7C9CC' : severity === 'medium' ? '#F2E5C1' : '#E3E8F0',
-    actions: buildActions(item.type, status, language, Boolean(activeTask)),
+    actions: buildActions(item.type, status, t, Boolean(activeTask)),
     confidenceScore: formatCalculatedPriority(item.confidenceScore),
     expectedImpact: content.expectedImpact,
     urgencyWindow: content.urgencyWindow,
-    affectedDepartments: localizeList(item.affectedDepartments ?? [], language),
-    affectedResources: localizeList(item.affectedResources ?? [], language),
+    affectedDepartments: localizeList(item.affectedDepartments ?? [], t),
+    affectedResources: localizeList(item.affectedResources ?? [], t),
     rationale: content.rationale,
     recommendedActions: content.recommendedActions,
     status,
@@ -722,15 +820,19 @@ function mapRecommendation(item: OperationalRecommendationResponse, language: 'e
   };
 }
 
-function selectRecommendationContent(item: OperationalRecommendationResponse, language: 'en' | 'es') {
+function selectRecommendationContent(
+  item: OperationalRecommendationResponse,
+  language: 'en' | 'es',
+  t: AdminRecommendationsTranslator,
+) {
   const localized = item.translations?.[language] ?? item.translations?.en ?? null;
   return {
-    title: localizedText(localized?.title, localizeRecommendationTitle(item.title, language)),
-    description: localizedText(localized?.description, localizeRecommendationDescription(item, language)),
-    expectedImpact: localizedText(localized?.expectedImpact, localizeExpectedImpact(item.expectedImpact, language)),
-    urgencyWindow: localizedText(localized?.urgencyWindow, localizeUrgencyWindow(item.urgencyWindow, language)),
-    rationale: localizedList(localized?.rationale, item.rationale ?? [], language),
-    recommendedActions: localizedList(localized?.recommendedActions, item.recommendedActions ?? [], language),
+    title: localizedText(localized?.title, localizeRecommendationTitle(item.title, t)),
+    description: localizedText(localized?.description, localizeRecommendationDescription(item, t)),
+    expectedImpact: localizedText(localized?.expectedImpact, localizeExpectedImpact(item.expectedImpact, t)),
+    urgencyWindow: localizedText(localized?.urgencyWindow, localizeUrgencyWindow(item.urgencyWindow, t)),
+    rationale: localizedList(localized?.rationale, item.rationale ?? [], t),
+    recommendedActions: localizedList(localized?.recommendedActions, item.recommendedActions ?? [], t),
   };
 }
 
@@ -738,9 +840,9 @@ function localizedText(value: string | null | undefined, fallback: string) {
   return value && value.trim().length > 0 ? value.trim() : fallback;
 }
 
-function localizedList(value: OperationalRecommendationTranslation['rationale'], fallback: string[], language: 'en' | 'es') {
+function localizedList(value: OperationalRecommendationTranslation['rationale'], fallback: string[], t: AdminRecommendationsTranslator) {
   const source = value && value.length > 0 ? value : fallback;
-  return language === 'es' ? localizeList(source ?? [], language) : source ?? [];
+  return localizeList(source ?? [], t);
 }
 
 function formatLastUpdatedLabel(value: string, language: 'en' | 'es') {
@@ -758,129 +860,42 @@ function formatCalculatedPriority(value: number | string | null | undefined) {
   return Math.round(numeric <= 1 ? numeric * 100 : numeric);
 }
 
-function localizeRecommendationTitle(title: string, language: 'en' | 'es') {
-  if (language !== 'es') return title;
-  const titles: Record<string, string> = {
-    'Expand Monitored Bed Capacity': 'Expandir capacidad de camas monitoreadas',
-    'Monitor Bed Occupancy Trend': 'Monitorear tendencia de ocupacion de camas',
-    'Increase Emergency Physician Staffing': 'Aumentar cobertura de medicos de urgencias',
-    'ICU Capacity Critical - Activate Surge Protocol': 'Activar protocolo de expansion UCI',
-    'Review Local Epidemiology Response': 'Revisar respuesta de epidemiologia local',
-    'Implement Respiratory Isolation Measures': 'Implementar medidas de aislamiento respiratorio',
-    'Replenish Critical Protective and Respiratory Supplies': 'Reabastecer insumos criticos de proteccion respiratoria',
-    'Review PPE Stock Levels': 'Revisar niveles de inventario de EPP',
-  };
-  return titles[title] ?? title;
+function localizeRecommendationTitle(title: string, t: AdminRecommendationsTranslator) {
+  return translateLookup(t, recommendationTitleKeys, title, title);
 }
 
-function localizeRecommendationDescription(item: OperationalRecommendationResponse, language: 'en' | 'es') {
-  if (language !== 'es') return item.description;
-  const descriptions: Record<string, string> = {
-    'Expand Monitored Bed Capacity': 'Abrir camas monitoreadas adicionales para prevenir saturacion de capacidad hospitalaria.',
-    'Monitor Bed Occupancy Trend': 'Iniciar planeacion de contingencia para evitar llegar a capacidad critica.',
-    'Increase Emergency Physician Staffing': 'Aumentar cobertura medica de urgencias ante presion por brotes cercanos y demanda hospitalaria.',
-    'ICU Capacity Critical - Activate Surge Protocol': 'La ocupacion UCI esta en nivel critico; activar el protocolo de expansion para preservar cuidados intensivos.',
-    'Review Local Epidemiology Response': 'Revisar la preparacion hospitalaria ante actividad epidemiologica local en el area de influencia.',
-    'Implement Respiratory Isolation Measures': 'Establecer zonas de aislamiento respiratorio para reducir transmision intrahospitalaria durante el brote activo.',
-    'Replenish Critical Protective and Respiratory Supplies': 'Reabastecer insumos criticos de proteccion y respuesta respiratoria para mantener seguridad del personal y atencion continua.',
-    'Review PPE Stock Levels': 'Revisar inventario de EPP y preparar reposicion preventiva ante aumento de consumo.',
-  };
-  return descriptions[item.title] ?? item.description;
+function localizeRecommendationDescription(item: OperationalRecommendationResponse, t: AdminRecommendationsTranslator) {
+  return translateLookup(t, recommendationDescriptionKeys, item.title, item.description);
 }
 
-function localizeExpectedImpact(value: string, language: 'en' | 'es') {
-  if (language !== 'es') return value;
-  const impacts: Record<string, string> = {
-    'Reduce patient wait times and prevent diversion': 'Reducir tiempos de espera y prevenir derivacion de pacientes',
-    'Prevent critical bed shortage': 'Prevenir escasez critica de camas',
-    'Improve patient throughput during outbreak surge': 'Mejorar flujo de pacientes durante aumento por brote',
-    'Prevent ICU overflow and ensure critical care availability': 'Prevenir saturacion UCI y asegurar disponibilidad de cuidados criticos',
-    'Reduce risk of influenza transmission to staff and patients within the hospital': 'Reducir riesgo de transmision respiratoria a personal y pacientes dentro del hospital',
-    'Ensure uninterrupted staff protection and maintain readiness for respiratory surge': 'Asegurar proteccion continua del personal y preparacion ante demanda respiratoria',
-    'Avoid PPE stockout during active outbreak period': 'Evitar agotamiento de EPP durante el periodo de brote activo',
-  };
-  return impacts[value] ?? value;
+function localizeExpectedImpact(value: string, t: AdminRecommendationsTranslator) {
+  return translateLookup(t, recommendationImpactKeys, value, value);
 }
 
-function localizeUrgencyWindow(value: string, language: 'en' | 'es') {
-  if (language !== 'es') return value;
-  const windows: Record<string, string> = {
-    Immediately: 'Inmediatamente',
-    'Within 12 hours': 'Dentro de 12 horas',
-    'Within 24 hours': 'Dentro de 24 horas',
-    'Within 48 hours': 'Dentro de 48 horas',
-  };
-  return windows[value] ?? value;
+function localizeUrgencyWindow(value: string, t: AdminRecommendationsTranslator) {
+  return translateLookup(t, recommendationUrgencyKeys, value, value);
 }
 
-function localizeRecommendationCategory(category: string, type: string, language: 'en' | 'es') {
-  if (language !== 'es') {
-    const englishCategories: Record<string, string> = {
-      EPIDEMIOLOGY_HOSPITAL: 'Hospital Epidemiology',
-      EPIDEMIOLOGY_MUNICIPAL: 'Municipal Epidemiology',
-      LOCAL_EPIDEMIOLOGY: 'Local Epidemiology',
-    };
-    return englishCategories[category] ?? englishCategories[type] ?? category;
-  }
-  const categories: Record<string, string> = {
-    SUPPLY: 'Insumos',
-    'BED CAPACITY': 'Capacidad hospitalaria',
-    BED_CAPACITY: 'Capacidad hospitalaria',
-    STAFFING: 'Personal',
-    ISOLATION: 'Epidemiologia local',
-    LOCAL_EPIDEMIOLOGY: 'Epidemiologia local',
-    EPIDEMIOLOGY_HOSPITAL: 'Epidemiologia hospitalaria',
-    EPIDEMIOLOGY_MUNICIPAL: 'Epidemiologia municipal',
-  };
-  return categories[category] ?? categories[type] ?? category;
+function localizeRecommendationCategory(category: string, type: string, t: AdminRecommendationsTranslator) {
+  return translateLookup(t, recommendationCategoryKeys, category, translateLookup(t, recommendationCategoryKeys, type, category));
 }
 
-function localizeRecommendationType(type: string, language: 'en' | 'es') {
-  if (language !== 'es') return type.replace(/_/g, ' ');
-  return localizeRecommendationCategory(type.replace(/_/g, ' '), type, language);
+function localizeRecommendationType(type: string, t: AdminRecommendationsTranslator) {
+  return localizeRecommendationCategory(type.replace(/_/g, ' '), type, t);
 }
 
-function localizeList(values: string[], language: 'en' | 'es') {
-  if (language !== 'es') return values;
-  return values.map((value) => {
-    const normalized = value.trim();
-    const translations: Record<string, string> = {
-      'General Ward': 'Hospitalizacion general',
-      ICU: 'UCI',
-      'Intensive Care Unit': 'Unidad de cuidados intensivos',
-      'Emergency Department': 'Urgencias',
-      'Respiratory Ward': 'Area respiratoria',
-      'Isolation Rooms': 'Salas de aislamiento',
-      'N95 Respirator Masks': 'Respiradores N95',
-      'Isolation Gowns': 'Batas de aislamiento',
-      'Central Supply': 'Almacen central',
-      'Emergency Physicians': 'Medicos de urgencias',
-      'Open additional monitored beds to prevent capacity overflow.': 'Abrir camas monitoreadas adicionales para prevenir saturacion de capacidad.',
-      'Reconfirm discharge readiness for stable patients': 'Reconfirmar altas posibles en pacientes estables',
-      'Activate ICU surge protocol': 'Activar protocolo de expansion UCI',
-      'Assign respiratory-capable overflow beds': 'Asignar camas de desborde con capacidad respiratoria',
-      'Expedite eligible ICU discharges': 'Agilizar egresos UCI elegibles',
-      'Replenish PPE and respiratory supplies': 'Reabastecer EPP e insumos respiratorios',
-      'Notify central supply coordinator': 'Notificar a coordinacion de almacen central',
-      'Prepare 48-hour consumption buffer': 'Preparar reserva de consumo para 48 horas',
-      'Establish respiratory isolation zones': 'Establecer zonas de aislamiento respiratorio',
-      'Assign dedicated staff flow for suspected respiratory cases': 'Asignar flujo dedicado de personal para casos respiratorios sospechosos',
-      'Review PPE burn rate before next shift': 'Revisar tasa de consumo de EPP antes del siguiente turno',
-    };
-    return translations[normalized] ?? value;
-  });
+function localizeList(values: string[], t: AdminRecommendationsTranslator) {
+  return values.map((value) => translateLookup(t, recommendationListKeys, value.trim(), value));
 }
 
-function buildActions(type: string, status: RecommendationStatus, language: 'en' | 'es', hasActiveTask: boolean): RecommendationFeedItem['actions'] {
+function buildActions(type: string, status: RecommendationStatus, t: AdminRecommendationsTranslator, hasActiveTask: boolean): RecommendationFeedItem['actions'] {
   const actions: RecommendationFeedItem['actions'] = [];
+  const actionLabels = adminRecommendationActionLabels(t);
   if (!isArchived(status)) {
-    actions.push({ label: hasActiveTask ? (language === 'es' ? 'Reasignar tarea' : 'Reassign task') : (language === 'es' ? 'Asignar tarea' : 'Assign task'), variant: 'primary' });
-    actions.push({ label: language === 'es' ? 'Notificar personal' : 'Notify staff', variant: 'secondary' });
-    if (type === 'SUPPLY' || type === 'BED_CAPACITY' || type === 'ISOLATION' || type === 'LOCAL_EPIDEMIOLOGY') {
-      actions.push({ label: language === 'es' ? 'Pedir insumos' : 'Order supplies', variant: 'secondary' });
-    }
-    actions.push({ label: language === 'es' ? 'Completar' : 'Complete', variant: 'secondary' });
-    actions.push({ label: language === 'es' ? 'Descartar' : 'Dismiss', variant: 'secondary' });
+    actions.push({ label: hasActiveTask ? actionLabels.reassignTask : actionLabels.assignTask, variant: 'primary' });
+    actions.push({ label: actionLabels.notifyStaff, variant: 'secondary' });
+    actions.push({ label: actionLabels.complete, variant: 'secondary' });
+    actions.push({ label: actionLabels.dismiss, variant: 'secondary' });
   }
   return actions;
 }
@@ -929,13 +944,12 @@ function toIsoDeadline(value: string) {
   return Number.isNaN(parsed) ? null : new Date(parsed).toISOString();
 }
 
-function getSeverityLabel(severity: string, language: 'en' | 'es') {
+function getSeverityLabel(severity: string, t: AdminRecommendationsTranslator) {
   const normalized = severity.toUpperCase();
-  if (language !== 'es') return normalized;
-  if (normalized === 'CRITICAL') return 'CRITICA';
-  if (normalized === 'HIGH') return 'ALTA';
-  if (normalized === 'MEDIUM') return 'MEDIA';
-  return 'BAJA';
+  if (normalized === 'CRITICAL') return t('admin.recommendations.severity.critical');
+  if (normalized === 'HIGH') return t('admin.recommendations.severity.high');
+  if (normalized === 'MEDIUM') return t('admin.recommendations.severity.medium');
+  return t('admin.recommendations.severity.low');
 }
 
 function deliveryNotice(
@@ -1006,19 +1020,8 @@ function recommendationDisplayKey(item: RecommendationFeedItem) {
   return `${item.type.toUpperCase()}:${normalizedTitle}`;
 }
 
-function localizeTabLabel(tab: RecommendationTab, language: 'en' | 'es') {
-  if (language === 'es') {
-    if (tab === 'active') return 'Totales';
-    if (tab === 'high') return 'Alta urgencia';
-    if (tab === 'assigned') return 'Asignado';
-    if (tab === 'unassigned') return 'Sin asignar';
-    return 'Archivo';
-  }
-  if (tab === 'active') return 'Totals';
-  if (tab === 'high') return 'High Urgency';
-  if (tab === 'assigned') return 'Assigned';
-  if (tab === 'unassigned') return 'Unassigned';
-  return 'Archive';
+function localizeTabLabel(tab: RecommendationTab, t: AdminRecommendationsTranslator) {
+  return t(`admin.recommendations.tabs.${tab}`);
 }
 
 const styles = StyleSheet.create({

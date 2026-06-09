@@ -45,7 +45,9 @@ export function SystemUsers() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
+  const [editingUser, setEditingUser] = useState<AdminUserResponse | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
   const sidebarItems = useMemo(() => getSystemSidebarItems(language), [language]);
 
   const load = useCallback(async () => {
@@ -87,12 +89,19 @@ export function SystemUsers() {
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
   const visibleUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const adminCount = users.filter((user) => user.roleCodes.includes('SYSTEM_ADMIN') || user.roleCodes.includes('HOSPITAL_ADMIN')).length;
+  const systemAdminCount = users.filter((user) => user.roleCodes.includes('SYSTEM_ADMIN')).length;
+  const hospitalAdminCount = users.filter((user) => user.roleCodes.includes('HOSPITAL_ADMIN')).length;
   const medicalCount = users.filter((user) => user.roleCodes.includes('DOCTOR')).length;
   const inactiveCount = users.filter((user) => user.status !== 'ACTIVE').length;
 
   const openCreate = () => {
+    setEditingUser(null);
+    setEditorOpen(true);
+  };
+
+  const openEdit = (user: AdminUserResponse) => {
     setSelectedUser(null);
+    setEditingUser(user);
     setEditorOpen(true);
   };
 
@@ -104,8 +113,8 @@ export function SystemUsers() {
       if (input.roleCode !== 'SYSTEM_ADMIN' && !hospitalId) {
         throw new Error(es ? 'Selecciona un hospital para este rol.' : 'Select a hospital for this role.');
       }
-      if (selectedUser) {
-        await updateAdminUser(selectedUser.id, {
+      if (editingUser) {
+        await updateAdminUser(editingUser.id, {
           fullName: input.fullName,
           email: input.email,
           roleCode: input.roleCode,
@@ -130,6 +139,26 @@ export function SystemUsers() {
       setError(nextError instanceof Error ? nextError.message : es ? 'No se pudo guardar el usuario.' : 'Unable to save user.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleUserStatus = async (user: AdminUserResponse) => {
+    const nextStatus: BackendUserStatus = user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    setActionBusyId(user.id);
+    setError(null);
+    try {
+      await updateAdminUser(user.id, {
+        fullName: user.fullName,
+        email: user.email,
+        roleCode: user.roleCodes[0] ?? 'DOCTOR',
+        hospitalId: user.roleCodes.includes('SYSTEM_ADMIN') ? undefined : user.hospitalId ?? undefined,
+        status: nextStatus,
+      });
+      await load();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : es ? 'No se pudo actualizar el estado del usuario.' : 'Unable to update user status.');
+    } finally {
+      setActionBusyId(null);
     }
   };
 
@@ -252,6 +281,7 @@ export function SystemUsers() {
                   <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
                   <Text style={[styles.headerCell, styles.roleCol]}>{es ? 'Rol' : 'Role'}</Text>
                   <Text style={[styles.headerCell, styles.statusCol]}>{es ? 'Estado' : 'Status'}</Text>
+                  <Text style={[styles.headerCell, styles.actionsCol]}>{es ? 'Acciones' : 'Actions'}</Text>
                 </View>
 
                 {visibleUsers.map((user, index) => {
@@ -263,7 +293,6 @@ export function SystemUsers() {
                       activeOpacity={0.78}
                       onPress={() => {
                         setSelectedUser(user);
-                        setEditorOpen(true);
                       }}
                     >
                       <View style={[styles.nameCol, styles.nameCell]}>
@@ -279,6 +308,24 @@ export function SystemUsers() {
                       </View>
                       <View style={styles.statusCol}>
                         <StatusBadge label={statusLabel(user.status, es)} variant={statusBadgeVariant(user.status)} />
+                      </View>
+                      <View style={styles.actionsCol}>
+                        <TouchableOpacity
+                          style={styles.iconActionButton}
+                          activeOpacity={0.76}
+                          onPress={() => openEdit(user)}
+                          disabled={actionBusyId === user.id}
+                        >
+                          <Feather name="edit-3" size={18} color="#64748B" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.iconActionButton}
+                          activeOpacity={0.76}
+                          onPress={() => { void toggleUserStatus(user); }}
+                          disabled={actionBusyId === user.id}
+                        >
+                          <Feather name={user.status === 'ACTIVE' ? 'slash-circle' : 'check-circle'} size={18} color={user.status === 'ACTIVE' ? '#EF4444' : '#16A34A'} />
+                        </TouchableOpacity>
                       </View>
                     </TouchableOpacity>
                   );
@@ -309,8 +356,15 @@ export function SystemUsers() {
 
             <View style={styles.summaryRow}>
               <SummaryCountCard
-                title={es ? 'Administradores' : 'Administrators'}
-                value={String(adminCount)}
+                title={es ? 'Admins sistema' : 'System Admins'}
+                value={String(systemAdminCount)}
+                variant="info"
+                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color="#5B21B6" />}
+                style={styles.summaryCard}
+              />
+              <SummaryCountCard
+                title={es ? 'Admins hospital' : 'Hospital Admins'}
+                value={String(hospitalAdminCount)}
                 variant="info"
                 icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color="#1718C7" />}
                 style={styles.summaryCard}
@@ -335,12 +389,18 @@ export function SystemUsers() {
 
         <UserEditorModal
           visible={editorOpen}
-          user={selectedUser}
+          user={editingUser}
           hospitals={hospitals}
           saving={saving}
           es={es}
           onClose={() => setEditorOpen(false)}
           onSave={saveUser}
+        />
+        <UserDetailModal
+          visible={selectedUser !== null}
+          user={selectedUser}
+          es={es}
+          onClose={() => setSelectedUser(null)}
         />
       </>
     </DashboardLayout>
@@ -476,6 +536,68 @@ function UserEditorModal({
   );
 }
 
+function UserDetailModal({
+  visible,
+  user,
+  es,
+  onClose,
+}: {
+  visible: boolean;
+  user: AdminUserResponse | null;
+  es: boolean;
+  onClose: () => void;
+}) {
+  const role = user?.roleCodes[0] ?? 'DOCTOR';
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalBackdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <CardBase style={[styles.modalCard, styles.detailModalCard]}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderCopy}>
+              <Text style={styles.modalEyebrow}>{es ? 'Informacion de usuario' : 'User Information'}</Text>
+              <Text style={styles.modalTitle}>{user?.fullName ?? (es ? 'Usuario' : 'User')}</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
+              <Feather name="x" size={20} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.detailContent}>
+            <View style={styles.detailIdentity}>
+              <UserAvatarBadge initials={initialsFromName(user?.fullName)} variant="default" />
+              <View style={styles.detailIdentityText}>
+                <Text style={styles.detailName}>{user?.fullName ?? '-'}</Text>
+                <Text style={styles.detailEmail}>{user?.email ?? '-'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.detailGrid}>
+              <DetailItem label={es ? 'Rol' : 'Role'} value={roleLabel(role, es)} />
+              <DetailItem label={es ? 'Estado' : 'Status'} value={user ? statusLabel(user.status, es) : '-'} />
+              <DetailItem label={es ? 'Hospital asignado' : 'Assigned Hospital'} value={user?.hospitalName ?? (es ? 'Sistema' : 'System')} />
+              <DetailItem label="ID" value={user?.id ?? '-'} />
+            </View>
+          </View>
+
+          <View style={styles.modalFooter}>
+            <Button label={es ? 'Cerrar' : 'Close'} variant="secondary" onPress={onClose} />
+          </View>
+        </CardBase>
+      </View>
+    </Modal>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailItem}>
+      <Text style={styles.detailItemLabel}>{label}</Text>
+      <Text style={styles.detailItemValue}>{value}</Text>
+    </View>
+  );
+}
+
 function Field({ label, value, onChangeText, secure = false }: { label: string; value: string; onChangeText: (value: string) => void; secure?: boolean }) {
   return (
     <View style={styles.field}>
@@ -513,6 +635,7 @@ function UsersTableSkeleton() {
         <View style={[styles.usersSkeletonLine, styles.emailCol, { height: 12 }]} />
         <View style={[styles.usersSkeletonLine, styles.roleCol, { height: 12 }]} />
         <View style={[styles.usersSkeletonLine, styles.statusCol, { height: 12 }]} />
+        <View style={[styles.usersSkeletonLine, styles.actionsCol, { height: 12 }]} />
       </View>
       {[0, 1, 2, 3, 4].map((item) => (
         <View key={item} style={[styles.tableRow, item === 4 && styles.tableRowLast]}>
@@ -531,6 +654,12 @@ function UsersTableSkeleton() {
           </View>
           <View style={styles.statusCol}>
             <View style={[styles.usersSkeletonBadge, styles.usersSkeletonStatus]} />
+          </View>
+          <View style={styles.actionsCol}>
+            <View style={styles.usersSkeletonActions}>
+              <View style={styles.usersSkeletonIconAction} />
+              <View style={styles.usersSkeletonIconAction} />
+            </View>
           </View>
         </View>
       ))}
@@ -728,6 +857,13 @@ const styles = StyleSheet.create({
   statusCol: {
     flex: 0.72,
   },
+  actionsCol: {
+    width: 92,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
   nameCell: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -752,6 +888,14 @@ const styles = StyleSheet.create({
   },
   emailText: {
     color: '#475569',
+  },
+  iconActionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
   roleBadge: {
     alignSelf: 'flex-start',
@@ -858,6 +1002,17 @@ const styles = StyleSheet.create({
   usersSkeletonStatus: {
     width: 82,
   },
+  usersSkeletonActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  usersSkeletonIconAction: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    backgroundColor: '#EEF2F7',
+  },
   usersSkeletonPager: {
     flexDirection: 'row',
     gap: 8,
@@ -882,6 +1037,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
+  },
+  detailModalCard: {
+    maxWidth: 620,
   },
   modalHeader: {
     padding: 24,
@@ -921,6 +1079,61 @@ const styles = StyleSheet.create({
   form: {
     padding: 24,
     gap: 14,
+  },
+  detailContent: {
+    padding: 24,
+    gap: 22,
+  },
+  detailIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  detailIdentityText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  detailName: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  detailEmail: {
+    marginTop: 3,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  detailGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  detailItem: {
+    flexBasis: '48%',
+    flexGrow: 1,
+    minWidth: 220,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    padding: 14,
+    gap: 6,
+  },
+  detailItemLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    color: '#94A3B8',
+  },
+  detailItemValue: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   field: {
     gap: 7,

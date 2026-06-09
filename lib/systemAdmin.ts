@@ -12,6 +12,7 @@ export interface SystemMetricResponse {
 
 export interface SystemActivityPointResponse {
   label: string;
+  date?: string;
   value: number;
   adminValue: number;
   doctorValue: number;

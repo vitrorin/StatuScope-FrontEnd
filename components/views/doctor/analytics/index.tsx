@@ -28,6 +28,12 @@ import {
   DoctorDashboardReportOutbreakResponse,
   DoctorDashboardReportResponse,
   DoctorDashboardStateMapItem,
+  getAdminEpidemiologyDiseaseCatalog,
+  getAdminEpidemiologyMap,
+  getAdminEpidemiologyReport,
+  getAdminEpidemiologyStateMap,
+  getAdminEpidemiologyStateOutbreakMap,
+  getAdminEpidemiologyStateReport,
   getDoctorDashboardDiseaseCatalog,
   getDoctorDashboardMap,
   getDoctorDashboardReport,
@@ -54,6 +60,7 @@ type AnalyticsPersona = 'doctor' | 'admin';
 type AnalyticsScope = 'municipal' | 'state';
 type SectionStatus = 'idle' | 'loading' | 'success' | 'error';
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type StateReportLoader = (stateId: string) => Promise<DoctorDashboardReportResponse>;
 
 interface AnalyticsState {
   status: SectionStatus;
@@ -527,9 +534,10 @@ function reportFromStateMap(
 async function loadStateReportWithFallback(
   state: DoctorDashboardStateMapItem,
   stateOutbreakMap: DoctorDashboardMapResponse | null,
+  loadStateReport: StateReportLoader,
 ) {
   try {
-    return await getDoctorDashboardStateReport(state.stateId);
+    return await loadStateReport(state.stateId);
   } catch {
     return reportFromStateMap(state, stateOutbreakMap);
   }
@@ -561,26 +569,34 @@ export function AnalyticsScreen({
   const [selectedZone, setSelectedZone] = useState<AnalyticsZoneDetail | null>(null);
   const [selectedDisease, setSelectedDisease] = useState<AnalyticsDiseaseDetail | null>(null);
   const isAdmin = isAdminPersona(persona, sidebarItems);
+  const api = useMemo(() => ({
+    diseaseCatalog: isAdmin ? getAdminEpidemiologyDiseaseCatalog : getDoctorDashboardDiseaseCatalog,
+    map: isAdmin ? getAdminEpidemiologyMap : getDoctorDashboardMap,
+    report: isAdmin ? getAdminEpidemiologyReport : getDoctorDashboardReport,
+    stateMap: isAdmin ? getAdminEpidemiologyStateMap : getDoctorDashboardStateMap,
+    stateOutbreakMap: isAdmin ? getAdminEpidemiologyStateOutbreakMap : getDoctorDashboardStateOutbreakMap,
+    stateReport: isAdmin ? getAdminEpidemiologyStateReport : getDoctorDashboardStateReport,
+  }), [isAdmin]);
 
   const loadAnalytics = useCallback(async () => {
     setAnalyticsState((current) => ({ ...current, status: 'loading', error: null }));
     try {
       const [localReport, stateReport, map] = await Promise.all([
-        getDoctorDashboardReport('local', radiusKm),
-        getDoctorDashboardReport('state', radiusKm),
-        getDoctorDashboardMap(radiusKm),
+        api.report('local', radiusKm),
+        api.report('state', radiusKm),
+        api.map(radiusKm),
       ]);
       const [stateMap, diseaseCatalog] = await Promise.all([
-        getDoctorDashboardStateMap(),
-        getDoctorDashboardDiseaseCatalog(),
+        api.stateMap(),
+        api.diseaseCatalog(),
       ]);
       const stateKey = stateLookupKey(stateReport.stateName ?? localReport.stateName ?? '');
       const selectedState = stateMap.states.find((state) => stateLookupKey(state.stateName) === stateKey);
       const stateOutbreakMap = selectedState
-        ? await getDoctorDashboardStateOutbreakMap(selectedState.stateId)
+        ? await api.stateOutbreakMap(selectedState.stateId)
         : null;
       const selectedStateReport = selectedState
-        ? await loadStateReportWithFallback(selectedState, stateOutbreakMap)
+        ? await loadStateReportWithFallback(selectedState, stateOutbreakMap, api.stateReport)
         : stateReport;
       setSelectedStateId(selectedState?.stateId ?? null);
       setAnalyticsState({
@@ -600,16 +616,16 @@ export function AnalyticsScreen({
         error: error instanceof Error ? error.message : 'Unable to load analytics.',
       }));
     }
-  }, [radiusKm]);
+  }, [api, radiusKm]);
 
   const loadStateAnalytics = useCallback(async (stateId: string) => {
     setSelectedStateId(stateId);
     setAnalyticsState((current) => ({ ...current, status: 'loading', error: null }));
     try {
       const selectedState = analyticsState.stateMap.find((state) => state.stateId === stateId) ?? null;
-      const stateOutbreakMap = await getDoctorDashboardStateOutbreakMap(stateId);
+      const stateOutbreakMap = await api.stateOutbreakMap(stateId);
       const stateReport = selectedState
-        ? await loadStateReportWithFallback(selectedState, stateOutbreakMap)
+        ? await loadStateReportWithFallback(selectedState, stateOutbreakMap, api.stateReport)
         : reportFromStateMap(null, stateOutbreakMap);
       setAnalyticsState((current) => ({
         ...current,
@@ -625,7 +641,7 @@ export function AnalyticsScreen({
         error: error instanceof Error ? error.message : 'Unable to load state analytics.',
       }));
     }
-  }, [analyticsState.stateMap]);
+  }, [analyticsState.stateMap, api]);
 
   useEffect(() => {
     void loadAnalytics();

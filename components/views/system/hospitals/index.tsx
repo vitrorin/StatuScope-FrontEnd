@@ -19,6 +19,7 @@ import {
 } from '@/lib/systemAdmin';
 import { initialsFromName } from '@/lib/format';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AdminUserResponse, listAdminUsers } from '@/lib/adminUsers';
 
 export function SystemHospitals() {
   const router = useRouter();
@@ -27,11 +28,13 @@ export function SystemHospitals() {
   const es = isSpanish(language);
   const [hospitals, setHospitals] = useState<HospitalResponse[]>([]);
   const [municipalities, setMunicipalities] = useState<MunicipalityResponse[]>([]);
+  const [userCountsByHospital, setUserCountsByHospital] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [selectedHospital, setSelectedHospital] = useState<HospitalResponse | null>(null);
+  const [detailHospital, setDetailHospital] = useState<HospitalResponse | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const sidebarItems = useMemo(() => getSystemSidebarItems(language), [language]);
 
@@ -39,9 +42,14 @@ export function SystemHospitals() {
     setLoading(true);
     setError(null);
     try {
-      const [hospitalRows, municipalityRows] = await Promise.all([listSystemHospitals(), listSystemMunicipalities()]);
+      const [hospitalRows, municipalityRows, userRows] = await Promise.all([
+        listSystemHospitals(),
+        listSystemMunicipalities(),
+        listAdminUsers(),
+      ]);
       setHospitals(hospitalRows);
       setMunicipalities(municipalityRows);
+      setUserCountsByHospital(countHospitalUsers(userRows));
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : es ? 'No se pudieron cargar los hospitales.' : 'Unable to load hospitals.');
     } finally {
@@ -164,13 +172,17 @@ export function SystemHospitals() {
             <View style={styles.tableHeader}>
               <Text style={[styles.headerCell, styles.hospitalCol]}>{es ? 'Hospital' : 'Hospital Name'}</Text>
               <Text style={[styles.headerCell, styles.cityCol]}>{es ? 'Ubicación' : 'Location'}</Text>
-              <Text style={[styles.headerCell, styles.staffCol]}>{es ? 'Personal' : 'Staff'}</Text>
+              <Text style={[styles.headerCell, styles.staffCol]}>{es ? 'Usuarios' : 'Users'}</Text>
               <Text style={[styles.headerCell, styles.statusCol]}>{es ? 'Estado' : 'Status'}</Text>
               <Text style={[styles.headerCell, styles.actionCol]}>{es ? 'Acciones' : 'Actions'}</Text>
             </View>
             {filteredHospitals.map((hospital) => (
               <View key={hospital.id} style={styles.tableRow}>
-                <View style={[styles.hospitalCell, styles.hospitalCol]}>
+                <TouchableOpacity
+                  style={[styles.hospitalCell, styles.hospitalCol]}
+                  activeOpacity={0.78}
+                  onPress={() => setDetailHospital(hospital)}
+                >
                   <View style={[styles.hospitalIcon, !hospital.active && styles.hospitalIconInactive]}>
                     <MaterialCommunityIcons name="hospital-building" size={17} color={hospital.active ? '#1D4ED8' : '#64748B'} />
                   </View>
@@ -178,14 +190,14 @@ export function SystemHospitals() {
                     <Text style={styles.hospitalName}>{hospital.name}</Text>
                     <Text style={styles.hospitalCode}>{hospital.code}</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
                 <View style={styles.cityCol}>
                   <Text style={styles.bodyStrong}>{hospital.municipalityName ?? (es ? 'Sin municipio' : 'No municipality')}</Text>
                   <Text style={styles.bodyMuted}>{hospital.stateName ?? (es ? 'Sin estado' : 'No state')}</Text>
                 </View>
                 <View style={styles.staffCol}>
-                  <Text style={styles.bodyStrong}>{(hospital.doctorCount ?? 0) + (hospital.nurseCount ?? 0)}</Text>
-                  <Text style={styles.bodyMuted}>{es ? 'miembros' : 'staff'}</Text>
+                  <Text style={styles.bodyStrong}>{userCountsByHospital[hospital.id] ?? 0}</Text>
+                  <Text style={styles.bodyMuted}>{es ? 'registrados' : 'registered'}</Text>
                 </View>
                 <View style={styles.statusCol}><StatusPill active={hospital.active} es={es} /></View>
                 <View style={[styles.actionCol, styles.actions]}>
@@ -212,6 +224,13 @@ export function SystemHospitals() {
         es={es}
         onClose={() => setEditorOpen(false)}
         onSave={saveHospital}
+      />
+      <HospitalDetailModal
+        visible={Boolean(detailHospital)}
+        hospital={detailHospital}
+        registeredUsers={detailHospital ? userCountsByHospital[detailHospital.id] ?? 0 : 0}
+        es={es}
+        onClose={() => setDetailHospital(null)}
       />
     </DashboardLayout>
   );
@@ -383,14 +402,102 @@ function StatusPill({ active, es }: { active: boolean; es: boolean }) {
   );
 }
 
+function HospitalDetailModal({
+  visible,
+  hospital,
+  registeredUsers,
+  es,
+  onClose,
+}: {
+  visible: boolean;
+  hospital: HospitalResponse | null;
+  registeredUsers: number;
+  es: boolean;
+  onClose: () => void;
+}) {
+  if (!hospital) return null;
+  const operationalStaff = (hospital.doctorCount ?? 0) + (hospital.nurseCount ?? 0);
+  const location = [hospital.municipalityName, hospital.stateName].filter(Boolean).join(', ') || (es ? 'Sin ubicacion' : 'No location');
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalBackdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={[styles.modalCard, styles.detailModalCard]}>
+          <View style={styles.modalHeader}>
+            <View style={styles.detailTitleRow}>
+              <View style={[styles.hospitalIcon, !hospital.active && styles.hospitalIconInactive]}>
+                <MaterialCommunityIcons name="hospital-building" size={18} color={hospital.active ? '#1D4ED8' : '#64748B'} />
+              </View>
+              <View style={styles.detailTitleCopy}>
+                <Text style={styles.eyebrow}>{es ? 'Detalle del hospital' : 'Hospital Detail'}</Text>
+                <Text style={styles.modalTitle}>{hospital.name}</Text>
+                <Text style={styles.detailSubtitle}>{hospital.code} - {location}</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}><Feather name="x" size={20} color="#64748B" /></TouchableOpacity>
+          </View>
+
+          <View style={styles.detailBody}>
+            <View style={styles.detailStats}>
+              <DetailStat label={es ? 'Usuarios registrados' : 'Registered users'} value={String(registeredUsers)} />
+              <DetailStat label={es ? 'Camas' : 'Beds'} value={formatNullableNumber(hospital.bedCount, es)} />
+              <DetailStat label={es ? 'Personal operativo' : 'Operational staff'} value={formatNullableNumber(operationalStaff, es)} />
+            </View>
+
+            <View style={styles.detailRows}>
+              <DetailRow label={es ? 'Estado' : 'Status'} value={hospital.active ? (es ? 'Activo' : 'Active') : (es ? 'Inactivo' : 'Inactive')} />
+              <DetailRow label={es ? 'Direccion' : 'Address'} value={hospital.address || (es ? 'Sin direccion' : 'No address')} />
+              <DetailRow label={es ? 'Telefono' : 'Phone'} value={hospital.phone || (es ? 'Sin telefono' : 'No phone')} />
+              <DetailRow label={es ? 'Codigo postal' : 'Postal code'} value={hospital.postalCode || (es ? 'Sin codigo postal' : 'No postal code')} />
+              <DetailRow label="Invite Code" value={hospital.inviteCode || 'N/A'} />
+              <DetailRow
+                label={es ? 'Coordenadas' : 'Coordinates'}
+                value={
+                  hospital.latitude != null && hospital.longitude != null
+                    ? `${hospital.latitude}, ${hospital.longitude}`
+                    : (es ? 'Sin coordenadas' : 'No coordinates')
+                }
+              />
+              <DetailRow
+                label={es ? 'Doctores / Enfermeras' : 'Doctors / Nurses'}
+                value={`${formatNullableNumber(hospital.doctorCount, es)} / ${formatNullableNumber(hospital.nurseCount, es)}`}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function DetailStat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailStat}>
+      <Text style={styles.detailStatValue}>{value}</Text>
+      <Text style={styles.detailStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.detailRowLabel}>{label}</Text>
+      <Text style={styles.detailRowValue}>{value}</Text>
+    </View>
+  );
+}
+
 function HospitalsSkeleton() {
   return (
     <View style={styles.tableCard}>
       <View style={styles.tableHeader}>
-        <View style={[styles.skeletonLine, styles.hospitalCol]} />
-        <View style={[styles.skeletonLine, styles.cityCol]} />
-        <View style={[styles.skeletonLine, styles.staffCol]} />
-        <View style={[styles.skeletonLine, styles.statusCol]} />
+        <View style={styles.hospitalCol}><View style={[styles.skeletonLine, styles.skeletonHeaderShort]} /></View>
+        <View style={styles.cityCol}><View style={[styles.skeletonLine, styles.skeletonHeaderShort]} /></View>
+        <View style={styles.staffCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
+        <View style={styles.statusCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
+        <View style={styles.actionCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
       </View>
       {Array.from({ length: 5 }).map((_, index) => (
         <View key={index} style={styles.tableRow}>
@@ -402,10 +509,16 @@ function HospitalsSkeleton() {
             </View>
           </View>
           <View style={styles.cityCol}>
-            <View style={[styles.skeletonLine, { width: 130 }]} />
+            <View style={styles.skeletonStack}>
+              <View style={[styles.skeletonLine, { width: index === 2 ? 118 : 136 }]} />
+              <View style={[styles.skeletonLine, { width: 92, height: 10 }]} />
+            </View>
           </View>
           <View style={styles.staffCol}>
-            <View style={[styles.skeletonLine, { width: 58 }]} />
+            <View style={styles.skeletonStack}>
+              <View style={[styles.skeletonLine, { width: 28 }]} />
+              <View style={[styles.skeletonLine, { width: 72, height: 10 }]} />
+            </View>
           </View>
           <View style={styles.statusCol}>
             <View style={styles.skeletonBadge} />
@@ -451,6 +564,18 @@ function numberOrUndefined(value: string) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function countHospitalUsers(users: AdminUserResponse[]) {
+  return users.reduce<Record<string, number>>((counts, user) => {
+    if (!user.hospitalId || user.roleCodes.includes('SYSTEM_ADMIN')) return counts;
+    counts[user.hospitalId] = (counts[user.hospitalId] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function formatNullableNumber(value: number | null | undefined, es: boolean) {
+  return value == null ? (es ? 'Sin dato' : 'No data') : String(value);
+}
+
 const styles = StyleSheet.create({
   contentContainer: { padding: 32, gap: 24 },
   hero: { backgroundColor: '#F8FAFF', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(0, 3, 184, 0.08)', padding: 28, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20, shadowColor: '#000F6B', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 26, elevation: 4 },
@@ -493,6 +618,8 @@ const styles = StyleSheet.create({
   skeletonIcon: { width: 36, height: 36, borderRadius: 14, backgroundColor: '#DBEAFE' },
   skeletonStack: { gap: 7 },
   skeletonBadge: { width: 82, height: 28, borderRadius: 999, backgroundColor: '#EEF2F7' },
+  skeletonHeaderShort: { width: 118 },
+  skeletonHeaderTiny: { width: 70 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.42)', alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalCard: { width: '100%', maxWidth: 820, maxHeight: '92%', backgroundColor: '#FFFFFF', borderRadius: 24, overflow: 'hidden' },
   modalHeader: { padding: 24, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
@@ -511,6 +638,19 @@ const styles = StyleSheet.create({
   municipalityChipText: { color: '#64748B', fontSize: 12, fontWeight: '800' },
   municipalityChipTextActive: { color: '#0003B8' },
   modalFooter: { padding: 18, borderTopWidth: 1, borderTopColor: '#E2E8F0', flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
+  detailModalCard: { maxWidth: 720 },
+  detailTitleRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  detailTitleCopy: { flex: 1, minWidth: 0 },
+  detailSubtitle: { marginTop: 6, color: '#64748B', fontWeight: '700', fontSize: 13 },
+  detailBody: { padding: 24, gap: 20 },
+  detailStats: { flexDirection: 'row', gap: 12 },
+  detailStat: { flex: 1, minHeight: 82, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC', padding: 14, justifyContent: 'center' },
+  detailStatValue: { color: '#111827', fontWeight: '900', fontSize: 24, lineHeight: 30 },
+  detailStatLabel: { marginTop: 4, color: '#64748B', fontWeight: '800', fontSize: 11, textTransform: 'uppercase' },
+  detailRows: { borderTopWidth: 1, borderTopColor: '#E2E8F0' },
+  detailRow: { minHeight: 48, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', gap: 18, paddingVertical: 12 },
+  detailRowLabel: { width: 160, color: '#64748B', fontWeight: '800', fontSize: 12, textTransform: 'uppercase' },
+  detailRowValue: { flex: 1, minWidth: 0, color: '#111827', fontWeight: '700', fontSize: 13, lineHeight: 19 },
 });
 
 export default SystemHospitals;
