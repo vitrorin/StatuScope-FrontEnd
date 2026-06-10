@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { Avatar } from '../../components/foundation/Avatar';
 
 const meta = {
-  title: 'Foundation/Avatar',
+  title: 'Components/foundation/Avatar',
   component: Avatar,
   decorators: [
     (Story) => (

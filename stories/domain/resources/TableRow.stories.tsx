@@ -4,7 +4,7 @@ import { TableRow } from '../../../components/resources/TableRow';
 import { AppColors } from '@/constants/theme';
 
 const meta = {
-  title: 'Domain/Resources/TableRow',
+  title: 'Components/resources/TableRow',
   component: TableRow,
   decorators: [
     (Story) => (

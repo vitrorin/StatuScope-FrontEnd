@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { PaginationControl } from '../../components/users/PaginationControl';
 
 const meta = {
-  title: 'Patterns/PaginationControl',
+  title: 'Components/users/PaginationControl',
   component: PaginationControl,
   decorators: [
     (Story) => (

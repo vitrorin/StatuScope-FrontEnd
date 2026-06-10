@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { IconButton } from '../../components/foundation/IconButton';
 
 const meta = {
-  title: 'Foundation/IconButton',
+  title: 'Components/foundation/IconButton',
   component: IconButton,
   decorators: [
     (Story) => (

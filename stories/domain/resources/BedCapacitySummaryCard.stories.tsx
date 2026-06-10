@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { BedCapacitySummaryCard } from '../../../components/resources/BedCapacitySummaryCard';
 
 const meta = {
-  title: 'Domain/Resources/BedCapacitySummaryCard',
+  title: 'Components/resources/BedCapacitySummaryCard',
   component: BedCapacitySummaryCard,
   decorators: [
     (Story) => (

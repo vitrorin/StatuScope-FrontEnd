@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { SearchInput } from '../../components/inputs/SearchInput';
 
 const meta = {
-  title: 'Patterns/SearchInput',
+  title: 'Components/inputs/SearchInput',
   component: SearchInput,
   decorators: [
     (Story) => (

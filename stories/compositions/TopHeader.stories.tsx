@@ -5,7 +5,7 @@ import { TopHeader } from '../../components/layout/TopHeader';
 import { AppColors } from '../../constants/theme';
 
 const meta = {
-  title: 'Compositions/TopHeader',
+  title: 'Components/layout/TopHeader',
   component: TopHeader,
   decorators: [
     (Story) => (

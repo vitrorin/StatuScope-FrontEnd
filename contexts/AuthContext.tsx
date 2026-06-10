@@ -25,7 +25,7 @@ export interface RegisterPayload {
   inviteCode: string;
 }
 
-interface AuthContextValue {
+export interface AuthContextValue {
   firebaseUser: FirebaseUser | null;
   profile: UserProfile | null;
   loading: boolean;
@@ -38,7 +38,7 @@ interface AuthContextValue {
   isSystemAdmin: () => boolean;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 type RawProfile = Omit<UserProfile, 'roles' | 'privileges'> & {
   roles: string[] | null | undefined;

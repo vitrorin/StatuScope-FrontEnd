@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { TextareaField } from '../../components/inputs/TextareaField';
 
 const meta = {
-  title: 'Patterns/TextareaField',
+  title: 'Components/inputs/TextareaField',
   component: TextareaField,
   decorators: [
     (Story) => (

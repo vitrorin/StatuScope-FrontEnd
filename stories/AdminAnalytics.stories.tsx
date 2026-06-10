@@ -1,9 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { AdminAnalytics } from '@/components/views/admin/analytics';
+import { mockProfiles } from '../.storybook/mocks/AuthContext';
+import { withMockProfile } from './viewDecorators';
 
 const meta = {
-  title: 'Views/Admin/Analytics',
+  title: 'Views/HospitalAdmin/Analytics',
   component: AdminAnalytics,
+  decorators: [withMockProfile(mockProfiles.hospitalAdmin)],
   parameters: {
     layout: 'fullscreen',
   },

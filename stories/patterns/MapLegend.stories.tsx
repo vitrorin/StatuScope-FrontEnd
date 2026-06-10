@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { MapLegend } from '../../components/dashboard/MapLegend';
 
 const meta = {
-  title: 'Patterns/MapLegend',
+  title: 'Components/dashboard/MapLegend',
   component: MapLegend,
   decorators: [
     (Story) => (

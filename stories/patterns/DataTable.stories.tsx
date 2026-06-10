@@ -4,7 +4,7 @@ import { DataTable } from '../../components/resources/DataTable';
 import { AppColors } from '@/constants/theme';
 
 const meta = {
-  title: 'Patterns/DataTable',
+  title: 'Components/resources/DataTable',
   component: DataTable,
   decorators: [
     (Story) => (

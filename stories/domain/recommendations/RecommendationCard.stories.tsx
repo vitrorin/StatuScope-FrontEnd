@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { RecommendationCard } from '../../../components/recommendations/RecommendationCard';
 
 const meta = {
-  title: 'Domain/Recommendations/RecommendationCard',
+  title: 'Components/recommendations/RecommendationCard',
   component: RecommendationCard,
   decorators: [
     (Story) => (

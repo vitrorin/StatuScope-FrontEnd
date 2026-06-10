@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { SelectField } from '../../components/inputs/SelectField';
 
 const meta = {
-  title: 'Patterns/SelectField',
+  title: 'Components/inputs/SelectField',
   component: SelectField,
   decorators: [
     (Story) => (

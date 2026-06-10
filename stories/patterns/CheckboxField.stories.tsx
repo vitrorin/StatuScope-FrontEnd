@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { CheckboxField } from '../../components/inputs/CheckboxField';
 
 const meta = {
-  title: 'Patterns/CheckboxField',
+  title: 'Components/inputs/CheckboxField',
   component: CheckboxField,
   decorators: [
     (Story) => (

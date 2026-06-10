@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { Sidebar } from '../../components/Sidebar';
 
 const meta = {
-  title: 'Compositions/Sidebar',
+  title: 'Components/Sidebar',
   component: Sidebar,
   decorators: [
     (Story) => (
