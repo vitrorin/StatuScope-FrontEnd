@@ -178,7 +178,7 @@ export function DepartmentManageOverlay({
               label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : isCreate ? (isSpanish(language) ? 'Crear departamento' : 'Create Department') : (isSpanish(language) ? 'Guardar departamento' : 'Save Department')}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               disabled={saving || deleting || !draft.name.trim() || !draft.code.trim()}
               onPress={() => onSave(draft)}
             />

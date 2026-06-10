@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CardBase } from '@/components/patterns/CardBase';
@@ -26,7 +26,7 @@ interface AdminReportPreview {
   subtitle: string;
   generatedAt: string;
   hospitalName: string;
-  summaryCards: Array<{ label: string; value: string; detail?: string; tone?: 'default' | 'critical' | 'warning' | 'positive' | 'info' }>;
+  summaryCards: { label: string; value: string; detail?: string; tone?: 'default' | 'critical' | 'warning' | 'positive' | 'info' }[];
   charts: AdminReportChart[];
   tables: AdminReportTable[];
 }
@@ -35,7 +35,7 @@ interface AdminReportChart {
   title: string;
   subtitle?: string;
   maxLabel?: string;
-  items: Array<{ label: string; value: number; displayValue?: string; color?: PdfColor }>;
+  items: { label: string; value: number; displayValue?: string; color?: PdfColor }[];
 }
 
 interface AdminReportTable {
@@ -61,12 +61,20 @@ export function ExportReportOverlay({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewFilename, setPreviewFilename] = useState<string | null>(null);
 
+  const clearPreview = useCallback(() => {
+    revokePdfUrl(previewUrl);
+    setPreviewReport(null);
+    setPreviewPdf(null);
+    setPreviewUrl(null);
+    setPreviewFilename(null);
+  }, [previewUrl]);
+
   useEffect(() => {
     if (!visible) {
       clearPreview();
       setExportingType(null);
     }
-  }, [visible]);
+  }, [clearPreview, visible]);
 
   useEffect(() => () => {
     revokePdfUrl(previewUrl);
@@ -95,14 +103,6 @@ export function ExportReportOverlay({
 
   const handleBack = () => {
     clearPreview();
-  };
-
-  const clearPreview = () => {
-    revokePdfUrl(previewUrl);
-    setPreviewReport(null);
-    setPreviewPdf(null);
-    setPreviewUrl(null);
-    setPreviewFilename(null);
   };
 
   return (

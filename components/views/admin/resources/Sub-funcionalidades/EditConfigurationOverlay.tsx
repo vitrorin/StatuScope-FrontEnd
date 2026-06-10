@@ -234,7 +234,7 @@ export function EditConfigurationOverlay({
               label={isSpanish(language) ? 'Guardar configuración' : 'Save Configuration'}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               onPress={() => onSave(draft)}
             />
           </View>

@@ -8,7 +8,7 @@
  *  - Each test verifies the correct endpoint is called and the response is
  *    returned unchanged.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from '@/__tests__/helpers/jestCompat';
 
 // ── Firebase mock ─────────────────────────────────────────────────────────────
 // Must be declared BEFORE the module under test is imported so that vi.mock

@@ -134,7 +134,7 @@ export function SystemHospitals() {
       sidebarItems={sidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView testID="system-hospitals-screen" contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
           <View>
             <Text style={styles.eyebrow}>{es ? 'Red hospitalaria' : 'Hospital Network'}</Text>

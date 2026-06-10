@@ -41,7 +41,7 @@ import { useTranslation } from '@/i18n';
 import { getHospitalAdminLabel, isSpanish } from '@/components/views/admin/localization';
 import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboardLocalization';
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
-import { aggregateOutbreakColor, diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
+import { diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
 import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
 import { AppColors, withAlpha } from '@/constants/theme';
 
@@ -265,7 +265,7 @@ export function AdminDashboard() {
       sidebarItems={sidebarItems}
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
-      <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false} scrollEnabled={!isMapHovered}>
+      <ScrollView testID="admin-dashboard-screen" contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false} scrollEnabled={!isMapHovered}>
         <View style={styles.container}>
           <View style={styles.heroStrip}>
             <View style={styles.heroCopy}>
@@ -1449,7 +1449,7 @@ function insight(value: AdminDashboardMetricInsight): AdminDashboardMetricInsigh
   return value;
 }
 
-function compactInsights(items: Array<AdminDashboardMetricInsight | null>): AdminDashboardMetricInsight[] {
+function compactInsights(items: (AdminDashboardMetricInsight | null)[]): AdminDashboardMetricInsight[] {
   return items.filter((item): item is AdminDashboardMetricInsight => item !== null);
 }
 
@@ -1883,14 +1883,6 @@ function severityToSoftColor(value: string) {
   if (normalized === 'HIGH') return AppColors.status.dangerSoft;
   if (normalized === 'MEDIUM') return AppColors.status.warningWash;
   return AppColors.status.infoSoft;
-}
-
-function severityToBorderColor(value: string) {
-  const normalized = value.toUpperCase();
-  if (normalized === 'CRITICAL') return withAlpha(AppColors.status.danger, 0.34);
-  if (normalized === 'HIGH') return withAlpha(AppColors.status.dangerBright, 0.28);
-  if (normalized === 'MEDIUM') return withAlpha(AppColors.status.warning, 0.28);
-  return withAlpha(AppColors.status.info, 0.2);
 }
 
 function severityTone(value: string) {

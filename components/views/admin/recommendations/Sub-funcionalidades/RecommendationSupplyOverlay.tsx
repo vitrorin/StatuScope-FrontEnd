@@ -78,7 +78,7 @@ export function RecommendationSupplyOverlay({ visible, item, onClose, onSubmit }
               label={spanish ? 'Enviar solicitud' : 'Submit Supply Request'}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               onPress={() => onSubmit({ supplyType, quantity, destination, supplier })}
             />
           </View>

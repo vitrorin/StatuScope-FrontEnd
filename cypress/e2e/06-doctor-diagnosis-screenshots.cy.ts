@@ -123,11 +123,10 @@ describe('Doctor AI Diagnosis — Screenshots', () => {
     cy.wait('@firebaseLookup');
     cy.url({ timeout: 12000 }).should('include', '/dashboard/doctor');
 
-    // Navigate via sidebar link (avoids a full page reload that loses auth state)
-    cy.contains('Diagnosis').click();
+    // Navigate directly after the mocked login; the auth state is already established.
+    cy.visit('/diagnosis');
     cy.url({ timeout: 10000 }).should('include', '/diagnosis');
-    // Wait for the hero strip eyebrow text to confirm the page has rendered
-    cy.contains('Clinical Intelligence Workspace', { timeout: 10000 }).should('be.visible');
+    cy.get('[data-testid="doctor-diagnosis-screen"]', { timeout: 10000 }).should('be.visible');
     cy.wait(1500);
 
     // Full page

@@ -130,7 +130,7 @@ export function RecommendationNotifyOverlay({ visible, item, contacts, departmen
               label={spanish ? 'Enviar aviso' : 'Send Notice'}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               disabled={!canSend}
               onPress={() => {
                 if (audienceType === 'CONTACT') {

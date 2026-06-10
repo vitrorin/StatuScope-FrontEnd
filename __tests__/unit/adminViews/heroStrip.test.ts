@@ -6,7 +6,7 @@
  * This avoids pulling in React Native (Flow syntax) or any other native
  * module that cannot be parsed by Vite in a Node environment.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from '@/__tests__/helpers/jestCompat';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 

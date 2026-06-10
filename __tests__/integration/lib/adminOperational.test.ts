@@ -7,7 +7,7 @@
  *  - Verify that each exported function calls the correct endpoint,
  *    HTTP method, and request body.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from '@/__tests__/helpers/jestCompat';
 
 // ── Firebase mock ─────────────────────────────────────────────────────────────
 vi.mock('@/lib/firebase', () => ({

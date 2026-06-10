@@ -206,7 +206,7 @@ export function InventoryActionOverlay({
               label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : isCreate ? (isSpanish(language) ? 'Crear artículo' : 'Create Item') : (isSpanish(language) ? 'Guardar artículo' : 'Save Item')}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               disabled={saving || deleting || !draft.title.trim() || !draft.itemCode.trim()}
               onPress={() => onSave(draft)}
             />

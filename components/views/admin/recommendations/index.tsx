@@ -135,7 +135,7 @@ export function AdminRecommendations() {
     } finally {
       setActionBusyId(null);
     }
-  }, [refreshRecommendation]);
+  }, [language, refreshRecommendation]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -149,7 +149,7 @@ export function AdminRecommendations() {
     } finally {
       setRefreshing(false);
     }
-  }, [loadRecommendations]);
+  }, [language, loadRecommendations]);
 
   const detailRecommendation = recommendations.find((item) => item.id === detailId) ?? null;
   const taskRecommendation = recommendations.find((item) => item.id === taskId) ?? null;
@@ -879,10 +879,6 @@ function localizeUrgencyWindow(value: string, t: AdminRecommendationsTranslator)
 
 function localizeRecommendationCategory(category: string, type: string, t: AdminRecommendationsTranslator) {
   return translateLookup(t, recommendationCategoryKeys, category, translateLookup(t, recommendationCategoryKeys, type, category));
-}
-
-function localizeRecommendationType(type: string, t: AdminRecommendationsTranslator) {
-  return localizeRecommendationCategory(type.replace(/_/g, ' '), type, t);
 }
 
 function localizeList(values: string[], t: AdminRecommendationsTranslator) {

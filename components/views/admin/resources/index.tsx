@@ -345,7 +345,7 @@ export function AdminResources() {
       }}
     >
       <>
-        <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView testID="admin-resources-screen" contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
             <View style={styles.heroStrip}>
               <View style={styles.heroCopy}>

@@ -1,5 +1,3 @@
-import React from 'react';
-
 export type UserRole = 'Hospital Administrator' | 'Doctor';
 export type UserStatus = 'Active' | 'Inactive' | 'Suspended';
 

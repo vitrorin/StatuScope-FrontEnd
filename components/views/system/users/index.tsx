@@ -175,7 +175,7 @@ export function SystemUsers() {
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <>
-        <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+        <ScrollView testID="system-users-screen" contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
             <View style={styles.heroStrip}>
               <View style={styles.heroCopy}>

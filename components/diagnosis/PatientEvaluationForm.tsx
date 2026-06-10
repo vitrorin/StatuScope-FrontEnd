@@ -26,7 +26,7 @@ export interface PatientEvaluationFormProps {
   fileDescription?: string;
   fileBrowseLabel?: string;
   fileUpToLabel?: string;
-  sexOptions?: Array<{ label: string; value: string }>;
+  sexOptions?: { label: string; value: string }[];
   patientNameValue?: string;
   birthDateValue?: string;
   sexValue?: string;

@@ -1,5 +1,6 @@
-import { firebaseAuth } from './firebase';
+import { firebaseAuth } from '@/lib/firebase';
 import { getCurrentLanguage } from '@/i18n/language';
+import axios, { AxiosHeaders, AxiosRequestConfig } from 'axios';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -14,35 +15,63 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T = unknown>(
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
-  const user = firebaseAuth.currentUser;
-  const headers = new Headers(init.headers);
-  if (!headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
-  }
+export const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  validateStatus: () => true,
+});
+
+apiClient.interceptors.request.use(async (config) => {
+  const headers = AxiosHeaders.from(config.headers);
+  headers.set('Content-Type', headers.get('Content-Type') ?? 'application/json');
   headers.set('Accept-Language', getCurrentLanguage());
+
+  const user = firebaseAuth.currentUser;
   if (user) {
     const token = await user.getIdToken();
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  config.headers = headers;
+  return config;
+});
 
-  if (res.status === 204) return undefined as T;
-
-  const body = await res.json().catch(() => ({} as Record<string, unknown>));
-
-  if (!res.ok) {
-    if (res.status === 401) {
-      await firebaseAuth.signOut().catch(() => undefined);
-    }
-    const code = (body as { code?: string }).code;
-    const message = (body as { message?: string }).message ?? res.statusText;
-    throw new ApiError(res.status, code, message);
+function parseBody(body: BodyInit | null | undefined): AxiosRequestConfig['data'] {
+  if (typeof body !== 'string') {
+    return body;
   }
 
-  return body as T;
+  try {
+    return JSON.parse(body);
+  } catch {
+    return body;
+  }
+}
+
+export async function api<T = unknown>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const response = await apiClient.request({
+    url: path,
+    method: init.method,
+    headers: init.headers as AxiosRequestConfig['headers'],
+    data: parseBody(init.body),
+  });
+
+  if (response.status === 204) return undefined as T;
+
+  if (response.status < 200 || response.status >= 300) {
+    if (response.status === 401) {
+      await firebaseAuth.signOut().catch(() => undefined);
+    }
+    const body = response.data ?? {};
+    const code = (body as { code?: string }).code;
+    const message = (body as { message?: string }).message ?? response.statusText;
+    throw new ApiError(response.status, code, message);
+  }
+
+  return response.data as T;
 }

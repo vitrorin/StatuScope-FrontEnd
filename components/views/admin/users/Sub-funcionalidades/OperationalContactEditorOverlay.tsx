@@ -114,7 +114,7 @@ export function OperationalContactEditorOverlay({
               variant="primary"
               size="md"
               disabled={!canSave}
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               onPress={() => onSave({
                 displayName: displayName.trim(),
                 roleLabel: roleLabel.trim(),

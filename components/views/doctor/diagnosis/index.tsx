@@ -173,44 +173,6 @@ function deriveDropzoneState(
   return 'empty';
 }
 
-function formatOutbreakContextMessage(context: AssistantContext | null, t: TranslateFn): string | undefined {
-  const outbreaks = context?.outbreaks ?? [];
-  const stateName = context?.stateName ?? context?.regionName;
-  const regionLabel = stateName
-    ? t('doctor.diagnosis.outbreakContext.state', { state: stateName })
-    : t('doctor.diagnosis.outbreakContext.generic');
-
-  if (outbreaks.length === 0) {
-    return stateName ? `${regionLabel} ${t('doctor.diagnosis.outbreakContext.noSignals')}` : undefined;
-  }
-
-  const casesByDisease = new Map<string, number>();
-  outbreaks.forEach((outbreak) => {
-    const current = casesByDisease.get(outbreak.diseaseName) ?? 0;
-    casesByDisease.set(outbreak.diseaseName, current + outbreak.caseCount);
-  });
-
-  const rankedDiseases = [...casesByDisease.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([diseaseName, caseCount]) => `${diseaseName} (${caseCount})`);
-
-  const totalCases = [...casesByDisease.values()].reduce((sum, caseCount) => sum + caseCount, 0);
-  const diseaseCount = casesByDisease.size;
-  const summaryLabel = t(
-    diseaseCount === 1
-      ? 'doctor.diagnosis.outbreakContext.signal'
-      : 'doctor.diagnosis.outbreakContext.signals',
-    { count: diseaseCount },
-  );
-  const headline = `${regionLabel} ${t('doctor.diagnosis.outbreakContext.headline', { summary: summaryLabel, total: totalCases })}`;
-  const topDiseasesLabel = rankedDiseases.length > 0
-    ? ` ${t('doctor.diagnosis.outbreakContext.highestActivity', { diseases: rankedDiseases.join(', ') })}`
-    : '';
-
-  return `${headline}${topDiseasesLabel}`;
-}
-
 async function pickDiagnosisFile(t: TranslateFn): Promise<PickedDiagnosisFile | null> {
   if (typeof document === 'undefined') {
     throw new Error(t('doctor.diagnosis.errors.webUploadOnly'));
@@ -495,7 +457,7 @@ export function DoctorDiagnosis() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [language, t]);
 
   useEffect(() => {
     let isActive = true;
@@ -852,12 +814,10 @@ export function DoctorDiagnosis() {
     }
   };
 
-  const outbreakWarningMessage = formatOutbreakContextMessage(contextUsed, t);
   const latestFile = evaluation?.files?.[0] ?? null;
   const dropzoneState = deriveDropzoneState(isUploadingFile, uploadError, evaluation);
   const boundedChatHeight = formPanelHeight ?? 520;
   const latestAssistantMessage = findLatestAssistantMessage(chatHistory);
-  const hasAssistantRecommendation = !!latestAssistantMessage;
   const primarySuggestion = latestAssistantMessage?.suggestions?.find((suggestion) => suggestion.primary)
     ?? latestAssistantMessage?.suggestions?.[0];
   const suggestionConfidence = formatSuggestionConfidence(primarySuggestion?.confidence);
@@ -893,7 +853,7 @@ export function DoctorDiagnosis() {
         router.replace('/login');
       }}
     >
-      <ScrollView contentContainerStyle={styles.pageScrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView testID="doctor-diagnosis-screen" contentContainerStyle={styles.pageScrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.contentContainer}>
           <View style={styles.heroStrip}>
             <View style={styles.heroCopy}>
