@@ -327,7 +327,7 @@ function buildRiskAssessment({
   };
 }
 
-function positionZones(zones: DoctorDashboardMapResponse['zones']): Array<DoctorDashboardMapResponse['zones'][number] & { top: string; left: string }> {
+function positionZones(zones: DoctorDashboardMapResponse['zones']): (DoctorDashboardMapResponse['zones'][number] & { top: string; left: string })[] {
   if (zones.length === 0) return [];
   const geocoded = zones.filter((zone) => typeof zone.latitude === 'number' && typeof zone.longitude === 'number');
   if (geocoded.length === 0) {
@@ -664,13 +664,22 @@ export function AnalyticsScreen({
     void loadAnalytics();
   }, [loadAnalytics]);
 
-  const localOutbreaks = analyticsState.localReport?.outbreaks ?? [];
-  const stateOutbreaks = analyticsState.stateReport?.outbreaks ?? [];
+  const localOutbreaks = useMemo(
+    () => analyticsState.localReport?.outbreaks ?? [],
+    [analyticsState.localReport?.outbreaks],
+  );
+  const stateOutbreaks = useMemo(
+    () => analyticsState.stateReport?.outbreaks ?? [],
+    [analyticsState.stateReport?.outbreaks],
+  );
   const selectedState = useMemo(
     () => analyticsState.stateMap.find((state) => state.stateId === selectedStateId) ?? null,
     [analyticsState.stateMap, selectedStateId],
   );
-  const scopedOutbreaks = scope === 'municipal' ? localOutbreaks : stateOutbreaks;
+  const scopedOutbreaks = useMemo(
+    () => (scope === 'municipal' ? localOutbreaks : stateOutbreaks),
+    [localOutbreaks, scope, stateOutbreaks],
+  );
   const diseaseAnalytics = useMemo(
     () => buildDiseaseAnalytics(scopedOutbreaks, stateOutbreaks, periodDays, analyticsState.localReport?.generatedAt),
     [analyticsState.localReport?.generatedAt, periodDays, scopedOutbreaks, stateOutbreaks],

@@ -297,17 +297,6 @@ function buildReportPdf({
   return { pdf: pdf.output(), filename };
 }
 
-function exportReportPdf({
-  report,
-  t,
-}: {
-  report: DoctorDashboardReportResponse;
-  t: (key: string, params?: Record<string, string | number>) => string;
-}) {
-  const { pdf, filename } = buildReportPdf({ report, t, language: 'es' });
-  savePdfDocument(pdf, filename);
-}
-
 function scopeLabel(scope: string | null | undefined, t: (key: string) => string) {
   if (scope === 'local' || scope === 'MUNICIPALITY') return t('doctor.dashboard.reports.localScope');
   if (scope === 'state' || scope === 'STATE') return t('doctor.dashboard.reports.stateScope');
@@ -378,7 +367,7 @@ interface PdfSummaryCard {
 interface PdfBarChart {
   title: string;
   subtitle?: string;
-  items: Array<{ label: string; value: number; displayValue?: string; color?: PdfColor }>;
+  items: { label: string; value: number; displayValue?: string; color?: PdfColor }[];
 }
 
 function drawPdfSectionTitle(pdf: SimplePdf, y: number, title: string) {

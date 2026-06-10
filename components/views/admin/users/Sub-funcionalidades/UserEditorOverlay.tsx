@@ -185,7 +185,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
               label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : mode === 'create' ? (isSpanish(language) ? 'Crear usuario' : 'Create User') : (isSpanish(language) ? 'Guardar cambios' : 'Save Changes')}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               onPress={() => { void onSave(draft, password); }}
               disabled={saving}
             />

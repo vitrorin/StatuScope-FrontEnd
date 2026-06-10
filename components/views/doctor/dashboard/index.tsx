@@ -36,7 +36,7 @@ import {
 import { useTranslation } from '@/i18n';
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboardLocalization';
-import { aggregateOutbreakColor, diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
+import { diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
 import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
 import { AppColors, withAlpha } from '@/constants/theme';
 
@@ -710,6 +710,7 @@ export function DoctorDashboard() {
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <ScrollView
+        testID="doctor-dashboard-screen"
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         scrollEnabled={!isMapHovered}

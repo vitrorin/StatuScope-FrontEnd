@@ -1,0 +1,46 @@
+module.exports = {
+  preset: 'jest-expo',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  testMatch: ['<rootDir>/__tests__/**/*.test.ts', '<rootDir>/__tests__/**/*.test.tsx'],
+  moduleNameMapper: {
+    '^expo-localization$': '<rootDir>/__tests__/mocks/expoLocalization.ts',
+    '^firebase/app$': '<rootDir>/__tests__/mocks/firebaseApp.ts',
+    '^firebase/auth$': '<rootDir>/__tests__/mocks/firebaseAuth.ts',
+    '^@/lib/firebase$': '<rootDir>/__tests__/mocks/firebase.ts',
+    '^@/(.*)$': '<rootDir>/$1',
+    '^tailwind.config$': '<rootDir>/tailwind.config.js',
+  },
+  collectCoverageFrom: [
+    'lib/api.ts',
+    'lib/adminUsers.ts',
+    'lib/dashboardLocalization.ts',
+    'lib/diagnosisAssistant.ts',
+    'lib/diagnosisDiseases.ts',
+    'lib/diagnosisEvaluation.ts',
+    'lib/diseaseLocalization.ts',
+    'lib/format.ts',
+    'components/foundation/Button.tsx',
+    '!**/*.stories.{ts,tsx}',
+    '!**/__tests__/**',
+    '!**/__mocks__/**',
+    '!**/*.config.{ts,js,mjs}',
+  ],
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/cypress/',
+    '/stories/',
+    '/assets/',
+    '/dist/',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo|expo-modules-core|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@react-native-async-storage/async-storage)/)',
+  ],
+};

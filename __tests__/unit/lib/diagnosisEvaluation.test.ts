@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from '@/__tests__/helpers/jestCompat';
 
 // ── Mock firebase & i18n before importing ────────────────────────────────────
 vi.mock('@/lib/firebase', () => ({

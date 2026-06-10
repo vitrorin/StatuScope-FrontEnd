@@ -117,7 +117,7 @@ export function RecommendationTaskOverlay({ visible, item, contacts, onClose, on
               label={spanish ? 'Asignar plan' : 'Assign Plan'}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               disabled={!selectedContact}
               onPress={() => {
                 if (!selectedContact) return;

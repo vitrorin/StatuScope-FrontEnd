@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { RoleGate } from '@/components/auth/RoleGate';
-import AdminRecommendations from '@/components/views/admin/recommendations';
+import AdminRecommendationsView from '@/components/views/admin/recommendations';
 import { useAuth } from '@/contexts/AuthContext';
 
 function AdminRecommendationsFallback() {
@@ -17,7 +17,7 @@ export default function AdminRecommendationsScreen() {
       roles={['HOSPITAL_ADMIN']}
       fallback={<AdminRecommendationsFallback />}
     >
-      <AdminRecommendations />
+      <AdminRecommendationsView />
     </RoleGate>
   );
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from '@/__tests__/helpers/jestCompat';
 import { initialsFromName } from '@/lib/format';
 
 describe('initialsFromName', () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from '@/__tests__/helpers/jestCompat';
 import { translateDashboardValue, translateDashboardBadge } from '@/lib/dashboardLocalization';
 
 // Simple identity translator — returns value when key has no translation

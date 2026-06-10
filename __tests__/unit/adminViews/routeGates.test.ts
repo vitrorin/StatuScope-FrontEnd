@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@/__tests__/helpers/jestCompat';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 

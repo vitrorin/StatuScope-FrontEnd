@@ -106,6 +106,7 @@ export function SystemDashboard() {
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <ScrollView
+        testID="system-dashboard-screen"
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         scrollEnabled={!isHospitalMapHovered && !isHospitalMapExpanded}

@@ -6,7 +6,7 @@
  *  - Mock global `fetch` so no real HTTP calls are made.
  *  - Verify the correct endpoint, method, body, and response handling.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from '@/__tests__/helpers/jestCompat';
 
 vi.mock('@/lib/firebase', () => ({
   firebaseApp: {},

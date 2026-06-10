@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
 import { AppColors } from '@/constants/theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'surface';
@@ -15,7 +15,7 @@ export interface ButtonProps {
   trailingIcon?: React.ReactNode;
   children?: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   labelStyle?: TextStyle;
 }
 
