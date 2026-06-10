@@ -18,6 +18,7 @@ import { CheckboxField } from '@/components/inputs/CheckboxField';
 import { useAuth } from '@/contexts/AuthContext';
 import type { UserProfile } from '@/contexts/AuthContext';
 import { AppColors } from '@/constants/theme';
+import { ApiError } from '@/lib/api';
 
 const BRAND_BLUE = AppColors.brand.primary;
 const PANEL_TEXT = AppColors.text.primary;
@@ -114,8 +115,12 @@ export function Login() {
     try {
       const me = await login(email.trim(), password);
       router.replace(dashboardForProfile(me) as never);
-    } catch {
-      setError('Invalid email or password.');
+    } catch (nextError) {
+      if (nextError instanceof ApiError && nextError.status === 401) {
+        setError('Firebase accepted the login, but this account is not registered or active in StatuScope. Please sign up again or ask an admin to activate it.');
+      } else {
+        setError('Invalid email or password.');
+      }
     } finally {
       setSubmitting(false);
     }
