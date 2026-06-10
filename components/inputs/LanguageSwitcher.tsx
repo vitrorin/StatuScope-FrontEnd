@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTranslation } from '@/i18n';
+import { AppColors } from '@/constants/theme';
 
 export function LanguageSwitcher() {
   const { language, toggleLanguage, t } = useTranslation();
@@ -24,15 +25,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   label: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
 });

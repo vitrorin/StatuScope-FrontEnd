@@ -5,6 +5,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardZone } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface MapZoneDetailOverlayProps {
   visible: boolean;
@@ -28,7 +29,7 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
               <Text style={styles.subtitle}>{zone.note}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   headerCopy: {
     flex: 1,
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -103,13 +104,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   noteCard: {
     marginHorizontal: 24,
@@ -156,13 +157,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     marginBottom: 8,
   },
   noteText: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
 });
 

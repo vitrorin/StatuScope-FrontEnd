@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { InlineWarningBanner } from '../feedback/InlineWarningBanner';
+import { AppColors } from '@/constants/theme';
 
 export interface DiagnosisResponseCardProps {
   title?: string;
@@ -63,14 +64,14 @@ export function DiagnosisResponseCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#DCE6F5',
+    borderColor: AppColors.border.panel,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 18,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
     shadowRadius: 24,
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 25,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   insightPill: {
     alignSelf: 'flex-start',
@@ -96,13 +97,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   insightPillText: {
     fontSize: 11,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -112,10 +113,10 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 15,
     lineHeight: 25,
-    color: '#334155',
+    color: AppColors.text.body,
   },
   highlight: {
-    color: '#DC2626',
+    color: AppColors.status.danger,
     fontWeight: '700',
   },
   warningBanner: {

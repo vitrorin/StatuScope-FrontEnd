@@ -4,7 +4,7 @@ import { SystemUsers } from '@/components/views/system/users';
 
 export default function SystemUsersRoute() {
   return (
-    <RoleGate roles={['SYSTEM_ADMIN']} fallback={<Redirect href="/dashboard/doctor" />}>
+    <RoleGate roles={['SYSTEM_ADMIN']} privileges={['isSystemAdmin']} fallback={<Redirect href="/dashboard/doctor" />}>
       <SystemUsers />
     </RoleGate>
   );

@@ -19,6 +19,8 @@ import {
 } from '@/lib/systemAdmin';
 import { initialsFromName } from '@/lib/format';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AdminUserResponse, listAdminUsers } from '@/lib/adminUsers';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 export function SystemHospitals() {
   const router = useRouter();
@@ -27,11 +29,13 @@ export function SystemHospitals() {
   const es = isSpanish(language);
   const [hospitals, setHospitals] = useState<HospitalResponse[]>([]);
   const [municipalities, setMunicipalities] = useState<MunicipalityResponse[]>([]);
+  const [userCountsByHospital, setUserCountsByHospital] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [selectedHospital, setSelectedHospital] = useState<HospitalResponse | null>(null);
+  const [detailHospital, setDetailHospital] = useState<HospitalResponse | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const sidebarItems = useMemo(() => getSystemSidebarItems(language), [language]);
 
@@ -39,9 +43,14 @@ export function SystemHospitals() {
     setLoading(true);
     setError(null);
     try {
-      const [hospitalRows, municipalityRows] = await Promise.all([listSystemHospitals(), listSystemMunicipalities()]);
+      const [hospitalRows, municipalityRows, userRows] = await Promise.all([
+        listSystemHospitals(),
+        listSystemMunicipalities(),
+        listAdminUsers(),
+      ]);
       setHospitals(hospitalRows);
       setMunicipalities(municipalityRows);
+      setUserCountsByHospital(countHospitalUsers(userRows));
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : es ? 'No se pudieron cargar los hospitales.' : 'Unable to load hospitals.');
     } finally {
@@ -138,15 +147,15 @@ export function SystemHospitals() {
             label={es ? 'Registrar hospital' : 'Register New Hospital'}
             variant="primary"
             size="md"
-            leadingIcon={<Feather name="plus" size={16} color="#FFFFFF" />}
+            leadingIcon={<Feather name="plus" size={16} color={AppColors.surface.card} />}
             onPress={() => { setSelectedHospital(null); setEditorOpen(true); }}
           />
         </View>
 
         <View style={styles.summaryGrid}>
-          <SummaryCard title={es ? 'Total de hospitales' : 'Total Facilities'} value={hospitals.length} icon="hospital-building" tone="#1D4ED8" />
-          <SummaryCard title={es ? 'Activos' : 'Active Partners'} value={activeCount} icon="check-decagram-outline" tone="#10B981" />
-          <SummaryCard title={es ? 'Inactivos o pendientes' : 'Inactive or Pending'} value={inactiveCount} icon="dots-horizontal-circle-outline" tone="#64748B" />
+          <SummaryCard title={es ? 'Total de hospitales' : 'Total Facilities'} value={hospitals.length} icon="hospital-building" tone={AppColors.brand.link} />
+          <SummaryCard title={es ? 'Activos' : 'Active Partners'} value={activeCount} icon="check-decagram-outline" tone={AppColors.status.successAccent} />
+          <SummaryCard title={es ? 'Inactivos o pendientes' : 'Inactive or Pending'} value={inactiveCount} icon="dots-horizontal-circle-outline" tone={AppColors.text.secondary} />
         </View>
 
         <View style={styles.toolbar}>
@@ -154,7 +163,7 @@ export function SystemHospitals() {
             value={query}
             onChangeText={setQuery}
             placeholder={es ? 'Buscar hospitales, ciudades o estados...' : 'Search hospitals, cities, or states...'}
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={AppColors.text.muted}
             style={styles.searchInput}
           />
         </View>
@@ -164,36 +173,40 @@ export function SystemHospitals() {
             <View style={styles.tableHeader}>
               <Text style={[styles.headerCell, styles.hospitalCol]}>{es ? 'Hospital' : 'Hospital Name'}</Text>
               <Text style={[styles.headerCell, styles.cityCol]}>{es ? 'Ubicación' : 'Location'}</Text>
-              <Text style={[styles.headerCell, styles.staffCol]}>{es ? 'Personal' : 'Staff'}</Text>
+              <Text style={[styles.headerCell, styles.staffCol]}>{es ? 'Usuarios' : 'Users'}</Text>
               <Text style={[styles.headerCell, styles.statusCol]}>{es ? 'Estado' : 'Status'}</Text>
               <Text style={[styles.headerCell, styles.actionCol]}>{es ? 'Acciones' : 'Actions'}</Text>
             </View>
             {filteredHospitals.map((hospital) => (
               <View key={hospital.id} style={styles.tableRow}>
-                <View style={[styles.hospitalCell, styles.hospitalCol]}>
+                <TouchableOpacity
+                  style={[styles.hospitalCell, styles.hospitalCol]}
+                  activeOpacity={0.78}
+                  onPress={() => setDetailHospital(hospital)}
+                >
                   <View style={[styles.hospitalIcon, !hospital.active && styles.hospitalIconInactive]}>
-                    <MaterialCommunityIcons name="hospital-building" size={17} color={hospital.active ? '#1D4ED8' : '#64748B'} />
+                    <MaterialCommunityIcons name="hospital-building" size={17} color={hospital.active ? AppColors.brand.link : AppColors.text.secondary} />
                   </View>
                   <View>
                     <Text style={styles.hospitalName}>{hospital.name}</Text>
                     <Text style={styles.hospitalCode}>{hospital.code}</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
                 <View style={styles.cityCol}>
                   <Text style={styles.bodyStrong}>{hospital.municipalityName ?? (es ? 'Sin municipio' : 'No municipality')}</Text>
                   <Text style={styles.bodyMuted}>{hospital.stateName ?? (es ? 'Sin estado' : 'No state')}</Text>
                 </View>
                 <View style={styles.staffCol}>
-                  <Text style={styles.bodyStrong}>{(hospital.doctorCount ?? 0) + (hospital.nurseCount ?? 0)}</Text>
-                  <Text style={styles.bodyMuted}>{es ? 'miembros' : 'staff'}</Text>
+                  <Text style={styles.bodyStrong}>{userCountsByHospital[hospital.id] ?? 0}</Text>
+                  <Text style={styles.bodyMuted}>{es ? 'registrados' : 'registered'}</Text>
                 </View>
                 <View style={styles.statusCol}><StatusPill active={hospital.active} es={es} /></View>
                 <View style={[styles.actionCol, styles.actions]}>
                   <TouchableOpacity onPress={() => { setSelectedHospital(hospital); setEditorOpen(true); }} activeOpacity={0.75}>
-                    <Feather name="edit-2" size={17} color="#64748B" />
+                    <Feather name="edit-2" size={17} color={AppColors.text.secondary} />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => { void toggleStatus(hospital); }} activeOpacity={0.75} disabled={saving}>
-                    <Feather name={hospital.active ? 'slash' : 'check-circle'} size={18} color={hospital.active ? '#EF4444' : '#10B981'} />
+                    <Feather name={hospital.active ? 'slash' : 'check-circle'} size={18} color={hospital.active ? AppColors.status.dangerBright : AppColors.status.successAccent} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -212,6 +225,13 @@ export function SystemHospitals() {
         es={es}
         onClose={() => setEditorOpen(false)}
         onSave={saveHospital}
+      />
+      <HospitalDetailModal
+        visible={Boolean(detailHospital)}
+        hospital={detailHospital}
+        registeredUsers={detailHospital ? userCountsByHospital[detailHospital.id] ?? 0 : 0}
+        es={es}
+        onClose={() => setDetailHospital(null)}
       />
     </DashboardLayout>
   );
@@ -291,7 +311,7 @@ function HospitalEditorModal({
               <Text style={styles.eyebrow}>{es ? 'Hospitales' : 'Hospitals'}</Text>
               <Text style={styles.modalTitle}>{hospital ? (es ? 'Editar hospital' : 'Edit Hospital') : (es ? 'Registrar hospital' : 'Register Hospital')}</Text>
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}><Feather name="x" size={20} color="#64748B" /></TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}><Feather name="x" size={20} color={AppColors.text.secondary} /></TouchableOpacity>
           </View>
 
           <ScrollView contentContainerStyle={styles.form}>
@@ -321,7 +341,7 @@ function HospitalEditorModal({
                 onChangeText={setMunicipalityQuery}
                 style={styles.input}
                 placeholder={es ? 'Buscar municipio o estado' : 'Search municipality or state'}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={AppColors.text.muted}
               />
               {selectedMunicipality ? (
                 <Text style={styles.selectedHint}>
@@ -383,14 +403,102 @@ function StatusPill({ active, es }: { active: boolean; es: boolean }) {
   );
 }
 
+function HospitalDetailModal({
+  visible,
+  hospital,
+  registeredUsers,
+  es,
+  onClose,
+}: {
+  visible: boolean;
+  hospital: HospitalResponse | null;
+  registeredUsers: number;
+  es: boolean;
+  onClose: () => void;
+}) {
+  if (!hospital) return null;
+  const operationalStaff = (hospital.doctorCount ?? 0) + (hospital.nurseCount ?? 0);
+  const location = [hospital.municipalityName, hospital.stateName].filter(Boolean).join(', ') || (es ? 'Sin ubicacion' : 'No location');
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalBackdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={[styles.modalCard, styles.detailModalCard]}>
+          <View style={styles.modalHeader}>
+            <View style={styles.detailTitleRow}>
+              <View style={[styles.hospitalIcon, !hospital.active && styles.hospitalIconInactive]}>
+                <MaterialCommunityIcons name="hospital-building" size={18} color={hospital.active ? AppColors.brand.link : AppColors.text.secondary} />
+              </View>
+              <View style={styles.detailTitleCopy}>
+                <Text style={styles.eyebrow}>{es ? 'Detalle del hospital' : 'Hospital Detail'}</Text>
+                <Text style={styles.modalTitle}>{hospital.name}</Text>
+                <Text style={styles.detailSubtitle}>{hospital.code} - {location}</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}><Feather name="x" size={20} color={AppColors.text.secondary} /></TouchableOpacity>
+          </View>
+
+          <View style={styles.detailBody}>
+            <View style={styles.detailStats}>
+              <DetailStat label={es ? 'Usuarios registrados' : 'Registered users'} value={String(registeredUsers)} />
+              <DetailStat label={es ? 'Camas' : 'Beds'} value={formatNullableNumber(hospital.bedCount, es)} />
+              <DetailStat label={es ? 'Personal operativo' : 'Operational staff'} value={formatNullableNumber(operationalStaff, es)} />
+            </View>
+
+            <View style={styles.detailRows}>
+              <DetailRow label={es ? 'Estado' : 'Status'} value={hospital.active ? (es ? 'Activo' : 'Active') : (es ? 'Inactivo' : 'Inactive')} />
+              <DetailRow label={es ? 'Direccion' : 'Address'} value={hospital.address || (es ? 'Sin direccion' : 'No address')} />
+              <DetailRow label={es ? 'Telefono' : 'Phone'} value={hospital.phone || (es ? 'Sin telefono' : 'No phone')} />
+              <DetailRow label={es ? 'Codigo postal' : 'Postal code'} value={hospital.postalCode || (es ? 'Sin codigo postal' : 'No postal code')} />
+              <DetailRow label="Invite Code" value={hospital.inviteCode || 'N/A'} />
+              <DetailRow
+                label={es ? 'Coordenadas' : 'Coordinates'}
+                value={
+                  hospital.latitude != null && hospital.longitude != null
+                    ? `${hospital.latitude}, ${hospital.longitude}`
+                    : (es ? 'Sin coordenadas' : 'No coordinates')
+                }
+              />
+              <DetailRow
+                label={es ? 'Doctores / Enfermeras' : 'Doctors / Nurses'}
+                value={`${formatNullableNumber(hospital.doctorCount, es)} / ${formatNullableNumber(hospital.nurseCount, es)}`}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function DetailStat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailStat}>
+      <Text style={styles.detailStatValue}>{value}</Text>
+      <Text style={styles.detailStatLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.detailRowLabel}>{label}</Text>
+      <Text style={styles.detailRowValue}>{value}</Text>
+    </View>
+  );
+}
+
 function HospitalsSkeleton() {
   return (
     <View style={styles.tableCard}>
       <View style={styles.tableHeader}>
-        <View style={[styles.skeletonLine, styles.hospitalCol]} />
-        <View style={[styles.skeletonLine, styles.cityCol]} />
-        <View style={[styles.skeletonLine, styles.staffCol]} />
-        <View style={[styles.skeletonLine, styles.statusCol]} />
+        <View style={styles.hospitalCol}><View style={[styles.skeletonLine, styles.skeletonHeaderShort]} /></View>
+        <View style={styles.cityCol}><View style={[styles.skeletonLine, styles.skeletonHeaderShort]} /></View>
+        <View style={styles.staffCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
+        <View style={styles.statusCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
+        <View style={styles.actionCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
       </View>
       {Array.from({ length: 5 }).map((_, index) => (
         <View key={index} style={styles.tableRow}>
@@ -402,10 +510,16 @@ function HospitalsSkeleton() {
             </View>
           </View>
           <View style={styles.cityCol}>
-            <View style={[styles.skeletonLine, { width: 130 }]} />
+            <View style={styles.skeletonStack}>
+              <View style={[styles.skeletonLine, { width: index === 2 ? 118 : 136 }]} />
+              <View style={[styles.skeletonLine, { width: 92, height: 10 }]} />
+            </View>
           </View>
           <View style={styles.staffCol}>
-            <View style={[styles.skeletonLine, { width: 58 }]} />
+            <View style={styles.skeletonStack}>
+              <View style={[styles.skeletonLine, { width: 28 }]} />
+              <View style={[styles.skeletonLine, { width: 72, height: 10 }]} />
+            </View>
           </View>
           <View style={styles.statusCol}>
             <View style={styles.skeletonBadge} />
@@ -423,7 +537,7 @@ function Field({ label, value, onChangeText }: { label: string; value: string; o
   return (
     <View style={styles.field}>
       <Text style={styles.formLabel}>{label}</Text>
-      <TextInput value={value} onChangeText={onChangeText} style={styles.input} placeholderTextColor="#94A3B8" />
+      <TextInput value={value} onChangeText={onChangeText} style={styles.input} placeholderTextColor={AppColors.text.muted} />
     </View>
   );
 }
@@ -451,66 +565,93 @@ function numberOrUndefined(value: string) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function countHospitalUsers(users: AdminUserResponse[]) {
+  return users.reduce<Record<string, number>>((counts, user) => {
+    if (!user.hospitalId || user.roleCodes.includes('SYSTEM_ADMIN')) return counts;
+    counts[user.hospitalId] = (counts[user.hospitalId] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function formatNullableNumber(value: number | null | undefined, es: boolean) {
+  return value == null ? (es ? 'Sin dato' : 'No data') : String(value);
+}
+
 const styles = StyleSheet.create({
   contentContainer: { padding: 32, gap: 24 },
-  hero: { backgroundColor: '#F8FAFF', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(0, 3, 184, 0.08)', padding: 28, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20, shadowColor: '#000F6B', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 26, elevation: 4 },
-  eyebrow: { fontSize: 12, fontWeight: '800', color: '#0003B8', textTransform: 'uppercase' },
-  title: { marginTop: 8, fontSize: 30, lineHeight: 38, fontWeight: '800', color: '#111827' },
-  subtitle: { marginTop: 6, fontSize: 15, lineHeight: 23, color: '#64748B' },
+  hero: { backgroundColor: AppColors.surface.raised, borderRadius: 24, borderWidth: 1, borderColor: withAlpha(AppColors.brand.primary, 0.08), padding: 28, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20, shadowColor: AppColors.shadow.blue, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 26, elevation: 4 },
+  eyebrow: { fontSize: 12, fontWeight: '800', color: AppColors.brand.primary, textTransform: 'uppercase' },
+  title: { marginTop: 8, fontSize: 30, lineHeight: 38, fontWeight: '800', color: AppColors.text.strong },
+  subtitle: { marginTop: 6, fontSize: 15, lineHeight: 23, color: AppColors.text.secondary },
   summaryGrid: { flexDirection: 'row', gap: 20 },
-  summaryCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', padding: 22, flexDirection: 'row', alignItems: 'center', gap: 14, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 3 },
+  summaryCard: { flex: 1, backgroundColor: AppColors.surface.card, borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, padding: 22, flexDirection: 'row', alignItems: 'center', gap: 14, shadowColor: AppColors.text.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 3 },
   summaryIcon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  summaryTitle: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
-  summaryValue: { marginTop: 4, fontSize: 28, fontWeight: '800', color: '#1D4ED8' },
-  toolbar: { backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', padding: 18, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 2 },
-  searchInput: { minHeight: 46, borderRadius: 12, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 14, color: '#111827', fontWeight: '600' },
-  tableCard: { backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 3 },
-  tableHeader: { minHeight: 52, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', paddingHorizontal: 20 },
-  tableRow: { minHeight: 76, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-  headerCell: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
+  summaryTitle: { fontSize: 12, fontWeight: '800', color: AppColors.text.secondary, textTransform: 'uppercase' },
+  summaryValue: { marginTop: 4, fontSize: 28, fontWeight: '800', color: AppColors.brand.link },
+  toolbar: { backgroundColor: AppColors.surface.card, borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, padding: 18, shadowColor: AppColors.text.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 2 },
+  searchInput: { minHeight: 46, borderRadius: 12, backgroundColor: AppColors.surface.subtle, borderWidth: 1, borderColor: AppColors.border.default, paddingHorizontal: 14, color: AppColors.text.strong, fontWeight: '600' },
+  tableCard: { backgroundColor: AppColors.surface.card, borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, overflow: 'hidden', shadowColor: AppColors.text.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 3 },
+  tableHeader: { minHeight: 52, flexDirection: 'row', alignItems: 'center', backgroundColor: AppColors.surface.subtle, paddingHorizontal: 20 },
+  tableRow: { minHeight: 76, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, borderTopWidth: 1, borderTopColor: AppColors.surface.muted },
+  headerCell: { fontSize: 12, fontWeight: '800', color: AppColors.text.secondary, textTransform: 'uppercase' },
   hospitalCol: { flex: 1.8 },
   cityCol: { flex: 1.2 },
   staffCol: { flex: 0.8 },
   statusCol: { flex: 0.8 },
   actionCol: { flex: 0.6 },
   hospitalCell: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  hospitalIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
-  hospitalIconInactive: { backgroundColor: '#F1F5F9' },
-  hospitalName: { color: '#111827', fontWeight: '800', fontSize: 14 },
-  hospitalCode: { marginTop: 2, color: '#94A3B8', fontWeight: '700', fontSize: 11 },
-  bodyStrong: { color: '#111827', fontWeight: '800', fontSize: 14 },
-  bodyMuted: { marginTop: 2, color: '#94A3B8', fontWeight: '600', fontSize: 12 },
+  hospitalIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: AppColors.status.infoSoft, alignItems: 'center', justifyContent: 'center' },
+  hospitalIconInactive: { backgroundColor: AppColors.surface.muted },
+  hospitalName: { color: AppColors.text.strong, fontWeight: '800', fontSize: 14 },
+  hospitalCode: { marginTop: 2, color: AppColors.text.muted, fontWeight: '700', fontSize: 11 },
+  bodyStrong: { color: AppColors.text.strong, fontWeight: '800', fontSize: 14 },
+  bodyMuted: { marginTop: 2, color: AppColors.text.muted, fontWeight: '600', fontSize: 12 },
   statusPill: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  statusActive: { backgroundColor: '#DCFCE7' },
-  statusInactive: { backgroundColor: '#F1F5F9' },
+  statusActive: { backgroundColor: AppColors.status.successSoft },
+  statusInactive: { backgroundColor: AppColors.surface.muted },
   statusText: { fontSize: 11, fontWeight: '800' },
   statusTextActive: { color: '#059669' },
-  statusTextInactive: { color: '#64748B' },
+  statusTextInactive: { color: AppColors.text.secondary },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
-  errorText: { color: '#DC2626', fontWeight: '700' },
-  skeletonTable: { height: 360, backgroundColor: '#F8FAFC' },
-  skeletonLine: { height: 12, borderRadius: 999, backgroundColor: '#E8EEF6' },
-  skeletonIcon: { width: 36, height: 36, borderRadius: 14, backgroundColor: '#DBEAFE' },
+  errorText: { color: AppColors.status.danger, fontWeight: '700' },
+  skeletonTable: { height: 360, backgroundColor: AppColors.surface.subtle },
+  skeletonLine: { height: 12, borderRadius: 999, backgroundColor: AppColors.chart.grid },
+  skeletonIcon: { width: 36, height: 36, borderRadius: 14, backgroundColor: AppColors.status.infoSoft },
   skeletonStack: { gap: 7 },
-  skeletonBadge: { width: 82, height: 28, borderRadius: 999, backgroundColor: '#EEF2F7' },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.42)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  modalCard: { width: '100%', maxWidth: 820, maxHeight: '92%', backgroundColor: '#FFFFFF', borderRadius: 24, overflow: 'hidden' },
-  modalHeader: { padding: 24, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
-  modalTitle: { marginTop: 6, fontSize: 24, fontWeight: '800', color: '#111827' },
-  closeButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center' },
+  skeletonBadge: { width: 82, height: 28, borderRadius: 999, backgroundColor: AppColors.border.soft },
+  skeletonHeaderShort: { width: 118 },
+  skeletonHeaderTiny: { width: 70 },
+  modalBackdrop: { flex: 1, backgroundColor: AppColors.modal.darkBackdrop, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  modalCard: { width: '100%', maxWidth: 820, maxHeight: '92%', backgroundColor: AppColors.surface.card, borderRadius: 24, overflow: 'hidden' },
+  modalHeader: { padding: 24, borderBottomWidth: 1, borderBottomColor: AppColors.border.default, flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
+  modalTitle: { marginTop: 6, fontSize: 24, fontWeight: '800', color: AppColors.text.strong },
+  closeButton: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, borderColor: AppColors.border.default, alignItems: 'center', justifyContent: 'center' },
   form: { padding: 24, gap: 14 },
   twoCols: { flexDirection: 'row', gap: 12 },
   threeCols: { flexDirection: 'row', gap: 12 },
   field: { flex: 1, gap: 7 },
-  formLabel: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
-  input: { minHeight: 46, borderRadius: 12, borderWidth: 1, borderColor: '#CBD5E1', paddingHorizontal: 13, color: '#111827', fontWeight: '700' },
-  selectedHint: { color: '#64748B', fontSize: 12, fontWeight: '700' },
+  formLabel: { fontSize: 12, fontWeight: '800', color: AppColors.text.secondary, textTransform: 'uppercase' },
+  input: { minHeight: 46, borderRadius: 12, borderWidth: 1, borderColor: AppColors.border.strong, paddingHorizontal: 13, color: AppColors.text.strong, fontWeight: '700' },
+  selectedHint: { color: AppColors.text.secondary, fontSize: 12, fontWeight: '700' },
   municipalityChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  municipalityChip: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0' },
-  municipalityChipActive: { backgroundColor: '#E0E7FF', borderColor: '#C7D2FE' },
-  municipalityChipText: { color: '#64748B', fontSize: 12, fontWeight: '800' },
-  municipalityChipTextActive: { color: '#0003B8' },
-  modalFooter: { padding: 18, borderTopWidth: 1, borderTopColor: '#E2E8F0', flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
+  municipalityChip: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: AppColors.surface.subtle, borderWidth: 1, borderColor: AppColors.border.default },
+  municipalityChipActive: { backgroundColor: AppColors.border.brandSoft, borderColor: AppColors.border.brandSubtle },
+  municipalityChipText: { color: AppColors.text.secondary, fontSize: 12, fontWeight: '800' },
+  municipalityChipTextActive: { color: AppColors.brand.primary },
+  modalFooter: { padding: 18, borderTopWidth: 1, borderTopColor: AppColors.border.default, flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
+  detailModalCard: { maxWidth: 720 },
+  detailTitleRow: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  detailTitleCopy: { flex: 1, minWidth: 0 },
+  detailSubtitle: { marginTop: 6, color: AppColors.text.secondary, fontWeight: '700', fontSize: 13 },
+  detailBody: { padding: 24, gap: 20 },
+  detailStats: { flexDirection: 'row', gap: 12 },
+  detailStat: { flex: 1, minHeight: 82, borderRadius: 16, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.subtle, padding: 14, justifyContent: 'center' },
+  detailStatValue: { color: AppColors.text.strong, fontWeight: '900', fontSize: 24, lineHeight: 30 },
+  detailStatLabel: { marginTop: 4, color: AppColors.text.secondary, fontWeight: '800', fontSize: 11, textTransform: 'uppercase' },
+  detailRows: { borderTopWidth: 1, borderTopColor: AppColors.border.default },
+  detailRow: { minHeight: 48, borderBottomWidth: 1, borderBottomColor: AppColors.border.default, flexDirection: 'row', alignItems: 'center', gap: 18, paddingVertical: 12 },
+  detailRowLabel: { width: 160, color: AppColors.text.secondary, fontWeight: '800', fontSize: 12, textTransform: 'uppercase' },
+  detailRowValue: { flex: 1, minWidth: 0, color: AppColors.text.strong, fontWeight: '700', fontSize: 13, lineHeight: 19 },
 });
 
 export default SystemHospitals;

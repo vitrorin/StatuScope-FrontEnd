@@ -7,6 +7,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { RecommendationFeedItem } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface RecommendationSupplyOverlayProps {
   visible: boolean;
@@ -50,7 +51,7 @@ export function RecommendationSupplyOverlay({ visible, item, onClose, onSubmit }
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
           <View style={styles.content}>
@@ -89,20 +90,20 @@ export function RecommendationSupplyOverlay({ visible, item, onClose, onSubmit }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.74)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: AppColors.modal.backdrop },
   dialog: { width: '100%', maxWidth: 720, borderRadius: 24, padding: 0, overflow: 'hidden' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: '#EEF2F7' },
-  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#1718C7', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
-  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
-  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft },
+  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.brand.action, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
+  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: AppColors.text.soft },
+  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: AppColors.border.default },
   content: { padding: 24, gap: 16 },
   row: { flexDirection: 'row', gap: 16 },
   field: { flex: 1 },
   inputContainer: { height: 50, borderRadius: 12 },
-  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingHorizontal: 24, paddingTop: 18, paddingBottom: 24, borderTopWidth: 1, borderTopColor: '#EEF2F7' },
+  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingHorizontal: 24, paddingTop: 18, paddingBottom: 24, borderTopWidth: 1, borderTopColor: AppColors.border.soft },
   footerButton: { minWidth: 150 },
-  primaryButton: { backgroundColor: '#1718C7', borderColor: '#1718C7' },
+  primaryButton: { backgroundColor: AppColors.brand.action, borderColor: AppColors.brand.action },
 });
 
 export default RecommendationSupplyOverlay;

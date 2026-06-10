@@ -24,6 +24,7 @@ import {
 } from '@/lib/systemAdmin';
 import { initialsFromName } from '@/lib/format';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 const roleOptions: BackendRoleCode[] = ['SYSTEM_ADMIN', 'HOSPITAL_ADMIN', 'DOCTOR'];
 const statusOptions: BackendUserStatus[] = ['ACTIVE', 'DISABLED', 'PENDING'];
@@ -45,7 +46,9 @@ export function SystemUsers() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
+  const [editingUser, setEditingUser] = useState<AdminUserResponse | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
   const sidebarItems = useMemo(() => getSystemSidebarItems(language), [language]);
 
   const load = useCallback(async () => {
@@ -87,12 +90,19 @@ export function SystemUsers() {
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE));
   const visibleUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  const adminCount = users.filter((user) => user.roleCodes.includes('SYSTEM_ADMIN') || user.roleCodes.includes('HOSPITAL_ADMIN')).length;
+  const systemAdminCount = users.filter((user) => user.roleCodes.includes('SYSTEM_ADMIN')).length;
+  const hospitalAdminCount = users.filter((user) => user.roleCodes.includes('HOSPITAL_ADMIN')).length;
   const medicalCount = users.filter((user) => user.roleCodes.includes('DOCTOR')).length;
   const inactiveCount = users.filter((user) => user.status !== 'ACTIVE').length;
 
   const openCreate = () => {
+    setEditingUser(null);
+    setEditorOpen(true);
+  };
+
+  const openEdit = (user: AdminUserResponse) => {
     setSelectedUser(null);
+    setEditingUser(user);
     setEditorOpen(true);
   };
 
@@ -104,8 +114,8 @@ export function SystemUsers() {
       if (input.roleCode !== 'SYSTEM_ADMIN' && !hospitalId) {
         throw new Error(es ? 'Selecciona un hospital para este rol.' : 'Select a hospital for this role.');
       }
-      if (selectedUser) {
-        await updateAdminUser(selectedUser.id, {
+      if (editingUser) {
+        await updateAdminUser(editingUser.id, {
           fullName: input.fullName,
           email: input.email,
           roleCode: input.roleCode,
@@ -130,6 +140,26 @@ export function SystemUsers() {
       setError(nextError instanceof Error ? nextError.message : es ? 'No se pudo guardar el usuario.' : 'Unable to save user.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleUserStatus = async (user: AdminUserResponse) => {
+    const nextStatus: BackendUserStatus = user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    setActionBusyId(user.id);
+    setError(null);
+    try {
+      await updateAdminUser(user.id, {
+        fullName: user.fullName,
+        email: user.email,
+        roleCode: user.roleCodes[0] ?? 'DOCTOR',
+        hospitalId: user.roleCodes.includes('SYSTEM_ADMIN') ? undefined : user.hospitalId ?? undefined,
+        status: nextStatus,
+      });
+      await load();
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : es ? 'No se pudo actualizar el estado del usuario.' : 'Unable to update user status.');
+    } finally {
+      setActionBusyId(null);
     }
   };
 
@@ -162,7 +192,7 @@ export function SystemUsers() {
                 label={es ? 'Crear usuario' : 'Create New User'}
                 variant="primary"
                 size="lg"
-                leadingIcon={<Feather name="user-plus" size={15} color="#FFFFFF" />}
+                leadingIcon={<Feather name="user-plus" size={15} color={AppColors.surface.card} />}
                 style={styles.createButton}
                 onPress={openCreate}
               />
@@ -174,7 +204,7 @@ export function SystemUsers() {
                   placeholder={es ? 'Buscar por nombre o correo' : 'Search by name or email'}
                   value={query}
                   onChangeText={setQuery}
-                  leftIcon={<Feather name="search" size={16} color="#94A3B8" />}
+                  leftIcon={<Feather name="search" size={16} color={AppColors.text.muted} />}
                   inputContainerStyle={styles.searchInputContainer}
                   style={styles.searchField}
                 />
@@ -182,7 +212,7 @@ export function SystemUsers() {
                   label={es ? 'Filtros' : 'Filters'}
                   variant="secondary"
                   size="md"
-                  leadingIcon={<Feather name="sliders" size={15} color="#64748B" />}
+                  leadingIcon={<Feather name="sliders" size={15} color={AppColors.text.secondary} />}
                   style={styles.filterToggleButton}
                   onPress={() => setIsFiltersOpen((current) => !current)}
                 />
@@ -252,6 +282,7 @@ export function SystemUsers() {
                   <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
                   <Text style={[styles.headerCell, styles.roleCol]}>{es ? 'Rol' : 'Role'}</Text>
                   <Text style={[styles.headerCell, styles.statusCol]}>{es ? 'Estado' : 'Status'}</Text>
+                  <Text style={[styles.headerCell, styles.actionsCol]}>{es ? 'Acciones' : 'Actions'}</Text>
                 </View>
 
                 {visibleUsers.map((user, index) => {
@@ -263,7 +294,6 @@ export function SystemUsers() {
                       activeOpacity={0.78}
                       onPress={() => {
                         setSelectedUser(user);
-                        setEditorOpen(true);
                       }}
                     >
                       <View style={[styles.nameCol, styles.nameCell]}>
@@ -279,6 +309,24 @@ export function SystemUsers() {
                       </View>
                       <View style={styles.statusCol}>
                         <StatusBadge label={statusLabel(user.status, es)} variant={statusBadgeVariant(user.status)} />
+                      </View>
+                      <View style={styles.actionsCol}>
+                        <TouchableOpacity
+                          style={styles.iconActionButton}
+                          activeOpacity={0.76}
+                          onPress={() => openEdit(user)}
+                          disabled={actionBusyId === user.id}
+                        >
+                          <Feather name="edit-3" size={18} color={AppColors.text.secondary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.iconActionButton}
+                          activeOpacity={0.76}
+                          onPress={() => { void toggleUserStatus(user); }}
+                          disabled={actionBusyId === user.id}
+                        >
+                          <Feather name={user.status === 'ACTIVE' ? 'slash' : 'check-circle'} size={18} color={user.status === 'ACTIVE' ? AppColors.status.dangerBright : AppColors.status.success} />
+                        </TouchableOpacity>
                       </View>
                     </TouchableOpacity>
                   );
@@ -309,24 +357,31 @@ export function SystemUsers() {
 
             <View style={styles.summaryRow}>
               <SummaryCountCard
-                title={es ? 'Administradores' : 'Administrators'}
-                value={String(adminCount)}
+                title={es ? 'Admins sistema' : 'System Admins'}
+                value={String(systemAdminCount)}
                 variant="info"
-                icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color="#1718C7" />}
+                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color={AppColors.brand.purple} />}
+                style={styles.summaryCard}
+              />
+              <SummaryCountCard
+                title={es ? 'Admins hospital' : 'Hospital Admins'}
+                value={String(hospitalAdminCount)}
+                variant="info"
+                icon={<MaterialCommunityIcons name="account-cog-outline" size={15} color={AppColors.brand.action} />}
                 style={styles.summaryCard}
               />
               <SummaryCountCard
                 title={es ? 'Personal medico' : 'Medical Staff'}
                 value={String(medicalCount)}
                 variant="info"
-                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color="#5B63E2" />}
+                icon={<MaterialCommunityIcons name="shield-account-outline" size={15} color={AppColors.brand.purple} />}
                 style={styles.summaryCard}
               />
               <SummaryCountCard
                 title={es ? 'Usuarios inactivos' : 'Inactive Users'}
                 value={String(inactiveCount)}
                 variant="neutral"
-                icon={<MaterialCommunityIcons name="account-off-outline" size={15} color="#94A3B8" />}
+                icon={<MaterialCommunityIcons name="account-off-outline" size={15} color={AppColors.text.muted} />}
                 style={styles.summaryCard}
               />
             </View>
@@ -335,12 +390,18 @@ export function SystemUsers() {
 
         <UserEditorModal
           visible={editorOpen}
-          user={selectedUser}
+          user={editingUser}
           hospitals={hospitals}
           saving={saving}
           es={es}
           onClose={() => setEditorOpen(false)}
           onSave={saveUser}
+        />
+        <UserDetailModal
+          visible={selectedUser !== null}
+          user={selectedUser}
+          es={es}
+          onClose={() => setSelectedUser(null)}
         />
       </>
     </DashboardLayout>
@@ -405,7 +466,7 @@ function UserEditorModal({
               <Text style={styles.modalTitle}>{user ? (es ? 'Editar usuario' : 'Edit User') : (es ? 'Crear usuario' : 'Create User')}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={20} color="#64748B" />
+              <Feather name="x" size={20} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -476,11 +537,73 @@ function UserEditorModal({
   );
 }
 
+function UserDetailModal({
+  visible,
+  user,
+  es,
+  onClose,
+}: {
+  visible: boolean;
+  user: AdminUserResponse | null;
+  es: boolean;
+  onClose: () => void;
+}) {
+  const role = user?.roleCodes[0] ?? 'DOCTOR';
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalBackdrop}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <CardBase style={[styles.modalCard, styles.detailModalCard]}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalHeaderCopy}>
+              <Text style={styles.modalEyebrow}>{es ? 'Informacion de usuario' : 'User Information'}</Text>
+              <Text style={styles.modalTitle}>{user?.fullName ?? (es ? 'Usuario' : 'User')}</Text>
+            </View>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
+              <Feather name="x" size={20} color={AppColors.text.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.detailContent}>
+            <View style={styles.detailIdentity}>
+              <UserAvatarBadge initials={initialsFromName(user?.fullName)} variant="default" />
+              <View style={styles.detailIdentityText}>
+                <Text style={styles.detailName}>{user?.fullName ?? '-'}</Text>
+                <Text style={styles.detailEmail}>{user?.email ?? '-'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.detailGrid}>
+              <DetailItem label={es ? 'Rol' : 'Role'} value={roleLabel(role, es)} />
+              <DetailItem label={es ? 'Estado' : 'Status'} value={user ? statusLabel(user.status, es) : '-'} />
+              <DetailItem label={es ? 'Hospital asignado' : 'Assigned Hospital'} value={user?.hospitalName ?? (es ? 'Sistema' : 'System')} />
+              <DetailItem label="ID" value={user?.id ?? '-'} />
+            </View>
+          </View>
+
+          <View style={styles.modalFooter}>
+            <Button label={es ? 'Cerrar' : 'Close'} variant="secondary" onPress={onClose} />
+          </View>
+        </CardBase>
+      </View>
+    </Modal>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailItem}>
+      <Text style={styles.detailItemLabel}>{label}</Text>
+      <Text style={styles.detailItemValue}>{value}</Text>
+    </View>
+  );
+}
+
 function Field({ label, value, onChangeText, secure = false }: { label: string; value: string; onChangeText: (value: string) => void; secure?: boolean }) {
   return (
     <View style={styles.field}>
       <Text style={styles.formLabel}>{label}</Text>
-      <TextInput value={value} onChangeText={onChangeText} secureTextEntry={secure} style={styles.input} placeholderTextColor="#94A3B8" />
+      <TextInput value={value} onChangeText={onChangeText} secureTextEntry={secure} style={styles.input} placeholderTextColor={AppColors.text.muted} />
     </View>
   );
 }
@@ -513,6 +636,7 @@ function UsersTableSkeleton() {
         <View style={[styles.usersSkeletonLine, styles.emailCol, { height: 12 }]} />
         <View style={[styles.usersSkeletonLine, styles.roleCol, { height: 12 }]} />
         <View style={[styles.usersSkeletonLine, styles.statusCol, { height: 12 }]} />
+        <View style={[styles.usersSkeletonLine, styles.actionsCol, { height: 12 }]} />
       </View>
       {[0, 1, 2, 3, 4].map((item) => (
         <View key={item} style={[styles.tableRow, item === 4 && styles.tableRowLast]}>
@@ -531,6 +655,12 @@ function UsersTableSkeleton() {
           </View>
           <View style={styles.statusCol}>
             <View style={[styles.usersSkeletonBadge, styles.usersSkeletonStatus]} />
+          </View>
+          <View style={styles.actionsCol}>
+            <View style={styles.usersSkeletonActions}>
+              <View style={styles.usersSkeletonIconAction} />
+              <View style={styles.usersSkeletonIconAction} />
+            </View>
           </View>
         </View>
       ))}
@@ -575,13 +705,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
     borderRadius: 24,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.08)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000F6B',
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -597,28 +727,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   heroTitle: {
     fontSize: 26,
     lineHeight: 34,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 8,
     maxWidth: 720,
   },
   heroDescription: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#475569',
+    color: AppColors.text.body,
     maxWidth: 760,
   },
   createButton: {
     minHeight: 40,
     borderRadius: 12,
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
     paddingHorizontal: 18,
   },
   filterCard: {
@@ -643,7 +773,7 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     height: 46,
     borderRadius: 12,
-    borderColor: '#DCE3EE',
+    borderColor: AppColors.border.default,
   },
   filterSection: {
     gap: 10,
@@ -652,7 +782,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
@@ -665,22 +795,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#F6F8FC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
   },
   filterChipActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: 'rgba(23, 24, 199, 0.24)',
+    backgroundColor: AppColors.surface.brandSoft,
+    borderColor: withAlpha(AppColors.brand.action, 0.24),
   },
   filterChipText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   filterChipTextActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   tableCard: {
     borderRadius: 16,
@@ -691,7 +821,7 @@ const styles = StyleSheet.create({
     minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     paddingHorizontal: 20,
   },
   tableRow: {
@@ -700,7 +830,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: AppColors.surface.muted,
   },
   tableRowLast: {
     borderBottomWidth: 0,
@@ -708,13 +838,13 @@ const styles = StyleSheet.create({
   headerCell: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
   },
   bodyCell: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#475569',
+    color: AppColors.text.body,
   },
   nameCol: {
     flex: 1.35,
@@ -727,6 +857,13 @@ const styles = StyleSheet.create({
   },
   statusCol: {
     flex: 0.72,
+  },
+  actionsCol: {
+    width: 92,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 10,
   },
   nameCell: {
     flexDirection: 'row',
@@ -741,17 +878,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   userHospital: {
     marginTop: 2,
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   emailText: {
-    color: '#475569',
+    color: AppColors.text.body,
+  },
+  iconActionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: AppColors.surface.card,
   },
   roleBadge: {
     alignSelf: 'flex-start',
@@ -760,13 +905,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   roleBadgeInfo: {
-    backgroundColor: '#EEF1FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   roleBadgeNeutral: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.surface.muted,
   },
   roleBadgeSystem: {
-    backgroundColor: '#F5F3FF',
+    backgroundColor: AppColors.recommendationCategory.logistics.soft,
   },
   roleBadgeText: {
     fontSize: 11,
@@ -774,13 +919,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   roleBadgeTextInfo: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   roleBadgeTextNeutral: {
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   roleBadgeTextSystem: {
-    color: '#5B21B6',
+    color: AppColors.brand.purple,
   },
   emptyState: {
     padding: 28,
@@ -789,17 +934,17 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   emptyStateSubtitle: {
     marginTop: 6,
     fontSize: 13,
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   tableFooter: {
     minHeight: 58,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: AppColors.surface.muted,
     paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
@@ -810,7 +955,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -822,29 +967,29 @@ const styles = StyleSheet.create({
   errorCard: {
     borderRadius: 16,
     padding: 18,
-    borderColor: '#FECACA',
+    borderColor: AppColors.status.dangerBorder,
     gap: 8,
   },
   errorTitle: {
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '900',
-    color: '#991B1B',
+    color: AppColors.status.dangerDeep,
   },
   errorText: {
-    color: '#64748B',
+    color: AppColors.text.secondary,
     lineHeight: 20,
   },
   usersSkeletonLine: {
     height: 12,
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   usersSkeletonAvatar: {
     width: 36,
     height: 36,
     borderRadius: 999,
-    backgroundColor: '#E0E7FF',
+    backgroundColor: AppColors.border.brandSoft,
   },
   usersSkeletonNameStack: {
     gap: 8,
@@ -853,10 +998,21 @@ const styles = StyleSheet.create({
     width: 126,
     height: 28,
     borderRadius: 999,
-    backgroundColor: '#EEF2F7',
+    backgroundColor: AppColors.border.soft,
   },
   usersSkeletonStatus: {
     width: 82,
+  },
+  usersSkeletonActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  usersSkeletonIconAction: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    backgroundColor: AppColors.border.soft,
   },
   usersSkeletonPager: {
     flexDirection: 'row',
@@ -866,11 +1022,11 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: '#EEF2F7',
+    backgroundColor: AppColors.border.soft,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.42)',
+    backgroundColor: AppColors.modal.darkBackdrop,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -883,10 +1039,13 @@ const styles = StyleSheet.create({
     padding: 0,
     overflow: 'hidden',
   },
+  detailModalCard: {
+    maxWidth: 620,
+  },
   modalHeader: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 16,
@@ -899,7 +1058,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
   },
   modalTitle: {
@@ -907,14 +1066,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '800',
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -922,22 +1081,77 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 14,
   },
+  detailContent: {
+    padding: 24,
+    gap: 22,
+  },
+  detailIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  detailIdentityText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  detailName: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '900',
+    color: AppColors.text.primary,
+  },
+  detailEmail: {
+    marginTop: 3,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: AppColors.text.secondary,
+  },
+  detailGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  detailItem: {
+    flexBasis: '48%',
+    flexGrow: 1,
+    minWidth: 220,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.subtle,
+    padding: 14,
+    gap: 6,
+  },
+  detailItemLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    color: AppColors.text.muted,
+  },
+  detailItemValue: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: AppColors.text.primary,
+  },
   field: {
     gap: 7,
   },
   formLabel: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
   },
   input: {
     minHeight: 46,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: AppColors.border.strong,
     paddingHorizontal: 13,
-    color: '#111827',
+    color: AppColors.text.strong,
     fontWeight: '700',
   },
   choiceRow: {
@@ -955,26 +1169,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   choiceChipActive: {
-    backgroundColor: '#E0E7FF',
-    borderColor: '#C7D2FE',
+    backgroundColor: AppColors.border.brandSoft,
+    borderColor: AppColors.border.brandSubtle,
   },
   choiceChipText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   choiceChipTextActive: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   modalFooter: {
     padding: 18,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: AppColors.border.default,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 10,

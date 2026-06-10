@@ -15,6 +15,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { DepartmentResourceItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface DepartmentManageOverlayProps {
   visible: boolean;
@@ -75,7 +76,7 @@ export function DepartmentManageOverlay({
               <Text style={styles.subtitle}>{isSpanish(language) ? 'Gestiona el registro de departamento almacenado para este hospital.' : 'Manage the real department record stored for this hospital.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
@@ -223,20 +224,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     marginBottom: 8,
   },
   title: {
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   content: {
     padding: 24,
@@ -271,22 +272,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#F6F8FC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
   },
   statusChipActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
+    backgroundColor: AppColors.surface.brandSoft,
+    borderColor: AppColors.border.brandMuted,
   },
   statusChipText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   statusChipTextActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   notesInputContainer: {
     height: 52,
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
   },
   deleteButton: {
     marginRight: 'auto',
@@ -313,8 +314,8 @@ const styles = StyleSheet.create({
     minWidth: 150,
   },
   primaryButton: {
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
 });
 

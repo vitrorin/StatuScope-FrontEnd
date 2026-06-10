@@ -631,6 +631,97 @@
           "title": "Emergency Load"
         }
       }
+    },
+    "recommendations": {
+      "tabs": {
+        "active": "Totals",
+        "high": "High Urgency",
+        "assigned": "Assigned",
+        "unassigned": "Unassigned",
+        "archive": "Archive"
+      },
+      "actions": {
+        "assignTask": "Assign task",
+        "reassignTask": "Reassign task",
+        "notifyStaff": "Notify staff",
+        "orderSupplies": "Order supplies",
+        "complete": "Complete",
+        "dismiss": "Dismiss"
+      },
+      "severity": {
+        "critical": "CRITICAL",
+        "high": "HIGH",
+        "medium": "MEDIUM",
+        "low": "LOW"
+      },
+      "categories": {
+        "supply": "Supply",
+        "bedCapacity": "Bed Capacity",
+        "staffing": "Staffing",
+        "localEpidemiology": "Local Epidemiology",
+        "hospitalEpidemiology": "Hospital Epidemiology",
+        "municipalEpidemiology": "Municipal Epidemiology"
+      },
+      "fallbacks": {
+        "titles": {
+          "expandMonitoredBedCapacity": "Expand Monitored Bed Capacity",
+          "monitorBedOccupancyTrend": "Monitor Bed Occupancy Trend",
+          "increaseEmergencyPhysicianStaffing": "Increase Emergency Physician Staffing",
+          "activateIcuSurgeProtocol": "ICU Capacity Critical - Activate Surge Protocol",
+          "reviewLocalEpidemiologyResponse": "Review Local Epidemiology Response",
+          "implementRespiratoryIsolation": "Implement Respiratory Isolation Measures",
+          "replenishCriticalRespiratorySupplies": "Replenish Critical Protective and Respiratory Supplies",
+          "reviewPpeStockLevels": "Review PPE Stock Levels"
+        },
+        "descriptions": {
+          "expandMonitoredBedCapacity": "Open additional monitored beds to prevent hospital capacity overflow.",
+          "monitorBedOccupancyTrend": "Start contingency planning to avoid reaching critical capacity.",
+          "increaseEmergencyPhysicianStaffing": "Increase emergency physician coverage due to nearby outbreak pressure and hospital demand.",
+          "activateIcuSurgeProtocol": "ICU occupancy is at a critical level; activate the surge protocol to preserve critical care availability.",
+          "reviewLocalEpidemiologyResponse": "Review hospital readiness for local epidemiological activity in the catchment area.",
+          "implementRespiratoryIsolation": "Establish respiratory isolation zones to reduce in-hospital transmission during the active outbreak.",
+          "replenishCriticalRespiratorySupplies": "Replenish critical protective and respiratory response supplies to maintain staff safety and continuous care.",
+          "reviewPpeStockLevels": "Review PPE inventory and prepare preventive replenishment ahead of increased consumption."
+        },
+        "impacts": {
+          "reducePatientWaitTimes": "Reduce patient wait times and prevent diversion",
+          "preventCriticalBedShortage": "Prevent critical bed shortage",
+          "improvePatientThroughput": "Improve patient throughput during outbreak surge",
+          "preventIcuOverflow": "Prevent ICU overflow and ensure critical care availability",
+          "reduceRespiratoryTransmission": "Reduce risk of respiratory transmission to staff and patients within the hospital",
+          "ensureStaffProtection": "Ensure uninterrupted staff protection and maintain readiness for respiratory surge",
+          "avoidPpeStockout": "Avoid PPE stockout during active outbreak period"
+        },
+        "urgency": {
+          "immediately": "Immediately",
+          "within12Hours": "Within 12 hours",
+          "within24Hours": "Within 24 hours",
+          "within48Hours": "Within 48 hours"
+        },
+        "list": {
+          "generalWard": "General Ward",
+          "icu": "ICU",
+          "intensiveCareUnit": "Intensive Care Unit",
+          "emergencyDepartment": "Emergency Department",
+          "respiratoryWard": "Respiratory Ward",
+          "isolationRooms": "Isolation Rooms",
+          "n95RespiratorMasks": "N95 Respirator Masks",
+          "isolationGowns": "Isolation Gowns",
+          "centralSupply": "Central Supply",
+          "emergencyPhysicians": "Emergency Physicians",
+          "openMonitoredBeds": "Open additional monitored beds to prevent capacity overflow.",
+          "reconfirmDischargeReadiness": "Reconfirm discharge readiness for stable patients",
+          "activateIcuSurgeProtocol": "Activate ICU surge protocol",
+          "assignRespiratoryOverflowBeds": "Assign respiratory-capable overflow beds",
+          "expediteIcuDischarges": "Expedite eligible ICU discharges",
+          "replenishPpeAndRespiratorySupplies": "Replenish PPE and respiratory supplies",
+          "notifyCentralSupplyCoordinator": "Notify central supply coordinator",
+          "prepareConsumptionBuffer": "Prepare 48-hour consumption buffer",
+          "establishRespiratoryIsolationZones": "Establish respiratory isolation zones",
+          "assignDedicatedStaffFlow": "Assign dedicated staff flow for suspected respiratory cases",
+          "reviewPpeBurnRate": "Review PPE burn rate before next shift"
+        }
+      }
     }
   }
 }

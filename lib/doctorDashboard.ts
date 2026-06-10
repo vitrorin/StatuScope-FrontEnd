@@ -1,6 +1,6 @@
 import { api } from './api';
 
-function radiusQuery(radiusKm?: number) {
+export function radiusQuery(radiusKm?: number) {
   return typeof radiusKm === 'number' ? `?radiusKm=${encodeURIComponent(String(radiusKm))}` : '';
 }
 
@@ -187,4 +187,48 @@ export async function getDoctorDashboardReport(scope: DoctorDashboardReportScope
 
 export async function getDoctorDashboardStateReport(stateId: string): Promise<DoctorDashboardReportResponse> {
   return api<DoctorDashboardReportResponse>(`/doctor/dashboard/reports/states/${encodeURIComponent(stateId)}`);
+}
+
+export async function getAdminEpidemiologySummary(radiusKm?: number): Promise<DoctorDashboardSummary> {
+  return api<DoctorDashboardSummary>(`/admin/epidemiology/summary${radiusQuery(radiusKm)}`);
+}
+
+export async function getAdminEpidemiologyMetrics(radiusKm?: number): Promise<DoctorDashboardMetricsResponse> {
+  return api<DoctorDashboardMetricsResponse>(`/admin/epidemiology/metrics${radiusQuery(radiusKm)}`);
+}
+
+export async function getAdminEpidemiologyMap(radiusKm?: number): Promise<DoctorDashboardMapResponse> {
+  return api<DoctorDashboardMapResponse>(`/admin/epidemiology/map${radiusQuery(radiusKm)}`);
+}
+
+export async function getAdminEpidemiologyStateMap(): Promise<DoctorDashboardStateMapResponse> {
+  return api<DoctorDashboardStateMapResponse>('/admin/epidemiology/map/states');
+}
+
+export async function getAdminEpidemiologyDiseaseCatalog(): Promise<DoctorDashboardDiseaseCatalogResponse> {
+  return api<DoctorDashboardDiseaseCatalogResponse>('/admin/epidemiology/diseases');
+}
+
+export async function getAdminEpidemiologyStateOutbreakMap(stateId: string): Promise<DoctorDashboardMapResponse> {
+  return api<DoctorDashboardMapResponse>(`/admin/epidemiology/map/states/${stateId}/outbreaks`);
+}
+
+export async function getAdminEpidemiologyAlerts(radiusKm?: number): Promise<DoctorDashboardAlertsResponse> {
+  return api<DoctorDashboardAlertsResponse>(`/admin/epidemiology/alerts${radiusQuery(radiusKm)}`);
+}
+
+export async function getAdminEpidemiologyLocalBreakdown(radiusKm?: number): Promise<DoctorDashboardBreakdownResponse> {
+  return api<DoctorDashboardBreakdownResponse>(`/admin/epidemiology/disease-breakdown/local${radiusQuery(radiusKm)}`);
+}
+
+export async function getAdminEpidemiologyStateBreakdown(radiusKm?: number): Promise<DoctorDashboardBreakdownResponse> {
+  return api<DoctorDashboardBreakdownResponse>(`/admin/epidemiology/disease-breakdown/state${radiusQuery(radiusKm)}`);
+}
+
+export async function getAdminEpidemiologyReport(scope: DoctorDashboardReportScope, radiusKm?: number): Promise<DoctorDashboardReportResponse> {
+  return api<DoctorDashboardReportResponse>(`/admin/epidemiology/reports/${scope}${radiusQuery(radiusKm)}`);
+}
+
+export async function getAdminEpidemiologyStateReport(stateId: string): Promise<DoctorDashboardReportResponse> {
+  return api<DoctorDashboardReportResponse>(`/admin/epidemiology/reports/states/${encodeURIComponent(stateId)}`);
 }

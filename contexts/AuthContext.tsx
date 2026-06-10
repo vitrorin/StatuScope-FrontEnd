@@ -34,6 +34,8 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasPrivilege: (priv: string) => boolean;
+  isAdmin: () => boolean;
+  isSystemAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -96,10 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = (r: string) => !!profile?.roles?.includes(r);
   const hasPrivilege = (p: string) => !!profile?.privileges?.includes(p);
+  const isAdmin = () => hasRole('HOSPITAL_ADMIN');
+  const isSystemAdmin = () => hasRole('SYSTEM_ADMIN') || hasPrivilege('isSystemAdmin');
 
   return (
     <AuthContext.Provider
-      value={{ firebaseUser, profile, loading, login, register, logout, hasRole, hasPrivilege }}
+      value={{ firebaseUser, profile, loading, login, register, logout, hasRole, hasPrivilege, isAdmin, isSystemAdmin }}
     >
       {children}
     </AuthContext.Provider>

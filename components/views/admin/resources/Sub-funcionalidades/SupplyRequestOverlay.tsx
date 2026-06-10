@@ -16,6 +16,7 @@ import { HospitalInventoryMovementResponse } from '@/lib/adminOperational';
 import { InventoryResourceItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface SupplyRequestDraft {
   quantity: string;
@@ -93,7 +94,7 @@ export function SupplyRequestOverlay({
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -173,7 +174,7 @@ export function SupplyRequestOverlay({
                 <Text style={styles.historyMuted}>{es ? 'Sin movimientos registrados.' : 'No movements recorded.'}</Text>
               ) : movements.slice(0, 4).map((movement) => (
                 <View key={movement.id} style={styles.historyRow}>
-                  <MaterialCommunityIcons name="history" size={16} color="#64748B" />
+                  <MaterialCommunityIcons name="history" size={16} color={AppColors.text.secondary} />
                   <View style={styles.historyCopy}>
                     <Text style={styles.historyTitle}>
                       {movement.movementType} {movement.quantityDelta > 0 ? '+' : ''}{movement.quantityDelta} {movement.unit ?? inventoryItem.unit}
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.76)',
+    backgroundColor: AppColors.modal.backdropStrong,
   },
   dialog: {
     width: '100%',
@@ -253,7 +254,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   headerCopy: {
     flex: 1,
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -271,13 +272,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   closeButton: {
     width: 38,
@@ -286,8 +287,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
   content: {
     padding: 24,
@@ -300,16 +301,16 @@ const styles = StyleSheet.create({
   infoTile: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#DDE6F4',
+    borderColor: AppColors.modal.border,
     borderRadius: 14,
     padding: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
   },
   infoLabel: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '800',
-    color: '#8FA0B8',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
   },
   infoValue: {
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   row: {
     flexDirection: 'row',
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   priorityRow: {
     flexDirection: 'row',
@@ -345,24 +346,24 @@ const styles = StyleSheet.create({
   },
   priorityChip: {
     borderWidth: 1,
-    borderColor: '#DDE6F4',
+    borderColor: AppColors.modal.border,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   priorityChipActive: {
-    borderColor: '#1718C7',
-    backgroundColor: '#EEF2FF',
+    borderColor: AppColors.brand.action,
+    backgroundColor: AppColors.surface.brandSoft,
   },
   priorityText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   priorityTextActive: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   historyBlock: {
     gap: 10,
@@ -370,17 +371,17 @@ const styles = StyleSheet.create({
   historyMuted: {
     fontSize: 13,
     lineHeight: 20,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     borderRadius: 12,
     padding: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   historyCopy: {
     flex: 1,
@@ -389,13 +390,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   historyMeta: {
     marginTop: 2,
     fontSize: 12,
     lineHeight: 18,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   footer: {
     flexDirection: 'row',
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 18,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
   },
   footerButton: {
     minWidth: 150,

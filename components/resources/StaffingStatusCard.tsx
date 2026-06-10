@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export type StaffingVariant = 'doctor' | 'nurse' | 'specialist' | 'default';
 
@@ -16,10 +17,10 @@ export interface StaffingStatusCardProps {
 }
 
 const variantColors = {
-  doctor: '#3B82F6',
-  nurse: '#22C55E',
-  specialist: '#8B5CF6',
-  default: '#0003B8',
+  doctor: AppColors.roleTone.doctor.accent,
+  nurse: AppColors.status.successBright,
+  specialist: AppColors.brand.purple,
+  default: AppColors.brand.primary,
 };
 
 export function StaffingStatusCard({
@@ -63,10 +64,10 @@ export function StaffingStatusCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: AppColors.border.muted,
     flexDirection: 'row',
     overflow: 'hidden',
     shadowColor: '#000',
@@ -105,12 +106,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: AppColors.text.strong,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: AppColors.table.muted,
   },
   value: {
     fontSize: 24,

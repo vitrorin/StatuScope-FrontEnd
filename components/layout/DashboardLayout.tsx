@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Sidebar, SidebarActive, SidebarItemKey, SidebarNavItem } from '@/components/Sidebar';
 import { TopHeader } from '@/components/layout/TopHeader';
+import { AppColors } from '@/constants/theme';
 
 export interface DashboardLayoutProps {
   active?: SidebarActive;
@@ -49,16 +50,16 @@ export function DashboardLayout({
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: '#F5F5F8',
+    backgroundColor: AppColors.surface.page,
   },
   frame: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#F5F5F8',
+    backgroundColor: AppColors.surface.page,
   },
   mainArea: {
     flex: 1,
-    backgroundColor: '#F5F5F8',
+    backgroundColor: AppColors.surface.page,
   },
   content: {
     flex: 1,

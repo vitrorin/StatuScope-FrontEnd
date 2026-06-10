@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { ActionChipButton } from '../recommendations/ActionChipButton';
 import { StatusBadge } from '../feedback/StatusBadge';
+import { AppColors } from '@/constants/theme';
 
 export type TableRowStatusVariant = 'critical' | 'warning' | 'success' | 'neutral';
 
@@ -71,8 +72,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: AppColors.surface.control,
+    backgroundColor: AppColors.surface.card,
   },
   mainContent: {
     flex: 1,
@@ -82,11 +83,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   subtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginTop: 2,
   },
   metricsSection: {
@@ -101,11 +102,11 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   metricLabel: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
     marginTop: 2,
   },
   statusSection: {

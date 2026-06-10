@@ -12,13 +12,13 @@ import { resolve } from 'node:path';
 
 // ── Design-token constants (the doctor AI assistant reference) ────────────────
 
-const HERO_STRIP_BACKGROUND     = '#F8FAFF';
-const HERO_STRIP_BORDER_COLOR   = 'rgba(0, 3, 184, 0.08)';
+const HERO_STRIP_BACKGROUND     = 'AppColors.surface.raised';
+const HERO_STRIP_BORDER_COLOR   = 'withAlpha(AppColors.brand.primary, 0.08)';
 const HERO_STRIP_BORDER_RADIUS  = 24;
-const HERO_STRIP_SHADOW_COLOR   = '#000F6B';
-const HERO_EYEBROW_COLOR        = '#0003B8';
-const HERO_TITLE_COLOR          = '#0F172A';
-const HERO_DESCRIPTION_COLOR    = '#475569';
+const HERO_STRIP_SHADOW_COLOR   = 'AppColors.shadow.blue';
+const HERO_EYEBROW_COLOR        = 'AppColors.brand.primary';
+const HERO_TITLE_COLOR          = 'AppColors.text.primary';
+const HERO_DESCRIPTION_COLOR    = 'AppColors.text.body';
 const HERO_TITLE_FONT_SIZE      = 26;
 const HERO_EYEBROW_FONT_SIZE    = 12;
 const HERO_EYEBROW_TEXT_TRANSFORM = 'uppercase';
@@ -37,25 +37,25 @@ function readView(relativePath: string): string {
  */
 function expectHeroStripTokensInSource(src: string, label: string) {
   expect(src, `${label}: missing heroStrip backgroundColor`)
-    .toContain(`backgroundColor: '${HERO_STRIP_BACKGROUND}'`);
+    .toContain(`backgroundColor: ${HERO_STRIP_BACKGROUND}`);
   expect(src, `${label}: missing heroStrip borderColor`)
-    .toContain(`borderColor: '${HERO_STRIP_BORDER_COLOR}'`);
+    .toContain(`borderColor: ${HERO_STRIP_BORDER_COLOR}`);
   expect(src, `${label}: missing heroStrip borderRadius`)
     .toContain(`borderRadius: ${HERO_STRIP_BORDER_RADIUS}`);
   expect(src, `${label}: missing heroStrip shadowColor`)
-    .toContain(`shadowColor: '${HERO_STRIP_SHADOW_COLOR}'`);
+    .toContain(`shadowColor: ${HERO_STRIP_SHADOW_COLOR}`);
   expect(src, `${label}: missing heroEyebrow color`)
-    .toContain(`color: '${HERO_EYEBROW_COLOR}'`);
+    .toContain(`color: ${HERO_EYEBROW_COLOR}`);
   expect(src, `${label}: missing heroEyebrow fontSize`)
     .toContain(`fontSize: ${HERO_EYEBROW_FONT_SIZE}`);
   expect(src, `${label}: missing heroEyebrow textTransform`)
     .toContain(`textTransform: '${HERO_EYEBROW_TEXT_TRANSFORM}'`);
   expect(src, `${label}: missing heroTitle color`)
-    .toContain(`color: '${HERO_TITLE_COLOR}'`);
+    .toContain(`color: ${HERO_TITLE_COLOR}`);
   expect(src, `${label}: missing heroTitle fontSize`)
     .toContain(`fontSize: ${HERO_TITLE_FONT_SIZE}`);
   expect(src, `${label}: missing heroDescription color`)
-    .toContain(`color: '${HERO_DESCRIPTION_COLOR}'`);
+    .toContain(`color: ${HERO_DESCRIPTION_COLOR}`);
 }
 
 // ── Per-view source-text tests ────────────────────────────────────────────────
@@ -92,24 +92,24 @@ describe('Admin Resources heroStrip styles', () => {
 // These verify the expected design system values are correct and consistent.
 
 describe('Design token constants', () => {
-  it('hero strip background is the correct off-white blue tint', () => {
-    expect(HERO_STRIP_BACKGROUND).toBe('#F8FAFF');
+  it('hero strip background uses the shared raised surface token', () => {
+    expect(HERO_STRIP_BACKGROUND).toBe('AppColors.surface.raised');
   });
 
-  it('hero eyebrow uses brand blue #0003B8', () => {
-    expect(HERO_EYEBROW_COLOR).toBe('#0003B8');
+  it('hero eyebrow uses the shared brand primary token', () => {
+    expect(HERO_EYEBROW_COLOR).toBe('AppColors.brand.primary');
   });
 
-  it('hero title uses dark slate #0F172A', () => {
-    expect(HERO_TITLE_COLOR).toBe('#0F172A');
+  it('hero title uses the shared primary text token', () => {
+    expect(HERO_TITLE_COLOR).toBe('AppColors.text.primary');
   });
 
-  it('hero description uses muted slate #475569', () => {
-    expect(HERO_DESCRIPTION_COLOR).toBe('#475569');
+  it('hero description uses the shared body text token', () => {
+    expect(HERO_DESCRIPTION_COLOR).toBe('AppColors.text.body');
   });
 
-  it('hero strip shadow uses deep navy #000F6B', () => {
-    expect(HERO_STRIP_SHADOW_COLOR).toBe('#000F6B');
+  it('hero strip shadow uses the shared blue shadow token', () => {
+    expect(HERO_STRIP_SHADOW_COLOR).toBe('AppColors.shadow.blue');
   });
 
   it('hero strip border radius is 24', () => {

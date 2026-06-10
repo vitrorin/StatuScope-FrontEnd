@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { AppColors } from '@/constants/theme';
 
 import { View, Text } from 'react-native';
 import { SectionTitleBlock } from '../../components/layout/SectionTitleBlock';
@@ -8,7 +9,7 @@ const meta = {
   component: SectionTitleBlock,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.page }}>
         <Story />
       </View>
     ),
@@ -48,23 +49,23 @@ export const WithActions: Story = {
     subtitle: 'With Actions',
     rightSlot: (
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ 
-          backgroundColor: '#1D4ED8', 
-          paddingHorizontal: 16, 
-          paddingVertical: 8, 
-          borderRadius: 8 
+        <View style={{
+          backgroundColor: AppColors.brand.link,
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderRadius: 8,
         }}>
-          <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>Add New</Text>
+          <Text style={{ color: AppColors.surface.card, fontSize: 14, fontWeight: '600' }}>Add New</Text>
         </View>
-        <View style={{ 
-          backgroundColor: '#FFFFFF', 
-          paddingHorizontal: 16, 
-          paddingVertical: 8, 
+        <View style={{
+          backgroundColor: AppColors.surface.card,
+          paddingHorizontal: 16,
+          paddingVertical: 8,
           borderRadius: 8,
           borderWidth: 1,
-          borderColor: '#E5E7EB'
+          borderColor: AppColors.border.muted,
         }}>
-          <Text style={{ color: '#374151', fontSize: 14, fontWeight: '500' }}>Export</Text>
+          <Text style={{ color: AppColors.text.body, fontSize: 14, fontWeight: '500' }}>Export</Text>
         </View>
       </View>
     ),

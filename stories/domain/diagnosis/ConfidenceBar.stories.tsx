@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { AppColors } from '@/constants/theme';
 
 import { View } from 'react-native';
 import { ConfidenceBar } from '../../../components/diagnosis/ConfidenceBar';
@@ -8,7 +9,7 @@ const meta = {
   component: ConfidenceBar,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <Story />
       </View>
     ),
@@ -48,6 +49,6 @@ export const CustomColor: Story = {
     label: 'TYPHOID',
     value: 67,
     valueText: '67%',
-    color: '#F59E0B',
+    color: AppColors.status.warning,
   },
 };

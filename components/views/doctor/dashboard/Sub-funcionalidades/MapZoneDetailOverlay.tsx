@@ -4,6 +4,7 @@ import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'reac
 import { CardBase } from '@/components/patterns/CardBase';
 import { DoctorDashboardZone } from '@/components/views/doctor/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
+import { AppColors } from '@/constants/theme';
 
 interface MapZoneDetailOverlayProps {
   visible: boolean;
@@ -45,7 +46,7 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
               ) : null}
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -75,7 +76,7 @@ function MetricStat({ label, value, accentColor }: { label: string; value: strin
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.74)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: AppColors.modal.backdrop },
   dialog: { width: '100%', maxWidth: 680, borderRadius: 24, padding: 0, overflow: 'hidden' },
   header: {
     flexDirection: 'row',
@@ -85,20 +86,20 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   headerCopy: { flex: 1 },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
   },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
-  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
+  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: AppColors.text.soft },
   locationPill: {
     alignSelf: 'flex-start',
     marginTop: 12,
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  locationText: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: '#0F172A' },
+  locationText: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: AppColors.text.primary },
   closeButton: {
     width: 40,
     height: 40,
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 24 },
   statCard: {
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   statAccent: {
     position: 'absolute',
@@ -150,12 +151,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
   },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
+  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
 });
 
 export default MapZoneDetailOverlay;

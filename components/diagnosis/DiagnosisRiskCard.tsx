@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export type RiskVariant = 'critical' | 'warning' | 'info';
 
@@ -14,22 +15,22 @@ export interface DiagnosisRiskCardProps {
 
 const variantStyles = {
   critical: {
-    border: '#FECACA',
-    background: '#FEF2F2',
-    text: '#B91C1C',
-    subtitle: '#DC2626',
+    border: AppColors.status.dangerBorder,
+    background: AppColors.status.dangerSoft,
+    text: AppColors.status.dangerDark,
+    subtitle: AppColors.status.danger,
   },
   warning: {
-    border: '#FDE68A',
-    background: '#FFFBEB',
-    text: '#B45309',
-    subtitle: '#D97706',
+    border: AppColors.status.warningBorder,
+    background: AppColors.status.warningWash,
+    text: AppColors.status.warningStrong,
+    subtitle: AppColors.status.warningText,
   },
   info: {
-    border: '#BFDBFE',
-    background: '#EFF6FF',
-    text: '#1D4ED8',
-    subtitle: '#2563EB',
+    border: AppColors.status.infoSoft,
+    background: AppColors.status.infoSoft,
+    text: AppColors.brand.link,
+    subtitle: AppColors.status.info,
   },
 };
 
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
     textTransform: 'uppercase',
   },
   statusTextPlain: {

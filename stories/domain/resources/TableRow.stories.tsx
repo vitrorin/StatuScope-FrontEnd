@@ -1,14 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { View } from 'react-native';
 import { TableRow } from '../../../components/resources/TableRow';
+import { AppColors } from '@/constants/theme';
 
 const meta = {
   title: 'Domain/Resources/TableRow',
   component: TableRow,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
-        <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', overflow: 'hidden' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
+        <View style={{ backgroundColor: AppColors.surface.card, borderRadius: 16, borderWidth: 1, borderColor: AppColors.border.muted, overflow: 'hidden' }}>
           <Story />
         </View>
       </View>

@@ -7,6 +7,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { HospitalDepartmentResourceResponse, OperationalContactInput, OperationalContactResponse } from '@/lib/adminOperational';
 import { useTranslation } from '@/i18n';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface OperationalContactEditorOverlayProps {
   visible: boolean;
@@ -59,7 +60,7 @@ export function OperationalContactEditorOverlay({
               <Text style={styles.title}>{contact ? (spanish ? 'Editar contacto' : 'Edit Contact') : (spanish ? 'Nuevo contacto' : 'New Contact')}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -134,7 +135,7 @@ export function OperationalContactEditorOverlay({
 function ToggleChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity style={[styles.toggleChip, active && styles.toggleChipActive]} onPress={onPress} activeOpacity={0.75}>
-      <Feather name={active ? 'check-circle' : 'circle'} size={15} color={active ? '#1718C7' : '#94A3B8'} />
+      <Feather name={active ? 'check-circle' : 'circle'} size={15} color={active ? AppColors.brand.action : AppColors.text.muted} />
       <Text style={[styles.toggleText, active && styles.toggleTextActive]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -142,32 +143,32 @@ function ToggleChip({ label, active, onPress }: { label: string; active: boolean
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.74)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: AppColors.modal.backdrop },
   dialog: { width: '100%', maxWidth: 720, maxHeight: '90%', borderRadius: 24, padding: 0, overflow: 'hidden' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: '#EEF2F7' },
-  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#1718C7', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
-  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft },
+  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.brand.action, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
+  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: AppColors.border.default },
   content: { padding: 24, gap: 16 },
   row: { flexDirection: 'row', gap: 16 },
   field: { flex: 1 },
-  fieldLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#8A9AAF', textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
+  fieldLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.text.muted, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
   inputContainer: { height: 50, borderRadius: 12 },
   departmentList: { gap: 8 },
-  departmentOption: { minHeight: 48, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
-  departmentOptionActive: { borderColor: '#C9D1FF', backgroundColor: '#F7F8FF' },
-  departmentName: { fontSize: 13, lineHeight: 17, fontWeight: '800', color: '#0F172A' },
-  departmentNameActive: { color: '#1718C7' },
-  departmentCode: { marginTop: 2, fontSize: 11, lineHeight: 15, color: '#70839B', fontWeight: '700' },
-  emptyText: { fontSize: 13, lineHeight: 18, color: '#70839B' },
+  departmentOption: { minHeight: 48, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
+  departmentOptionActive: { borderColor: AppColors.border.brandMuted, backgroundColor: '#F7F8FF' },
+  departmentName: { fontSize: 13, lineHeight: 17, fontWeight: '800', color: AppColors.text.primary },
+  departmentNameActive: { color: AppColors.brand.action },
+  departmentCode: { marginTop: 2, fontSize: 11, lineHeight: 15, color: AppColors.text.soft, fontWeight: '700' },
+  emptyText: { fontSize: 13, lineHeight: 18, color: AppColors.text.soft },
   toggleGrid: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
-  toggleChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
-  toggleChipActive: { backgroundColor: '#EEF1FF', borderColor: '#C9D1FF' },
-  toggleText: { fontSize: 13, lineHeight: 18, fontWeight: '800', color: '#64748B' },
-  toggleTextActive: { color: '#1718C7' },
-  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingHorizontal: 24, paddingTop: 18, paddingBottom: 24, borderTopWidth: 1, borderTopColor: '#EEF2F7' },
+  toggleChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card },
+  toggleChipActive: { backgroundColor: AppColors.surface.brandSoft, borderColor: AppColors.border.brandMuted },
+  toggleText: { fontSize: 13, lineHeight: 18, fontWeight: '800', color: AppColors.text.secondary },
+  toggleTextActive: { color: AppColors.brand.action },
+  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingHorizontal: 24, paddingTop: 18, paddingBottom: 24, borderTopWidth: 1, borderTopColor: AppColors.border.soft },
   footerButton: { minWidth: 150 },
-  primaryButton: { backgroundColor: '#1718C7', borderColor: '#1718C7' },
+  primaryButton: { backgroundColor: AppColors.brand.action, borderColor: AppColors.brand.action },
 });
 
 export default OperationalContactEditorOverlay;

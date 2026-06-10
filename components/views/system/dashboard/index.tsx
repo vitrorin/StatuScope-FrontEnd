@@ -20,6 +20,7 @@ import {
   SystemNearbyOutbreakResponse,
 } from '@/lib/systemAdmin';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 const metricIcons: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
   hospitals: 'hospital-building',
@@ -46,6 +47,7 @@ export function SystemDashboard() {
   const [isActivityExpanded, setIsActivityExpanded] = useState(false);
   const [isHospitalMapHovered, setIsHospitalMapHovered] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [mainGridWidth, setMainGridWidth] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const sidebarItems = useMemo(() => getSystemSidebarItems(language), [language]);
@@ -66,7 +68,7 @@ export function SystemDashboard() {
         id: boundary.id,
         geometry: boundary.geometry,
         fillColor: regionalFillColor(intensity),
-        strokeColor: value > 0 ? 'rgba(23, 24, 199, 0.58)' : 'rgba(100, 116, 139, 0.22)',
+        strokeColor: value > 0 ? withAlpha(AppColors.brand.action, 0.58) : withAlpha(AppColors.text.secondary, 0.22),
         strokeWidth: value > 0 ? 1.25 : 0.8,
       };
     });
@@ -82,6 +84,11 @@ export function SystemDashboard() {
       setLoading(false);
     }
   }, [es]);
+  const handleMainGridLayout = useCallback((event: { nativeEvent: { layout: { width: number } } }) => {
+    const nextWidth = event.nativeEvent.layout.width;
+    setMainGridWidth((currentWidth) => (Math.abs(currentWidth - nextWidth) > 1 ? nextWidth : currentWidth));
+  }, []);
+  const mainPanelWidth = mainGridWidth > 0 ? (mainGridWidth - 14) / 2 : undefined;
 
   useEffect(() => {
     void loadSummary();
@@ -118,7 +125,7 @@ export function SystemDashboard() {
               label={es ? 'Exportar reporte' : 'Export Report'}
               variant="secondary"
               size="sm"
-              leadingIcon={<Feather name="download" size={15} color="#334155" />}
+              leadingIcon={<Feather name="download" size={15} color={AppColors.text.body} />}
               onPress={() => setIsReportOpen(true)}
               disabled={!summary}
             />
@@ -126,7 +133,7 @@ export function SystemDashboard() {
               label={es ? 'Actualizar metricas' : 'Refresh Metrics'}
               variant="primary"
               size="sm"
-              leadingIcon={<Feather name="refresh-cw" size={15} color="#FFFFFF" />}
+              leadingIcon={<Feather name="refresh-cw" size={15} color={AppColors.surface.card} />}
               onPress={() => { void loadSummary(); }}
             />
           </View>
@@ -148,8 +155,8 @@ export function SystemDashboard() {
               ))}
             </View>
 
-            <View style={styles.mainGrid}>
-              <View style={styles.regionalMapPanel}>
+            <View style={styles.mainGrid} onLayout={handleMainGridLayout}>
+              <View style={[styles.regionalMapPanel, mainPanelWidth ? { width: mainPanelWidth } : styles.mainPanelFallback]}>
                 <RadarMapCard
                   title={es ? 'Mapa de sucursales por estado' : 'Branch Map by State'}
                   subtitle={es ? 'Estados con mayor presencia hospitalaria' : 'States with the largest hospital footprint'}
@@ -163,7 +170,7 @@ export function SystemDashboard() {
                   }))}
                   showControls
                   showFooter={false}
-                  mapHeight={326}
+                  mapHeight={388}
                   fitMapToCard
                   mapCenterLatitude={23.6345}
                   mapCenterLongitude={-102.5528}
@@ -178,8 +185,8 @@ export function SystemDashboard() {
                   bottomRightActionLabel={es ? 'Expandir mapa' : 'Expand map'}
                   onBottomRightActionPress={() => setIsHospitalMapExpanded(true)}
                   legendItems={[
-                    { label: es ? 'Hospitales' : 'Hospitals', color: '#1718C7' },
-                    { label: es ? 'Menor presencia' : 'Lower footprint', color: '#DADCFB' },
+                    { label: es ? 'Hospitales' : 'Hospitals', color: AppColors.brand.action },
+                    { label: es ? 'Menor presencia' : 'Lower footprint', color: AppColors.border.brandSoft },
                   ]}
                 />
                 {/*
@@ -204,7 +211,7 @@ export function SystemDashboard() {
                 */}
               </View>
 
-              <CardBase style={[styles.panel, styles.activityPanel]}>
+              <CardBase style={[styles.panel, styles.activityPanel, mainPanelWidth ? { width: mainPanelWidth } : styles.mainPanelFallback]}>
                 <View style={styles.panelHeader}>
                   <View>
                     <Text style={styles.panelTitle}>{es ? 'Tendencia de actividad de usuarios' : 'User Activity Trend'}</Text>
@@ -219,7 +226,7 @@ export function SystemDashboard() {
                       activeOpacity={0.78}
                       onPress={() => setIsActivityExpanded(true)}
                     >
-                      <Feather name="maximize-2" size={15} color="#1718C7" />
+                      <Feather name="maximize-2" size={15} color={AppColors.brand.action} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -249,7 +256,7 @@ export function SystemDashboard() {
                       <MaterialCommunityIcons
                         name={hospital.nearbyActiveOutbreakCount > 0 ? 'radar' : 'hospital-building'}
                         size={18}
-                        color={hospital.nearbyActiveOutbreakCount > 0 ? '#B42318' : '#1718C7'}
+                        color={hospital.nearbyActiveOutbreakCount > 0 ? AppColors.status.dangerOutbreak : AppColors.brand.action}
                       />
                     </View>
                     <View style={styles.hospitalCopy}>
@@ -269,7 +276,7 @@ export function SystemDashboard() {
                         {es ? 'brotes activos cerca' : 'active outbreaks nearby'}
                       </Text>
                     </View>
-                    <Feather name="chevron-right" size={18} color="#94A3B8" />
+                    <Feather name="chevron-right" size={18} color={AppColors.text.muted} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -330,33 +337,35 @@ function ActivityTrendChart({
   const adminTotal = points.reduce((sum, point) => sum + (point.adminValue ?? 0), 0);
   const doctorTotal = points.reduce((sum, point) => sum + (point.doctorValue ?? 0), 0);
   const peak = points.reduce((current, point) => point.value > current.value ? point : current, points[0] ?? { label: '', value: 0, adminValue: 0, doctorValue: 0 });
+  const peakLabel = formatActivityPointLabel(peak, es);
 
   return (
     <View style={styles.activityWrap}>
       <View style={styles.activitySummaryRow}>
         <View style={styles.activitySummaryCard}>
-          <View style={[styles.activityDot, { backgroundColor: '#1718C7' }]} />
+          <View style={[styles.activityDot, { backgroundColor: AppColors.brand.action }]} />
           <Text style={styles.activitySummaryValue}>{adminTotal}</Text>
           <Text style={styles.activitySummaryLabel}>{es ? 'actividad admin' : 'admin activity'}</Text>
         </View>
         <View style={styles.activitySummaryCard}>
-          <View style={[styles.activityDot, { backgroundColor: '#007C89' }]} />
+          <View style={[styles.activityDot, { backgroundColor: AppColors.brand.teal }]} />
           <Text style={styles.activitySummaryValue}>{doctorTotal}</Text>
           <Text style={styles.activitySummaryLabel}>{es ? 'actividad doctores' : 'doctor activity'}</Text>
         </View>
         <View style={styles.activityPeakCard}>
           <Text style={styles.activityPeakLabel}>{es ? 'Pico semanal' : 'Weekly peak'}</Text>
           <Text style={styles.activityPeakValue}>{peak.value}</Text>
-          <Text style={styles.activityPeakDay}>{peak.label}</Text>
+          <Text style={styles.activityPeakDay}>{peakLabel.compact}</Text>
         </View>
       </View>
 
       <View style={styles.activityChart}>
         {points.map((point) => {
-          const adminHeight = Math.max(8, ((point.adminValue ?? 0) / max) * 156);
-          const doctorHeight = Math.max(8, ((point.doctorValue ?? 0) / max) * 156);
+          const adminHeight = Math.max(8, ((point.adminValue ?? 0) / max) * 148);
+          const doctorHeight = Math.max(8, ((point.doctorValue ?? 0) / max) * 148);
+          const pointLabel = formatActivityPointLabel(point, es);
           return (
-            <View key={point.label} style={styles.activityDay}>
+            <View key={point.date ?? point.label} style={styles.activityDay}>
               <Text style={styles.activityDayTotal}>{point.value}</Text>
               <View style={styles.activityColumnPair}>
                 <View style={styles.activityMiniColumnWrap}>
@@ -370,17 +379,54 @@ function ActivityTrendChart({
                 <Text style={styles.activitySplitText}>{point.adminValue ?? 0}</Text>
                 <Text style={styles.activitySplitText}>{point.doctorValue ?? 0}</Text>
               </View>
-              <Text style={styles.barLabel}>{point.label}</Text>
+              <Text style={styles.activityDateLabel}>{pointLabel.date}</Text>
+              <Text style={styles.barLabel}>{pointLabel.weekday}</Text>
             </View>
           );
         })}
       </View>
       <View style={styles.activityLegend}>
-        <View style={styles.activityLegendItem}><View style={[styles.activityLegendSwatch, { backgroundColor: '#1718C7' }]} /><Text style={styles.activityLegendText}>{es ? 'Administradores' : 'Administrators'}</Text></View>
-        <View style={styles.activityLegendItem}><View style={[styles.activityLegendSwatch, { backgroundColor: '#007C89' }]} /><Text style={styles.activityLegendText}>{es ? 'Doctores' : 'Doctors'}</Text></View>
+        <View style={styles.activityLegendItem}><View style={[styles.activityLegendSwatch, { backgroundColor: AppColors.brand.action }]} /><Text style={styles.activityLegendText}>{es ? 'Administradores' : 'Administrators'}</Text></View>
+        <View style={styles.activityLegendItem}><View style={[styles.activityLegendSwatch, { backgroundColor: AppColors.brand.teal }]} /><Text style={styles.activityLegendText}>{es ? 'Doctores' : 'Doctors'}</Text></View>
       </View>
     </View>
   );
+}
+
+function activityPointDate(point: SystemDashboardSummaryResponse['userActivity'][number]) {
+  if (!point.date) return null;
+  const [year, month, day] = point.date.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function formatActivityPointLabel(
+  point: SystemDashboardSummaryResponse['userActivity'][number],
+  es: boolean,
+) {
+  const date = activityPointDate(point);
+  if (!date) {
+    return {
+      weekday: point.label,
+      date: point.label,
+      compact: point.label,
+      full: point.label,
+    };
+  }
+  const locale = es ? 'es-MX' : 'en-US';
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' })
+    .format(date)
+    .replace('.', '')
+    .toUpperCase();
+  const dateLabel = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' })
+    .format(date)
+    .replace('.', '');
+  return {
+    weekday,
+    date: dateLabel,
+    compact: `${weekday} · ${dateLabel}`,
+    full: `${weekday} ${dateLabel}`,
+  };
 }
 
 function MetricCard({ metric, es }: { metric: SystemMetricResponse; es: boolean }) {
@@ -428,7 +474,7 @@ function HospitalOutbreakModal({
 }) {
   if (!hospital) return null;
   const topOutbreaks = hospital.nearbyOutbreaks ?? [];
-  const alertTone = hospital.nearbyActiveOutbreakCount > 0 ? '#B42318' : '#1718C7';
+  const alertTone = hospital.nearbyActiveOutbreakCount > 0 ? AppColors.status.dangerOutbreak : AppColors.brand.action;
   const locationText = [hospital.municipalityName, hospital.stateName].filter(Boolean).join(', ');
 
   return (
@@ -453,7 +499,7 @@ function HospitalOutbreakModal({
               ) : null}
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -469,13 +515,13 @@ function HospitalOutbreakModal({
                 label={es ? 'Radio' : 'Radius'}
                 value={`${hospital.radiusKm} km`}
                 detail={es ? 'desde el hospital' : 'from the hospital'}
-                accent="#1718C7"
+                accent={AppColors.brand.action}
               />
               <ModalStat
                 label={es ? 'Codigo' : 'Code'}
                 value={hospital.code}
                 detail={hospital.active ? (es ? 'hospital activo' : 'active hospital') : (es ? 'hospital inactivo' : 'inactive hospital')}
-                accent="#007C89"
+                accent={AppColors.brand.teal}
               />
             </View>
 
@@ -493,7 +539,7 @@ function HospitalOutbreakModal({
                   <OutbreakInsightRow key={outbreak.id ?? `${outbreak.diseaseName}-${index}`} outbreak={outbreak} index={index} es={es} />
                 )) : (
                   <View style={styles.emptyInsight}>
-                    <Feather name="check-circle" size={20} color="#1718C7" />
+                    <Feather name="check-circle" size={20} color={AppColors.brand.action} />
                     <Text style={styles.emptyInsightText}>
                       {es
                         ? 'No hay brotes municipales activos dentro del radio de 35 km.'
@@ -541,8 +587,8 @@ function HospitalMapExpandedModal({
     return {
       id: boundary.id,
       geometry: boundary.geometry,
-      fillColor: hasHospitals ? 'rgba(23, 24, 199, 0.05)' : 'rgba(100, 116, 139, 0.04)',
-      strokeColor: hasHospitals ? 'rgba(23, 24, 199, 0.62)' : 'rgba(100, 116, 139, 0.24)',
+      fillColor: hasHospitals ? withAlpha(AppColors.brand.action, 0.05) : withAlpha(AppColors.text.secondary, 0.04),
+      strokeColor: hasHospitals ? withAlpha(AppColors.brand.action, 0.62) : withAlpha(AppColors.text.secondary, 0.24),
       strokeWidth: hasHospitals ? 1.3 : 1,
     };
   }), [stateNamesWithHospitals]);
@@ -551,8 +597,8 @@ function HospitalMapExpandedModal({
       ? [{
         id: selectedState.id,
         geometry: selectedState.geometry,
-        fillColor: 'rgba(23, 24, 199, 0.06)',
-        strokeColor: '#1718C7',
+        fillColor: withAlpha(AppColors.brand.action, 0.06),
+        strokeColor: AppColors.brand.action,
         strokeWidth: 2,
       }]
       : []
@@ -565,10 +611,10 @@ function HospitalMapExpandedModal({
         id: `state-${boundary.id}`,
         latitude: center.latitude,
         longitude: center.longitude,
-        borderColor: '#0003B8',
-        fillColor: '#FFFFFF',
+        borderColor: AppColors.brand.primary,
+        fillColor: AppColors.surface.card,
         label: shortStateName(boundary.name),
-        icon: <Feather name="map-pin" size={13} color="#0003B8" />,
+        icon: <Feather name="map-pin" size={13} color={AppColors.brand.primary} />,
         onPress: () => setSelectedState(boundary),
       };
     }), [stateNamesWithHospitals]);
@@ -580,14 +626,13 @@ function HospitalMapExpandedModal({
         id: hospital.id,
         latitude: hospital.latitude,
         longitude: hospital.longitude,
-        borderColor: hasOutbreaks ? '#B42318' : '#1718C7',
-        fillColor: hasOutbreaks ? '#FEF3F2' : '#EEF1FF',
-        label: hospital.name,
+        borderColor: hasOutbreaks ? AppColors.status.dangerOutbreak : AppColors.brand.action,
+        fillColor: hasOutbreaks ? AppColors.status.dangerWash : AppColors.surface.brandSoft,
         icon: (
           <MaterialCommunityIcons
             name="hospital-box-outline"
             size={12}
-            color="#0003B8"
+            color={AppColors.brand.primary}
           />
         ),
         onPress: () => onHospitalPress(hospital),
@@ -616,12 +661,12 @@ function HospitalMapExpandedModal({
             <View style={styles.mapDialogActions}>
               {selectedState ? (
                 <TouchableOpacity style={styles.mapBackButton} activeOpacity={0.75} onPress={() => setSelectedState(null)}>
-                  <Feather name="arrow-left" size={16} color="#1718C7" />
+                  <Feather name="arrow-left" size={16} color={AppColors.brand.action} />
                   <Text style={styles.mapBackText}>{es ? 'Estados' : 'States'}</Text>
                 </TouchableOpacity>
               ) : null}
               <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -648,8 +693,8 @@ function HospitalMapExpandedModal({
               pins={pins}
               polygons={polygons}
               legendItems={[
-                { label: selectedState ? (es ? 'Silueta del estado' : 'State outline') : (es ? 'Estado con hospitales' : 'State with hospitals'), color: '#1718C7' },
-                { label: es ? 'Hospital registrado' : 'Registered hospital', color: '#0003B8' },
+                { label: selectedState ? (es ? 'Silueta del estado' : 'State outline') : (es ? 'Estado con hospitales' : 'State with hospitals'), color: AppColors.brand.action },
+                { label: es ? 'Hospital registrado' : 'Registered hospital', color: AppColors.brand.primary },
               ]}
             />
           </View>
@@ -694,7 +739,7 @@ function MetricInfoModal({
               <Text style={styles.dialogSubtitle}>{detail}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
           <View style={styles.metricDialogBody}>
@@ -760,7 +805,7 @@ function ActivityDetailModal({
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -804,10 +849,10 @@ function ActivityDetailModal({
                   <Text style={styles.hospitalMetricDetailEyebrow}>{es ? 'Detalle seleccionado' : 'Selected Detail'}</Text>
                   <Text style={styles.hospitalMetricDetailTitle}>{activeHospital.hospitalName}</Text>
                   <View style={styles.hospitalMetricStatsGrid}>
-                    <ModalStat label={es ? 'Usuarios totales' : 'Total Users'} value={`${activeHospital.totalUsers}`} detail={es ? 'cuentas asignadas' : 'assigned accounts'} accent="#1718C7" />
-                    <ModalStat label={es ? 'Usuarios activos' : 'Active Users'} value={`${activeHospital.activeUsers}`} detail={es ? 'con acceso vigente' : 'currently enabled'} accent="#007C89" />
-                    <ModalStat label={es ? 'Doctores' : 'Doctors'} value={`${activeHospital.doctorUsers}`} detail={es ? 'personal medico' : 'medical staff'} accent="#0E7490" />
-                    <ModalStat label={es ? 'Administradores' : 'Administrators'} value={`${activeHospital.adminUsers}`} detail={es ? 'gestion hospitalaria' : 'hospital management'} accent="#5B21B6" />
+                    <ModalStat label={es ? 'Usuarios totales' : 'Total Users'} value={`${activeHospital.totalUsers}`} detail={es ? 'cuentas asignadas' : 'assigned accounts'} accent={AppColors.brand.action} />
+                    <ModalStat label={es ? 'Usuarios activos' : 'Active Users'} value={`${activeHospital.activeUsers}`} detail={es ? 'con acceso vigente' : 'currently enabled'} accent={AppColors.brand.teal} />
+                    <ModalStat label={es ? 'Doctores' : 'Doctors'} value={`${activeHospital.doctorUsers}`} detail={es ? 'personal medico' : 'medical staff'} accent={AppColors.status.cyanDark} />
+                    <ModalStat label={es ? 'Administradores' : 'Administrators'} value={`${activeHospital.adminUsers}`} detail={es ? 'gestion hospitalaria' : 'hospital management'} accent={AppColors.brand.purple} />
                   </View>
                   <View style={styles.inactiveStrip}>
                     <Text style={styles.inactiveStripLabel}>{es ? 'Usuarios inactivos o pendientes' : 'Inactive or pending users'}</Text>
@@ -816,7 +861,7 @@ function ActivityDetailModal({
                 </>
               ) : (
                 <View style={styles.emptyInsight}>
-                  <Feather name="info" size={20} color="#1718C7" />
+                  <Feather name="info" size={20} color={AppColors.brand.action} />
                   <Text style={styles.emptyInsightText}>{es ? 'Aun no hay hospitales con usuarios asignados.' : 'There are no hospitals with assigned users yet.'}</Text>
                 </View>
               )}
@@ -886,7 +931,7 @@ function SystemReportOverlay({
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -895,13 +940,13 @@ function SystemReportOverlay({
               <PdfPreviewFrame url={previewUrl} title={es ? 'Vista previa del reporte' : 'Report preview'} />
             ) : (
               <View style={styles.reportPreviewFallback}>
-                <Feather name="file-text" size={24} color="#1718C7" />
+                <Feather name="file-text" size={24} color={AppColors.brand.action} />
                 <Text style={styles.reportPreviewFallbackText}>{es ? 'La vista previa no esta disponible.' : 'Preview is not available.'}</Text>
               </View>
             )}
 
             <TouchableOpacity style={styles.reportDownloadButton} activeOpacity={0.82} onPress={handleDownload} disabled={!previewPdf}>
-              <Feather name="download" size={18} color="#FFFFFF" />
+              <Feather name="download" size={18} color={AppColors.surface.card} />
               <Text style={styles.reportDownloadButtonText}>{es ? 'Descargar reporte' : 'Download report'}</Text>
             </TouchableOpacity>
           </View>
@@ -919,7 +964,7 @@ function PdfPreviewFrame({ url, title }: { url: string; title: string }) {
       width: '100%',
       height: '100%',
       border: '0',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: AppColors.surface.card,
     },
   });
 }
@@ -973,42 +1018,47 @@ function DashboardSkeleton() {
         ))}
       </View>
       <View style={styles.mainGrid}>
-        <CardBase style={[styles.panel, styles.regionalMapPanel, styles.skeletonTall]}>
+        <CardBase style={[styles.panel, styles.skeletonMainPanel]}>
           <View style={styles.skeletonPanelTitle} />
           <View style={styles.skeletonMapBlob} />
         </CardBase>
-        <CardBase style={[styles.panel, styles.activityPanel, styles.skeletonTall]}>
-          <View style={styles.skeletonPanelTitle} />
+        <CardBase style={[styles.panel, styles.skeletonMainPanel]}>
+          <View style={styles.skeletonHeaderRow}>
+            <View>
+              <View style={styles.skeletonPanelTitle} />
+              <View style={styles.skeletonPanelSubtitle} />
+            </View>
+            <View style={styles.skeletonPill} />
+          </View>
+          <View style={styles.skeletonSummaryRow}>
+            <View style={styles.skeletonSummaryCard} />
+            <View style={styles.skeletonSummaryCard} />
+            <View style={styles.skeletonPeakCard} />
+          </View>
           <View style={styles.skeletonChartRow}>
             {Array.from({ length: 7 }).map((_, index) => <View key={index} style={[styles.skeletonChartBar, { height: 70 + index * 12 }]} />)}
           </View>
         </CardBase>
       </View>
-      <CardBase style={[styles.panel, styles.skeletonEvents]}>
-        <View style={styles.skeletonPanelTitle} />
-        <View style={styles.skeletonListLine} />
-        <View style={styles.skeletonListLine} />
-        <View style={styles.skeletonListLine} />
-      </CardBase>
     </>
   );
 }
 
 function metricPalette(metric: SystemMetricResponse) {
   const status = metric.status?.toLowerCase();
-  if (status === 'critical') return { accent: '#B42318', border: 'rgba(180, 35, 24, 0.24)' };
-  if (status === 'warning') return { accent: '#B54708', border: 'rgba(181, 71, 8, 0.26)' };
-  if (metric.id === 'users') return { accent: '#007C89', border: 'rgba(0, 124, 137, 0.22)' };
-  if (metric.id === 'ai') return { accent: '#5B21B6', border: 'rgba(91, 33, 182, 0.22)' };
-  return { accent: '#1718C7', border: 'rgba(23, 24, 199, 0.20)' };
+  if (status === 'critical') return { accent: AppColors.status.dangerOutbreak, border: withAlpha(AppColors.status.dangerOutbreak, 0.24) };
+  if (status === 'warning') return { accent: AppColors.status.warningDark, border: withAlpha(AppColors.status.warningDark, 0.26) };
+  if (metric.id === 'users') return { accent: AppColors.brand.teal, border: withAlpha(AppColors.brand.teal, 0.22) };
+  if (metric.id === 'ai') return { accent: AppColors.brand.purple, border: withAlpha(AppColors.brand.purple, 0.22) };
+  return { accent: AppColors.brand.action, border: withAlpha(AppColors.brand.action, 0.20) };
 }
 
 function severityTone(severity: string) {
   const normalized = severity.toUpperCase();
-  if (normalized === 'CRITICAL') return '#B42318';
+  if (normalized === 'CRITICAL') return AppColors.status.dangerOutbreak;
   if (normalized === 'HIGH') return '#C2410C';
-  if (normalized === 'MEDIUM') return '#B54708';
-  return '#007C89';
+  if (normalized === 'MEDIUM') return AppColors.status.warningDark;
+  return AppColors.brand.teal;
 }
 
 function localizeSeverity(severity: string, es: boolean) {
@@ -1021,10 +1071,10 @@ function localizeSeverity(severity: string, es: boolean) {
 }
 
 function regionalFillColor(intensity: number) {
-  if (intensity >= 0.8) return 'rgba(23, 24, 199, 0.78)';
-  if (intensity >= 0.55) return 'rgba(23, 24, 199, 0.52)';
-  if (intensity > 0) return 'rgba(23, 24, 199, 0.28)';
-  return 'rgba(218, 220, 251, 0.42)';
+  if (intensity >= 0.8) return withAlpha(AppColors.brand.action, 0.78);
+  if (intensity >= 0.55) return withAlpha(AppColors.brand.action, 0.52);
+  if (intensity > 0) return withAlpha(AppColors.brand.action, 0.28);
+  return withAlpha(AppColors.border.brandSoft, 0.42);
 }
 
 function shortStateName(name: string): string {
@@ -1168,7 +1218,7 @@ function buildSystemReportPdf(summary: SystemDashboardSummaryResponse, es: boole
     [es ? 'Dia' : 'Day', es ? 'Total' : 'Total', es ? 'Admins' : 'Admins', es ? 'Doctores' : 'Doctors'],
     [160, 90, 120, 146],
     summary.userActivity.map((point) => [
-      point.label,
+      formatActivityPointLabel(point, es).full,
       formatPdfNumber(point.value),
       formatPdfNumber(point.adminValue ?? 0),
       formatPdfNumber(point.doctorValue ?? 0),
@@ -1432,27 +1482,27 @@ function wrapPdfText(value: string, maxChars: number) {
 const styles = StyleSheet.create({
   contentContainer: { padding: 32, gap: 24 },
   hero: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     padding: 28,
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 20,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.05,
     shadowRadius: 28,
     elevation: 2,
   },
   heroCopy: { flex: 1, minWidth: 0 },
-  eyebrow: { fontSize: 13, fontWeight: '800', color: '#1718C7', textTransform: 'uppercase', letterSpacing: 0 },
-  title: { marginTop: 8, fontSize: 30, lineHeight: 38, fontWeight: '900', color: '#0F172A' },
-  subtitle: { marginTop: 6, fontSize: 16, lineHeight: 24, color: '#64748B', maxWidth: 760 },
+  eyebrow: { fontSize: 13, fontWeight: '800', color: AppColors.brand.action, textTransform: 'uppercase', letterSpacing: 0 },
+  title: { marginTop: 8, fontSize: 30, lineHeight: 38, fontWeight: '900', color: AppColors.text.primary },
+  subtitle: { marginTop: 6, fontSize: 16, lineHeight: 24, color: AppColors.text.secondary, maxWidth: 760 },
   heroActions: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
-  metricsGrid: { flexDirection: 'row', gap: 14, flexWrap: 'wrap' },
-  metricTouchable: { flex: 1, minWidth: 220 },
+  metricsGrid: { width: '100%', flexDirection: 'row', gap: 14, flexWrap: 'wrap' },
+  metricTouchable: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 220 },
   metricCard: {
     flex: 1,
     minWidth: 220,
@@ -1461,39 +1511,40 @@ const styles = StyleSheet.create({
     paddingTop: 22,
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     shadowOpacity: 0.10,
   },
   metricAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 5 },
   metricHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18, gap: 12 },
-  metricTitle: { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '700', color: '#64748B' },
+  metricTitle: { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '700', color: AppColors.text.secondary },
   metricBadgePill: { flexShrink: 0, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5 },
   metricBadge: { fontSize: 11, lineHeight: 14, fontWeight: '800' },
   metricValueRow: { flexDirection: 'row', alignItems: 'center', minHeight: 54 },
   metricIconBox: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  metricValue: { flex: 1, minWidth: 0, fontSize: 30, lineHeight: 36, fontWeight: '900', color: '#0F172A' },
-  metricDetail: { marginTop: 12, fontSize: 12, lineHeight: 18, color: '#64748B' },
-  mainGrid: { flexDirection: 'row', gap: 16, alignItems: 'stretch' },
-  panel: { borderRadius: 18, padding: 24, backgroundColor: '#FFFFFF' },
-  activityPanel: { flex: 1, minWidth: 360 },
+  metricValue: { flex: 1, minWidth: 0, fontSize: 30, lineHeight: 36, fontWeight: '900', color: AppColors.text.primary },
+  metricDetail: { marginTop: 12, fontSize: 12, lineHeight: 18, color: AppColors.text.secondary },
+  mainGrid: { width: '100%', minHeight: 520, flexDirection: 'row', gap: 14, alignItems: 'stretch' },
+  mainPanelFallback: { flex: 1 },
+  panel: { borderRadius: 18, padding: 24, backgroundColor: AppColors.surface.card },
+  activityPanel: { flexGrow: 0, flexShrink: 0, minWidth: 0, justifyContent: 'space-between' },
   regionalPanel: { flex: 1, minWidth: 280 },
-  regionalMapPanel: { flex: 1, minWidth: 360, gap: 12 },
+  regionalMapPanel: { flexGrow: 0, flexShrink: 0, minWidth: 0, gap: 12 },
   panelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 },
   panelHeaderActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  panelTitle: { fontSize: 17, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
-  panelSubtitle: { marginTop: 4, fontSize: 12, lineHeight: 18, fontWeight: '600', color: '#64748B' },
-  rangePill: { borderWidth: 1, borderColor: '#DADCFB', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#F6F7FF' },
-  rangeText: { fontSize: 12, fontWeight: '800', color: '#1718C7' },
-  expandButton: { width: 34, height: 34, borderRadius: 12, borderWidth: 1, borderColor: '#DADCFB', backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  activityWrap: { marginTop: 20, gap: 18 },
+  panelTitle: { fontSize: 17, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
+  panelSubtitle: { marginTop: 4, fontSize: 12, lineHeight: 18, fontWeight: '600', color: AppColors.text.secondary },
+  rangePill: { borderWidth: 1, borderColor: AppColors.border.brandSoft, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: AppColors.surface.brandWash },
+  rangeText: { fontSize: 12, fontWeight: '800', color: AppColors.brand.action },
+  expandButton: { width: 34, height: 34, borderRadius: 12, borderWidth: 1, borderColor: AppColors.border.brandSoft, backgroundColor: AppColors.surface.card, alignItems: 'center', justifyContent: 'center' },
+  activityWrap: { marginTop: 18, gap: 18, flex: 1 },
   activitySummaryRow: { flexDirection: 'row', gap: 10 },
   activitySummaryCard: {
     flex: 1,
     minHeight: 76,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.soft,
+    backgroundColor: AppColors.surface.subtle,
     padding: 12,
   },
   activityPeakCard: {
@@ -1501,197 +1552,202 @@ const styles = StyleSheet.create({
     minHeight: 76,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#DADCFB',
-    backgroundColor: '#F6F7FF',
+    borderColor: AppColors.border.brandSoft,
+    backgroundColor: AppColors.surface.brandWash,
     padding: 12,
   },
   activityDot: { width: 8, height: 8, borderRadius: 999, marginBottom: 8 },
-  activitySummaryValue: { fontSize: 22, lineHeight: 26, fontWeight: '900', color: '#0F172A' },
-  activitySummaryLabel: { marginTop: 2, fontSize: 11, lineHeight: 14, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
-  activityPeakLabel: { fontSize: 11, lineHeight: 14, fontWeight: '800', color: '#64748B', textTransform: 'uppercase' },
-  activityPeakValue: { marginTop: 7, fontSize: 24, lineHeight: 28, fontWeight: '900', color: '#1718C7' },
-  activityPeakDay: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: '900', color: '#64748B' },
-  activityChart: { height: 218, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 },
-  activityDay: { flex: 1, alignItems: 'center', gap: 8 },
-  activityDayTotal: { fontSize: 12, lineHeight: 16, fontWeight: '900', color: '#0F172A' },
-  activityColumnPair: { height: 160, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 5 },
-  activityMiniColumnWrap: { width: 15, height: 160, justifyContent: 'flex-end', borderRadius: 999, backgroundColor: '#EEF2F7', overflow: 'hidden' },
+  activitySummaryValue: { fontSize: 22, lineHeight: 26, fontWeight: '900', color: AppColors.text.primary },
+  activitySummaryLabel: { marginTop: 2, fontSize: 11, lineHeight: 14, fontWeight: '800', color: AppColors.text.secondary, textTransform: 'uppercase' },
+  activityPeakLabel: { fontSize: 11, lineHeight: 14, fontWeight: '800', color: AppColors.text.secondary, textTransform: 'uppercase' },
+  activityPeakValue: { marginTop: 7, fontSize: 24, lineHeight: 28, fontWeight: '900', color: AppColors.brand.action },
+  activityPeakDay: { marginTop: 1, fontSize: 12, lineHeight: 16, fontWeight: '900', color: AppColors.text.secondary },
+  activityChart: { minHeight: 248, marginTop: 10, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 },
+  activityDay: { flex: 1, alignItems: 'center', gap: 7 },
+  activityDayTotal: { fontSize: 12, lineHeight: 16, fontWeight: '900', color: AppColors.text.primary },
+  activityColumnPair: { height: 152, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 5 },
+  activityMiniColumnWrap: { width: 15, height: 152, justifyContent: 'flex-end', borderRadius: 999, backgroundColor: AppColors.border.soft, overflow: 'hidden' },
   activityColumn: {
     width: '100%',
     minHeight: 8,
     borderRadius: 999,
   },
-  adminSegment: { backgroundColor: '#1718C7' },
-  doctorSegment: { backgroundColor: '#007C89' },
+  adminSegment: { backgroundColor: AppColors.brand.action },
+  doctorSegment: { backgroundColor: AppColors.brand.teal },
   activityDaySplit: { flexDirection: 'row', gap: 4 },
-  activitySplitText: { minWidth: 18, textAlign: 'center', fontSize: 10, lineHeight: 12, fontWeight: '800', color: '#64748B' },
+  activitySplitText: { minWidth: 18, textAlign: 'center', fontSize: 10, lineHeight: 12, fontWeight: '800', color: AppColors.text.secondary },
+  activityDateLabel: { marginTop: -2, fontSize: 10, lineHeight: 12, fontWeight: '900', color: AppColors.text.secondary, textTransform: 'uppercase' },
   activityLegend: { flexDirection: 'row', gap: 16, justifyContent: 'center', flexWrap: 'wrap' },
   activityLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   activityLegendSwatch: { width: 10, height: 10, borderRadius: 999 },
-  activityLegendText: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#64748B' },
+  activityLegendText: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.text.secondary },
   chart: { height: 260, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingTop: 28, gap: 10 },
   barSlot: { flex: 1, alignItems: 'center', gap: 8 },
-  barTrack: { width: 34, height: 160, borderRadius: 999, backgroundColor: '#EEF2F7', justifyContent: 'flex-end', overflow: 'hidden' },
-  bar: { width: '100%', borderRadius: 999, backgroundColor: '#1718C7' },
-  barValue: { fontSize: 12, lineHeight: 16, fontWeight: '900', color: '#0F172A' },
-  barLabel: { fontSize: 11, fontWeight: '800', color: '#94A3B8' },
+  barTrack: { width: 34, height: 160, borderRadius: 999, backgroundColor: AppColors.border.soft, justifyContent: 'flex-end', overflow: 'hidden' },
+  bar: { width: '100%', borderRadius: 999, backgroundColor: AppColors.brand.action },
+  barValue: { fontSize: 12, lineHeight: 16, fontWeight: '900', color: AppColors.text.primary },
+  barLabel: { fontSize: 11, fontWeight: '800', color: AppColors.text.muted },
   regionList: { marginTop: 24, gap: 18 },
   regionItem: { gap: 8 },
   regionHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-  regionLabel: { fontSize: 13, fontWeight: '700', color: '#475569' },
-  regionPercent: { fontSize: 13, fontWeight: '900', color: '#0F172A' },
-  track: { height: 8, borderRadius: 999, backgroundColor: '#EEF2F7', overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 999, backgroundColor: '#1718C7' },
-  mapLegendCard: { borderRadius: 18, padding: 16, backgroundColor: '#FFFFFF' },
-  mapLegendTitle: { fontSize: 13, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
+  regionLabel: { fontSize: 13, fontWeight: '700', color: AppColors.text.body },
+  regionPercent: { fontSize: 13, fontWeight: '900', color: AppColors.text.primary },
+  track: { height: 8, borderRadius: 999, backgroundColor: AppColors.border.soft, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: 999, backgroundColor: AppColors.brand.action },
+  mapLegendCard: { borderRadius: 18, padding: 16, backgroundColor: AppColors.surface.card },
+  mapLegendTitle: { fontSize: 13, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
   mapLegendList: { marginTop: 10, gap: 8 },
   mapLegendRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   mapLegendRank: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  mapLegendRankText: { fontSize: 12, lineHeight: 16, fontWeight: '900', color: '#FFFFFF' },
+  mapLegendRankText: { fontSize: 12, lineHeight: 16, fontWeight: '900', color: AppColors.surface.card },
   mapLegendCopy: { flex: 1, minWidth: 0 },
-  mapLegendState: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: '#0F172A' },
-  mapLegendMeta: { marginTop: 2, fontSize: 11, lineHeight: 14, fontWeight: '700', color: '#64748B' },
-  linkText: { fontSize: 13, fontWeight: '900', color: '#1718C7' },
+  mapLegendState: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: AppColors.text.primary },
+  mapLegendMeta: { marginTop: 2, fontSize: 11, lineHeight: 14, fontWeight: '700', color: AppColors.text.secondary },
+  linkText: { fontSize: 13, fontWeight: '900', color: AppColors.brand.action },
   hospitalList: { marginTop: 14, gap: 10 },
   hospitalRow: {
     minHeight: 76,
     borderRadius: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
+    borderColor: AppColors.border.soft,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
   hospitalIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F1FF' },
-  hospitalIconAlert: { backgroundColor: '#FEF3F2' },
+  hospitalIconAlert: { backgroundColor: AppColors.status.dangerWash },
   hospitalCopy: { flex: 1, minWidth: 0 },
-  hospitalName: { color: '#0F172A', fontWeight: '900', fontSize: 14, lineHeight: 18 },
-  hospitalDetail: { marginTop: 4, color: '#64748B', fontSize: 12, lineHeight: 16, fontWeight: '600' },
+  hospitalName: { color: AppColors.text.primary, fontWeight: '900', fontSize: 14, lineHeight: 18 },
+  hospitalDetail: { marginTop: 4, color: AppColors.text.secondary, fontSize: 12, lineHeight: 16, fontWeight: '600' },
   outbreakSummary: { alignItems: 'flex-end', minWidth: 160 },
   outbreakCount: { fontSize: 22, lineHeight: 26, fontWeight: '900' },
-  outbreakCountAlert: { color: '#B42318' },
-  outbreakCountQuiet: { color: '#1718C7' },
-  outbreakLabel: { marginTop: 2, color: '#64748B', fontSize: 11, lineHeight: 14, fontWeight: '800', textAlign: 'right' },
+  outbreakCountAlert: { color: AppColors.status.dangerOutbreak },
+  outbreakCountQuiet: { color: AppColors.brand.action },
+  outbreakLabel: { marginTop: 2, color: AppColors.text.secondary, fontSize: 11, lineHeight: 14, fontWeight: '800', textAlign: 'right' },
   modalOverlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.76)' },
+  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: AppColors.modal.backdropStrong },
   mapModalOverlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 14 },
   mapDialog: {
     width: '100%',
     maxWidth: 1520,
     maxHeight: '96%',
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.14,
     shadowRadius: 36,
     elevation: 8,
   },
-  mapDialogHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 22, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#EEF2F7' },
+  mapDialogHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 22, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft },
   mapDialogActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  mapBackButton: { height: 40, borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: 'rgba(23, 24, 199, 0.14)', backgroundColor: '#F8FAFC', flexDirection: 'row', alignItems: 'center', gap: 8 },
-  mapBackText: { fontSize: 13, lineHeight: 16, fontWeight: '800', color: '#1718C7' },
+  mapBackButton: { height: 40, borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: withAlpha(AppColors.brand.action, 0.14), backgroundColor: AppColors.surface.subtle, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  mapBackText: { fontSize: 13, lineHeight: 16, fontWeight: '800', color: AppColors.brand.action },
   mapDialogBody: { padding: 18, flex: 1 },
-  mapStateBar: { minHeight: 64, borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC', padding: 14, marginBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  mapStateBar: { minHeight: 64, borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.subtle, padding: 14, marginBottom: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   mapStateCopy: { flex: 1, minWidth: 0 },
-  mapStateLabel: { fontSize: 11, lineHeight: 14, fontWeight: '900', color: '#8A9AAF', textTransform: 'uppercase' },
-  mapStateValue: { marginTop: 4, fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#0F172A' },
+  mapStateLabel: { fontSize: 11, lineHeight: 14, fontWeight: '900', color: AppColors.text.muted, textTransform: 'uppercase' },
+  mapStateValue: { marginTop: 4, fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.text.primary },
   dialog: { width: '100%', maxWidth: 760, maxHeight: '90%', borderRadius: 24, padding: 0, overflow: 'hidden' },
   metricDialog: { width: '100%', maxWidth: 720, maxHeight: '86%', borderRadius: 24, padding: 0, overflow: 'hidden' },
   activityDialog: { width: '100%', maxWidth: 1280, maxHeight: '94%', borderRadius: 24, padding: 0, overflow: 'hidden' },
-  dialogHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: '#EEF2F7' },
+  dialogHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: 18, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft },
   dialogHeaderCopy: { flex: 1, minWidth: 0 },
-  dialogEyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#1718C7', textTransform: 'uppercase', letterSpacing: 0 },
-  dialogTitle: { marginTop: 8, fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
-  dialogSubtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
+  dialogEyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.brand.action, textTransform: 'uppercase', letterSpacing: 0 },
+  dialogTitle: { marginTop: 8, fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
+  dialogSubtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: AppColors.text.soft },
   locationPill: { alignSelf: 'flex-start', marginTop: 12, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  locationText: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: '#0F172A' },
-  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  locationText: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: AppColors.text.primary },
+  closeButton: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: AppColors.border.default },
   dialogBody: { padding: 24, gap: 20 },
   metricDialogBody: { padding: 24, gap: 18 },
-  kpiInsightCard: { borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC', padding: 18, flexDirection: 'row', gap: 14 },
+  kpiInsightCard: { borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.subtle, padding: 18, flexDirection: 'row', gap: 14 },
   kpiInsightIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   kpiInsightCopy: { flex: 1, minWidth: 0 },
-  kpiInsightTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
-  kpiInsightText: { marginTop: 7, fontSize: 13, lineHeight: 21, fontWeight: '600', color: '#526174' },
+  kpiInsightTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
+  kpiInsightText: { marginTop: 7, fontSize: 13, lineHeight: 21, fontWeight: '600', color: AppColors.text.body },
   activityDialogBody: { padding: 18, flexDirection: 'row', gap: 16, minHeight: 650 },
-  activityDetailChartPanel: { flex: 1.35, minWidth: 430, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', padding: 18 },
+  activityDetailChartPanel: { flex: 1.35, minWidth: 430, borderRadius: 20, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, padding: 18 },
   activityDetailPanelHeader: { marginBottom: 12 },
-  activityDetailPanelTitle: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#0F172A' },
-  activityDetailPanelSubtitle: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '700', color: '#64748B' },
-  hospitalMetricListPanel: { flex: 1, minWidth: 480, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', padding: 18 },
+  activityDetailPanelTitle: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.text.primary },
+  activityDetailPanelSubtitle: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '700', color: AppColors.text.secondary },
+  hospitalMetricListPanel: { flex: 1, minWidth: 480, borderRadius: 20, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, padding: 18 },
   hospitalMetricList: { maxHeight: 560 },
   hospitalMetricListContent: { gap: 10, paddingBottom: 4 },
-  hospitalMetricRow: { minHeight: 74, borderRadius: 16, borderWidth: 1, borderColor: '#EEF2F7', backgroundColor: '#F8FAFC', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  hospitalMetricRowActive: { borderColor: 'rgba(23, 24, 199, 0.28)', backgroundColor: '#F6F7FF' },
-  hospitalMetricRank: { width: 34, height: 34, borderRadius: 11, backgroundColor: '#EEF2F7', alignItems: 'center', justifyContent: 'center' },
-  hospitalMetricRankActive: { backgroundColor: '#1718C7' },
-  hospitalMetricRankText: { fontSize: 13, lineHeight: 16, fontWeight: '900', color: '#64748B' },
-  hospitalMetricRankTextActive: { color: '#FFFFFF' },
+  hospitalMetricRow: { minHeight: 74, borderRadius: 16, borderWidth: 1, borderColor: AppColors.border.soft, backgroundColor: AppColors.surface.subtle, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  hospitalMetricRowActive: { borderColor: withAlpha(AppColors.brand.action, 0.28), backgroundColor: AppColors.surface.brandWash },
+  hospitalMetricRank: { width: 34, height: 34, borderRadius: 11, backgroundColor: AppColors.border.soft, alignItems: 'center', justifyContent: 'center' },
+  hospitalMetricRankActive: { backgroundColor: AppColors.brand.action },
+  hospitalMetricRankText: { fontSize: 13, lineHeight: 16, fontWeight: '900', color: AppColors.text.secondary },
+  hospitalMetricRankTextActive: { color: AppColors.surface.card },
   hospitalMetricCopy: { flex: 1, minWidth: 0 },
-  hospitalMetricName: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
-  hospitalMetricPlace: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
-  hospitalMetricTotal: { fontSize: 20, lineHeight: 24, fontWeight: '900', color: '#1718C7' },
-  hospitalMetricDetailPanel: { flex: 1, minWidth: 480, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', padding: 20 },
-  hospitalMetricDetailEyebrow: { fontSize: 11, lineHeight: 14, fontWeight: '900', color: '#1718C7', textTransform: 'uppercase' },
-  hospitalMetricDetailTitle: { marginTop: 8, fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
+  hospitalMetricName: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
+  hospitalMetricPlace: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
+  hospitalMetricTotal: { fontSize: 20, lineHeight: 24, fontWeight: '900', color: AppColors.brand.action },
+  hospitalMetricDetailPanel: { flex: 1, minWidth: 480, borderRadius: 20, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, padding: 20 },
+  hospitalMetricDetailEyebrow: { fontSize: 11, lineHeight: 14, fontWeight: '900', color: AppColors.brand.action, textTransform: 'uppercase' },
+  hospitalMetricDetailTitle: { marginTop: 8, fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
   hospitalMetricStatsGrid: { marginTop: 18, flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  inactiveStrip: { marginTop: 16, minHeight: 58, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC', paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  inactiveStripLabel: { fontSize: 13, lineHeight: 18, fontWeight: '800', color: '#64748B' },
-  inactiveStripValue: { fontSize: 24, lineHeight: 30, fontWeight: '900', color: '#64748B' },
+  inactiveStrip: { marginTop: 16, minHeight: 58, borderRadius: 16, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.subtle, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  inactiveStripLabel: { fontSize: 13, lineHeight: 18, fontWeight: '800', color: AppColors.text.secondary },
+  inactiveStripValue: { fontSize: 24, lineHeight: 30, fontWeight: '900', color: AppColors.text.secondary },
   modalStatsGrid: { flexDirection: 'row', gap: 12 },
   hospitalDetailStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   modalStatCard: { flex: 1, minHeight: 96, borderRadius: 16, padding: 16, paddingLeft: 20, borderWidth: 1, overflow: 'hidden' },
   modalStatAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  modalStatLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: '#8A9AAF', textTransform: 'uppercase', letterSpacing: 0 },
-  modalStatValue: { marginTop: 8, fontSize: 24, lineHeight: 30, fontWeight: '900', color: '#0F172A' },
-  modalStatDetail: { marginTop: 4, fontSize: 12, lineHeight: 16, color: '#64748B', fontWeight: '600' },
-  insightsSection: { borderRadius: 18, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF', overflow: 'hidden' },
-  insightsHeader: { minHeight: 62, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EEF2F7' },
-  insightsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
-  insightsCriteria: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
+  modalStatLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.text.muted, textTransform: 'uppercase', letterSpacing: 0 },
+  modalStatValue: { marginTop: 8, fontSize: 24, lineHeight: 30, fontWeight: '900', color: AppColors.text.primary },
+  modalStatDetail: { marginTop: 4, fontSize: 12, lineHeight: 16, color: AppColors.text.secondary, fontWeight: '600' },
+  insightsSection: { borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, overflow: 'hidden' },
+  insightsHeader: { minHeight: 62, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft },
+  insightsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
+  insightsCriteria: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
   insightsList: { padding: 12, gap: 10 },
-  insightRow: { minHeight: 72, borderRadius: 16, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#EEF2F7', padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  insightRow: { minHeight: 72, borderRadius: 16, backgroundColor: AppColors.surface.subtle, borderWidth: 1, borderColor: AppColors.border.soft, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   insightMarker: { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   insightRankText: { fontSize: 13, lineHeight: 16, fontWeight: '900' },
   insightCopy: { flex: 1, minWidth: 0 },
-  insightTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: '#0F172A' },
-  insightLocation: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#64748B' },
+  insightTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },
+  insightLocation: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
   insightMeta: { alignItems: 'flex-end', maxWidth: 160 },
   insightCases: { fontSize: 13, lineHeight: 18, fontWeight: '900' },
-  insightSeverity: { marginTop: 4, fontSize: 11, lineHeight: 14, fontWeight: '700', color: '#64748B' },
+  insightSeverity: { marginTop: 4, fontSize: 11, lineHeight: 14, fontWeight: '700', color: AppColors.text.secondary },
   emptyInsight: { padding: 18, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  emptyInsightText: { flex: 1, fontSize: 14, lineHeight: 22, color: '#526174' },
+  emptyInsightText: { flex: 1, fontSize: 14, lineHeight: 22, color: AppColors.text.body },
   reportOverlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  reportPreviewBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15, 23, 42, 0.38)' },
+  reportPreviewBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: withAlpha(AppColors.text.primary, 0.38) },
   reportDialog: { width: '100%', padding: 0, overflow: 'hidden' },
   reportPreviewDialog: { flex: 1, borderRadius: 18 },
-  reportHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 18, paddingHorizontal: 22, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EEF2F7', minHeight: 76 },
+  reportHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 18, paddingHorizontal: 22, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft, minHeight: 76 },
   reportHeaderCopy: { flex: 1, minWidth: 0 },
   reportPreviewBody: { flex: 1, padding: 18, gap: 14 },
-  reportPreviewFallback: { flex: 1, minHeight: 520, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  reportPreviewFallbackText: { fontSize: 14, lineHeight: 20, fontWeight: '700', color: '#64748B', textAlign: 'center' },
-  reportDownloadButton: { minHeight: 52, borderRadius: 14, backgroundColor: '#1718C7', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  reportDownloadButtonText: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: '#FFFFFF' },
-  errorCard: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: 24, borderWidth: 1, borderColor: '#FECACA', gap: 8 },
-  errorTitle: { fontSize: 18, fontWeight: '800', color: '#991B1B' },
-  errorText: { color: '#64748B' },
-  skeletonCard: { backgroundColor: '#F8FAFC' },
-  skeletonTall: { height: 300, backgroundColor: '#F8FAFC', gap: 18 },
-  skeletonEvents: { height: 220, backgroundColor: '#F8FAFC', gap: 14 },
-  skeletonMetricHeader: { width: '52%', height: 14, borderRadius: 999, backgroundColor: '#E8EEF6' },
-  skeletonMetricValue: { marginTop: 28, width: 96, height: 34, borderRadius: 999, backgroundColor: '#E1E8F3' },
-  skeletonMetricLine: { marginTop: 18, width: '82%', height: 12, borderRadius: 999, backgroundColor: '#E8EEF6' },
-  skeletonPanelTitle: { width: 190, height: 16, borderRadius: 999, backgroundColor: '#E1E8F3' },
-  skeletonChartRow: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingTop: 30 },
-  skeletonChartBar: { flex: 1, borderRadius: 999, backgroundColor: '#E1E8F3' },
-  skeletonMapBlob: { flex: 1, borderRadius: 22, backgroundColor: '#E8EEF6' },
-  skeletonListLine: { width: '100%', height: 42, borderRadius: 16, backgroundColor: '#E8EEF6' },
+  reportPreviewFallback: { flex: 1, minHeight: 520, borderRadius: 16, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.subtle, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  reportPreviewFallbackText: { fontSize: 14, lineHeight: 20, fontWeight: '700', color: AppColors.text.secondary, textAlign: 'center' },
+  reportDownloadButton: { minHeight: 52, borderRadius: 14, backgroundColor: AppColors.brand.action, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  reportDownloadButtonText: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.surface.card },
+  errorCard: { backgroundColor: AppColors.surface.card, borderRadius: 18, padding: 24, borderWidth: 1, borderColor: AppColors.status.dangerBorder, gap: 8 },
+  errorTitle: { fontSize: 18, fontWeight: '800', color: AppColors.status.dangerDeep },
+  errorText: { color: AppColors.text.secondary },
+  skeletonCard: { backgroundColor: AppColors.surface.subtle },
+  skeletonMainPanel: { flex: 1, minWidth: 0, minHeight: 520, backgroundColor: AppColors.surface.subtle, gap: 18 },
+  skeletonMetricHeader: { width: '52%', height: 14, borderRadius: 999, backgroundColor: AppColors.chart.grid },
+  skeletonMetricValue: { marginTop: 28, width: 96, height: 34, borderRadius: 999, backgroundColor: AppColors.chart.skeleton },
+  skeletonMetricLine: { marginTop: 18, width: '82%', height: 12, borderRadius: 999, backgroundColor: AppColors.chart.grid },
+  skeletonPanelTitle: { width: 190, height: 16, borderRadius: 999, backgroundColor: AppColors.chart.skeleton },
+  skeletonPanelSubtitle: { marginTop: 10, width: 260, height: 12, borderRadius: 999, backgroundColor: AppColors.chart.grid },
+  skeletonHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 },
+  skeletonPill: { width: 118, height: 32, borderRadius: 999, backgroundColor: AppColors.chart.grid },
+  skeletonSummaryRow: { flexDirection: 'row', gap: 10 },
+  skeletonSummaryCard: { flex: 1, height: 90, borderRadius: 16, backgroundColor: AppColors.chart.grid },
+  skeletonPeakCard: { width: 118, height: 90, borderRadius: 16, backgroundColor: AppColors.chart.skeleton },
+  skeletonChartRow: { flex: 1, minHeight: 248, flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingTop: 28 },
+  skeletonChartBar: { flex: 1, maxWidth: 44, borderRadius: 999, backgroundColor: AppColors.chart.skeleton },
+  skeletonMapBlob: { flex: 1, minHeight: 388, borderRadius: 18, backgroundColor: AppColors.chart.grid },
 });
 
 export default SystemDashboard;

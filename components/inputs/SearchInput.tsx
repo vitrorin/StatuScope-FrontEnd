@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, View, ViewStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { AppColors } from '@/constants/theme';
 
 export interface SearchInputProps {
   placeholder?: string;
@@ -42,11 +43,11 @@ export function SearchInput({
         style,
       ]}
     >
-      <Feather name="search" size={16} color={disabled ? '#CBD5E1' : '#94A3B8'} />
+      <Feather name="search" size={16} color={disabled ? AppColors.border.strong : AppColors.text.muted} />
       <TextInput
         style={[styles.input, disabled && styles.inputDisabled]}
         placeholder={placeholder}
-        placeholderTextColor={disabled ? '#D1D5DB' : '#94A3B8'}
+        placeholderTextColor={disabled ? AppColors.border.strong : AppColors.text.muted}
         value={value}
         onChangeText={onChangeText}
         onFocus={handleFocus}
@@ -62,7 +63,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.surface.muted,
     borderRadius: 8,
     paddingHorizontal: 12,
     height: 40,
@@ -71,19 +72,19 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   containerFocused: {
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.strong,
+    backgroundColor: AppColors.surface.card,
   },
   containerDisabled: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
   },
   input: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: AppColors.text.primary,
     padding: 0,
   },
   inputDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
 });

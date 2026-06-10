@@ -28,6 +28,12 @@ import {
   DoctorDashboardReportOutbreakResponse,
   DoctorDashboardReportResponse,
   DoctorDashboardStateMapItem,
+  getAdminEpidemiologyDiseaseCatalog,
+  getAdminEpidemiologyMap,
+  getAdminEpidemiologyReport,
+  getAdminEpidemiologyStateMap,
+  getAdminEpidemiologyStateOutbreakMap,
+  getAdminEpidemiologyStateReport,
   getDoctorDashboardDiseaseCatalog,
   getDoctorDashboardMap,
   getDoctorDashboardReport,
@@ -35,6 +41,7 @@ import {
   getDoctorDashboardStateOutbreakMap,
   getDoctorDashboardStateReport,
 } from '@/lib/doctorDashboard';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 const doctorNavigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -54,6 +61,7 @@ type AnalyticsPersona = 'doctor' | 'admin';
 type AnalyticsScope = 'municipal' | 'state';
 type SectionStatus = 'idle' | 'loading' | 'success' | 'error';
 type Translator = (key: string, params?: Record<string, string | number | null | undefined>) => string;
+type StateReportLoader = (stateId: string) => Promise<DoctorDashboardReportResponse>;
 
 interface AnalyticsState {
   status: SectionStatus;
@@ -135,9 +143,9 @@ function riskForDisease(item: Pick<DiseaseAnalytics, 'currentCases' | 'recentOut
 }
 
 function riskColor(risk: string): string {
-  if (risk === 'High') return '#EF4444';
-  if (risk === 'Moderate') return '#F97316';
-  return '#22C55E';
+  if (risk === 'High') return AppColors.status.dangerBright;
+  if (risk === 'Moderate') return AppColors.status.warningBright;
+  return AppColors.status.successBright;
 }
 
 function locationKey(outbreak: DoctorDashboardReportOutbreakResponse): string {
@@ -492,10 +500,10 @@ function buildStateOutbreakZones(
     const latitude = center.latitude + Math.sin(angle) * distance;
     const longitude = center.longitude + Math.cos(angle) * distance;
     const borderColor = outbreak.caseCount >= 100
-      ? '#EF4444'
+      ? AppColors.status.dangerBright
       : outbreak.caseCount >= 25
-        ? '#F97316'
-        : '#22C55E';
+        ? AppColors.status.warningBright
+        : AppColors.status.successBright;
 
     return {
       id: outbreak.id,
@@ -542,9 +550,10 @@ function reportFromStateMap(
 async function loadStateReportWithFallback(
   state: DoctorDashboardStateMapItem,
   stateOutbreakMap: DoctorDashboardMapResponse | null,
+  loadStateReport: StateReportLoader,
 ) {
   try {
-    const report = await getDoctorDashboardStateReport(state.stateId);
+    const report = await loadStateReport(state.stateId);
     return report.outbreaks.length > 0 ? report : reportFromStateMap(state, stateOutbreakMap);
   } catch {
     return reportFromStateMap(state, stateOutbreakMap);
@@ -577,26 +586,34 @@ export function AnalyticsScreen({
   const [selectedZone, setSelectedZone] = useState<AnalyticsZoneDetail | null>(null);
   const [selectedDisease, setSelectedDisease] = useState<AnalyticsDiseaseDetail | null>(null);
   const isAdmin = isAdminPersona(persona, sidebarItems);
+  const api = useMemo(() => ({
+    diseaseCatalog: isAdmin ? getAdminEpidemiologyDiseaseCatalog : getDoctorDashboardDiseaseCatalog,
+    map: isAdmin ? getAdminEpidemiologyMap : getDoctorDashboardMap,
+    report: isAdmin ? getAdminEpidemiologyReport : getDoctorDashboardReport,
+    stateMap: isAdmin ? getAdminEpidemiologyStateMap : getDoctorDashboardStateMap,
+    stateOutbreakMap: isAdmin ? getAdminEpidemiologyStateOutbreakMap : getDoctorDashboardStateOutbreakMap,
+    stateReport: isAdmin ? getAdminEpidemiologyStateReport : getDoctorDashboardStateReport,
+  }), [isAdmin]);
 
   const loadAnalytics = useCallback(async () => {
     setAnalyticsState((current) => ({ ...current, status: 'loading', error: null }));
     try {
       const [localReport, stateReport, map] = await Promise.all([
-        getDoctorDashboardReport('local', radiusKm),
-        getDoctorDashboardReport('state', radiusKm),
-        getDoctorDashboardMap(radiusKm),
+        api.report('local', radiusKm),
+        api.report('state', radiusKm),
+        api.map(radiusKm),
       ]);
       const [stateMap, diseaseCatalog] = await Promise.all([
-        getDoctorDashboardStateMap(),
-        getDoctorDashboardDiseaseCatalog(),
+        api.stateMap(),
+        api.diseaseCatalog(),
       ]);
       const selectedState = findStateByName(stateMap.states, localReport.stateName)
         ?? findStateByName(stateMap.states, stateReport.stateName);
       const stateOutbreakMap = selectedState
-        ? await getDoctorDashboardStateOutbreakMap(selectedState.stateId)
+        ? await api.stateOutbreakMap(selectedState.stateId)
         : null;
       const selectedStateReport = selectedState
-        ? await loadStateReportWithFallback(selectedState, stateOutbreakMap)
+        ? await loadStateReportWithFallback(selectedState, stateOutbreakMap, api.stateReport)
         : stateReport;
       setSelectedStateId(selectedState?.stateId ?? null);
       setAnalyticsState({
@@ -616,16 +633,16 @@ export function AnalyticsScreen({
         error: error instanceof Error ? error.message : 'Unable to load analytics.',
       }));
     }
-  }, [radiusKm]);
+  }, [api, radiusKm]);
 
   const loadStateAnalytics = useCallback(async (stateId: string) => {
     setSelectedStateId(stateId);
     setAnalyticsState((current) => ({ ...current, status: 'loading', error: null }));
     try {
       const selectedState = analyticsState.stateMap.find((state) => state.stateId === stateId) ?? null;
-      const stateOutbreakMap = await getDoctorDashboardStateOutbreakMap(stateId);
+      const stateOutbreakMap = await api.stateOutbreakMap(stateId);
       const stateReport = selectedState
-        ? await loadStateReportWithFallback(selectedState, stateOutbreakMap)
+        ? await loadStateReportWithFallback(selectedState, stateOutbreakMap, api.stateReport)
         : reportFromStateMap(null, stateOutbreakMap);
       setAnalyticsState((current) => ({
         ...current,
@@ -641,7 +658,7 @@ export function AnalyticsScreen({
         error: error instanceof Error ? error.message : 'Unable to load state analytics.',
       }));
     }
-  }, [analyticsState.stateMap]);
+  }, [analyticsState.stateMap, api]);
 
   useEffect(() => {
     void loadAnalytics();
@@ -770,8 +787,8 @@ export function AnalyticsScreen({
       ? [{
         id: selectedStateBoundary.id,
         geometry: selectedStateBoundary.geometry,
-        fillColor: 'rgba(0, 3, 184, 0.12)',
-        strokeColor: '#0003B8',
+        fillColor: withAlpha(AppColors.brand.primary, 0.12),
+        strokeColor: AppColors.brand.primary,
         strokeWidth: 2,
       }]
       : []
@@ -799,16 +816,16 @@ export function AnalyticsScreen({
         latitude: zone.latitude,
         longitude: zone.longitude,
         borderColor: zone.borderColor || riskColor(zone.risk),
-        fillColor: '#FFFFFF',
+        fillColor: AppColors.surface.card,
         icon:
-          zone.borderColor === '#0003B8' || zone.id === 'hospital-node' ? (
-            <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
-          ) : zone.borderColor === '#F97316' ? (
+          zone.borderColor === AppColors.brand.primary || zone.id === 'hospital-node' ? (
+            <MaterialCommunityIcons name="hospital-box-outline" size={12} color={AppColors.brand.primary} />
+          ) : zone.borderColor === AppColors.status.warningBright ? (
             <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
-          ) : zone.borderColor === '#22C55E' ? (
+          ) : zone.borderColor === AppColors.status.successBright ? (
             <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
           ) : (
-            <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor || '#EF4444'} />
+            <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor || AppColors.status.dangerBright} />
           ),
         onPress: detail ? () => setSelectedZone(detail) : undefined,
       };
@@ -827,9 +844,9 @@ export function AnalyticsScreen({
   const empty = !loading && scopedOutbreaks.length === 0;
   const hasSelectedDisease = !!selectedDiseaseAnalytics;
   const legendItems = [
-    { label: t('common.analytics.map.legend.highGrowth'), color: '#EF4444' },
-    { label: t('common.analytics.map.legend.moderateSignal'), color: '#F97316' },
-    { label: t('common.analytics.map.legend.hospitalRegion'), color: '#1718C7' },
+    { label: t('common.analytics.map.legend.highGrowth'), color: AppColors.status.dangerBright },
+    { label: t('common.analytics.map.legend.moderateSignal'), color: AppColors.status.warningBright },
+    { label: t('common.analytics.map.legend.hospitalRegion'), color: AppColors.brand.action },
   ];
 
   return (
@@ -904,7 +921,7 @@ export function AnalyticsScreen({
                   value={loading ? '...' : selectedDiseaseLabel}
                   caption={t('common.analytics.metrics.disease.caption')}
                   variant="info"
-                  icon={<MaterialCommunityIcons name="virus-outline" size={14} color="#0003B8" />}
+                  icon={<MaterialCommunityIcons name="virus-outline" size={14} color={AppColors.brand.primary} />}
                   style={styles.statCard}
                 />
                 <SummaryCountCard
@@ -912,7 +929,7 @@ export function AnalyticsScreen({
                   value={loading ? '...' : formatNumber(recentOutbreaks)}
                   caption={t('common.analytics.metrics.newOutbreaks.caption', { days: periodDays })}
                   variant="info"
-                  icon={<Feather name="activity" size={14} color="#0003B8" />}
+                  icon={<Feather name="activity" size={14} color={AppColors.brand.primary} />}
                   style={styles.statCard}
                 />
                 <SummaryCountCard
@@ -920,7 +937,7 @@ export function AnalyticsScreen({
                   value={loading ? '...' : formatNumber(previousOutbreaks)}
                   caption={t('common.analytics.metrics.previous.caption', { days: periodDays })}
                   variant={growth >= 25 ? 'warning' : 'info'}
-                  icon={<Feather name="trending-up" size={14} color="#0003B8" />}
+                  icon={<Feather name="trending-up" size={14} color={AppColors.brand.primary} />}
                   style={styles.statCard}
                 />
                 <SummaryCountCard
@@ -928,7 +945,7 @@ export function AnalyticsScreen({
                   value={loading ? '...' : formatNumber(projectedNextPeriod)}
                   caption={t('common.analytics.metrics.prediction.caption', { days: periodDays })}
                   variant={projectedNextPeriod > recentOutbreaks ? 'warning' : 'neutral'}
-                  icon={<Feather name="radio" size={14} color="#0003B8" />}
+                  icon={<Feather name="radio" size={14} color={AppColors.brand.primary} />}
                   style={styles.statCard}
                 />
               </View>
@@ -1025,7 +1042,7 @@ function MethodologyCard({ isAdmin, t }: { isAdmin: boolean; t: Translator }) {
         {rows.map(([key, icon]) => (
           <View key={key} style={styles.methodologyItem}>
             <View style={styles.methodologyIcon}>
-              <Feather name={icon} size={15} color="#1718C7" />
+              <Feather name={icon} size={15} color={AppColors.brand.action} />
             </View>
             <View style={styles.methodologyCopy}>
               <Text style={styles.methodologyTitle}>{t(`common.analytics.methodology.${key}.title`)}</Text>
@@ -1187,7 +1204,7 @@ function DiseaseSelector({
           activeOpacity={0.75}
           onPress={() => setShowDiseaseInfo((current) => !current)}
         >
-          <Feather name="alert-circle" size={17} color={showDiseaseInfo ? '#64748B' : '#94A3B8'} />
+          <Feather name="alert-circle" size={17} color={showDiseaseInfo ? AppColors.text.secondary : AppColors.text.muted} />
         </TouchableOpacity>
       </View>
       {loading ? (
@@ -1205,7 +1222,7 @@ function DiseaseSelector({
               }}
               onFocus={() => setIsOpen(true)}
               placeholder={t('common.analytics.selector.searchPlaceholder')}
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={AppColors.text.muted}
               style={styles.diseaseDropdownInput}
             />
             <TouchableOpacity
@@ -1213,7 +1230,7 @@ function DiseaseSelector({
               onPress={() => setIsOpen((current) => !current)}
               style={styles.diseaseDropdownIconButton}
             >
-              <Feather name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color="#1718C7" />
+              <Feather name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color={AppColors.brand.action} />
             </TouchableOpacity>
           </View>
           {isOpen ? (
@@ -1267,7 +1284,7 @@ function DiseaseSelector({
                   setIsStateOpen(true);
                 }}
                 placeholder={selectedState?.stateName ?? t('common.analytics.selector.statePlaceholder')}
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={AppColors.text.muted}
                 style={styles.diseaseDropdownInput}
               />
               <TouchableOpacity
@@ -1282,7 +1299,7 @@ function DiseaseSelector({
                 }}
                 style={styles.diseaseDropdownIconButton}
               >
-                <Feather name={isStateOpen ? 'chevron-up' : 'chevron-down'} size={18} color="#1718C7" />
+                <Feather name={isStateOpen ? 'chevron-up' : 'chevron-down'} size={18} color={AppColors.brand.action} />
               </TouchableOpacity>
             </View>
             {isStateOpen ? (
@@ -1335,7 +1352,7 @@ function DiseaseSelector({
                 activeOpacity={0.75}
                 onPress={() => setShowDiseaseInfo(false)}
               >
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
             <Text style={styles.infoModalText}>{t('common.analytics.selector.info.system')}</Text>
@@ -1479,7 +1496,7 @@ function RiskBalanceCard({
           <View style={styles.riskFactorList}>
             {assessment.elevating.map((factor) => (
               <View key={factor} style={styles.riskFactorItem}>
-                <Feather name="arrow-up-right" size={15} color="#DC2626" />
+                <Feather name="arrow-up-right" size={15} color={AppColors.status.danger} />
                 <Text style={styles.riskFactorText}>{factor}</Text>
               </View>
             ))}
@@ -1492,7 +1509,7 @@ function RiskBalanceCard({
           <View style={styles.riskFactorList}>
             {assessment.reducing.map((factor) => (
               <View key={factor} style={styles.riskFactorItem}>
-                <Feather name="arrow-down-right" size={15} color="#16A34A" />
+                <Feather name="arrow-down-right" size={15} color={AppColors.status.success} />
                 <Text style={styles.riskFactorText}>{factor}</Text>
               </View>
             ))}
@@ -1521,13 +1538,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 22,
     borderRadius: 24,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.08)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000F6B',
+    shadowColor: AppColors.shadow.blue,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1543,21 +1560,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     marginBottom: 8,
   },
   heroTitle: {
     fontSize: 26,
     lineHeight: 34,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 8,
     maxWidth: 720,
   },
   heroDescription: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#475569',
+    color: AppColors.text.body,
     maxWidth: 760,
   },
   filtersRow: {
@@ -1569,7 +1586,7 @@ const styles = StyleSheet.create({
   timeTabsShell: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF2F7',
+    backgroundColor: AppColors.border.soft,
     borderRadius: 14,
     padding: 4,
   },
@@ -1581,8 +1598,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timeTabActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
+    backgroundColor: AppColors.surface.card,
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -1592,10 +1609,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '600',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   timeTabTextActive: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   rangeBlock: {
     flexDirection: 'row',
@@ -1608,7 +1625,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1.4,
     textTransform: 'uppercase',
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   rangeButtons: {
     flexDirection: 'row',
@@ -1616,9 +1633,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   rangeButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.18)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.18),
     borderRadius: 10,
     paddingHorizontal: 18,
     paddingVertical: 12,
@@ -1626,9 +1643,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rangeButtonActive: {
-    backgroundColor: '#0003B8',
-    borderColor: '#0003B8',
-    shadowColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
+    borderColor: AppColors.brand.primary,
+    shadowColor: AppColors.brand.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.22,
     shadowRadius: 14,
@@ -1638,10 +1655,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '600',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   rangeButtonTextActive: {
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
   },
   banner: {
     borderRadius: 12,
@@ -1663,13 +1680,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   emptyText: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   mainRow: {
     flexDirection: 'row',
@@ -1691,7 +1708,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(23, 24, 199, 0.10)',
+    borderColor: withAlpha(AppColors.brand.action, 0.1),
   },
   methodologyHeader: {
     flexDirection: 'row',
@@ -1703,8 +1720,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: 'rgba(23, 24, 199, 0.08)',
-    color: '#1718C7',
+    backgroundColor: withAlpha(AppColors.brand.action, 0.08),
+    color: AppColors.brand.action,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '900',
@@ -1723,7 +1740,7 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
     borderRadius: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
   },
   methodologyIcon: {
     width: 30,
@@ -1731,7 +1748,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(23, 24, 199, 0.08)',
+    backgroundColor: withAlpha(AppColors.brand.action, 0.08),
   },
   methodologyCopy: {
     flex: 1,
@@ -1741,19 +1758,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   methodologyText: {
     marginTop: 5,
     fontSize: 12,
     lineHeight: 18,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   cardEyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '900',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -1762,7 +1779,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   narrativeList: {
     gap: 12,
@@ -1783,7 +1800,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   selectorCard: {
     borderRadius: 24,
@@ -1801,8 +1818,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: '#EEF2FF',
-    color: '#1718C7',
+    backgroundColor: AppColors.surface.brandSoft,
+    color: AppColors.brand.action,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '900',
@@ -1827,7 +1844,7 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 4,
     borderRadius: 14,
-    backgroundColor: '#EEF2F7',
+    backgroundColor: AppColors.border.soft,
     alignSelf: 'flex-start',
   },
   scopeButton: {
@@ -1838,8 +1855,8 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   scopeButtonActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
+    backgroundColor: AppColors.surface.card,
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -1849,17 +1866,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   scopeButtonTextActive: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   selectorListTitle: {
     marginTop: 16,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '900',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -1867,7 +1884,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '900',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -1887,12 +1904,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.strong,
+    backgroundColor: AppColors.surface.subtle,
   },
   infoButtonActive: {
-    borderColor: '#94A3B8',
-    backgroundColor: '#EEF2F7',
+    borderColor: AppColors.text.muted,
+    backgroundColor: AppColors.border.soft,
   },
   infoModalOverlay: {
     flex: 1,
@@ -1902,15 +1919,15 @@ const styles = StyleSheet.create({
   },
   infoModalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.28)',
+    backgroundColor: withAlpha(AppColors.text.primary, 0.28),
   },
   infoModalCard: {
     width: '100%',
     maxWidth: 460,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     padding: 20,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.18,
     shadowRadius: 32,
@@ -1927,7 +1944,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 23,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   infoModalClose: {
     width: 34,
@@ -1935,13 +1952,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.surface.muted,
   },
   infoModalText: {
     marginTop: 12,
     fontSize: 13,
     lineHeight: 20,
-    color: '#475569',
+    color: AppColors.text.body,
     fontWeight: '700',
   },
   infoDiseaseScroll: {
@@ -1958,7 +1975,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     paddingHorizontal: 14,
     paddingVertical: 11,
   },
@@ -1967,13 +1984,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   infoDiseaseMeta: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   diseaseDropdown: {
     marginTop: 10,
@@ -1991,7 +2008,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#D6E0EF',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -2000,8 +2017,8 @@ const styles = StyleSheet.create({
   selectorLoadingList: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5EAF3',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.divider,
+    backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
   },
   selectorLoadingOption: {
@@ -2011,7 +2028,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
   },
   selectorLoadingOptionText: {
     flex: 1,
@@ -2020,7 +2037,7 @@ const styles = StyleSheet.create({
   analyticsSkeletonLine: {
     height: 12,
     borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    backgroundColor: AppColors.chart.grid,
   },
   analyticsSkeletonInputText: {
     flex: 1,
@@ -2029,31 +2046,31 @@ const styles = StyleSheet.create({
   analyticsSkeletonSmallLine: {
     width: '30%',
     height: 9,
-    backgroundColor: '#EEF2F7',
+    backgroundColor: AppColors.border.soft,
   },
   analyticsSkeletonBadge: {
     width: 56,
     height: 22,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   analyticsSkeletonIcon: {
     width: 34,
     height: 34,
     borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   analyticsSkeletonDot: {
     width: 28,
     height: 28,
     borderRadius: 10,
-    backgroundColor: '#EEF2F7',
+    backgroundColor: AppColors.border.soft,
   },
   diseaseDropdownButton: {
     minHeight: 48,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.strong,
+    backgroundColor: AppColors.surface.card,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -2065,7 +2082,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     paddingVertical: 0,
   },
   diseaseDropdownIconButton: {
@@ -2074,7 +2091,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   diseaseDropdownList: {
     position: 'relative',
@@ -2084,10 +2101,10 @@ const styles = StyleSheet.create({
     maxHeight: 280,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.14,
     shadowRadius: 24,
@@ -2096,10 +2113,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
   },
   diseaseDropdownOptionActive: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   diseaseDropdownOptionHovered: {
     backgroundColor: '#F1F5FF',
@@ -2108,17 +2125,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#334155',
+    color: AppColors.text.body,
   },
   diseaseDropdownOptionTextActive: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   diseaseDropdownEmpty: {
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 14,
     lineHeight: 20,
-    color: '#64748B',
+    color: AppColors.text.secondary,
     fontWeight: '700',
   },
   analysisGrid: {
@@ -2136,21 +2153,21 @@ const styles = StyleSheet.create({
     width: 360,
     borderRadius: 24,
     padding: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   diseaseSummaryTitle: {
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   diseaseSummaryText: {
     marginTop: 10,
     fontSize: 14,
     lineHeight: 22,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   diseaseSummaryMetrics: {
     marginTop: 20,
@@ -2158,15 +2175,15 @@ const styles = StyleSheet.create({
   },
   diseaseSummaryMetric: {
     borderRadius: 18,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EEF2F7',
+    borderColor: AppColors.border.soft,
   },
   diseaseSummaryMetricLabel: {
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: AppColors.text.secondary,
     fontWeight: '900',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
@@ -2175,7 +2192,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 30,
     lineHeight: 36,
-    color: '#0F172A',
+    color: AppColors.text.primary,
     fontWeight: '900',
   },
   diseaseSummaryRisk: {
@@ -2184,7 +2201,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     paddingHorizontal: 12,
     paddingVertical: 9,
     alignSelf: 'flex-start',
@@ -2198,12 +2215,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '900',
-    color: '#334155',
+    color: AppColors.text.body,
   },
   trendPanelCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   trendWindowGrid: {
     marginTop: 18,
@@ -2215,9 +2232,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
     borderRadius: 18,
     padding: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   trendWindowHeader: {
     flexDirection: 'row',
@@ -2229,43 +2246,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '900',
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   trendWindowValue: {
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   trendLineTrack: {
     marginTop: 14,
     height: 8,
     borderRadius: 999,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
     overflow: 'hidden',
   },
   trendLineFill: {
     height: '100%',
     borderRadius: 999,
-    backgroundColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
   },
   trendWindowCaption: {
     marginTop: 10,
     fontSize: 11,
     lineHeight: 15,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   riskBalanceCard: {
     flex: 1.2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   riskSummaryText: {
     marginTop: 10,
     fontSize: 15,
     lineHeight: 23,
-    color: '#475569',
+    color: AppColors.text.body,
     fontWeight: '700',
   },
   riskColumns: {
@@ -2277,7 +2294,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     borderRadius: 18,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     padding: 16,
   },
   riskColumnTitle: {
@@ -2287,10 +2304,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   riskColumnTitleRed: {
-    color: '#DC2626',
+    color: AppColors.status.danger,
   },
   riskColumnTitleGreen: {
-    color: '#16A34A',
+    color: AppColors.status.success,
   },
   riskFactorList: {
     gap: 10,
@@ -2304,12 +2321,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 19,
-    color: '#475569',
+    color: AppColors.text.body,
     fontWeight: '700',
   },
   mutedText: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
 });

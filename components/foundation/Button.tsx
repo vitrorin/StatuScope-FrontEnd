@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'surface';
 
@@ -23,29 +24,29 @@ const variantStyles: Record<
   { backgroundColor: string; borderColor: string; textColor: string }
 > = {
   primary: {
-    backgroundColor: '#1D4ED8',
-    borderColor: '#1D4ED8',
-    textColor: '#FFFFFF',
+    backgroundColor: AppColors.brand.link,
+    borderColor: AppColors.brand.link,
+    textColor: AppColors.surface.card,
   },
   secondary: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
-    textColor: '#4B5563',
+    backgroundColor: AppColors.surface.card,
+    borderColor: AppColors.border.muted,
+    textColor: AppColors.text.body,
   },
   ghost: {
     backgroundColor: 'transparent',
     borderColor: 'transparent',
-    textColor: '#6B7280',
+    textColor: AppColors.table.muted,
   },
   danger: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FEE2E2',
-    textColor: '#DC2626',
+    backgroundColor: AppColors.status.dangerSoft,
+    borderColor: AppColors.status.dangerBorder,
+    textColor: AppColors.status.danger,
   },
   surface: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#E5E7EB',
-    textColor: '#374151',
+    backgroundColor: AppColors.surface.control,
+    borderColor: AppColors.border.muted,
+    textColor: AppColors.text.body,
   },
 };
 
@@ -88,8 +89,8 @@ export function Button({
       style={[
         styles.base,
         {
-          backgroundColor: disabled ? '#F9FAFB' : colors.backgroundColor,
-          borderColor: disabled ? '#E5E7EB' : colors.borderColor,
+          backgroundColor: disabled ? AppColors.surface.disabled : colors.backgroundColor,
+          borderColor: disabled ? AppColors.border.muted : colors.borderColor,
           paddingVertical: metrics.paddingVertical,
           paddingHorizontal: metrics.paddingHorizontal,
           borderRadius: metrics.borderRadius,
@@ -109,7 +110,7 @@ export function Button({
           style={[
             styles.label,
             {
-              color: disabled ? '#9CA3AF' : colors.textColor,
+              color: disabled ? AppColors.text.disabled : colors.textColor,
               fontSize: textSizes[size],
             },
             labelStyle,

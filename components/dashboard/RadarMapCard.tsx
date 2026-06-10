@@ -16,6 +16,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { MapControlButton } from './MapControlButton';
 import { MapLegend } from './MapLegend';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 export interface RadarMapPin {
   id?: string;
@@ -90,14 +91,14 @@ const defaultPins: RadarMapPin[] = [
   {
     top: '49%',
     left: '48%',
-    borderColor: '#EF4444',
-    icon: <MaterialCommunityIcons name="alert" size={16} color="#EF4444" />,
+    borderColor: AppColors.status.dangerBright,
+    icon: <MaterialCommunityIcons name="alert" size={16} color={AppColors.status.dangerBright} />,
   },
   {
     top: '33%',
     left: '63%',
-    borderColor: '#0003B8',
-    icon: <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />,
+    borderColor: AppColors.brand.primary,
+    icon: <MaterialCommunityIcons name="hospital-box-outline" size={12} color={AppColors.brand.primary} />,
   },
 ];
 
@@ -290,8 +291,8 @@ export function RadarMapCard({
                   surfaceWidth,
                   surfaceHeight,
                 )}
-                fill={polygon.fillColor ?? 'rgba(0, 3, 184, 0.08)'}
-                stroke={polygon.strokeColor ?? 'rgba(0, 3, 184, 0.5)'}
+                fill={polygon.fillColor ?? withAlpha(AppColors.brand.primary, 0.08)}
+                stroke={polygon.strokeColor ?? withAlpha(AppColors.brand.primary, 0.5)}
                 strokeWidth={polygon.strokeWidth ?? 1.5}
                 onPress={polygon.onPress}
               />
@@ -311,7 +312,7 @@ export function RadarMapCard({
           </View>
           {overlayItems?.map((item, index) => (
             <View key={index} style={styles.overlayItem}>
-              <View style={[styles.overlayDot, { backgroundColor: item.color || '#0003B8' }]} />
+              <View style={[styles.overlayDot, { backgroundColor: item.color || AppColors.brand.primary }]} />
               <Text style={styles.overlayLabel}>{item.label}</Text>
               <Text style={styles.overlayValue}>{item.value}</Text>
             </View>
@@ -372,7 +373,7 @@ export function RadarMapCard({
               styles.pin,
               {
                 borderColor: pin.borderColor,
-                backgroundColor: pin.fillColor || '#FFFFFF',
+                backgroundColor: pin.fillColor || AppColors.surface.card,
               },
             ]}
           >
@@ -417,7 +418,7 @@ export function RadarMapCard({
           activeOpacity={0.8}
           onPress={onBottomRightActionPress ?? (() => setIsFullscreen(true))}
         >
-          <Feather name="maximize-2" size={14} color="#0003B8" />
+          <Feather name="maximize-2" size={14} color={AppColors.brand.primary} />
           <Text style={styles.expandButtonText}>{bottomRightActionLabel}</Text>
         </TouchableOpacity>
       ) : null}
@@ -430,7 +431,7 @@ export function RadarMapCard({
       {showHeader ? (
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
-            <Feather name="map" size={18} color="#0003B8" />
+            <Feather name="map" size={18} color={AppColors.brand.primary} />
             <Text style={styles.headerTitle}>{title}</Text>
           </View>
 
@@ -459,11 +460,11 @@ export function RadarMapCard({
           <View style={styles.fullscreenCard}>
             <View style={styles.fullscreenHeader}>
               <View style={styles.headerTitleRow}>
-                <Feather name="map" size={18} color="#0003B8" />
+                <Feather name="map" size={18} color={AppColors.brand.primary} />
                 <Text style={styles.headerTitle}>{title}</Text>
               </View>
               <TouchableOpacity style={styles.closeButton} onPress={() => setIsFullscreen(false)} activeOpacity={0.75}>
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
             {mapSurface(720, true)}
@@ -751,12 +752,12 @@ function radiusCircleStyle(
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: '#FCFDFE',
+    backgroundColor: AppColors.surface.cardSoft,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.05)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.05),
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -765,13 +766,13 @@ const styles = StyleSheet.create({
   header: {
     minHeight: 66,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: AppColors.surface.subtle,
     paddingHorizontal: 20,
     paddingVertical: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -782,11 +783,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   mapContainer: {
     position: 'relative',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
     overflow: 'hidden',
     cursor: 'grab' as never,
     userSelect: 'none' as never,
@@ -798,7 +799,7 @@ const styles = StyleSheet.create({
   },
   mapLoadingSkeleton: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
   },
   mapLoadingPanel: {
     position: 'absolute',
@@ -807,20 +808,20 @@ const styles = StyleSheet.create({
     width: 214,
     borderRadius: 14,
     padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: withAlpha(AppColors.surface.card, 0.92),
   },
   mapLoadingTitle: {
     width: 112,
     height: 14,
     borderRadius: 999,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: AppColors.border.strong,
     marginBottom: 16,
   },
   mapLoadingLine: {
     width: 156,
     height: 10,
     borderRadius: 999,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
     marginTop: 10,
   },
   mapLoadingLineShort: {
@@ -832,8 +833,8 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    borderColor: AppColors.border.strong,
+    backgroundColor: AppColors.surface.subtle,
   },
   mapLoadingPinLarge: {
     width: 34,
@@ -848,11 +849,11 @@ const styles = StyleSheet.create({
   },
   mapPlaceholder: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#DCE7F3',
+    backgroundColor: AppColors.border.panelSoft,
   },
   tileLayer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
     pointerEvents: 'none',
   },
   mapTile: {
@@ -865,10 +866,10 @@ const styles = StyleSheet.create({
     top: 24,
     left: 24,
     width: 214,
-    backgroundColor: 'rgba(255,255,255,0.94)',
+    backgroundColor: withAlpha(AppColors.surface.card, 0.94),
     borderRadius: 14,
     padding: 16,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.08,
     shadowRadius: 24,
@@ -890,10 +891,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '700',
     letterSpacing: 1.4,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   overlayBadge: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: AppColors.status.successSoft,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
@@ -902,7 +903,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 14,
     fontWeight: '700',
-    color: '#16A34A',
+    color: AppColors.status.success,
   },
   overlayItem: {
     flexDirection: 'row',
@@ -919,13 +920,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     lineHeight: 16,
-    color: '#334155',
+    color: AppColors.text.body,
   },
   overlayValue: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   pinWrap: {
     position: 'absolute',
@@ -934,8 +935,8 @@ const styles = StyleSheet.create({
   radiusCircle: {
     position: 'absolute',
     borderWidth: 2,
-    borderColor: 'rgba(0, 3, 184, 0.32)',
-    backgroundColor: 'rgba(0, 3, 184, 0.07)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.32),
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.07),
     zIndex: 2,
   },
   pin: {
@@ -946,7 +947,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
@@ -973,13 +974,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.12)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.12),
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -990,7 +991,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   controlButton: {
     width: 40,
@@ -1000,8 +1001,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 0,
     paddingVertical: 0,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
+    backgroundColor: AppColors.surface.card,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -1010,13 +1011,13 @@ const styles = StyleSheet.create({
   footer: {
     minHeight: 38,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: AppColors.border.default,
     paddingHorizontal: 18,
     paddingVertical: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   footerLegend: {
     flex: 1,
@@ -1024,7 +1025,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 10,
     lineHeight: 14,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   fullscreenOverlay: {
     flex: 1,
@@ -1033,16 +1034,16 @@ const styles = StyleSheet.create({
   },
   fullscreenBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.36)',
+    backgroundColor: AppColors.overlay.scrim,
   },
   fullscreenCard: {
     flex: 1,
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.16,
     shadowRadius: 34,
@@ -1055,7 +1056,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
   },
   closeButton: {
     width: 40,
@@ -1064,7 +1065,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
 });

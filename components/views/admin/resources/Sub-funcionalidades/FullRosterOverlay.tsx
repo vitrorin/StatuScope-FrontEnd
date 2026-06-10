@@ -13,6 +13,7 @@ import { CardBase } from '@/components/patterns/CardBase';
 import { StaffRosterItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
 import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface FullRosterOverlayProps {
   visible: boolean;
@@ -45,7 +46,7 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
               <Text style={styles.subtitle}>{isSpanish(language) ? 'Roster en vivo por departamentos, turnos y estados de disponibilidad.' : 'Live roster across departments, shifts, and availability states.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -92,7 +93,7 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
                             : 'close-circle-outline'
                     }
                     size={14}
-                    color="#1718C7"
+                    color={AppColors.brand.action}
                   />
                   <Text style={styles.availabilityText}>{availabilityLabel(member.availability)}</Text>
                 </View>
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -132,13 +133,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -147,13 +148,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   list: {
     padding: 20,
@@ -171,20 +172,20 @@ const styles = StyleSheet.create({
   emptyCard: {
     borderRadius: 16,
     padding: 18,
-    backgroundColor: '#F8FAFF',
-    borderColor: '#E0E7FF',
+    backgroundColor: AppColors.surface.raised,
+    borderColor: AppColors.border.brandSoft,
   },
   emptyTitle: {
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   emptyText: {
     marginTop: 8,
     fontSize: 13,
     lineHeight: 20,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   rosterCard: {
     flexDirection: 'row',
@@ -199,13 +200,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF1FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   avatarText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   memberInfo: {
     flex: 1,
@@ -214,13 +215,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   memberMeta: {
     marginTop: 2,
     fontSize: 13,
     lineHeight: 18,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   availabilityPill: {
     flexDirection: 'row',
@@ -229,15 +230,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
     borderRadius: 999,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: '#E0E7FF',
+    borderColor: AppColors.border.brandSoft,
   },
   availabilityText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
 });
 

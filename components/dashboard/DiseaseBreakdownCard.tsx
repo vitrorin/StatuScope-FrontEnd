@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { ProgressMetricRow } from './ProgressMetricRow';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 export interface DiseaseBreakdownRow {
   id?: string;
@@ -95,10 +96,10 @@ export function DiseaseBreakdownCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.05)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.05),
     padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   header: {
     marginBottom: 16,
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 3,
     borderRadius: 999,
-    backgroundColor: 'rgba(0, 3, 184, 0.14)',
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.14),
     marginTop: 10,
   },
   rowsContainer: {
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   summaryContainer: {
     paddingTop: 22,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: AppColors.surface.muted,
     marginBottom: 18,
     gap: 14,
   },
@@ -144,16 +145,16 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontSize: 12,
     lineHeight: 16,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   summaryValue: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   button: {
-    backgroundColor: 'rgba(0, 3, 184, 0.10)',
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.1),
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
@@ -162,6 +163,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
 });

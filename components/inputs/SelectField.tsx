@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface SelectOption {
   label: string;
@@ -75,7 +76,7 @@ export function SelectField({
           >
             {selectedOption?.label || placeholder}
           </Text>
-          <Feather name={isOpen ? 'chevron-up' : 'chevron-down'} size={16} color="#64748B" />
+          <Feather name={isOpen ? 'chevron-up' : 'chevron-down'} size={16} color={AppColors.text.secondary} />
         </TouchableOpacity>
       </View>
 
@@ -131,27 +132,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '500',
-    color: '#374151',
+    color: AppColors.text.body,
     marginBottom: 8,
   },
   labelDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
   selectContainer: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
   },
   selectOpen: {
-    borderColor: '#0003B8',
+    borderColor: AppColors.brand.primary,
   },
   selectDisabled: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: AppColors.surface.disabled,
   },
   selectError: {
-    borderColor: '#EF4444',
+    borderColor: AppColors.status.dangerBright,
   },
   selectButton: {
     height: 42,
@@ -163,22 +164,22 @@ const styles = StyleSheet.create({
   selectText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   placeholderText: {
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   selectTextDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
   dropdown: {
     position: 'absolute',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
-    shadowColor: '#000000',
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -195,24 +196,24 @@ const styles = StyleSheet.create({
   },
   optionBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
   },
   optionSelected: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   optionText: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   optionTextSelected: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     fontWeight: '600',
   },
   errorText: {
     marginTop: 6,
     fontSize: 12,
     lineHeight: 16,
-    color: '#EF4444',
+    color: AppColors.status.dangerBright,
   },
 });

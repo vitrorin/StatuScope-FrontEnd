@@ -14,6 +14,7 @@ import {
   UserRole,
   UserStatus,
 } from '@/components/views/admin/users/Sub-funcionalidades/types';
+import { AppColors } from '@/constants/theme';
 
 interface UserEditorOverlayProps {
   visible: boolean;
@@ -99,7 +100,7 @@ export function UserEditorOverlay({ visible, mode, user, onClose, onSave, saving
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -222,13 +223,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -237,13 +238,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   content: {
     padding: 24,
@@ -275,14 +276,14 @@ const styles = StyleSheet.create({
   readOnlyCard: {
     borderRadius: 16,
     padding: 14,
-    backgroundColor: '#F8FAFF',
-    borderColor: '#E0E7FF',
+    backgroundColor: AppColors.surface.raised,
+    borderColor: AppColors.border.brandSoft,
   },
   readOnlyLabel: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 6,
@@ -291,13 +292,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   selectorLabel: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#526174',
+    color: AppColors.text.body,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
@@ -310,22 +311,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#F6F8FC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
   },
   chipActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
+    backgroundColor: AppColors.surface.brandSoft,
+    borderColor: AppColors.border.brandMuted,
   },
   chipText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   chipTextActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   footer: {
     flexDirection: 'row',
@@ -335,14 +336,14 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
   },
   footerButton: {
     minWidth: 150,
   },
   primaryButton: {
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
 });
 

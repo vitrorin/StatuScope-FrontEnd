@@ -17,12 +17,13 @@ import { InputField } from '@/components/inputs/InputField';
 import { CheckboxField } from '@/components/inputs/CheckboxField';
 import { useAuth } from '@/contexts/AuthContext';
 import type { UserProfile } from '@/contexts/AuthContext';
+import { AppColors } from '@/constants/theme';
 import { ApiError } from '@/lib/api';
 
-const BRAND_BLUE = '#0003B8';
-const PANEL_TEXT = '#0F172A';
-const MUTED_TEXT = '#64748B';
-const FIELD_BORDER = '#E2E8F0';
+const BRAND_BLUE = AppColors.brand.primary;
+const PANEL_TEXT = AppColors.text.primary;
+const MUTED_TEXT = AppColors.text.secondary;
+const FIELD_BORDER = AppColors.border.default;
 
 type RadarStat = {
   title: string;
@@ -37,7 +38,7 @@ const radarStats: RadarStat[] = [
   {
     title: 'ST. JUDE MEDICAL',
     value: '98.2%',
-    iconBackground: '#34D399',
+    iconBackground: AppColors.auth.radarGreen,
     iconColor: BRAND_BLUE,
     icon: 'hospital-box-outline' as const,
     position: {
@@ -50,7 +51,7 @@ const radarStats: RadarStat[] = [
   {
     title: 'PATIENT FLOW',
     value: '+12.4%',
-    iconBackground: '#93C5FD',
+    iconBackground: AppColors.auth.radarBlue,
     iconColor: BRAND_BLUE,
     icon: 'trending-up' as const,
     position: {
@@ -63,7 +64,7 @@ const radarStats: RadarStat[] = [
   {
     title: 'RESOURCE ALLOC.',
     value: 'OPTIMAL',
-    iconBackground: '#FFFFFF',
+    iconBackground: AppColors.surface.card,
     iconColor: BRAND_BLUE,
     icon: 'clipboard-pulse-outline' as const,
     position: {
@@ -141,7 +142,7 @@ export function Login() {
             <View>
               <View style={styles.brandRow}>
                 <View style={styles.brandBadge}>
-                  <MaterialCommunityIcons name="radar" size={20} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="radar" size={20} color={AppColors.surface.card} />
                 </View>
                 <View>
                   <Text style={styles.brandTitle}>StatuScope</Text>
@@ -158,7 +159,7 @@ export function Login() {
 
               {error ? (
                 <View style={styles.errorBanner}>
-                  <Feather name="alert-circle" size={14} color="#B91C1C" />
+                  <Feather name="alert-circle" size={14} color={AppColors.status.dangerDark} />
                   <Text style={styles.errorText}>{error}</Text>
                 </View>
               ) : null}
@@ -171,10 +172,10 @@ export function Login() {
                   value={email}
                   onChangeText={setEmail}
                   labelStyle={styles.fieldLabel}
-                  placeholderTextColor="#6B7280"
+                  placeholderTextColor={AppColors.table.muted}
                   inputContainerStyle={styles.loginInput}
                   inputStyle={styles.loginInputText}
-                  leftIcon={<Feather name="mail" size={16} color="#94A3B8" />}
+                  leftIcon={<Feather name="mail" size={16} color={AppColors.text.muted} />}
                 />
 
                 <InputField
@@ -184,10 +185,10 @@ export function Login() {
                   value={password}
                   onChangeText={setPassword}
                   labelStyle={styles.fieldLabel}
-                  placeholderTextColor="#6B7280"
+                  placeholderTextColor={AppColors.table.muted}
                   inputContainerStyle={styles.loginInput}
                   inputStyle={styles.loginInputText}
-                  leftIcon={<Feather name="lock" size={16} color="#94A3B8" />}
+                  leftIcon={<Feather name="lock" size={16} color={AppColors.text.muted} />}
                   labelAccessory={<Text style={styles.forgotPassword}>Forgot my password?</Text>}
                 />
 
@@ -208,7 +209,7 @@ export function Login() {
                   style={styles.loginButton}
                   labelStyle={styles.loginButtonLabel}
                   trailingIcon={
-                    submitting ? null : <Feather name="arrow-right" size={16} color="#FFFFFF" />
+                    submitting ? null : <Feather name="arrow-right" size={16} color={AppColors.surface.card} />
                   }
                   onPress={handleSubmit}
                 />
@@ -280,7 +281,7 @@ export function Login() {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: '#F5F5F8',
+    backgroundColor: AppColors.surface.page,
   },
   scrollContent: {
     flexGrow: 1,
@@ -292,11 +293,11 @@ const styles = StyleSheet.create({
   shell: {
     maxWidth: 1260,
     minHeight: 760,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 12,
     borderWidth: 0,
     overflow: 'hidden',
-    shadowColor: '#000000',
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 25 },
     shadowOpacity: 0.18,
     shadowRadius: 28,
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 66,
     paddingVertical: 56,
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   formPanelCompact: {
     minHeight: undefined,
@@ -366,21 +367,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FECACA',
-    backgroundColor: '#FEF2F2',
+    borderColor: AppColors.status.dangerBorder,
+    backgroundColor: AppColors.status.dangerSoft,
   },
   errorText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-    color: '#B91C1C',
+    color: AppColors.status.dangerDark,
     fontWeight: '600',
   },
   fieldLabel: {
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '600',
-    color: '#334155',
+    color: AppColors.text.body,
     textTransform: 'none',
     letterSpacing: 0,
     marginBottom: 0,
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
   },
   loginInputText: {
     fontSize: 16,
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   forgotPassword: {
     fontSize: 12,
@@ -413,12 +414,12 @@ const styles = StyleSheet.create({
     height: 16,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: AppColors.border.strong,
   },
   checkboxLabel: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#475569',
+    color: AppColors.text.body,
   },
   loginButton: {
     marginTop: 24,
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
   signUpPrompt: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#475569',
+    color: AppColors.text.body,
   },
   signUpLink: {
     fontSize: 14,
@@ -459,7 +460,7 @@ const styles = StyleSheet.create({
   },
   footerDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.surface.muted,
   },
   footerRow: {
     flexDirection: 'row',
@@ -470,7 +471,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#94A3B8',
+    color: AppColors.text.muted,
   },
   visualPanel: {
     flex: 1.08,
@@ -553,13 +554,13 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 15,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.60)',
+    color: AppColors.modal.glassSoft,
   },
   statValue: {
     fontSize: 18,
     lineHeight: 18,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
   },
   radarCoreWrap: {
     position: 'absolute',
@@ -584,10 +585,10 @@ const styles = StyleSheet.create({
     width: 112,
     height: 112,
     borderRadius: 999,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 25 },
     shadowOpacity: 0.2,
     shadowRadius: 32,
@@ -604,7 +605,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 28,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
     textAlign: 'center',
   },
   visualSubtitle: {
@@ -612,7 +613,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     lineHeight: 20,
-    color: 'rgba(255,255,255,0.60)',
+    color: AppColors.modal.glassSoft,
     textAlign: 'center',
   },
 });

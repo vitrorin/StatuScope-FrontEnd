@@ -631,6 +631,97 @@
           "title": "Carga de emergencias"
         }
       }
+    },
+    "recommendations": {
+      "tabs": {
+        "active": "Totales",
+        "high": "Alta urgencia",
+        "assigned": "Asignado",
+        "unassigned": "Sin asignar",
+        "archive": "Archivo"
+      },
+      "actions": {
+        "assignTask": "Asignar tarea",
+        "reassignTask": "Reasignar tarea",
+        "notifyStaff": "Notificar personal",
+        "orderSupplies": "Pedir insumos",
+        "complete": "Completar",
+        "dismiss": "Descartar"
+      },
+      "severity": {
+        "critical": "CRITICA",
+        "high": "ALTA",
+        "medium": "MEDIA",
+        "low": "BAJA"
+      },
+      "categories": {
+        "supply": "Insumos",
+        "bedCapacity": "Capacidad hospitalaria",
+        "staffing": "Personal",
+        "localEpidemiology": "Epidemiologia local",
+        "hospitalEpidemiology": "Epidemiologia hospitalaria",
+        "municipalEpidemiology": "Epidemiologia municipal"
+      },
+      "fallbacks": {
+        "titles": {
+          "expandMonitoredBedCapacity": "Expandir capacidad de camas monitoreadas",
+          "monitorBedOccupancyTrend": "Monitorear tendencia de ocupacion de camas",
+          "increaseEmergencyPhysicianStaffing": "Aumentar cobertura de medicos de urgencias",
+          "activateIcuSurgeProtocol": "Activar protocolo de expansion UCI",
+          "reviewLocalEpidemiologyResponse": "Revisar respuesta de epidemiologia local",
+          "implementRespiratoryIsolation": "Implementar medidas de aislamiento respiratorio",
+          "replenishCriticalRespiratorySupplies": "Reabastecer insumos criticos de proteccion respiratoria",
+          "reviewPpeStockLevels": "Revisar niveles de inventario de EPP"
+        },
+        "descriptions": {
+          "expandMonitoredBedCapacity": "Abrir camas monitoreadas adicionales para prevenir saturacion de capacidad hospitalaria.",
+          "monitorBedOccupancyTrend": "Iniciar planeacion de contingencia para evitar llegar a capacidad critica.",
+          "increaseEmergencyPhysicianStaffing": "Aumentar cobertura medica de urgencias ante presion por brotes cercanos y demanda hospitalaria.",
+          "activateIcuSurgeProtocol": "La ocupacion UCI esta en nivel critico; activar el protocolo de expansion para preservar cuidados intensivos.",
+          "reviewLocalEpidemiologyResponse": "Revisar la preparacion hospitalaria ante actividad epidemiologica local en el area de influencia.",
+          "implementRespiratoryIsolation": "Establecer zonas de aislamiento respiratorio para reducir transmision intrahospitalaria durante el brote activo.",
+          "replenishCriticalRespiratorySupplies": "Reabastecer insumos criticos de proteccion y respuesta respiratoria para mantener seguridad del personal y atencion continua.",
+          "reviewPpeStockLevels": "Revisar inventario de EPP y preparar reposicion preventiva ante aumento de consumo."
+        },
+        "impacts": {
+          "reducePatientWaitTimes": "Reducir tiempos de espera y prevenir derivacion de pacientes",
+          "preventCriticalBedShortage": "Prevenir escasez critica de camas",
+          "improvePatientThroughput": "Mejorar flujo de pacientes durante aumento por brote",
+          "preventIcuOverflow": "Prevenir saturacion UCI y asegurar disponibilidad de cuidados criticos",
+          "reduceRespiratoryTransmission": "Reducir riesgo de transmision respiratoria a personal y pacientes dentro del hospital",
+          "ensureStaffProtection": "Asegurar proteccion continua del personal y preparacion ante demanda respiratoria",
+          "avoidPpeStockout": "Evitar agotamiento de EPP durante el periodo de brote activo"
+        },
+        "urgency": {
+          "immediately": "Inmediatamente",
+          "within12Hours": "Dentro de 12 horas",
+          "within24Hours": "Dentro de 24 horas",
+          "within48Hours": "Dentro de 48 horas"
+        },
+        "list": {
+          "generalWard": "Hospitalizacion general",
+          "icu": "UCI",
+          "intensiveCareUnit": "Unidad de cuidados intensivos",
+          "emergencyDepartment": "Urgencias",
+          "respiratoryWard": "Area respiratoria",
+          "isolationRooms": "Salas de aislamiento",
+          "n95RespiratorMasks": "Respiradores N95",
+          "isolationGowns": "Batas de aislamiento",
+          "centralSupply": "Almacen central",
+          "emergencyPhysicians": "Medicos de urgencias",
+          "openMonitoredBeds": "Abrir camas monitoreadas adicionales para prevenir saturacion de capacidad.",
+          "reconfirmDischargeReadiness": "Reconfirmar altas posibles en pacientes estables",
+          "activateIcuSurgeProtocol": "Activar protocolo de expansion UCI",
+          "assignRespiratoryOverflowBeds": "Asignar camas de desborde con capacidad respiratoria",
+          "expediteIcuDischarges": "Agilizar egresos UCI elegibles",
+          "replenishPpeAndRespiratorySupplies": "Reabastecer EPP e insumos respiratorios",
+          "notifyCentralSupplyCoordinator": "Notificar a coordinacion de almacen central",
+          "prepareConsumptionBuffer": "Preparar reserva de consumo para 48 horas",
+          "establishRespiratoryIsolationZones": "Establecer zonas de aislamiento respiratorio",
+          "assignDedicatedStaffFlow": "Asignar flujo dedicado de personal para casos respiratorios sospechosos",
+          "reviewPpeBurnRate": "Revisar tasa de consumo de EPP antes del siguiente turno"
+        }
+      }
     }
   },
   "diseases": {

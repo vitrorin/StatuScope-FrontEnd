@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface PaginationControlProps {
   currentPage: number;
@@ -123,19 +124,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   pageButtonActive: {
-    backgroundColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
   },
   pageText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     fontWeight: '500',
   },
   pageTextActive: {
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
   },
   ellipsis: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
     marginHorizontal: 4,
   },
   arrowButton: {
@@ -144,18 +145,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: AppColors.surface.control,
     marginHorizontal: 4,
   },
   arrowDisabled: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: AppColors.surface.disabled,
   },
   arrowText: {
     fontSize: 20,
-    color: '#4B5563',
+    color: AppColors.text.body,
     fontWeight: '600',
   },
   arrowTextDisabled: {
-    color: '#D1D5DB',
+    color: AppColors.border.strong,
   },
 });

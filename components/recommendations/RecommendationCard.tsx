@@ -4,6 +4,7 @@ import { ActionChipButton } from './ActionChipButton';
 import { MetaInfoRow } from './MetaInfoRow';
 import { SeverityBadge } from './SeverityBadge';
 import { CardBase } from '../patterns/CardBase';
+import { AppColors } from '@/constants/theme';
 
 export type RecommendationSeverity = 'high' | 'medium' | 'low';
 export type ImageMode = 'heatmap' | 'chart' | 'supply' | 'placeholder';
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: 'relative',
     width: 140,
-    backgroundColor: '#F5F7FB',
+    backgroundColor: AppColors.surface.canvas,
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
   },
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 6,
@@ -129,13 +130,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: AppColors.text.strong,
     marginBottom: 8,
     lineHeight: 24,
   },
   description: {
     fontSize: 14,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     lineHeight: 20,
     marginBottom: 12,
   },

@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
 import { Badge } from './Badge';
+import { AppColors } from '@/constants/theme';
 
 export interface SegmentedOption {
   label: string;
@@ -90,14 +91,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
   },
   container: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: AppColors.surface.control,
     borderRadius: 12,
     padding: 4,
     gap: 4,
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   segmentActive: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -129,13 +130,13 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
+    color: AppColors.table.muted,
   },
   textSm: {
     fontSize: 13,
   },
   textActive: {
-    color: '#111827',
+    color: AppColors.text.strong,
     fontWeight: '600',
   },
   badgeWrap: {

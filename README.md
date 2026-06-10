@@ -66,6 +66,7 @@ npm run docker:build
 
 ```bash
 npx vitest
+npx vitest run __tests__/unit/adminViews/routeGates.test.ts
 node ./node_modules/typescript/bin/tsc --noEmit
 ```
 
@@ -92,7 +93,7 @@ Dedicated platform-wide area for `SYSTEM_ADMIN` users:
 
 System administrators are redirected to `/system/dashboard` after login.
 
-System admin pages are protected with `RoleGate` for `SYSTEM_ADMIN`. Some hospital-admin screens also allow `SYSTEM_ADMIN` because the backend gives system administrators platform-wide privileges.
+System admin pages are protected with `RoleGate` for `SYSTEM_ADMIN` plus `isSystemAdmin`. Hospital-admin screens stay scoped to `HOSPITAL_ADMIN`; the backend keeps `admin.operations` separate from `isSystemAdmin`.
 
 ### Hospital Administrator
 

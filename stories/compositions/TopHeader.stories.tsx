@@ -2,13 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
 import { View } from 'react-native';
 import { TopHeader } from '../../components/layout/TopHeader';
+import { AppColors } from '../../constants/theme';
 
 const meta = {
   title: 'Compositions/TopHeader',
   component: TopHeader,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, backgroundColor: AppColors.surface.page }}>
         <Story />
       </View>
     ),
@@ -23,7 +24,6 @@ type Story = StoryObj<typeof meta>;
 export const DefaultDoctor: Story = {
   args: {
     sectionLabel: 'Dashboard',
-    searchPlaceholder: 'Search patients, records...',
     userName: 'Dr. Sarah Chen',
     userId: 'ID: 2847',
     showNotificationDot: false,
@@ -34,7 +34,6 @@ export const DefaultDoctor: Story = {
 export const DefaultAdmin: Story = {
   args: {
     sectionLabel: 'User Management',
-    searchPlaceholder: 'Search users, roles...',
     userName: 'Admin Martinez',
     userId: 'ID: 001',
     showNotificationDot: false,
@@ -45,7 +44,6 @@ export const DefaultAdmin: Story = {
 export const WithNotificationIndicator: Story = {
   args: {
     sectionLabel: 'Analytics',
-    searchPlaceholder: 'Search analytics...',
     userName: 'Dr. James Wilson',
     userId: 'ID: 1923',
     showNotificationDot: true,
@@ -56,7 +54,6 @@ export const WithNotificationIndicator: Story = {
 export const WithCustomSearchPlaceholder: Story = {
   args: {
     sectionLabel: 'Diagnosis',
-    searchPlaceholder: 'Search symptoms, codes...',
     userName: 'Dr. Emily Roberts',
     userId: 'ID: 3456',
     showNotificationDot: false,
