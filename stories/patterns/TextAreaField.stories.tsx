@@ -2,11 +2,11 @@ import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
 import { View } from 'react-native';
-import { TextareaField } from '../../components/inputs/TextareaField';
+import { TextAreaField } from '../../components/inputs/TextAreaField';
 
 const meta = {
-  title: 'Components/inputs/TextareaField',
-  component: TextareaField,
+  title: 'Components/inputs/TextAreaField',
+  component: TextAreaField,
   decorators: [
     (Story) => (
       <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
@@ -17,7 +17,7 @@ const meta = {
     ),
   ],
   tags: ['autodocs'],
-} satisfies Meta<typeof TextareaField>;
+} satisfies Meta<typeof TextAreaField>;
 
 export default meta;
 

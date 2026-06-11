@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type BedCapacityVariant = 'default' | 'warning' | 'critical' | 'highlighted';
 
@@ -83,42 +83,42 @@ export function BedCapacitySummaryCard({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: AppSpacing.card,
   },
   title: {
-    fontSize: 12,
-    fontWeight: '500',
+    ...AppTypography.textStyles.caption,
+    fontWeight: AppTypography.fontWeights.medium,
     color: AppColors.table.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    letterSpacing: AppTypography.letterSpacing.eyebrow,
+    marginBottom: AppSpacing.fieldGap,
   },
   valueContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   value: {
-    fontSize: 32,
-    fontWeight: '700',
-    lineHeight: 38,
+    ...AppTypography.textStyles.display,
+    fontWeight: AppTypography.fontWeights.bold,
+    lineHeight: AppTypography.lineHeights.metricLarge,
   },
   unitText: {
-    fontSize: 16,
-    fontWeight: '500',
+    ...AppTypography.textStyles.inputText,
+    fontWeight: AppTypography.fontWeights.medium,
     color: AppColors.table.muted,
-    marginLeft: 4,
+    marginLeft: AppSpacing[2],
   },
   trendText: {
-    fontSize: 12,
+    ...AppTypography.textStyles.caption,
     color: AppColors.table.muted,
-    marginTop: 4,
+    marginTop: AppSpacing[2],
   },
   progressContainer: {
-    marginTop: 12,
+    marginTop: AppSpacing[6],
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 8,
+    ...AppTypography.textStyles.captionStrong,
+    fontWeight: AppTypography.fontWeights.semibold,
+    marginTop: AppSpacing.fieldGap,
   },
 });

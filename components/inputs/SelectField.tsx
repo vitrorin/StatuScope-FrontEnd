@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppShadows, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface SelectOption {
   label: string;
@@ -125,15 +125,13 @@ export function SelectField({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: AppSpacing.card,
     width: '100%',
   },
   label: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '500',
+    ...AppTypography.textStyles.inputLabel,
     color: AppColors.text.body,
-    marginBottom: 8,
+    marginBottom: AppSpacing.fieldGap,
   },
   labelDisabled: {
     color: AppColors.text.disabled,
@@ -141,7 +139,7 @@ const styles = StyleSheet.create({
   selectContainer: {
     borderWidth: 1,
     borderColor: AppColors.border.default,
-    borderRadius: 8,
+    borderRadius: AppRadii.md,
     backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
   },
@@ -155,15 +153,14 @@ const styles = StyleSheet.create({
     borderColor: AppColors.status.dangerBright,
   },
   selectButton: {
-    height: 42,
-    paddingHorizontal: 12,
+    height: AppSizes.controlMd + AppSpacing[1],
+    paddingHorizontal: AppSpacing[6],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   selectText: {
-    fontSize: 16,
-    lineHeight: 24,
+    ...AppTypography.textStyles.inputText,
     color: AppColors.text.primary,
   },
   placeholderText: {
@@ -176,14 +173,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderWidth: 1,
     borderColor: AppColors.border.default,
-    borderRadius: 12,
+    borderRadius: AppRadii.xl,
     backgroundColor: AppColors.surface.card,
     overflow: 'hidden',
-    shadowColor: AppColors.neutral.black,
-    shadowOffset: { width: 0, height: 4 },
+    ...AppShadows.card,
+    shadowOffset: { width: 0, height: AppSpacing[2] },
     shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowRadius: AppSpacing[6],
     zIndex: 100,
   },
   dropdownBackdrop: {
@@ -191,8 +187,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   option: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: AppSpacing[7],
+    paddingVertical: AppSpacing[6],
   },
   optionBorder: {
     borderBottomWidth: 1,
@@ -202,18 +198,16 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface.brandSoft,
   },
   optionText: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...AppTypography.textStyles.body,
     color: AppColors.text.primary,
   },
   optionTextSelected: {
     color: AppColors.brand.primary,
-    fontWeight: '600',
+    fontWeight: AppTypography.fontWeights.semibold,
   },
   errorText: {
-    marginTop: 6,
-    fontSize: 12,
-    lineHeight: 16,
+    marginTop: AppSpacing[3],
+    ...AppTypography.textStyles.caption,
     color: AppColors.status.dangerBright,
   },
 });

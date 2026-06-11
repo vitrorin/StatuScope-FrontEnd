@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface SectionTitleBlockProps {
   eyebrow?: string;
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: AppSpacing.card,
     paddingHorizontal: 0,
     width: '100%',
   },
@@ -50,27 +50,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eyebrow: {
-    fontSize: 12,
-    fontWeight: '500',
+    ...AppTypography.textStyles.eyebrow,
+    fontWeight: AppTypography.fontWeights.medium,
     color: AppColors.brand.link,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
+    letterSpacing: AppTypography.letterSpacing.eyebrow,
+    marginBottom: AppSpacing[3],
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...AppTypography.textStyles.screenTitle,
     color: AppColors.text.strong,
-    lineHeight: 34,
   },
   subtitle: {
-    fontSize: 14,
+    ...AppTypography.textStyles.body,
     color: AppColors.table.muted,
-    marginTop: 8,
-    lineHeight: 20,
+    marginTop: AppSpacing.fieldGap,
   },
   rightSlot: {
-    marginLeft: 24,
+    marginLeft: AppSpacing.screen,
     alignItems: 'flex-end',
   },
 });

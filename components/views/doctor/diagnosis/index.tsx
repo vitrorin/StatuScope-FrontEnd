@@ -32,7 +32,7 @@ import {
   uploadDiagnosisEvaluationFile,
 } from '@/lib/diagnosisEvaluation';
 import { InputField } from '@/components/inputs/InputField';
-import { TextareaField } from '@/components/inputs/TextareaField';
+import { TextAreaField } from '@/components/inputs/TextAreaField';
 import { DiagnosisDiseaseOption, searchDiagnosisDiseases } from '@/lib/diagnosisDiseases';
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { useTranslation } from '@/i18n';
@@ -1291,7 +1291,7 @@ export function DoctorDiagnosis() {
                           </View>
                         ) : null}
 
-                        <TextareaField
+                        <TextAreaField
                           placeholder={t('doctor.diagnosis.finalize.notesPlaceholder')}
                           value={feedbackNotes}
                           onChangeText={(value) => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, View, ViewStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface SearchInputProps {
   placeholder?: string;
@@ -62,11 +62,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: AppSpacing.fieldGap,
     backgroundColor: AppColors.surface.muted,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 40,
+    borderRadius: AppRadii.md,
+    paddingHorizontal: AppSpacing[6],
+    height: AppSizes.controlMd,
     borderWidth: 1,
     borderColor: 'transparent',
     width: '100%',
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    ...AppTypography.textStyles.body,
     color: AppColors.text.primary,
     padding: 0,
   },

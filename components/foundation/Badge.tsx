@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type BadgeTone =
   | 'critical'
@@ -43,15 +43,16 @@ export function Badge({ label, tone = 'neutral', style }: BadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: AppSpacing[5],
+    paddingVertical: AppSpacing[2],
+    borderRadius: AppRadii.pill,
     alignSelf: 'flex-start',
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
+    lineHeight: AppTypography.lineHeights.tight,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: AppTypography.letterSpacing.tight,
   },
 });

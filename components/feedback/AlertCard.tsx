@@ -1,7 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type AlertCardVariant = 'critical' | 'warning' | 'success' | 'info' | 'neutral';
 
@@ -75,38 +75,36 @@ export function AlertCard({
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    borderRadius: 10,
-    paddingVertical: 18,
-    paddingRight: 18,
+    borderRadius: AppRadii.lg,
+    paddingVertical: AppSpacing[9],
+    paddingRight: AppSpacing[9],
     alignItems: 'stretch',
     overflow: 'hidden',
     width: '100%',
   },
   indicator: {
-    width: 4,
-    borderRadius: 2,
-    marginRight: 18,
+    width: AppSpacing[2],
+    borderRadius: AppRadii.xs,
+    marginRight: AppSpacing[9],
     marginLeft: 0,
   },
   content: {
     flex: 1,
-    paddingLeft: 2,
-    paddingRight: 8,
+    paddingLeft: AppSpacing[1],
+    paddingRight: AppSpacing.fieldGap,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
+    gap: AppSpacing[5],
+    marginBottom: AppSpacing.fieldGap,
   },
   title: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '800',
+    ...AppTypography.textStyles.body,
+    fontWeight: AppTypography.fontWeights.extrabold,
   },
   description: {
-    fontSize: 12,
-    lineHeight: 16,
+    ...AppTypography.textStyles.caption,
     opacity: 0.9,
   },
 });

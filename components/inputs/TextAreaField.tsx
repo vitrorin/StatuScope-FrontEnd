@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
-export interface TextareaFieldProps {
+export interface TextAreaFieldProps {
   label?: string;
   placeholder?: string;
   value?: string;
@@ -14,7 +14,7 @@ export interface TextareaFieldProps {
   style?: ViewStyle;
 }
 
-export function TextareaField({
+export function TextAreaField({
   label,
   placeholder,
   value,
@@ -24,7 +24,7 @@ export function TextareaField({
   numberOfLines = 4,
   onChangeText,
   style,
-}: TextareaFieldProps) {
+}: TextAreaFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
 
   const getBorderColor = () => {
@@ -84,24 +84,23 @@ export function TextareaField({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: AppSpacing.card,
     width: '100%',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...AppTypography.textStyles.inputLabel,
     color: AppColors.text.body,
-    marginBottom: 8,
+    marginBottom: AppSpacing.fieldGap,
   },
   labelDisabled: {
     color: AppColors.text.disabled,
   },
   textareaContainer: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: AppRadii.xl,
     backgroundColor: AppColors.surface.card,
     width: '100%',
-    minHeight: 120,
+    minHeight: AppSizes.textareaMinHeight,
   },
   textareaFocused: {
     borderColor: AppColors.brand.primary,
@@ -112,22 +111,21 @@ const styles = StyleSheet.create({
   },
   textarea: {
     flex: 1,
-    fontSize: 16,
+    ...AppTypography.textStyles.inputText,
     color: AppColors.text.strong,
-    padding: 16,
-    lineHeight: 24,
+    padding: AppSpacing.card,
   },
   textareaTextDisabled: {
     color: AppColors.text.disabled,
   },
   hintText: {
-    fontSize: 12,
+    ...AppTypography.textStyles.caption,
     color: AppColors.table.muted,
-    marginTop: 6,
+    marginTop: AppSpacing[3],
   },
   errorText: {
-    fontSize: 12,
+    ...AppTypography.textStyles.caption,
     color: AppColors.status.dangerBright,
-    marginTop: 6,
+    marginTop: AppSpacing[3],
   },
 });

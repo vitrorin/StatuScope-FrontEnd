@@ -6,7 +6,7 @@ import { IconButton } from '../foundation/IconButton';
 import { FileUploadDropzone } from '../inputs/FileUploadDropzone';
 import { InputField } from '../inputs/InputField';
 import { SelectField } from '../inputs/SelectField';
-import { TextareaField } from '../inputs/TextareaField';
+import { TextAreaField } from '../inputs/TextAreaField';
 import { CardBase } from '../patterns/CardBase';
 import { AppColors } from '@/constants/theme';
 
@@ -135,7 +135,7 @@ export function PatientEvaluationForm({
 
         <View>
           <Text style={styles.fieldLabel}>{symptomsLabel}</Text>
-          <TextareaField
+          <TextAreaField
             placeholder={symptomsPlaceholder}
             value={symptomsValue}
             onChangeText={onSymptomsChange}
