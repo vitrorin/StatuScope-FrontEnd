@@ -17,6 +17,8 @@ export interface ButtonProps {
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   labelStyle?: TextStyle;
+  testID?: string;
+  accessibilityLabel?: string;
 }
 
 const variantStyles: Record<
@@ -80,6 +82,8 @@ export function Button({
   onPress,
   style,
   labelStyle,
+  testID,
+  accessibilityLabel,
 }: ButtonProps) {
   const colors = variantStyles[variant];
   const metrics = sizeStyles[size];
@@ -103,6 +107,8 @@ export function Button({
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
     >
       {leadingIcon ? <View style={styles.iconSlot}>{leadingIcon}</View> : null}
       {children || label ? (

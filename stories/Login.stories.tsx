@@ -3,7 +3,7 @@ import { Login } from '@/components/auth/Login';
 import { withMockProfile } from './viewDecorators';
 
 const meta = {
-  title: 'Views/Auth/Login',
+  title: 'Vistas/Auth/Login',
   component: Login,
   decorators: [withMockProfile(null)],
   parameters: {

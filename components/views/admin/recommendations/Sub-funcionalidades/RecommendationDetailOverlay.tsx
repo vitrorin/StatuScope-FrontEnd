@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { RecommendationFeedItem } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -49,15 +50,27 @@ export function RecommendationDetailOverlay({
 
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.metricRow}>
-              <MetricCard
+              <OverlayStatCard
+                showAccentBar={false}
+                style={styles.metricCard}
+                labelStyle={styles.metricLabel}
+                valueStyle={styles.metricValue}
                 label={isSpanish(language) ? 'Prioridad calculada' : 'Calculated Priority'}
                 value={getSeverityLabel(item.backendSeverity, language)}
               />
-              <MetricCard
+              <OverlayStatCard
+                showAccentBar={false}
+                style={styles.metricCard}
+                labelStyle={styles.metricLabel}
+                valueStyle={styles.metricValue}
                 label={isSpanish(language) ? 'Impacto esperado' : 'Expected Impact'}
                 value={item.expectedImpact}
               />
-              <MetricCard
+              <OverlayStatCard
+                showAccentBar={false}
+                style={styles.metricCard}
+                labelStyle={styles.metricLabel}
+                valueStyle={styles.metricValue}
                 label={isSpanish(language) ? 'Ventana de urgencia' : 'Urgency Window'}
                 value={item.urgencyWindow}
               />
@@ -111,21 +124,6 @@ export function RecommendationDetailOverlay({
         </CardBase>
       </View>
     </Modal>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <CardBase style={styles.metricCard}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
-    </CardBase>
   );
 }
 
@@ -202,10 +200,14 @@ const styles = StyleSheet.create({
   },
   metricRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   metricCard: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: '48%',
+    width: '48%',
     borderRadius: 16,
     padding: 14,
   },

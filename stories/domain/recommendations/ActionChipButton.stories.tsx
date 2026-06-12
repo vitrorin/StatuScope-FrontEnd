@@ -4,7 +4,7 @@ import { AppColors } from '@/constants/theme';
 import { ActionChipButton } from '@/components/recommendations/ActionChipButton';
 
 const meta = {
-  title: 'Components/recommendations/ActionChipButton',
+  title: 'Componentes únicos/Recommendations/ActionChipButton',
   component: ActionChipButton,
   decorators: [
     (Story) => (

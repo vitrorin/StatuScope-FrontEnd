@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { DiagnosisChatBubble } from '../../../components/diagnosis/DiagnosisChatBubble';
 
 const meta = {
-  title: 'Components/diagnosis/DiagnosisChatBubble',
+  title: 'Componentes únicos/Diagnosis/DiagnosisChatBubble',
   component: DiagnosisChatBubble,
   decorators: [
     (Story) => (

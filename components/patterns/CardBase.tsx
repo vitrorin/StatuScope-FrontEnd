@@ -5,10 +5,11 @@ import { AppColors, AppRadii, AppShadows, AppSpacing } from '@/constants/theme';
 export interface CardBaseProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
-export function CardBase({ children, style }: CardBaseProps) {
-  return <View style={[styles.card, style]}>{children}</View>;
+export function CardBase({ children, style, testID }: CardBaseProps) {
+  return <View style={[styles.card, style]} testID={testID}>{children}</View>;
 }
 
 const styles = StyleSheet.create({

@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   priorityValue: { fontSize: 14, lineHeight: 18, color: AppColors.text.primary, fontWeight: '900' },
   contactList: { gap: 8 },
   contactOption: { minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
-  contactOptionActive: { borderColor: AppColors.border.brandMuted, backgroundColor: '#F7F8FF' },
+  contactOptionActive: { borderColor: AppColors.border.brandMuted, backgroundColor: AppColors.selection.activeWash },
   contactName: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: AppColors.text.primary },
   contactNameActive: { color: AppColors.brand.action },
   contactMeta: { marginTop: 2, fontSize: 12, lineHeight: 16, color: AppColors.text.soft },

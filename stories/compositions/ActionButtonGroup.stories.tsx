@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { ActionButtonGroup } from '../../components/diagnosis/ActionButtonGroup';
 
 const meta = {
-  title: 'Components/diagnosis/ActionButtonGroup',
+  title: 'Componentes únicos/Diagnosis/ActionButtonGroup',
   component: ActionButtonGroup,
   decorators: [
     (Story) => (

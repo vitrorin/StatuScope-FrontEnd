@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { ProgressMetricRow } from '../../components/dashboard/ProgressMetricRow';
 
 const meta = {
-  title: 'Components/dashboard/ProgressMetricRow',
+  title: 'Componentes únicos/Dashboard/ProgressMetricRow',
   component: ProgressMetricRow,
   decorators: [
     (Story) => (

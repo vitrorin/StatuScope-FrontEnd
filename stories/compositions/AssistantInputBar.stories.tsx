@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { AssistantInputBar } from '../../components/diagnosis/AssistantInputBar';
 
 const meta = {
-  title: 'Components/diagnosis/AssistantInputBar',
+  title: 'Componentes únicos/Diagnosis/AssistantInputBar',
   component: AssistantInputBar,
   decorators: [
     (Story) => (

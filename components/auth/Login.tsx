@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     width: 820,
     height: 820,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: AppColors.auth.halo,
   },
   radarLargeRing: {
     position: 'absolute',
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     height: 572,
     borderRadius: 286,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: AppColors.auth.radarRing,
   },
   radarMidRing: {
     position: 'absolute',
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     height: 420,
     borderRadius: 210,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: AppColors.auth.radarRing,
   },
   radarInnerRing: {
     position: 'absolute',
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
     height: 268,
     borderRadius: 134,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
+    borderColor: AppColors.auth.radarRing,
   },
   statCard: {
     position: 'absolute',
@@ -540,8 +540,8 @@ const styles = StyleSheet.create({
     padding: 13,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.20)',
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderColor: AppColors.auth.statCardBorder,
+    backgroundColor: AppColors.auth.statCardBackground,
   },
   statIconWrap: {
     width: 32,
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
     height: 136,
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.30)',
+    borderColor: AppColors.auth.radarCoreBorder,
   },
   radarCore: {
     width: 112,

@@ -10,7 +10,7 @@ const options = [
 ];
 
 const meta = {
-  title: 'Components/recommendations/RecommendationTabs',
+  title: 'Componentes únicos/Recommendations/RecommendationTabs',
   component: RecommendationTabs,
   decorators: [
     (Story) => (

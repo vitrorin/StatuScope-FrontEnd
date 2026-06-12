@@ -3,7 +3,7 @@ import { RegisterForm } from '@/components/auth/RegisterForm';
 import { withMockProfile } from './viewDecorators';
 
 const meta = {
-  title: 'Views/Auth/Register',
+  title: 'Vistas/Auth/Register',
   component: RegisterForm,
   decorators: [withMockProfile(null)],
   parameters: {

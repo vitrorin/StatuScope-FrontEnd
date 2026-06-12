@@ -5,7 +5,7 @@ import { View, Text } from 'react-native';
 import { SectionTitleBlock } from '../../components/layout/SectionTitleBlock';
 
 const meta = {
-  title: 'Components/layout/SectionTitleBlock',
+  title: 'Componentes reutilizables/Layout/SectionTitleBlock',
   component: SectionTitleBlock,
   decorators: [
     (Story) => (

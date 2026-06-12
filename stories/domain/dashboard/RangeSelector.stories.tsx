@@ -10,7 +10,7 @@ const rangeOptions = [
 ];
 
 const meta = {
-  title: 'Components/dashboard/RangeSelector',
+  title: 'Componentes únicos/Dashboard/RangeSelector',
   component: RangeSelector,
   decorators: [
     (Story) => (

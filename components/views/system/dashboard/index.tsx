@@ -6,6 +6,8 @@ import { systemNavigationLinks, getSystemSidebarItems } from '@/components/dashb
 import { RadarMapCard, RadarMapPin, RadarMapPolygon } from '@/components/dashboard/RadarMapCard';
 import { Button } from '@/components/foundation/Button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
+import { PdfPreviewFrame } from '@/components/overlays/PdfPreviewFrame';
 import { CardBase } from '@/components/patterns/CardBase';
 import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
 import { useAuth } from '@/contexts/AuthContext';
@@ -506,23 +508,29 @@ function HospitalOutbreakModal({
 
           <ScrollView contentContainerStyle={styles.dialogBody} showsVerticalScrollIndicator={false}>
             <View style={styles.hospitalDetailStatsGrid}>
-              <ModalStat
+              <OverlayStatCard
                 label={es ? 'Brotes cercanos' : 'Nearby Outbreaks'}
                 value={`${hospital.nearbyActiveOutbreakCount}`}
                 detail={es ? 'brotes activos cerca' : 'active outbreaks nearby'}
-                accent={alertTone}
+                accentColor={alertTone}
+                style={styles.modalStatCard}
+                valueStyle={styles.modalStatValue}
               />
-              <ModalStat
+              <OverlayStatCard
                 label={es ? 'Radio' : 'Radius'}
                 value={`${hospital.radiusKm} km`}
                 detail={es ? 'desde el hospital' : 'from the hospital'}
-                accent={AppColors.brand.action}
+                accentColor={AppColors.brand.action}
+                style={styles.modalStatCard}
+                valueStyle={styles.modalStatValue}
               />
-              <ModalStat
+              <OverlayStatCard
                 label={es ? 'Codigo' : 'Code'}
                 value={hospital.code}
                 detail={hospital.active ? (es ? 'hospital activo' : 'active hospital') : (es ? 'hospital inactivo' : 'inactive hospital')}
-                accent={AppColors.brand.teal}
+                accentColor={AppColors.brand.teal}
+                style={styles.modalStatCard}
+                valueStyle={styles.modalStatValue}
               />
             </View>
 
@@ -745,17 +753,21 @@ function MetricInfoModal({
           </View>
           <View style={styles.metricDialogBody}>
             <View style={styles.modalStatsGrid}>
-              <ModalStat
+              <OverlayStatCard
                 label={es ? 'Valor actual' : 'Current Value'}
                 value={value}
                 detail={es ? 'lectura consolidada' : 'consolidated reading'}
-                accent={palette.accent}
+                accentColor={palette.accent}
+                style={styles.modalStatCard}
+                valueStyle={styles.modalStatValue}
               />
-              <ModalStat
+              <OverlayStatCard
                 label={es ? 'Estado operativo' : 'Operational Status'}
                 value={badge}
                 detail={es ? 'segun senales del backend' : 'based on backend signals'}
-                accent={palette.accent}
+                accentColor={palette.accent}
+                style={styles.modalStatCard}
+                valueStyle={styles.modalStatValue}
               />
             </View>
             <View style={styles.kpiInsightCard}>
@@ -850,10 +862,10 @@ function ActivityDetailModal({
                   <Text style={styles.hospitalMetricDetailEyebrow}>{es ? 'Detalle seleccionado' : 'Selected Detail'}</Text>
                   <Text style={styles.hospitalMetricDetailTitle}>{activeHospital.hospitalName}</Text>
                   <View style={styles.hospitalMetricStatsGrid}>
-                    <ModalStat label={es ? 'Usuarios totales' : 'Total Users'} value={`${activeHospital.totalUsers}`} detail={es ? 'cuentas asignadas' : 'assigned accounts'} accent={AppColors.brand.action} />
-                    <ModalStat label={es ? 'Usuarios activos' : 'Active Users'} value={`${activeHospital.activeUsers}`} detail={es ? 'con acceso vigente' : 'currently enabled'} accent={AppColors.brand.teal} />
-                    <ModalStat label={es ? 'Doctores' : 'Doctors'} value={`${activeHospital.doctorUsers}`} detail={es ? 'personal medico' : 'medical staff'} accent={AppColors.status.cyanDark} />
-                    <ModalStat label={es ? 'Administradores' : 'Administrators'} value={`${activeHospital.adminUsers}`} detail={es ? 'gestion hospitalaria' : 'hospital management'} accent={AppColors.brand.purple} />
+                    <OverlayStatCard style={styles.modalStatCard} valueStyle={styles.modalStatValue} label={es ? 'Usuarios totales' : 'Total Users'} value={`${activeHospital.totalUsers}`} detail={es ? 'cuentas asignadas' : 'assigned accounts'} accentColor={AppColors.brand.action} />
+                    <OverlayStatCard style={styles.modalStatCard} valueStyle={styles.modalStatValue} label={es ? 'Usuarios activos' : 'Active Users'} value={`${activeHospital.activeUsers}`} detail={es ? 'con acceso vigente' : 'currently enabled'} accentColor={AppColors.brand.teal} />
+                    <OverlayStatCard style={styles.modalStatCard} valueStyle={styles.modalStatValue} label={es ? 'Doctores' : 'Doctors'} value={`${activeHospital.doctorUsers}`} detail={es ? 'personal medico' : 'medical staff'} accentColor={AppColors.status.cyanDark} />
+                    <OverlayStatCard style={styles.modalStatCard} valueStyle={styles.modalStatValue} label={es ? 'Administradores' : 'Administrators'} value={`${activeHospital.adminUsers}`} detail={es ? 'gestion hospitalaria' : 'hospital management'} accentColor={AppColors.brand.purple} />
                   </View>
                   <View style={styles.inactiveStrip}>
                     <Text style={styles.inactiveStripLabel}>{es ? 'Usuarios inactivos o pendientes' : 'Inactive or pending users'}</Text>
@@ -957,30 +969,6 @@ function SystemReportOverlay({
   );
 }
 
-function PdfPreviewFrame({ url, title }: { url: string; title: string }) {
-  return React.createElement('iframe', {
-    src: url,
-    title,
-    style: {
-      width: '100%',
-      height: '100%',
-      border: '0',
-      backgroundColor: AppColors.surface.card,
-    },
-  });
-}
-
-function ModalStat({ label, value, detail, accent }: { label: string; value: string; detail: string; accent: string }) {
-  return (
-    <CardBase style={[styles.modalStatCard, { borderColor: `${accent}24` }]}>
-      <View style={[styles.modalStatAccent, { backgroundColor: accent }]} />
-      <Text style={styles.modalStatLabel}>{label}</Text>
-      <Text style={styles.modalStatValue}>{value}</Text>
-      <Text style={styles.modalStatDetail}>{detail}</Text>
-    </CardBase>
-  );
-}
-
 function OutbreakInsightRow({ outbreak, index, es }: { outbreak: SystemNearbyOutbreakResponse; index: number; es: boolean }) {
   const tone = severityTone(outbreak.severity);
   return (
@@ -1057,7 +1045,7 @@ function metricPalette(metric: SystemMetricResponse) {
 function severityTone(severity: string) {
   const normalized = severity.toUpperCase();
   if (normalized === 'CRITICAL') return AppColors.status.dangerOutbreak;
-  if (normalized === 'HIGH') return '#C2410C';
+  if (normalized === 'HIGH') return AppColors.severityTone.high;
   if (normalized === 'MEDIUM') return AppColors.status.warningDark;
   return AppColors.brand.teal;
 }
@@ -1194,9 +1182,18 @@ function buildSystemReportPdf(summary: SystemDashboardSummaryResponse, es: boole
   pdf.rect(36, 34, 540, 76, [246, 247, 255], [218, 220, 251]);
   pdf.text(es ? 'Reporte del administrador del sistema' : 'System Administrator Report', 54, y, 18, true, [15, 23, 42]);
   y += 24;
-  pdf.text(`StatuScope | ${generatedAt.toLocaleString()}`, 54, y, 10, false, [82, 97, 116]);
+  pdf.text(`StatuScope | ${generatedAt.toLocaleString(es ? 'es-MX' : 'en-US')}`, 54, y, 10, false, [82, 97, 116]);
   y += 18;
-  pdf.text(`${formatPdfNumber(summary.metrics.length)} KPIs | ${formatPdfNumber(summary.hospitalOutbreaks.length)} hospitales | ${formatPdfNumber(hospitalsWithOutbreaks)} con brotes cercanos | ${formatPdfNumber(totalNearbyOutbreaks)} brotes`, 54, y, 9, false, [82, 97, 116]);
+  pdf.text(
+    es
+      ? `${formatPdfNumber(summary.metrics.length)} KPIs | ${formatPdfNumber(summary.hospitalOutbreaks.length)} hospitales | ${formatPdfNumber(hospitalsWithOutbreaks)} con brotes cercanos | ${formatPdfNumber(totalNearbyOutbreaks)} brotes`
+      : `${formatPdfNumber(summary.metrics.length)} KPIs | ${formatPdfNumber(summary.hospitalOutbreaks.length)} hospitals | ${formatPdfNumber(hospitalsWithOutbreaks)} with nearby outbreaks | ${formatPdfNumber(totalNearbyOutbreaks)} outbreaks`,
+    54,
+    y,
+    9,
+    false,
+    [82, 97, 116],
+  );
   y = 132;
 
   y = drawPdfTable(
@@ -1617,7 +1614,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
-  hospitalIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F1FF' },
+  hospitalIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: AppColors.decorative.hospitalIconWash },
   hospitalIconAlert: { backgroundColor: AppColors.status.dangerWash },
   hospitalCopy: { flex: 1, minWidth: 0 },
   hospitalName: { color: AppColors.text.primary, fontWeight: '900', fontSize: 14, lineHeight: 18 },
@@ -1700,10 +1697,7 @@ const styles = StyleSheet.create({
   modalStatsGrid: { flexDirection: 'row', gap: 12 },
   hospitalDetailStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   modalStatCard: { flex: 1, minHeight: 96, borderRadius: 16, padding: 16, paddingLeft: 20, borderWidth: 1, overflow: 'hidden' },
-  modalStatAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  modalStatLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.text.muted, textTransform: 'uppercase', letterSpacing: 0 },
-  modalStatValue: { marginTop: 8, fontSize: 24, lineHeight: 30, fontWeight: '900', color: AppColors.text.primary },
-  modalStatDetail: { marginTop: 4, fontSize: 12, lineHeight: 16, color: AppColors.text.secondary, fontWeight: '600' },
+  modalStatValue: { fontSize: 24, lineHeight: 30 },
   insightsSection: { borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, overflow: 'hidden' },
   insightsHeader: { minHeight: 62, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft },
   insightsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },

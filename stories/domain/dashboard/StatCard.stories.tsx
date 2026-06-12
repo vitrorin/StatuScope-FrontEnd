@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { StatCard } from '../../../components/dashboard/StatCard';
 
 const meta = {
-  title: 'Components/dashboard/StatCard',
+  title: 'Componentes únicos/Dashboard/StatCard',
   component: StatCard,
   decorators: [
     (Story) => (

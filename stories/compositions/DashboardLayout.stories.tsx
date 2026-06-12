@@ -23,7 +23,7 @@ const sidebarItems = [
 ];
 
 const meta = {
-  title: 'Components/layout/DashboardLayout',
+  title: 'Componentes reutilizables/Layout/DashboardLayout',
   component: DashboardLayout,
   parameters: {
     layout: 'fullscreen',

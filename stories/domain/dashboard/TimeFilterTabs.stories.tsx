@@ -11,7 +11,7 @@ const timeOptions = [
 ];
 
 const meta = {
-  title: 'Components/dashboard/TimeFilterTabs',
+  title: 'Componentes únicos/Dashboard/TimeFilterTabs',
   component: TimeFilterTabs,
   decorators: [
     (Story) => (

@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { RadarMapCard } from '../../../components/dashboard/RadarMapCard';
 
 const meta = {
-  title: 'Components/dashboard/RadarMapCard',
+  title: 'Componentes únicos/Dashboard/RadarMapCard',
   component: RadarMapCard,
   decorators: [
     (Story) => (

@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface.raised,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E6EDF8',
+    borderColor: AppColors.panel.diagnosisBorder,
     paddingHorizontal: 10,
     paddingVertical: 10,
   },

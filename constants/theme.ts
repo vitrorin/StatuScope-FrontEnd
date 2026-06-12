@@ -125,6 +125,13 @@ export const AppColors = {
   border,
   status,
   chart,
+  decorative: {
+    alertBarDanger: '#F05252',
+    alertBarInfo: '#3D7FFF',
+    linkAccent: '#0a7ea4',
+    hospitalIconWash: '#F0F1FF',
+    dashboardRoleWash: '#EEF0FF',
+  },
   clinicalSeverity: {
     critical: {
       accent: '#E11D48',
@@ -170,6 +177,7 @@ export const AppColors = {
       accent: status.dangerBright,
       background: status.dangerSoft,
       track: status.dangerBorder,
+      trackSoft: '#F9D8D8',
     },
     info: {
       accent: status.cyan,
@@ -215,6 +223,12 @@ export const AppColors = {
       value: status.infoDark,
     },
   },
+  severityTone: {
+    high: '#C2410C',
+    mediumBorder: '#F2E5C1',
+    neutralBorder: '#E3E8F0',
+    active: '#059669',
+  },
   roleTone: {
     doctor: {
       accent: '#3B82F6',
@@ -249,6 +263,11 @@ export const AppColors = {
     placeholder: '#6B7280',
     radarGreen: '#34D399',
     radarBlue: '#93C5FD',
+    halo: 'rgba(255,255,255,0.03)',
+    radarRing: 'rgba(255,255,255,0.10)',
+    statCardBorder: 'rgba(255,255,255,0.20)',
+    statCardBackground: 'rgba(255,255,255,0.10)',
+    radarCoreBorder: 'rgba(255,255,255,0.30)',
   },
   modal: {
     backdrop: 'rgba(255,255,255,0.74)',
@@ -266,6 +285,19 @@ export const AppColors = {
     glass: 'rgba(255,255,255,0.74)',
     glassStrong: 'rgba(255,255,255,0.92)',
     modal: neutral.white,
+    sidebarMutedText: 'rgba(71, 85, 105, 0.72)',
+    mapSkeletonPanel: 'rgba(255, 255, 255, 0.86)',
+    mapSkeletonPin: 'rgba(226, 232, 240, 0.85)',
+    analyticsBlueArea: 'rgba(80, 195, 244, 0.10)',
+    analyticsPurpleArea: 'rgba(139, 92, 246, 0.06)',
+  },
+  selection: {
+    activeWash: '#F7F8FF',
+    hoverWash: '#F1F5FF',
+  },
+  panel: {
+    diagnosisBorder: '#E6EDF8',
+    selectorBorder: '#D6E0EF',
   },
   shadow: {
     default: neutral.ink,

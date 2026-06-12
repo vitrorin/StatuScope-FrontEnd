@@ -4,7 +4,7 @@ import { AppColors } from '@/constants/theme';
 import { CardBase } from '@/components/patterns/CardBase';
 
 const meta = {
-  title: 'Components/patterns/CardBase',
+  title: 'Componentes reutilizables/Patterns/CardBase',
   component: CardBase,
   decorators: [
     (Story) => (

@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { MetaInfoRow } from '../../components/recommendations/MetaInfoRow';
 
 const meta = {
-  title: 'Components/recommendations/MetaInfoRow',
+  title: 'Componentes únicos/Recommendations/MetaInfoRow',
   component: MetaInfoRow,
   decorators: [
     (Story) => (

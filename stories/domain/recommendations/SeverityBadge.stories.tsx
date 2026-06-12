@@ -4,7 +4,7 @@ import { AppColors } from '@/constants/theme';
 import { SeverityBadge } from '@/components/recommendations/SeverityBadge';
 
 const meta = {
-  title: 'Components/recommendations/SeverityBadge',
+  title: 'Componentes únicos/Recommendations/SeverityBadge',
   component: SeverityBadge,
   decorators: [
     (Story) => (

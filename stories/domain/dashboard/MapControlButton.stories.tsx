@@ -4,7 +4,7 @@ import { AppColors } from '@/constants/theme';
 import { MapControlButton } from '@/components/dashboard/MapControlButton';
 
 const meta = {
-  title: 'Components/dashboard/MapControlButton',
+  title: 'Componentes únicos/Dashboard/MapControlButton',
   component: MapControlButton,
   decorators: [
     (Story) => (

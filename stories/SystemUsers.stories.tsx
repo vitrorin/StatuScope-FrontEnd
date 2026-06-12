@@ -4,7 +4,7 @@ import { mockProfiles } from '../.storybook/mocks/AuthContext';
 import { withMockProfile } from './viewDecorators';
 
 const meta = {
-  title: 'Views/SystemAdmin/Users',
+  title: 'Vistas/SystemAdmin/Users',
   component: SystemUsers,
   decorators: [withMockProfile(mockProfiles.systemAdmin)],
   parameters: {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DoctorDashboardMetric } from '@/components/views/doctor/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -36,8 +37,8 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
 
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
             <View style={styles.metricsGrid}>
-              <MetricStat label={t('doctor.dashboard.overlays.currentValue')} value={metric.value} accentColor={accentColor(metric.status)} />
-              <MetricStat label={t('doctor.dashboard.overlays.signal')} value={metric.signalLabel} accentColor={accentColor(metric.status)} />
+              <OverlayStatCard label={t('doctor.dashboard.overlays.currentValue')} value={metric.value} accentColor={accentColor(metric.status)} style={styles.statCard} />
+              <OverlayStatCard label={t('doctor.dashboard.overlays.signal')} value={metric.signalLabel} accentColor={accentColor(metric.status)} style={styles.statCard} />
             </View>
 
             {metric.insights && metric.insights.length > 0 ? (
@@ -76,20 +77,10 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
   );
 }
 
-function MetricStat({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
-  return (
-    <CardBase style={[styles.statCard, { borderColor: `${accentColor}22` }]}>
-      <View style={[styles.statAccent, { backgroundColor: accentColor }]} />
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </CardBase>
-  );
-}
-
 function accentColor(status?: DoctorDashboardMetric['status']) {
-  if (status === 'danger') return AppColors.status.infoDark;
-  if (status === 'warning') return AppColors.roleTone.doctor.accent;
-  if (status === 'positive') return AppColors.auth.radarBlue;
+  if (status === 'danger') return AppColors.status.dangerBright;
+  if (status === 'warning') return AppColors.status.warningBright;
+  if (status === 'positive') return AppColors.status.successBright;
   return AppColors.brand.primary;
 }
 
@@ -131,17 +122,6 @@ const styles = StyleSheet.create({
   body: { padding: 24, gap: 20 },
   metricsGrid: { flexDirection: 'row', gap: 12 },
   statCard: { flex: 1, borderRadius: 16, padding: 16, paddingLeft: 20, borderWidth: 1, overflow: 'hidden' },
-  statAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  statLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: AppColors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 8,
-  },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
   insightsSection: {
     borderRadius: 18,
     borderWidth: 1,

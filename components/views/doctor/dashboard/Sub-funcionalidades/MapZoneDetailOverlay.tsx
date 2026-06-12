@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DoctorDashboardZone } from '@/components/views/doctor/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -52,25 +53,19 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
 
           <View style={styles.metricsGrid}>
             {metrics.map((metric) => (
-              <MetricStat key={metric.label} label={metric.label} value={metric.value} accentColor={zone.borderColor} />
+              <OverlayStatCard
+                key={metric.label}
+                label={metric.label}
+                value={metric.value}
+                accentColor={zone.borderColor}
+                valueNumberOfLines={2}
+                style={styles.statCard}
+              />
             ))}
           </View>
         </CardBase>
       </View>
     </Modal>
-  );
-}
-
-function MetricStat({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
-  return (
-    <CardBase style={[styles.statCard, { borderColor: `${accentColor}24` }]}>
-      <View style={[styles.statAccent, { backgroundColor: accentColor }]} />
-      <View style={[styles.statIcon, { backgroundColor: `${accentColor}12` }]}>
-        <Feather name="activity" size={15} color={accentColor} />
-      </View>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue} numberOfLines={2}>{value}</Text>
-    </CardBase>
   );
 }
 
@@ -123,40 +118,17 @@ const styles = StyleSheet.create({
   },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 24 },
   statCard: {
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: '48%',
     width: '48%',
-    minHeight: 118,
+    minHeight: 106,
     borderRadius: 14,
     padding: 16,
-    paddingLeft: 20,
     overflow: 'hidden',
     borderWidth: 1,
     backgroundColor: AppColors.surface.card,
   },
-  statAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-  },
-  statIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  statLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: AppColors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 8,
-  },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
 });
 
 export default MapZoneDetailOverlay;

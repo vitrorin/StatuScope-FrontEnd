@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     right: -12,
     width: '56%',
     height: '118%',
-    backgroundColor: 'rgba(80, 195, 244, 0.10)',
+    backgroundColor: AppColors.overlay.analyticsBlueArea,
     borderRadius: 220,
   },
   heatArea: {
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     width: 280,
     height: 340,
     borderRadius: 999,
-    backgroundColor: 'rgba(139, 92, 246, 0.06)',
+    backgroundColor: AppColors.overlay.analyticsPurpleArea,
   },
   pinWrap: {
     position: 'absolute',

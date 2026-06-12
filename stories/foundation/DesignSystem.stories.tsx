@@ -108,7 +108,7 @@ function DesignSystemOverview() {
 }
 
 const meta = {
-  title: 'Components/foundation/DesignSystem',
+  title: 'Componentes reutilizables/Foundation/DesignSystem',
   component: DesignSystemOverview,
   tags: ['autodocs'],
 } satisfies Meta<typeof DesignSystemOverview>;

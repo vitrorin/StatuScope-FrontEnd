@@ -7,6 +7,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RadarMapCard, RadarMapPolygon } from '@/components/dashboard/RadarMapCard';
 import { AlertCard } from '@/components/feedback/AlertCard';
+import { RetryState } from '@/components/feedback/RetryState';
+import { SkeletonLine } from '@/components/feedback/SkeletonLine';
+import { AlertListOverlay } from '@/components/overlays/AlertListOverlay';
 import { DiseaseBreakdownCard } from '@/components/dashboard/DiseaseBreakdownCard';
 import { AlertDetailOverlay } from '@/components/views/doctor/dashboard/Sub-funcionalidades/AlertDetailOverlay';
 import { EpidemiologicalReportOverlay, ReportSection } from '@/components/views/doctor/dashboard/Sub-funcionalidades/EpidemiologicalReportOverlay';
@@ -369,9 +372,9 @@ function getRadiusBounds(
 }
 
 function metricAccentColor(status?: DoctorDashboardMetric['status']) {
-  if (status === 'danger') return AppColors.status.infoDark;
-  if (status === 'warning') return AppColors.roleTone.doctor.accent;
-  if (status === 'positive') return AppColors.auth.radarBlue;
+  if (status === 'danger') return AppColors.status.dangerBright;
+  if (status === 'warning') return AppColors.status.warningBright;
+  if (status === 'positive') return AppColors.status.successBright;
   return AppColors.text.secondary;
 }
 
@@ -388,27 +391,6 @@ function metricIcon(metric: DoctorDashboardMetric, isLoading = false) {
           : 'bar-chart-2';
 
   return <Feather name={iconName} size={18} color={color} />;
-}
-
-function SkeletonLine({ width, height = 12, style }: { width: number | string; height?: number; style?: object }) {
-  return <View style={[styles.skeletonLine, { width, height }, style]} />;
-}
-
-function RetryOverlay({
-  label,
-  onRetry,
-}: {
-  label: string;
-  onRetry: () => void;
-}) {
-  return (
-    <View style={styles.retryOverlay}>
-      <TouchableOpacity style={styles.retryButton} activeOpacity={0.82} onPress={onRetry}>
-        <Feather name="refresh-cw" size={18} color={AppColors.brand.primary} />
-        <Text style={styles.retryText}>{label}</Text>
-      </TouchableOpacity>
-    </View>
-  );
 }
 
 function MapSkeleton({ width }: { width?: number }) {
@@ -768,7 +750,7 @@ export function DoctorDashboard() {
                   icon={metricIcon(metric, !metricsState.data)}
                   isLoading={!metricsState.data}
                 />
-                <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadMetrics} />
+                <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadMetrics} compact style={styles.retryOverlay} />
               </View>
             ))
           ) : topMetrics.map((metric) => (
@@ -799,7 +781,7 @@ export function DoctorDashboard() {
           ) : mapState.status === 'error' ? (
             <View style={[styles.retryHost, mapWidth ? { width: mapWidth } : styles.mapCard]}>
               <MapSkeleton />
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadMap} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadMap} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <RadarMapCard
@@ -861,7 +843,7 @@ export function DoctorDashboard() {
           ) : alertsState.status === 'error' ? (
             <View style={[styles.retryHost, mapWidth ? { width: mapWidth } : null]}>
               <AlertsSkeleton title={t('doctor.dashboard.alerts.title')} />
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadAlerts} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadAlerts} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <View
@@ -928,7 +910,7 @@ export function DoctorDashboard() {
                 title={t('doctor.dashboard.diseaseBreakdown.localTitle')}
                 buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
               />
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadLocalBreakdown} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadLocalBreakdown} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <DiseaseBreakdownCard
@@ -955,7 +937,7 @@ export function DoctorDashboard() {
                 title={t('doctor.dashboard.diseaseBreakdown.stateTitle')}
                 buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
               />
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadStateBreakdown} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadStateBreakdown} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <DiseaseBreakdownCard
@@ -976,15 +958,16 @@ export function DoctorDashboard() {
       <MetricDetailOverlay visible={selectedMetric !== null} metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
       <MapZoneDetailOverlay visible={selectedZone !== null} zone={selectedZone} onClose={() => setSelectedZone(null)} />
       <AlertDetailOverlay visible={selectedAlert !== null} alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
-      <MoreAlertsOverlay
+      <AlertListOverlay
         visible={isMoreAlertsOpen}
+        title={t('doctor.dashboard.alerts.moreTitle')}
+        eyebrow={t('doctor.dashboard.alerts.moreEyebrow')}
         alerts={remainingAlerts}
         onClose={() => setIsMoreAlertsOpen(false)}
         onSelectAlert={(alert) => {
           setIsMoreAlertsOpen(false);
           setSelectedAlert(alert);
         }}
-        t={t}
       />
       <EpidemiologicalReportOverlay
         visible={isReportOpen}
@@ -1112,7 +1095,7 @@ function StateOutbreakExplorer({
               <MapSkeleton />
             ) : stateMapStatus === 'error' ? (
               <View style={styles.stateExplorerError}>
-                <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={() => onSelectState(selectedState)} />
+                <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={() => onSelectState(selectedState)} compact style={styles.retryOverlay} />
               </View>
             ) : (
               <RadarMapCard
@@ -1153,7 +1136,7 @@ function StateOutbreakExplorer({
             <MapSkeleton />
           ) : statesStatus === 'error' ? (
             <View style={styles.stateExplorerError}>
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={onRetryStates} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={onRetryStates} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <RadarMapCard
@@ -1183,51 +1166,6 @@ function StateOutbreakExplorer({
               }))}
             />
           )}
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-function MoreAlertsOverlay({
-  visible,
-  alerts,
-  onClose,
-  onSelectAlert,
-  t,
-}: {
-  visible: boolean;
-  alerts: DoctorDashboardAlert[];
-  onClose: () => void;
-  onSelectAlert: (alert: DoctorDashboardAlert) => void;
-  t: (key: string, params?: Record<string, string | number>) => string;
-}) {
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.moreAlertsOverlay}>
-        <Pressable style={styles.stateExplorerBackdrop} onPress={onClose} />
-        <View style={styles.moreAlertsCard}>
-          <View style={styles.moreAlertsHeader}>
-            <View>
-              <Text style={styles.stateExplorerEyebrow}>{t('doctor.dashboard.alerts.moreEyebrow')}</Text>
-              <Text style={styles.stateExplorerTitle}>{t('doctor.dashboard.alerts.moreTitle')}</Text>
-            </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color={AppColors.text.secondary} />
-            </TouchableOpacity>
-          </View>
-          <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
-            {alerts.map((alert) => (
-              <TouchableOpacity key={alert.id} activeOpacity={0.82} onPress={() => onSelectAlert(alert)}>
-                <AlertCard
-                  title={alert.title}
-                  description={alert.description}
-                  variant={alert.variant}
-                  style={styles.alertCard}
-                />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -1375,10 +1313,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: AppColors.brand.primary,
   },
-  skeletonLine: {
-    borderRadius: 999,
-    backgroundColor: AppColors.chart.grid,
-  },
   skeletonSpaced: {
     marginTop: 14,
   },
@@ -1420,7 +1354,7 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
     borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.86)',
+    backgroundColor: AppColors.overlay.mapSkeletonPanel,
   },
   skeletonMapOverlayHeader: {
     gap: 10,
@@ -1451,7 +1385,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 160,
     borderRadius: 999,
-    backgroundColor: 'rgba(226, 232, 240, 0.85)',
+    backgroundColor: AppColors.overlay.mapSkeletonPin,
   },
   skeletonPinSmall: {
     position: 'absolute',

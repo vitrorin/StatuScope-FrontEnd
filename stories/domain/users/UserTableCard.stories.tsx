@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { UserTableCard } from '../../../components/users/UserTableCard';
 
 const meta = {
-  title: 'Components/users/UserTableCard',
+  title: 'Componentes únicos/Users/UserTableCard',
   component: UserTableCard,
   decorators: [
     (Story) => (

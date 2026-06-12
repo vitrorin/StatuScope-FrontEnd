@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { FileUploadDropzone } from '../../components/inputs/FileUploadDropzone';
 
 const meta = {
-  title: 'Components/inputs/FileUploadDropzone',
+  title: 'Componentes reutilizables/Inputs/FileUploadDropzone',
   component: FileUploadDropzone,
   decorators: [
     (Story) => (

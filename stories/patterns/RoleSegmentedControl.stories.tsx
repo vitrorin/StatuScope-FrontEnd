@@ -10,7 +10,7 @@ const roleOptions = [
 ];
 
 const meta = {
-  title: 'Components/inputs/RoleSegmentedControl',
+  title: 'Componentes reutilizables/Inputs/RoleSegmentedControl',
   component: RoleSegmentedControl,
   decorators: [
     (Story) => (

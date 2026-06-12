@@ -4,7 +4,7 @@ import { AppColors } from '@/constants/theme';
 import { LanguageSwitcher } from '@/components/inputs/LanguageSwitcher';
 
 const meta = {
-  title: 'Components/inputs/LanguageSwitcher',
+  title: 'Componentes reutilizables/Inputs/LanguageSwitcher',
   component: LanguageSwitcher,
   decorators: [
     (Story) => (

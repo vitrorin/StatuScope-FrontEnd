@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { ConfidenceBar } from '../../../components/diagnosis/ConfidenceBar';
 
 const meta = {
-  title: 'Components/diagnosis/ConfidenceBar',
+  title: 'Componentes únicos/Diagnosis/ConfidenceBar',
   component: ConfidenceBar,
   decorators: [
     (Story) => (

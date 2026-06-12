@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.status.successWash,
   },
   containerError: {
-    borderColor: '#FCA5A5',
+    borderColor: AppColors.status.dangerBorder,
     backgroundColor: AppColors.status.dangerSoft,
   },
   iconWrap: {

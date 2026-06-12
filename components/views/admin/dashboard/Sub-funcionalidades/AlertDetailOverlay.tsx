@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardAlert } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -25,7 +26,7 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
       : alert.description.split('.')[0]);
   const rows = [
     { label: t('doctor.dashboard.alerts.activeCasesLabel'), value: activeCasesText, icon: 'activity' as const, color: accent },
-    { label: t('doctor.dashboard.overlays.municipality'), value: alert.municipalityName ?? alert.area ?? alert.department, icon: 'map-pin' as const, color: '#3D7FFF' },
+    { label: t('doctor.dashboard.overlays.municipality'), value: alert.municipalityName ?? alert.area ?? alert.department, icon: 'map-pin' as const, color: AppColors.decorative.alertBarInfo },
     { label: t('doctor.dashboard.overlays.state'), value: alert.stateName ?? alert.area ?? alert.department, icon: 'map' as const, color: AppColors.brand.purple },
     { label: t('doctor.dashboard.overlays.status'), value: statusLabel, icon: 'check-circle' as const, color: statusAccent(alert.variant) },
     { label: t('doctor.dashboard.overlays.priority'), value: alert.priority, icon: 'flag' as const, color: priorityAccent(alert.variant) },
@@ -49,15 +50,19 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
 
           <View style={styles.body}>
             <View style={styles.metricsGrid}>
-              <MetricStat
+              <OverlayStatCard
                 label={t('doctor.dashboard.overlays.currentValue')}
                 value={diseaseName}
                 accentColor={accent}
+                valueNumberOfLines={2}
+                style={styles.statCard}
               />
-              <MetricStat
+              <OverlayStatCard
                 label={t('doctor.dashboard.overlays.signal')}
                 value={statusLabel}
                 accentColor={accent}
+                valueNumberOfLines={2}
+                style={styles.statCard}
               />
             </View>
 
@@ -83,16 +88,6 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
         </CardBase>
       </View>
     </Modal>
-  );
-}
-
-function MetricStat({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
-  return (
-    <CardBase style={[styles.statCard, { borderColor: `${accentColor}24` }]}>
-      <View style={[styles.statAccent, { backgroundColor: accentColor }]} />
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue} numberOfLines={2}>{value}</Text>
-    </CardBase>
   );
 }
 
@@ -145,9 +140,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: AppColors.surface.card,
   },
-  statAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  statLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.text.muted, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
   insightsSection: { borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, overflow: 'hidden' },
   insightsHeader: { minHeight: 56, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: AppColors.border.soft, justifyContent: 'center' },
   insightsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '900', color: AppColors.text.primary },

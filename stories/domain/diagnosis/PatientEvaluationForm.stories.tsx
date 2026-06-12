@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { PatientEvaluationForm } from '../../../components/diagnosis/PatientEvaluationForm';
 
 const meta = {
-  title: 'Components/diagnosis/PatientEvaluationForm',
+  title: 'Componentes únicos/Diagnosis/PatientEvaluationForm',
   component: PatientEvaluationForm,
   decorators: [
     (Story) => (

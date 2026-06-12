@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { AlertCard } from '../../components/feedback/AlertCard';
 
 const meta = {
-  title: 'Components/feedback/AlertCard',
+  title: 'Componentes reutilizables/Feedback/AlertCard',
   component: AlertCard,
   decorators: [
     (Story) => (

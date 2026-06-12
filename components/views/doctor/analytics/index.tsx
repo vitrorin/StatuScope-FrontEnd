@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { initialsFromName } from '@/lib/format';
 import { RadarMapCard, RadarMapPin, RadarMapPolygon } from '@/components/dashboard/RadarMapCard';
 import { DetectionBanner } from '@/components/feedback/DetectionBanner';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { SkeletonLine } from '@/components/feedback/SkeletonLine';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
 import { SidebarItemKey, SidebarNavItem } from '@/components/Sidebar';
@@ -915,10 +917,11 @@ export function AnalyticsScreen({
             />
 
             {!hasSelectedDisease && !loading ? (
-              <CardBase style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>{t('common.analytics.selectionRequired.title')}</Text>
-                <Text style={styles.emptyText}>{t('common.analytics.selectionRequired.text')}</Text>
-              </CardBase>
+              <EmptyState
+                style={styles.emptyCard}
+                title={t('common.analytics.selectionRequired.title')}
+                message={t('common.analytics.selectionRequired.text')}
+              />
             ) : null}
 
             {hasSelectedDisease ? <MethodologyCard isAdmin={isAdmin} t={t} /> : null}
@@ -961,10 +964,11 @@ export function AnalyticsScreen({
             ) : null}
 
             {hasSelectedDisease && empty ? (
-              <CardBase style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>{t('common.analytics.empty.title')}</Text>
-                <Text style={styles.emptyText}>{t('common.analytics.empty.text')}</Text>
-              </CardBase>
+              <EmptyState
+                style={styles.emptyCard}
+                title={t('common.analytics.empty.title')}
+                message={t('common.analytics.empty.text')}
+              />
             ) : hasSelectedDisease ? (
               <>
                 <View style={styles.mainRow}>
@@ -1394,7 +1398,7 @@ function DiseaseSelectorLoadingSkeleton() {
   return (
     <View style={styles.selectorLoadingBlock}>
       <View style={styles.selectorLoadingInput}>
-        <View style={[styles.analyticsSkeletonLine, styles.analyticsSkeletonInputText]} />
+        <SkeletonLine width="100%" height={14} style={styles.analyticsSkeletonInputText} />
         <View style={styles.analyticsSkeletonIcon} />
       </View>
       <View style={styles.selectorLoadingList}>
@@ -1402,10 +1406,10 @@ function DiseaseSelectorLoadingSkeleton() {
           <View key={item} style={styles.selectorLoadingOption}>
             <View style={styles.analyticsSkeletonDot} />
             <View style={styles.selectorLoadingOptionText}>
-              <View style={[styles.analyticsSkeletonLine, { width: item === 0 ? '54%' : item === 1 ? '42%' : '48%' }]} />
-              <View style={[styles.analyticsSkeletonLine, styles.analyticsSkeletonSmallLine]} />
+              <SkeletonLine width={item === 0 ? '54%' : item === 1 ? '42%' : '48%'} />
+              <SkeletonLine width="30%" height={9} style={styles.analyticsSkeletonSmallLine} />
             </View>
-            <View style={[styles.analyticsSkeletonLine, styles.analyticsSkeletonBadge]} />
+            <SkeletonLine width={56} height={22} style={styles.analyticsSkeletonBadge} />
           </View>
         ))}
       </View>
@@ -1684,18 +1688,6 @@ const styles = StyleSheet.create({
   emptyCard: {
     borderRadius: 24,
     padding: 24,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '900',
-    color: AppColors.text.primary,
-  },
-  emptyText: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 22,
-    color: AppColors.text.secondary,
   },
   mainRow: {
     flexDirection: 'row',
@@ -2016,7 +2008,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#D6E0EF',
+    borderColor: AppColors.panel.selectorBorder,
     backgroundColor: AppColors.surface.card,
     flexDirection: 'row',
     alignItems: 'center',
@@ -2043,23 +2035,13 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 8,
   },
-  analyticsSkeletonLine: {
-    height: 12,
-    borderRadius: 999,
-    backgroundColor: AppColors.chart.grid,
-  },
   analyticsSkeletonInputText: {
     flex: 1,
-    height: 14,
   },
   analyticsSkeletonSmallLine: {
-    width: '30%',
-    height: 9,
     backgroundColor: AppColors.border.soft,
   },
   analyticsSkeletonBadge: {
-    width: 56,
-    height: 22,
     backgroundColor: AppColors.surface.brandSoft,
   },
   analyticsSkeletonIcon: {
@@ -2128,7 +2110,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface.brandSoft,
   },
   diseaseDropdownOptionHovered: {
-    backgroundColor: '#F1F5FF',
+    backgroundColor: AppColors.selection.hoverWash,
   },
   diseaseDropdownOptionText: {
     fontSize: 14,

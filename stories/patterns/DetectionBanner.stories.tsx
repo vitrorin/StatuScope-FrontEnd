@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { DetectionBanner } from '../../components/feedback/DetectionBanner';
 
 const meta = {
-  title: 'Components/feedback/DetectionBanner',
+  title: 'Componentes reutilizables/Feedback/DetectionBanner',
   component: DetectionBanner,
   decorators: [
     (Story) => (

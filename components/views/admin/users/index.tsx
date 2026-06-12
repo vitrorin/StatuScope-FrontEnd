@@ -5,6 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { adminNavigationLinks, getAdminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
+import { SelectableChip } from '@/components/foundation/SelectableChip';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { SkeletonLine } from '@/components/feedback/SkeletonLine';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { InputField } from '@/components/inputs/InputField';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -294,17 +297,19 @@ export function AdminUsers() {
                       {roleFilters.map((role) => {
                         const isActive = activeRoleFilter === role;
                         return (
-                          <TouchableOpacity
+                          <SelectableChip
                             key={role}
-                            style={[styles.filterChip, isActive && styles.filterChipActive]}
+                            label={roleLabel(role)}
+                            selected={isActive}
+                            style={styles.filterChip}
+                            selectedStyle={styles.filterChipActive}
+                            labelStyle={styles.filterChipText}
+                            selectedLabelStyle={styles.filterChipTextActive}
                             onPress={() => {
                               setActiveRoleFilter(role);
                               setCurrentPage(1);
                             }}
-                            activeOpacity={0.75}
-                          >
-                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{roleLabel(role)}</Text>
-                          </TouchableOpacity>
+                          />
                         );
                       })}
                     </View>
@@ -316,17 +321,19 @@ export function AdminUsers() {
                       {statusFilters.map((status) => {
                         const isActive = activeStatusFilter === status;
                         return (
-                          <TouchableOpacity
+                          <SelectableChip
                             key={status}
-                            style={[styles.filterChip, isActive && styles.filterChipActive]}
+                            label={statusLabel(status)}
+                            selected={isActive}
+                            style={styles.filterChip}
+                            selectedStyle={styles.filterChipActive}
+                            labelStyle={styles.filterChipText}
+                            selectedLabelStyle={styles.filterChipTextActive}
                             onPress={() => {
                               setActiveStatusFilter(status);
                               setCurrentPage(1);
                             }}
-                            activeOpacity={0.75}
-                          >
-                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{statusLabel(status)}</Text>
-                          </TouchableOpacity>
+                          />
                         );
                       })}
                     </View>
@@ -401,12 +408,11 @@ export function AdminUsers() {
               ))}
 
               {visibleUsers.length === 0 ? (
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateTitle}>{isSpanish(language) ? 'No se encontraron usuarios' : 'No users found'}</Text>
-                  <Text style={styles.emptyStateSubtitle}>
-                    {isSpanish(language) ? 'Prueba ajustando la busqueda o los filtros.' : 'Try adjusting the current search or filters.'}
-                  </Text>
-                </View>
+                <EmptyState
+                  style={styles.emptyState}
+                  title={isSpanish(language) ? 'No se encontraron usuarios' : 'No users found'}
+                  message={isSpanish(language) ? 'Prueba ajustando la busqueda o los filtros.' : 'Try adjusting the current search or filters.'}
+                />
               ) : null}
 
               <View style={styles.tableFooter}>
@@ -460,12 +466,11 @@ export function AdminUsers() {
                 ))}
 
                 {visibleContacts.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateTitle}>{isSpanish(language) ? 'No hay contactos' : 'No contacts found'}</Text>
-                    <Text style={styles.emptyStateSubtitle}>
-                      {isSpanish(language) ? 'Agrega contactos para asignar tareas y enviar avisos reales por correo.' : 'Add contacts to assign tasks and send real email notices.'}
-                    </Text>
-                  </View>
+                  <EmptyState
+                    style={styles.emptyState}
+                    title={isSpanish(language) ? 'No hay contactos' : 'No contacts found'}
+                    message={isSpanish(language) ? 'Agrega contactos para asignar tareas y enviar avisos reales por correo.' : 'Add contacts to assign tasks and send real email notices.'}
+                  />
                 ) : null}
 
                 <View style={styles.tableFooter}>
@@ -606,22 +611,22 @@ function UsersTableSkeleton({ mode }: { mode: 'users' | 'directory' }) {
   return (
     <CardBase style={styles.tableCard}>
       <View style={styles.tableHeader}>
-        <View style={[styles.usersSkeletonLine, styles.nameCol, { height: 12 }]} />
-        <View style={[styles.usersSkeletonLine, styles.emailCol, { height: 12 }]} />
-        <View style={[styles.usersSkeletonLine, styles.roleCol, { height: 12 }]} />
-        <View style={[styles.usersSkeletonLine, styles.statusCol, { height: 12 }]} />
+        <View style={styles.nameCol}><SkeletonLine width="100%" height={12} /></View>
+        <View style={styles.emailCol}><SkeletonLine width="100%" height={12} /></View>
+        <View style={styles.roleCol}><SkeletonLine width="100%" height={12} /></View>
+        <View style={styles.statusCol}><SkeletonLine width="100%" height={12} /></View>
       </View>
       {[0, 1, 2, 3, 4].map((item) => (
         <View key={item} style={[styles.tableRow, item === 4 && styles.tableRowLast]}>
           <View style={[styles.bodyCell, styles.nameCol, styles.nameCell]}>
             <View style={styles.usersSkeletonAvatar} />
             <View style={styles.usersSkeletonNameStack}>
-              <View style={[styles.usersSkeletonLine, { width: item === 1 ? 116 : 148, height: 14 }]} />
-              {mode === 'directory' ? <View style={[styles.usersSkeletonLine, { width: 88, height: 10 }]} /> : null}
+              <SkeletonLine width={item === 1 ? 116 : 148} height={14} />
+              {mode === 'directory' ? <SkeletonLine width={88} height={10} /> : null}
             </View>
           </View>
           <View style={[styles.bodyCell, styles.emailCol]}>
-            <View style={[styles.usersSkeletonLine, { width: item === 2 ? 154 : 190 }]} />
+            <SkeletonLine width={item === 2 ? 154 : 190} />
           </View>
           <View style={[styles.bodyCell, styles.roleCol]}>
             <View style={styles.usersSkeletonBadge} />
@@ -632,7 +637,7 @@ function UsersTableSkeleton({ mode }: { mode: 'users' | 'directory' }) {
         </View>
       ))}
       <View style={styles.tableFooter}>
-        <View style={[styles.usersSkeletonLine, { width: 160 }]} />
+        <SkeletonLine width={160} />
         <View style={styles.usersSkeletonPager}>
           <View style={styles.usersSkeletonPagerButton} />
           <View style={styles.usersSkeletonPagerButton} />
@@ -901,7 +906,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface.control,
   },
   roleBadgeInfo: {
-    backgroundColor: '#EEF0FF',
+    backgroundColor: AppColors.decorative.dashboardRoleWash,
   },
   roleBadgeText: {
     fontSize: 11,
@@ -919,20 +924,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 36,
     paddingHorizontal: 24,
+    borderWidth: 0,
+    borderRadius: 0,
     borderTopWidth: 1,
     borderTopColor: AppColors.border.soft,
-  },
-  emptyStateTitle: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '800',
-    color: AppColors.text.primary,
-  },
-  emptyStateSubtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    lineHeight: 20,
-    color: AppColors.text.soft,
+    backgroundColor: AppColors.surface.card,
   },
   tableFooter: {
     borderTopWidth: 1,
@@ -947,11 +943,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     color: AppColors.text.soft,
-  },
-  usersSkeletonLine: {
-    height: 12,
-    borderRadius: 999,
-    backgroundColor: AppColors.chart.grid,
   },
   usersSkeletonAvatar: {
     width: 38,

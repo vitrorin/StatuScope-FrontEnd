@@ -7,6 +7,7 @@ import { DiagnosisChatBubble } from '@/components/diagnosis/DiagnosisChatBubble'
 import { DiagnosisResponseCard } from '@/components/diagnosis/DiagnosisResponseCard';
 import { FileUploadState, PatientEvaluationForm } from '@/components/diagnosis/PatientEvaluationForm';
 import { RecommendedTestsCard } from '@/components/diagnosis/RecommendedTestsCard';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { Button } from '@/components/foundation/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { initialsFromName } from '@/lib/format';
@@ -955,13 +956,12 @@ export function DoctorDiagnosis() {
                   showsVerticalScrollIndicator={false}
                 >
                   {chatHistory.length === 0 ? (
-                    <View style={styles.emptyState}>
-                      <MaterialCommunityIcons name="stethoscope" size={24} color={AppColors.brand.primary} />
-                      <Text style={styles.emptyTitle}>{t('doctor.diagnosis.assistant.emptyTitle')}</Text>
-                      <Text style={styles.emptyText}>
-                        {t('doctor.diagnosis.assistant.emptyText')}
-                      </Text>
-                    </View>
+                    <EmptyState
+                      style={styles.emptyState}
+                      icon={<MaterialCommunityIcons name="stethoscope" size={24} color={AppColors.brand.primary} />}
+                      title={t('doctor.diagnosis.assistant.emptyTitle')}
+                      message={t('doctor.diagnosis.assistant.emptyText')}
+                    />
                   ) : (
                     chatHistory.map((message, index) => {
                       const normalizedMessage = ensureMessageMetadata(message, index, language);
@@ -1684,22 +1684,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: AppColors.border.default,
     backgroundColor: AppColors.surface.card,
-  },
-  emptyTitle: {
-    marginTop: 12,
-    fontSize: 17,
-    lineHeight: 24,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    textAlign: 'center',
-  },
-  emptyText: {
-    marginTop: 6,
-    maxWidth: 420,
-    fontSize: 14,
-    lineHeight: 22,
-    color: AppColors.text.secondary,
-    textAlign: 'center',
   },
   responseRow: {
     flexDirection: 'row',

@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { SelectField } from '../../components/inputs/SelectField';
 
 const meta = {
-  title: 'Components/inputs/SelectField',
+  title: 'Componentes reutilizables/Inputs/SelectField',
   component: SelectField,
   decorators: [
     (Story) => (

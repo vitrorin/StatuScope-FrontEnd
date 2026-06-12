@@ -4,7 +4,7 @@ import { mockProfiles } from '../.storybook/mocks/AuthContext';
 import { withMockProfile } from './viewDecorators';
 
 const meta = {
-  title: 'Views/HospitalAdmin/Dashboard',
+  title: 'Vistas/HospitalAdmin/Dashboard',
   component: AdminDashboard,
   decorators: [withMockProfile(mockProfiles.hospitalAdmin)],
   parameters: {

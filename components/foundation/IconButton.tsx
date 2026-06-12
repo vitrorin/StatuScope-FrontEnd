@@ -1,5 +1,5 @@
 import React from 'react';
-import { ViewStyle } from 'react-native';
+import { StyleProp, ViewStyle } from 'react-native';
 import { Button, ButtonVariant } from './Button';
 
 export interface IconButtonProps {
@@ -7,7 +7,9 @@ export interface IconButtonProps {
   variant?: ButtonVariant;
   disabled?: boolean;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
+  accessibilityLabel?: string;
 }
 
 export function IconButton({
@@ -16,6 +18,8 @@ export function IconButton({
   disabled = false,
   onPress,
   style,
+  testID,
+  accessibilityLabel,
 }: IconButtonProps) {
   return (
     <Button
@@ -24,6 +28,8 @@ export function IconButton({
       disabled={disabled}
       onPress={onPress}
       style={style}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
     >
       {icon}
     </Button>

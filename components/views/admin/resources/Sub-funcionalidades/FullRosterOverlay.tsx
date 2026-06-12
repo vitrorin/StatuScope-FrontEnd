@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { CardBase } from '@/components/patterns/CardBase';
 import { StaffRosterItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -52,14 +53,15 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
 
           <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
             {roster.length === 0 ? (
-              <CardBase style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>{isSpanish(language) ? 'No hay contactos operativos disponibles' : 'No live operational contacts available'}</Text>
-                <Text style={styles.emptyText}>
-                  {isSpanish(language)
+              <EmptyState
+                style={styles.emptyCard}
+                title={isSpanish(language) ? 'No hay contactos operativos disponibles' : 'No live operational contacts available'}
+                message={
+                  isSpanish(language)
                     ? 'Este roster ahora solo muestra registros de contactos reales devueltos por el backend.'
-                    : 'This roster now only shows real contact records returned by the backend.'}
-                </Text>
-              </CardBase>
+                    : 'This roster now only shows real contact records returned by the backend.'
+                }
+              />
             ) : null}
 
             {roster.map((member) => (
@@ -174,18 +176,6 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: AppColors.surface.raised,
     borderColor: AppColors.border.brandSoft,
-  },
-  emptyTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '800',
-    color: AppColors.text.primary,
-  },
-  emptyText: {
-    marginTop: 8,
-    fontSize: 13,
-    lineHeight: 20,
-    color: AppColors.text.soft,
   },
   rosterCard: {
     flexDirection: 'row',

@@ -4,7 +4,7 @@ import { AppColors } from '@/constants/theme';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
 
 const meta = {
-  title: 'Components/feedback/StatusBadge',
+  title: 'Componentes reutilizables/Feedback/StatusBadge',
   component: StatusBadge,
   decorators: [
     (Story) => (

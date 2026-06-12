@@ -5,7 +5,7 @@ import { View, Text } from 'react-native';
 import { MiniMetricCard } from '../../../components/dashboard/MiniMetricCard';
 
 const meta = {
-  title: 'Components/dashboard/MiniMetricCard',
+  title: 'Componentes únicos/Dashboard/MiniMetricCard',
   component: MiniMetricCard,
   decorators: [
     (Story) => (

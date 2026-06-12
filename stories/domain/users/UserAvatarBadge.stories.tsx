@@ -4,7 +4,7 @@ import { AppColors } from '@/constants/theme';
 import { UserAvatarBadge } from '@/components/users/UserAvatarBadge';
 
 const meta = {
-  title: 'Components/users/UserAvatarBadge',
+  title: 'Componentes únicos/Users/UserAvatarBadge',
   component: UserAvatarBadge,
   decorators: [
     (Story) => (

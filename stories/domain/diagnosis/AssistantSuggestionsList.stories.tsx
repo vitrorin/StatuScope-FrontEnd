@@ -41,7 +41,7 @@ const localizedRiskLabels: Record<string, string> = {
 };
 
 const meta = {
-  title: 'Components/diagnosis/AssistantSuggestionsList',
+  title: 'Componentes únicos/Diagnosis/AssistantSuggestionsList',
   component: AssistantSuggestionsList,
   decorators: [
     (Story) => (

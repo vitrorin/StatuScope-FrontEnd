@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { CardBase } from '@/components/patterns/CardBase';
 import { InventoryResourceItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -53,10 +54,11 @@ export function InventoryMapOverlay({ visible, inventory, onClose }: InventoryMa
 
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {locations.length === 0 ? (
-              <CardBase style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>{isSpanish(language) ? 'No hay ubicaciones de inventario disponibles' : 'No inventory locations available'}</Text>
-                <Text style={styles.emptyText}>{isSpanish(language) ? 'Agrega un artículo de inventario con ubicación para verlo agrupado aquí.' : 'Add an inventory item with a location to see it grouped here.'}</Text>
-              </CardBase>
+              <EmptyState
+                style={styles.emptyCard}
+                title={isSpanish(language) ? 'No hay ubicaciones de inventario disponibles' : 'No inventory locations available'}
+                message={isSpanish(language) ? 'Agrega un artículo de inventario con ubicación para verlo agrupado aquí.' : 'Add an inventory item with a location to see it grouped here.'}
+              />
             ) : null}
 
             {locations.map(([location, items]) => (
@@ -162,18 +164,6 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: AppColors.surface.raised,
     borderColor: AppColors.border.brandSoft,
-  },
-  emptyTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '800',
-    color: AppColors.text.primary,
-  },
-  emptyText: {
-    marginTop: 8,
-    fontSize: 13,
-    lineHeight: 20,
-    color: AppColors.text.soft,
   },
   locationCard: {
     borderRadius: 18,

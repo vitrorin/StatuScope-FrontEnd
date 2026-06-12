@@ -4,7 +4,7 @@ import { AppColors } from '@/constants/theme';
 import { ProgressBar } from '@/components/foundation/ProgressBar';
 
 const meta = {
-  title: 'Components/foundation/ProgressBar',
+  title: 'Componentes reutilizables/Foundation/ProgressBar',
   component: ProgressBar,
   decorators: [
     (Story) => (
