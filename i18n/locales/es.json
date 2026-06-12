@@ -314,6 +314,7 @@
       },
       "actions": {
         "runAnalysis": "Ejecutar análisis IA",
+        "startNewReport": "Iniciar Nuevo Reporte",
         "analyzing": "Analizando...",
         "saving": "Guardando..."
       },
@@ -392,6 +393,7 @@
         }
       },
       "validation": {
+        "alertTitle": "Datos incompletos",
         "patientNameRequired": "El nombre del paciente es obligatorio.",
         "birthDateRequired": "La fecha de nacimiento es obligatoria.",
         "birthDateFormat": "La fecha de nacimiento debe usar el formato AAAA-MM-DD.",

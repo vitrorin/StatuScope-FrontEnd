@@ -314,6 +314,7 @@
       },
       "actions": {
         "runAnalysis": "Run AI Analysis",
+        "startNewReport": "Start New Report",
         "analyzing": "Analyzing...",
         "saving": "Saving..."
       },
@@ -392,6 +393,7 @@
         }
       },
       "validation": {
+        "alertTitle": "Missing information",
         "patientNameRequired": "Patient name is required.",
         "birthDateRequired": "Birth date is required.",
         "birthDateFormat": "Birth date must use YYYY-MM-DD format.",
