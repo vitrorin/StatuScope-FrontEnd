@@ -1,7 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type AlertCardVariant = 'critical' | 'warning' | 'success' | 'info' | 'neutral';
 
@@ -9,12 +9,14 @@ export interface AlertCardProps {
   title: string;
   description: string;
   variant?: AlertCardVariant;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
+  metadata?: string;
+  testID?: string;
 }
 
 const variantStyles = {
   critical: {
-    bar: '#F05252',
+    bar: AppColors.decorative.alertBarDanger,
     background: AppColors.status.dangerSoft,
     title: AppColors.status.dangerDeep,
     text: AppColors.status.dangerDark,
@@ -35,7 +37,7 @@ const variantStyles = {
     icon: 'check-circle' as const,
   },
   info: {
-    bar: '#3D7FFF',
+    bar: AppColors.decorative.alertBarInfo,
     background: AppColors.status.infoSoft,
     title: AppColors.brand.link,
     text: AppColors.status.info,
@@ -55,11 +57,13 @@ export function AlertCard({
   description,
   variant = 'info',
   style,
+  metadata,
+  testID,
 }: AlertCardProps) {
   const colors = variantStyles[variant];
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.background }, style]}>
+    <View style={[styles.card, { backgroundColor: colors.background }, style]} testID={testID}>
       <View style={[styles.indicator, { backgroundColor: colors.bar }]} />
       <View style={styles.content}>
         <View style={styles.headerRow}>
@@ -67,6 +71,7 @@ export function AlertCard({
           <Text style={[styles.title, { color: colors.title }]}>{title}</Text>
         </View>
         <Text style={[styles.description, { color: colors.text }]}>{description}</Text>
+        {metadata ? <Text style={[styles.metadata, { color: colors.text }]}>{metadata}</Text> : null}
       </View>
     </View>
   );
@@ -75,38 +80,41 @@ export function AlertCard({
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    borderRadius: 10,
-    paddingVertical: 18,
-    paddingRight: 18,
+    borderRadius: AppRadii.lg,
+    paddingVertical: AppSpacing[9],
+    paddingRight: AppSpacing[9],
     alignItems: 'stretch',
     overflow: 'hidden',
     width: '100%',
   },
   indicator: {
-    width: 4,
-    borderRadius: 2,
-    marginRight: 18,
+    width: AppSpacing[2],
+    borderRadius: AppRadii.xs,
+    marginRight: AppSpacing[9],
     marginLeft: 0,
   },
   content: {
     flex: 1,
-    paddingLeft: 2,
-    paddingRight: 8,
+    paddingLeft: AppSpacing[1],
+    paddingRight: AppSpacing.fieldGap,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
+    gap: AppSpacing[5],
+    marginBottom: AppSpacing.fieldGap,
   },
   title: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '800',
+    ...AppTypography.textStyles.body,
+    fontWeight: AppTypography.fontWeights.extrabold,
   },
   description: {
-    fontSize: 12,
-    lineHeight: 16,
+    ...AppTypography.textStyles.caption,
     opacity: 0.9,
+  },
+  metadata: {
+    ...AppTypography.textStyles.captionStrong,
+    marginTop: AppSpacing[4],
+    opacity: 0.82,
   },
 });

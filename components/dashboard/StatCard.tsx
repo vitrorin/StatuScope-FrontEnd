@@ -3,7 +3,15 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Badge } from '../foundation/Badge';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
-import { AppColors, withAlpha } from '@/constants/theme';
+import {
+  AppColors,
+  AppRadii,
+  AppShadows,
+  AppSizes,
+  AppSpacing,
+  AppTypography,
+  withAlpha,
+} from '@/constants/theme';
 
 export type StatCardStatus = 'positive' | 'danger' | 'warning' | 'neutral';
 
@@ -116,12 +124,12 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minHeight: 176,
-    padding: 24,
-    paddingTop: 22,
-    borderRadius: 14,
+    padding: AppSpacing.screen,
+    paddingTop: AppSpacing[11] ?? 22,
+    borderRadius: AppRadii['2xl'],
     backgroundColor: AppColors.surface.frost,
     overflow: 'hidden',
-    shadowColor: AppColors.text.primary,
+    ...AppShadows.card,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.10,
     shadowRadius: 30,
@@ -132,19 +140,18 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 5,
+    width: AppSpacing[2] + 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 18,
-    gap: 12,
+    marginBottom: AppSpacing[9],
+    gap: AppSpacing[6],
   },
   title: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '700',
+    ...AppTypography.textStyles.bodySmall,
+    fontWeight: AppTypography.fontWeights.bold,
     color: AppColors.text.secondary,
   },
   titleContainer: {
@@ -153,73 +160,72 @@ const styles = StyleSheet.create({
   },
   badge: {
     flexShrink: 0,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingHorizontal: AppSpacing[4] + 1,
+    paddingVertical: AppSpacing[2] + 1,
   },
   skeletonBadge: {
-    width: 48,
-    height: 22,
-    borderRadius: 999,
+    width: AppSpacing[24],
+    height: AppSpacing[11] ?? 22,
+    borderRadius: AppRadii.pill,
     backgroundColor: AppColors.chart.grid,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 54,
+    minHeight: AppSpacing[27] ?? 54,
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: AppSizes.controlSm,
+    height: AppSizes.controlSm,
+    borderRadius: AppRadii.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: AppSpacing[6],
   },
   value: {
     flexShrink: 1,
-    fontSize: 32,
-    lineHeight: 38,
-    fontWeight: '900',
+    ...AppTypography.textStyles.display,
+    lineHeight: AppTypography.lineHeights.metricLarge,
+    fontWeight: AppTypography.fontWeights.black,
     color: AppColors.text.primary,
   },
   skeletonValueBlock: {
-    gap: 6,
+    gap: AppSpacing[3],
   },
   skeletonValue: {
     width: '62%',
-    height: 34,
-    borderRadius: 999,
+    height: AppTypography.lineHeights.screenTitle,
+    borderRadius: AppRadii.pill,
     backgroundColor: AppColors.chart.grid,
   },
   skeletonValueShort: {
     width: '48%',
   },
   subtitle: {
-    marginTop: 14,
-    fontSize: 12,
-    lineHeight: 17,
+    marginTop: AppSpacing[7],
+    ...AppTypography.textStyles.caption,
+    lineHeight: AppTypography.lineHeights.captionRelaxed,
     color: AppColors.text.secondary,
   },
   skeletonSubtitleBlock: {
-    marginTop: 14,
-    gap: 5,
+    marginTop: AppSpacing[7],
+    gap: AppSpacing[2] + 1,
   },
   skeletonSubtitle: {
     width: '78%',
-    height: 12,
-    borderRadius: 999,
+    height: AppTypography.fontSizes.caption,
+    borderRadius: AppRadii.pill,
     backgroundColor: AppColors.chart.grid,
   },
   skeletonSubtitleShort: {
     width: '58%',
   },
   trendText: {
-    marginTop: 6,
-    fontSize: 12,
-    lineHeight: 16,
+    marginTop: AppSpacing[3],
+    ...AppTypography.textStyles.caption,
     color: AppColors.text.muted,
   },
   progressContainer: {
-    marginTop: 12,
+    marginTop: AppSpacing[6],
   },
 });

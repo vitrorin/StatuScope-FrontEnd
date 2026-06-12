@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface CheckboxFieldProps {
   label: string;
@@ -59,7 +59,7 @@ export function CheckboxField({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: AppSpacing.card,
     width: '100%',
   },
   checkboxContainer: {
@@ -67,15 +67,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
+    width: AppSizes.iconLg,
+    height: AppSizes.iconLg,
+    borderRadius: AppRadii.xs,
     borderWidth: 2,
     borderColor: AppColors.border.strong,
     backgroundColor: AppColors.surface.card,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: AppSpacing[6],
   },
   checkboxChecked: {
     backgroundColor: AppColors.brand.link,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     borderColor: AppColors.border.muted,
   },
   label: {
-    fontSize: 14,
+    ...AppTypography.textStyles.body,
     color: AppColors.text.body,
     flex: 1,
   },
@@ -94,10 +94,10 @@ const styles = StyleSheet.create({
     color: AppColors.text.disabled,
   },
   helperText: {
-    fontSize: 12,
+    ...AppTypography.textStyles.caption,
     color: AppColors.table.muted,
-    marginTop: 6,
-    marginLeft: 32,
+    marginTop: AppSpacing[3],
+    marginLeft: AppSpacing[16],
   },
   helperTextDisabled: {
     color: AppColors.text.disabled,

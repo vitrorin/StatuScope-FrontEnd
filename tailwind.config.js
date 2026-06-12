@@ -19,6 +19,42 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        app: {
+          brand: {
+            primary: '#0003B8',
+            action: '#1718C7',
+            link: '#1D4ED8',
+            teal: '#007C89',
+            purple: '#5B21B6',
+          },
+          text: {
+            primary: '#0F172A',
+            strong: '#111827',
+            body: '#475569',
+            secondary: '#64748B',
+            muted: '#94A3B8',
+            inverse: '#FFFFFF',
+          },
+          surface: {
+            page: '#F5F5F8',
+            canvas: '#F5F7FB',
+            card: '#FFFFFF',
+            subtle: '#F8FAFC',
+            muted: '#F1F5F9',
+            control: '#F3F4F6',
+          },
+          border: {
+            default: '#E2E8F0',
+            muted: '#E5E7EB',
+            strong: '#CBD5E1',
+          },
+          status: {
+            success: '#16A34A',
+            warning: '#F59E0B',
+            danger: '#DC2626',
+            info: '#2563EB',
+          },
+        },
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
@@ -175,9 +211,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        heading: undefined,
-        body: undefined,
-        mono: undefined,
+        heading: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        body: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        mono: ['SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
         jakarta: ['var(--font-plus-jakarta-sans)'],
         roboto: ['var(--font-roboto)'],
         code: ['var(--font-source-code-pro)'],
@@ -189,8 +225,37 @@ module.exports = {
       },
       fontSize: {
         '2xs': '10px',
+        eyebrow: ['11px', '16px'],
+        caption: ['12px', '16px'],
+        small: ['13px', '18px'],
+        body: ['14px', '20px'],
+        'body-lg': ['16px', '24px'],
+        'section-title': ['22px', '28px'],
+        'screen-title': ['28px', '34px'],
+        display: ['32px', '40px'],
+      },
+      spacing: {
+        '0.5': '2px',
+        '1.5': '6px',
+        '2.5': '10px',
+        '3.5': '14px',
+        '4.5': '18px',
+        '5.5': '22px',
+        '6.5': '26px',
+        '13.5': '54px',
+      },
+      borderRadius: {
+        app: '8px',
+        'app-lg': '10px',
+        'app-xl': '12px',
+        'app-2xl': '14px',
+        'app-3xl': '16px',
+        'app-5xl': '24px',
       },
       boxShadow: {
+        app: '0px 10px 24px rgba(15, 23, 42, 0.06)',
+        'app-subtle': '0px 1px 2px rgba(0, 0, 0, 0.06)',
+        'app-floating': '0px 25px 28px rgba(0, 0, 0, 0.18)',
         'hard-1': '-2px 2px 8px 0px rgba(38, 38, 38, 0.20)',
         'hard-2': '0px 3px 10px 0px rgba(38, 38, 38, 0.20)',
         'hard-3': '2px 2px 8px 0px rgba(38, 38, 38, 0.20)',

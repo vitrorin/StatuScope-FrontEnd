@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface PaginationControlProps {
   currentPage: number;
@@ -18,29 +18,27 @@ export function PaginationControl({
   const getVisiblePages = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
-    
+
     if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
+      for (let i = 1; i <= totalPages; i += 1) {
         pages.push(i);
       }
+    } else if (currentPage <= 3) {
+      for (let i = 1; i <= 4; i += 1) pages.push(i);
+      pages.push('...');
+      pages.push(totalPages);
+    } else if (currentPage >= totalPages - 2) {
+      pages.push(1);
+      pages.push('...');
+      for (let i = totalPages - 3; i <= totalPages; i += 1) pages.push(i);
     } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push('...');
-        pages.push(totalPages);
-      }
+      pages.push(1);
+      pages.push('...');
+      for (let i = currentPage - 1; i <= currentPage + 1; i += 1) pages.push(i);
+      pages.push('...');
+      pages.push(totalPages);
     }
-    
+
     return pages;
   };
 
@@ -67,40 +65,31 @@ export function PaginationControl({
         onPress={() => handlePagePress(page)}
         disabled={isActive}
       >
-        <Text style={[styles.pageText, isActive && styles.pageTextActive]}>
-          {page}
-        </Text>
+        <Text style={[styles.pageText, isActive && styles.pageTextActive]}>{page}</Text>
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={[styles.container, style]}>
-      {/* Previous arrow */}
       <TouchableOpacity
         style={[styles.arrowButton, currentPage === 1 && styles.arrowDisabled]}
         onPress={() => handlePagePress(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        <Text style={[styles.arrowText, currentPage === 1 && styles.arrowTextDisabled]}>
-          ‹
-        </Text>
+        <Text style={[styles.arrowText, currentPage === 1 && styles.arrowTextDisabled]}>{'<'}</Text>
       </TouchableOpacity>
 
-      {/* Page numbers */}
       <View style={styles.pagesContainer}>
         {getVisiblePages().map((page, index) => renderPage(page, index))}
       </View>
 
-      {/* Next arrow */}
       <TouchableOpacity
         style={[styles.arrowButton, currentPage === totalPages && styles.arrowDisabled]}
         onPress={() => handlePagePress(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
-        <Text style={[styles.arrowText, currentPage === totalPages && styles.arrowTextDisabled]}>
-          ›
-        </Text>
+        <Text style={[styles.arrowText, currentPage === totalPages && styles.arrowTextDisabled]}>{'>'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -116,45 +105,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pageButton: {
-    minWidth: 32,
-    height: 32,
+    minWidth: AppSpacing.section,
+    height: AppSpacing.section,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
-    marginHorizontal: 2,
+    borderRadius: AppRadii.md,
+    marginHorizontal: AppSpacing[1],
   },
   pageButtonActive: {
     backgroundColor: AppColors.brand.primary,
   },
   pageText: {
-    fontSize: 14,
+    ...AppTypography.textStyles.body,
     color: AppColors.table.muted,
-    fontWeight: '500',
+    fontWeight: AppTypography.fontWeights.medium,
   },
   pageTextActive: {
     color: AppColors.surface.card,
   },
   ellipsis: {
-    fontSize: 14,
+    ...AppTypography.textStyles.body,
     color: AppColors.text.disabled,
-    marginHorizontal: 4,
+    marginHorizontal: AppSpacing[2],
   },
   arrowButton: {
-    width: 32,
-    height: 32,
+    width: AppSpacing.section,
+    height: AppSpacing.section,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: AppRadii.md,
     backgroundColor: AppColors.surface.control,
-    marginHorizontal: 4,
+    marginHorizontal: AppSpacing[2],
   },
   arrowDisabled: {
     backgroundColor: AppColors.surface.disabled,
   },
   arrowText: {
-    fontSize: 20,
+    fontSize: AppSizes.iconLg,
     color: AppColors.text.body,
-    fontWeight: '600',
+    fontWeight: AppTypography.fontWeights.semibold,
   },
   arrowTextDisabled: {
     color: AppColors.border.strong,

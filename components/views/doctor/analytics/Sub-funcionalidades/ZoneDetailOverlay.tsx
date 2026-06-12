@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { useTranslation } from '@/i18n';
 import { AppColors } from '@/constants/theme';
@@ -43,10 +44,10 @@ export function ZoneDetailOverlay({ visible, zone, onClose }: ZoneDetailOverlayP
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricCard label={t('common.analytics.overlays.riskLevel')} value={zone.risk} />
-            <MetricCard label={t('common.analytics.overlays.primaryDisease')} value={zone.disease} />
-            <MetricCard label={t('common.analytics.overlays.radius')} value={zone.radius} />
-            <MetricCard label={t('common.analytics.overlays.priority')} value={zone.priority} />
+            <OverlayStatCard showAccentBar={false} style={styles.metricCard} labelStyle={styles.metricLabel} valueStyle={styles.metricValue} label={t('common.analytics.overlays.riskLevel')} value={zone.risk} />
+            <OverlayStatCard showAccentBar={false} style={styles.metricCard} labelStyle={styles.metricLabel} valueStyle={styles.metricValue} label={t('common.analytics.overlays.primaryDisease')} value={zone.disease} />
+            <OverlayStatCard showAccentBar={false} style={styles.metricCard} labelStyle={styles.metricLabel} valueStyle={styles.metricValue} label={t('common.analytics.overlays.radius')} value={zone.radius} />
+            <OverlayStatCard showAccentBar={false} style={styles.metricCard} labelStyle={styles.metricLabel} valueStyle={styles.metricValue} label={t('common.analytics.overlays.priority')} value={zone.priority} />
           </View>
 
           <CardBase style={styles.noteCard}>
@@ -56,15 +57,6 @@ export function ZoneDetailOverlay({ visible, zone, onClose }: ZoneDetailOverlayP
         </CardBase>
       </View>
     </Modal>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <CardBase style={styles.metricCard}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
-    </CardBase>
   );
 }
 
@@ -133,6 +125,9 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   metricCard: {
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: '48%',
     width: '48%',
     borderRadius: 16,
     padding: 14,

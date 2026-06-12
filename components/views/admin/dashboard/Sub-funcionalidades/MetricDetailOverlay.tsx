@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardMetric } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -44,11 +45,13 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
 
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
             <View style={styles.metricsGrid}>
-              <MetricStat label={t('admin.dashboard.kpiDetails.currentSituation')} value={metric.value} accentColor={accent} />
-              <MetricStat
+              <OverlayStatCard label={t('admin.dashboard.kpiDetails.currentSituation')} value={metric.value} accentColor={accent} valueNumberOfLines={2} style={styles.statCard} />
+              <OverlayStatCard
                 label={t('admin.dashboard.kpiDetails.indicator')}
                 value={metric.signalLabel}
                 accentColor={accent}
+                valueNumberOfLines={2}
+                style={styles.statCard}
               />
             </View>
 
@@ -124,16 +127,6 @@ export function MetricDetailOverlay({ visible, metric, onClose }: MetricDetailOv
   );
 }
 
-function MetricStat({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
-  return (
-    <CardBase style={[styles.statCard, { borderColor: `${accentColor}22` }]}>
-      <View style={[styles.statAccent, { backgroundColor: accentColor }]} />
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue} numberOfLines={2}>{value}</Text>
-    </CardBase>
-  );
-}
-
 function accentColor(tone?: AdminDashboardMetric['tone']) {
   if (tone === 'critical') return AppColors.status.dangerBright;
   if (tone === 'warning') return AppColors.status.warning;
@@ -180,17 +173,6 @@ const styles = StyleSheet.create({
   body: { padding: 24, gap: 20 },
   metricsGrid: { flexDirection: 'row', gap: 12 },
   statCard: { flex: 1, minHeight: 82, borderRadius: 16, padding: 16, paddingLeft: 20, borderWidth: 1, overflow: 'hidden' },
-  statAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
-  statLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: AppColors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 8,
-  },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
   insightsSection: {
     borderRadius: 18,
     borderWidth: 1,

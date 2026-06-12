@@ -1,6 +1,13 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { AppColors, withAlpha } from '@/constants/theme';
+import {
+  AppColors,
+  AppRadii,
+  AppShadows,
+  AppSpacing,
+  AppTypography,
+  withAlpha,
+} from '@/constants/theme';
 
 export type SummaryVariant = 'default' | 'info' | 'warning' | 'neutral';
 
@@ -71,33 +78,31 @@ export function SummaryCountCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: AppColors.surface.card,
-    borderRadius: 12,
+    borderRadius: AppRadii.xl,
     borderWidth: 1,
     borderColor: withAlpha(AppColors.brand.primary, 0.05),
-    padding: 21,
-    shadowColor: AppColors.neutral.black,
-    shadowOffset: { width: 0, height: 1 },
+    padding: AppSpacing[10] + 1,
+    ...AppShadows.subtle,
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: AppSpacing[2],
     elevation: 2,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 14,
+    gap: AppSpacing[6],
+    marginBottom: AppSpacing[7],
   },
   iconContainer: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
+    width: AppSpacing[13] ?? 26,
+    height: AppSpacing[13] ?? 26,
+    borderRadius: AppRadii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: '700',
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
     color: AppColors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 1.1,
@@ -108,20 +113,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   value: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '900',
-    letterSpacing: -0.4,
+    ...AppTypography.textStyles.metricValue,
+    fontWeight: AppTypography.fontWeights.black,
   },
   caption: {
-    marginLeft: 6,
-    marginBottom: 5,
-    fontSize: 14,
-    lineHeight: 20,
+    marginLeft: AppSpacing[3],
+    marginBottom: AppSpacing[2] + 1,
+    ...AppTypography.textStyles.body,
     color: AppColors.text.muted,
   },
   valueAccent: {
-    marginLeft: 5,
-    marginBottom: 6,
+    marginLeft: AppSpacing[2] + 1,
+    marginBottom: AppSpacing[3],
   },
 });

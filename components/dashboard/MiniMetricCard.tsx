@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface.card,
     borderRadius: 14,
     padding: 14,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 4,

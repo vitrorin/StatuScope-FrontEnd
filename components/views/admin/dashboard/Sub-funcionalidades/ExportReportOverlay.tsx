@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { PdfPreviewFrame, ReportOption } from '@/components/overlays';
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardAlert, AdminDashboardMetric, AdminDashboardZone } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 import { AdminDashboardSummaryResponse } from '@/lib/adminOperational';
@@ -160,7 +161,7 @@ export function ExportReportOverlay({
                 title={isSpanish(language) ? 'Resumen ejecutivo' : 'Executive Summary'}
                 description={isSpanish(language) ? 'KPIs principales y alertas hospitalarias prioritarias.' : 'Primary KPIs and priority hospital alerts.'}
                 disabled={exportingType !== null || !dashboard}
-                isLoading={exportingType === 'executive'}
+                loading={exportingType === 'executive'}
                 onPress={() => handlePreview('executive')}
               />
               <ReportOption
@@ -168,7 +169,7 @@ export function ExportReportOverlay({
                 title={isSpanish(language) ? 'Resumen hospitalario' : 'Hospital Overview'}
                 description={isSpanish(language) ? 'Capacidad, personal, UCI y acciones operativas relacionadas.' : 'Capacity, staffing, ICU, and related operational actions.'}
                 disabled={exportingType !== null || !dashboard}
-                isLoading={exportingType === 'hospital'}
+                loading={exportingType === 'hospital'}
                 onPress={() => handlePreview('hospital')}
               />
               <ReportOption
@@ -176,7 +177,7 @@ export function ExportReportOverlay({
                 title={isSpanish(language) ? 'Panorama epidemiologico' : 'Epidemiological Snapshot'}
                 description={isSpanish(language) ? 'Brotes activos, zonas del mapa y carga regional.' : 'Active outbreaks, map zones, and regional burden.'}
                 disabled={exportingType !== null || !dashboard}
-                isLoading={exportingType === 'epidemiological'}
+                loading={exportingType === 'epidemiological'}
                 onPress={() => handlePreview('epidemiological')}
               />
             </View>
@@ -185,48 +186,6 @@ export function ExportReportOverlay({
       </View>
     </Modal>
   );
-}
-
-function ReportOption({
-  icon,
-  title,
-  description,
-  disabled,
-  isLoading,
-  onPress,
-}: {
-  icon: React.ComponentProps<typeof Feather>['name'];
-  title: string;
-  description: string;
-  disabled?: boolean;
-  isLoading?: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity style={[styles.optionCard, disabled ? styles.optionCardDisabled : null]} activeOpacity={0.82} onPress={onPress} disabled={disabled}>
-      <View style={styles.optionIcon}>
-        <Feather name={icon} size={18} color={AppColors.brand.primary} />
-      </View>
-      <View style={styles.optionCopy}>
-        <Text style={styles.optionTitle}>{title}</Text>
-        <Text style={styles.optionDescription}>{description}</Text>
-      </View>
-      <Feather name={isLoading ? 'loader' : 'download'} size={18} color={AppColors.text.secondary} />
-    </TouchableOpacity>
-  );
-}
-
-function PdfPreviewFrame({ url, title }: { url: string; title: string }) {
-  return React.createElement('iframe', {
-    src: url,
-    title,
-    style: {
-      width: '100%',
-      height: '100%',
-      border: '0',
-      backgroundColor: AppColors.surface.card,
-    },
-  });
 }
 
 function buildAdminReport({
@@ -249,9 +208,10 @@ function buildAdminReport({
   const hospitalName = dashboard?.hospitalName ?? (language === 'es' ? 'Hospital' : 'Hospital');
   const generatedAt = dashboard?.generatedAt ?? new Date().toISOString();
   const title = reportTitle(type, language);
+  const generatedLabel = new Date(generatedAt).toLocaleString(language === 'es' ? 'es-MX' : 'en-US');
   const subtitle = language === 'es'
-    ? `${hospitalName} | Generado ${new Date(generatedAt).toLocaleString()}`
-    : `${hospitalName} | Generated ${new Date(generatedAt).toLocaleString()}`;
+    ? `${hospitalName} | Generado ${generatedLabel}`
+    : `${hospitalName} | Generated ${generatedLabel}`;
   const location = [dashboard?.municipalityName, dashboard?.stateName].filter(Boolean).join(', ');
   const totalAlertCases = alerts.reduce((sum, alert) => sum + (alert.caseCount ?? parseNumericValue(alert.caseLabel ?? '0')), 0);
   const criticalAlerts = alerts.filter((alert) => alert.variant === 'critical' || normalizedSeverity(alert.priority) === 'critical').length;
@@ -366,8 +326,8 @@ function buildAdminReport({
             alert.title,
             alert.caseLabel ?? formatNumber(alert.caseCount ?? 0),
             [alert.municipalityName ?? alert.area, alert.stateName].filter(Boolean).join(', ') || alert.department,
-            alert.confirmationStatus ?? '-',
-            alert.priority,
+            localizeConfirmationStatus(alert.confirmationStatus, language),
+            localizePriorityLabel(alert.priority, language),
           ]),
         },
         {
@@ -538,6 +498,23 @@ function localizePriorityLabel(severity: string, language: 'en' | 'es') {
     LOW: 'Baja',
   };
   return labels[normalized] ?? severity;
+}
+
+function localizeConfirmationStatus(status: string | null | undefined, language: 'en' | 'es') {
+  const normalized = (status ?? '').toUpperCase();
+  if (!normalized) return '-';
+  if (language !== 'es') {
+    const labels: Record<string, string> = {
+      CONFIRMED: 'Confirmed',
+      SUSPECTED: 'Suspected',
+    };
+    return labels[normalized] ?? normalized.replace(/_/g, ' ');
+  }
+  const labels: Record<string, string> = {
+    CONFIRMED: 'Confirmado',
+    SUSPECTED: 'Sospechoso',
+  };
+  return labels[normalized] ?? normalized.replace(/_/g, ' ');
 }
 
 function localizeActionStatus(status: string, language: 'en' | 'es') {
@@ -887,22 +864,6 @@ const styles = StyleSheet.create({
   },
   backText: { fontSize: 13, lineHeight: 16, fontWeight: '800', color: AppColors.brand.primary },
   options: { padding: 24, gap: 12 },
-  optionCard: {
-    minHeight: 78,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: AppColors.border.default,
-    backgroundColor: AppColors.surface.subtle,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  optionCardDisabled: { opacity: 0.58 },
-  optionIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: withAlpha(AppColors.brand.primary, 0.08), borderWidth: 1, borderColor: withAlpha(AppColors.brand.primary, 0.16) },
-  optionCopy: { flex: 1 },
-  optionTitle: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.text.primary },
-  optionDescription: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
   previewBody: { flex: 1, padding: 18, gap: 14 },
   previewFallback: {
     flex: 1,

@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { adminNavigationLinks, getAdminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
 import { ProgressBar } from '@/components/foundation/ProgressBar';
+import { SkeletonLine } from '@/components/feedback/SkeletonLine';
 import { StatusBadge } from '@/components/feedback/StatusBadge';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
@@ -514,7 +515,7 @@ export function AdminResources() {
                           actionPlacement="below"
                           actionVariant="secondary"
                           progressFillColor={item.tone === 'critical' ? AppColors.status.dangerAccent : item.tone === 'low' ? AppColors.status.warning : AppColors.brand.action}
-                          progressTrackColor={item.tone === 'critical' ? '#F9D8D8' : item.tone === 'low' ? AppColors.status.warningSoft : AppColors.resourceStatus.stable.track}
+                          progressTrackColor={item.tone === 'critical' ? AppColors.resourceStatus.critical.trackSoft : item.tone === 'low' ? AppColors.status.warningSoft : AppColors.resourceStatus.stable.track}
                           onAction={() => handleInventoryAction(item)}
                           style={styles.inventoryItem}
                         />
@@ -968,10 +969,6 @@ function ResourceScreenSkeleton({ language }: { language: AppLanguage }) {
   );
 }
 
-function SkeletonLine({ width, height = 12, style }: { width: number | string; height?: number; style?: object }) {
-  return <View style={[styles.skeletonLine, { width, height }, style]} />;
-}
-
 function alertInventoryRank(item: InventoryResourceItem) {
   return item.tone === 'critical' ? 0 : item.tone === 'low' ? 1 : 2;
 }
@@ -1234,10 +1231,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: AppColors.text.body,
-  },
-  skeletonLine: {
-    borderRadius: 999,
-    backgroundColor: AppColors.border.default,
   },
   skeletonIcon: {
     width: 38,

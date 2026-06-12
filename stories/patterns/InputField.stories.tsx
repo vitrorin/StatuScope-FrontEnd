@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { InputField } from '../../components/inputs/InputField';
 
 const meta = {
-  title: 'Patterns/InputField',
+  title: 'Componentes reutilizables/Inputs/InputField',
   component: InputField,
   decorators: [
     (Story) => (

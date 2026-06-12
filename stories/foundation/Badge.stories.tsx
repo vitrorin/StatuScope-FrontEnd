@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { Badge } from '../../components/foundation/Badge';
 
 const meta = {
-  title: 'Foundation/Badge',
+  title: 'Componentes reutilizables/Foundation/Badge',
   component: Badge,
   decorators: [
     (Story) => (

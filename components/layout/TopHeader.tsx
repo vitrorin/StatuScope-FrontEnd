@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { Avatar } from '../foundation/Avatar';
 import { LanguageSwitcher } from '../inputs/LanguageSwitcher';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface TopHeaderProps {
   sectionLabel?: string;
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: AppColors.surface.card,
     minHeight: 68,
-    paddingHorizontal: 32,
+    paddingHorizontal: AppSpacing.section,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.border.default,
   },
@@ -62,39 +62,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionLabel: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...AppTypography.textStyles.body,
     color: AppColors.text.muted,
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
+    gap: AppSpacing[10],
   },
   divider: {
     width: 1,
-    height: 32,
+    height: AppSpacing.section,
     backgroundColor: AppColors.border.default,
   },
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 1,
-    gap: 14,
+    gap: AppSpacing[7],
   },
   profileInfo: {
     alignItems: 'flex-end',
   },
   userName: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '700',
+    ...AppTypography.textStyles.bodyStrong,
+    fontWeight: AppTypography.fontWeights.bold,
     color: AppColors.text.primary,
   },
   userId: {
     marginTop: 0,
-    fontSize: 12,
-    lineHeight: 16,
+    ...AppTypography.textStyles.caption,
     color: AppColors.text.muted,
   },
   avatar: {

@@ -33,10 +33,16 @@ import {
   createAdminRecommendationTask,
   createAdminRecommendationNotification,
   createAdminSupplyRequest,
+  createAdminResourceSupplyRequest,
+  listOperationalContacts,
+  createOperationalContact,
+  updateOperationalContact,
+  updateOperationalContactStatus,
   getAdminResourceSummary,
   getAdminResourceDepartments,
   getAdminResourceStaffing,
   getAdminResourceInventory,
+  getAdminResourceInventoryMovements,
   getAdminOperationalRoster,
   updateAdminResourceSummary,
   updateAdminResourceDepartment,
@@ -165,6 +171,18 @@ const INVENTORY_ITEM = {
   criticalThreshold: 50,
   targetQuantity: 180,
   status: 'CRITICAL',
+};
+
+const CONTACT = {
+  id: 'contact-001',
+  displayName: 'Dra. Lopez',
+  roleLabel: 'Epidemiologia',
+  departmentCode: 'EPI',
+  contactChannel: 'EMAIL',
+  contactValue: 'lopez@example.com',
+  availabilityStatus: 'ACTIVE',
+  assignable: true,
+  notifiable: true,
 };
 
 // ── getAdminDashboardSummary ──────────────────────────────────────────────────
@@ -379,6 +397,79 @@ describe('createAdminSupplyRequest', () => {
   });
 });
 
+describe('createAdminResourceSupplyRequest', () => {
+  const SUPPLY_INPUT = {
+    supplyTypeLabel: 'Masks',
+    quantity: 500,
+    unit: 'boxes',
+    destination: 'Warehouse',
+    priority: 'HIGH',
+  };
+
+  it('calls POST /admin/resources/inventory/:itemId/supply-requests', async () => {
+    const spy = mockFetch({ id: 'supply-002' }, 201);
+    await createAdminResourceSupplyRequest('inv-001', SUPPLY_INPUT);
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit?];
+    expect(url).toBe(`${BASE}/admin/resources/inventory/inv-001/supply-requests`);
+    expect(init?.method).toBe('POST');
+    expect(JSON.parse(init?.body as string).quantity).toBe(500);
+  });
+});
+
+describe('operational contacts', () => {
+  const CONTACT_INPUT = {
+    displayName: 'Dra. Lopez',
+    roleLabel: 'Epidemiologia',
+    departmentCode: 'EPI',
+    email: 'lopez@example.com',
+    assignable: true,
+    notifiable: false,
+    availabilityStatus: 'ACTIVE' as const,
+  };
+
+  it('lists contacts with no filters', async () => {
+    const spy = mockFetch([CONTACT]);
+    await listOperationalContacts();
+    const [url] = spy.mock.calls[0] as [string, RequestInit?];
+    expect(url).toBe(`${BASE}/admin/operational-contacts`);
+  });
+
+  it('lists contacts with assignable, notifiable and department filters', async () => {
+    const spy = mockFetch([CONTACT]);
+    await listOperationalContacts({ assignable: true, notifiable: false, departmentCode: 'EPI' });
+    const [url] = spy.mock.calls[0] as [string, RequestInit?];
+    expect(url).toContain('assignable=true');
+    expect(url).toContain('notifiable=false');
+    expect(url).toContain('departmentCode=EPI');
+  });
+
+  it('creates an operational contact', async () => {
+    const spy = mockFetch(CONTACT, 201);
+    await createOperationalContact(CONTACT_INPUT);
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit?];
+    expect(url).toBe(`${BASE}/admin/operational-contacts`);
+    expect(init?.method).toBe('POST');
+    expect(JSON.parse(init?.body as string).email).toBe('lopez@example.com');
+  });
+
+  it('updates an operational contact', async () => {
+    const spy = mockFetch(CONTACT);
+    await updateOperationalContact('contact-001', CONTACT_INPUT);
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit?];
+    expect(url).toBe(`${BASE}/admin/operational-contacts/contact-001`);
+    expect(init?.method).toBe('PUT');
+  });
+
+  it('updates operational contact status', async () => {
+    const spy = mockFetch({ ...CONTACT, availabilityStatus: 'INACTIVE' });
+    await updateOperationalContactStatus('contact-001', 'INACTIVE');
+    const [url, init] = spy.mock.calls[0] as [string, RequestInit?];
+    expect(url).toBe(`${BASE}/admin/operational-contacts/contact-001/status`);
+    expect(init?.method).toBe('PATCH');
+    expect(JSON.parse(init?.body as string).status).toBe('INACTIVE');
+  });
+});
+
 // ── Resource endpoints ────────────────────────────────────────────────────────
 
 describe('getAdminResourceSummary', () => {
@@ -436,6 +527,15 @@ describe('getAdminResourceInventory', () => {
     const result = await getAdminResourceInventory();
     expect(result.data[0].status).toBe('CRITICAL');
     expect(result.data[0].currentQuantity).toBeLessThan(result.data[0].criticalThreshold);
+  });
+});
+
+describe('getAdminResourceInventoryMovements', () => {
+  it('calls GET /admin/resources/inventory/:itemId/movements', async () => {
+    const spy = mockFetch({ section: 'movements', data: [{ id: 'mov-1', inventoryItemId: 'inv-001' }] });
+    await getAdminResourceInventoryMovements('inv-001');
+    const [url] = spy.mock.calls[0] as [string, RequestInit?];
+    expect(url).toBe(`${BASE}/admin/resources/inventory/inv-001/movements`);
   });
 });
 

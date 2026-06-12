@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, LayoutChangeEvent, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, LayoutChangeEvent, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AssistantInputBar } from '@/components/diagnosis/AssistantInputBar';
 import { DiagnosisChatBubble } from '@/components/diagnosis/DiagnosisChatBubble';
 import { DiagnosisResponseCard } from '@/components/diagnosis/DiagnosisResponseCard';
 import { FileUploadState, PatientEvaluationForm } from '@/components/diagnosis/PatientEvaluationForm';
 import { RecommendedTestsCard } from '@/components/diagnosis/RecommendedTestsCard';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { Button } from '@/components/foundation/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { initialsFromName } from '@/lib/format';
@@ -29,10 +30,11 @@ import {
   getCurrentDiagnosisEvaluation,
   submitAssistantFeedback,
   updateDiagnosisEvaluation,
+  updateDiagnosisEvaluationStatus,
   uploadDiagnosisEvaluationFile,
 } from '@/lib/diagnosisEvaluation';
 import { InputField } from '@/components/inputs/InputField';
-import { TextareaField } from '@/components/inputs/TextareaField';
+import { TextAreaField } from '@/components/inputs/TextAreaField';
 import { DiagnosisDiseaseOption, searchDiagnosisDiseases } from '@/lib/diagnosisDiseases';
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { useTranslation } from '@/i18n';
@@ -370,6 +372,7 @@ export function DoctorDiagnosis() {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
+  const [isStartingNewReport, setIsStartingNewReport] = useState(false);
   const isDiseaseOptionPressingRef = useRef(false);
   const diseaseSearchQueryRef = useRef(diseaseSearchQuery);
   const selectedDiseaseIdRef = useRef(selectedDiseaseId);
@@ -568,25 +571,31 @@ export function DoctorDiagnosis() {
     };
   };
 
+  const raiseValidationAlert = (message: string): never => {
+    setEvaluationError(message);
+    Alert.alert(t('doctor.diagnosis.validation.alertTitle'), message);
+    throw new Error(message);
+  };
+
   const persistEvaluation = async (): Promise<DiagnosisEvaluation> => {
     if (!patientName.trim()) {
-      throw new Error(t('doctor.diagnosis.validation.patientNameRequired'));
+      raiseValidationAlert(t('doctor.diagnosis.validation.patientNameRequired'));
     }
 
     if (!patientBirthDate.trim()) {
-      throw new Error(t('doctor.diagnosis.validation.birthDateRequired'));
+      raiseValidationAlert(t('doctor.diagnosis.validation.birthDateRequired'));
     }
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(patientBirthDate.trim())) {
-      throw new Error(t('doctor.diagnosis.validation.birthDateFormat'));
+      raiseValidationAlert(t('doctor.diagnosis.validation.birthDateFormat'));
     }
 
     if (!patientSex.trim()) {
-      throw new Error(t('doctor.diagnosis.validation.sexRequired'));
+      raiseValidationAlert(t('doctor.diagnosis.validation.sexRequired'));
     }
 
     if (!symptoms.trim()) {
-      throw new Error(t('doctor.diagnosis.validation.symptomsRequired'));
+      raiseValidationAlert(t('doctor.diagnosis.validation.symptomsRequired'));
     }
 
     setIsSavingEvaluation(true);
@@ -704,6 +713,50 @@ export function DoctorDiagnosis() {
       await persistEvaluation();
     } catch {
       return;
+    }
+  };
+
+  const resetDiagnosisWorkspace = () => {
+    setEvaluation(null);
+    setPatientName('');
+    setPatientBirthDate('');
+    setPatientSex('');
+    setSymptoms('');
+    setAssistantQuery('');
+    setDiseaseSearchQuery('');
+    setDiseaseOptions(diseaseCatalog);
+    setSelectedDiseaseId('');
+    setSelectedDiseaseName('');
+    setCustomDiseaseName('');
+    setFinalizeChoice('ai');
+    setSelectedLocalAlert(null);
+    setIsDiseaseSearchEditing(false);
+    setFeedbackNotes('');
+    setChatHistory([]);
+    setContextUsed(null);
+    setAssistantError(null);
+    setEvaluationError(null);
+    setUploadError(null);
+    setFeedbackError(null);
+    setFeedbackSuccess(null);
+    setIsFinalizeExpanded(false);
+  };
+
+  const handleStartNewReportPress = async () => {
+    setIsStartingNewReport(true);
+    setEvaluationError(null);
+
+    try {
+      if (evaluation && evaluation.status !== 'CONFIRMED') {
+        await updateDiagnosisEvaluationStatus(evaluation.id, 'REJECTED');
+      }
+      resetDiagnosisWorkspace();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('doctor.diagnosis.errors.saveEvaluation');
+      setEvaluationError(message);
+      Alert.alert(t('doctor.diagnosis.validation.alertTitle'), message);
+    } finally {
+      setIsStartingNewReport(false);
     }
   };
 
@@ -834,6 +887,11 @@ export function DoctorDiagnosis() {
     () => buildLocalAlertGroups(latestAssistantMessage?.suggestions ?? [], contextUsed?.outbreaks ?? [], t),
     [contextUsed?.outbreaks, latestAssistantMessage?.suggestions, t],
   );
+  const isStartingNewReportDisabled = isAssistantLoading
+    || isSavingEvaluation
+    || isUploadingFile
+    || isSubmittingFeedback
+    || isStartingNewReport;
 
   const handleFormPanelLayout = (event: LayoutChangeEvent) => {
     const nextHeight = Math.round(event.nativeEvent.layout.height);
@@ -864,13 +922,27 @@ export function DoctorDiagnosis() {
               </Text>
             </View>
 
-            <View style={styles.heroBadge}>
-              <View style={styles.heroBadgeDot} />
-              <Text style={styles.heroBadgeText}>
-                {evaluation?.status
-                  ? t('doctor.diagnosis.hero.status', { status: evaluation.status.replace('_', ' ') })
-                  : t('doctor.diagnosis.hero.ready')}
-              </Text>
+            <View style={styles.heroActions}>
+              <Button
+                label={t('doctor.diagnosis.actions.startNewReport')}
+                variant="secondary"
+                size="sm"
+                leadingIcon={<Feather name="plus-circle" size={15} color={AppColors.brand.primary} />}
+                disabled={isStartingNewReportDisabled}
+                onPress={handleStartNewReportPress}
+                style={styles.newReportButton}
+                labelStyle={styles.newReportButtonLabel}
+                testID="diagnosis-start-new-report"
+              />
+
+              <View style={styles.heroBadge}>
+                <View style={styles.heroBadgeDot} />
+                <Text style={styles.heroBadgeText}>
+                  {evaluation?.status
+                    ? t('doctor.diagnosis.hero.status', { status: evaluation.status.replace('_', ' ') })
+                    : t('doctor.diagnosis.hero.ready')}
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -955,13 +1027,12 @@ export function DoctorDiagnosis() {
                   showsVerticalScrollIndicator={false}
                 >
                   {chatHistory.length === 0 ? (
-                    <View style={styles.emptyState}>
-                      <MaterialCommunityIcons name="stethoscope" size={24} color={AppColors.brand.primary} />
-                      <Text style={styles.emptyTitle}>{t('doctor.diagnosis.assistant.emptyTitle')}</Text>
-                      <Text style={styles.emptyText}>
-                        {t('doctor.diagnosis.assistant.emptyText')}
-                      </Text>
-                    </View>
+                    <EmptyState
+                      style={styles.emptyState}
+                      icon={<MaterialCommunityIcons name="stethoscope" size={24} color={AppColors.brand.primary} />}
+                      title={t('doctor.diagnosis.assistant.emptyTitle')}
+                      message={t('doctor.diagnosis.assistant.emptyText')}
+                    />
                   ) : (
                     chatHistory.map((message, index) => {
                       const normalizedMessage = ensureMessageMetadata(message, index, language);
@@ -1291,7 +1362,7 @@ export function DoctorDiagnosis() {
                           </View>
                         ) : null}
 
-                        <TextareaField
+                        <TextAreaField
                           placeholder={t('doctor.diagnosis.finalize.notesPlaceholder')}
                           value={feedbackNotes}
                           onChangeText={(value) => {
@@ -1511,6 +1582,32 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 24,
   },
+  heroActions: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  newReportButton: {
+    minHeight: 40,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: AppColors.surface.brandSoft,
+    borderColor: AppColors.border.brandSubtle,
+    shadowColor: AppColors.brand.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 2,
+  },
+  newReportButtonLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: AppColors.brand.primary,
+  },
   heroEyebrow: {
     fontSize: 12,
     lineHeight: 18,
@@ -1684,22 +1781,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: AppColors.border.default,
     backgroundColor: AppColors.surface.card,
-  },
-  emptyTitle: {
-    marginTop: 12,
-    fontSize: 17,
-    lineHeight: 24,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    textAlign: 'center',
-  },
-  emptyText: {
-    marginTop: 6,
-    maxWidth: 420,
-    fontSize: 14,
-    lineHeight: 22,
-    color: AppColors.text.secondary,
-    textAlign: 'center',
   },
   responseRow: {
     flexDirection: 'row',

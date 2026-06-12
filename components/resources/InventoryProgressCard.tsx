@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Button, ButtonVariant } from '../foundation/Button';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type InventoryVariant = 'normal' | 'warning' | 'critical';
 
@@ -101,37 +101,36 @@ export function InventoryProgressCard({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: AppSpacing.card,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: AppSpacing[6],
   },
   titleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: AppSpacing[3],
     flex: 1,
-    marginRight: 12,
+    marginRight: AppSpacing[6],
   },
   titleIcon: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...AppTypography.textStyles.bodyStrong,
     color: AppColors.text.strong,
   },
   valueText: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...AppTypography.textStyles.body,
+    fontWeight: AppTypography.fontWeights.medium,
     color: AppColors.table.muted,
   },
   progressContainer: {
-    marginBottom: 12,
+    marginBottom: AppSpacing[6],
   },
   footer: {
     flexDirection: 'row',
@@ -139,11 +138,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   belowActionWrap: {
-    marginTop: 10,
+    marginTop: AppSpacing[5],
     alignItems: 'flex-end',
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '500',
+    ...AppTypography.textStyles.caption,
+    fontWeight: AppTypography.fontWeights.medium,
   },
 });

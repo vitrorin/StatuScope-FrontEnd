@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { AdminDashboardZone } from '@/components/views/admin/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -10,12 +11,14 @@ import { AppColors } from '@/constants/theme';
 interface MapZoneDetailOverlayProps {
   visible: boolean;
   zone: AdminDashboardZone | null;
+  showRadius?: boolean;
   onClose: () => void;
 }
 
-export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOverlayProps) {
+export function MapZoneDetailOverlay({ visible, zone, showRadius = true, onClose }: MapZoneDetailOverlayProps) {
   const { language } = useTranslation();
   if (!zone) return null;
+  const accent = zone.borderColor;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -34,29 +37,15 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricStat label={isSpanish(language) ? 'Nivel de riesgo' : 'Risk Level'} value={zone.risk} />
-            <MetricStat label={isSpanish(language) ? 'Enfermedad principal' : 'Primary Disease'} value={zone.disease} />
-            <MetricStat label={isSpanish(language) ? 'Casos' : 'Cases'} value={zone.cases} />
-            <MetricStat label={isSpanish(language) ? 'Radio' : 'Radius'} value={zone.radius} />
-            <MetricStat label={isSpanish(language) ? 'Prioridad' : 'Priority'} value={zone.priority} />
+            <OverlayStatCard label={isSpanish(language) ? 'Nivel de riesgo' : 'Risk Level'} value={zone.risk} accentColor={accent} style={styles.statCard} />
+            <OverlayStatCard label={isSpanish(language) ? 'Enfermedad principal' : 'Primary Disease'} value={zone.disease} accentColor={accent} style={styles.statCard} />
+            <OverlayStatCard label={isSpanish(language) ? 'Casos' : 'Cases'} value={zone.cases} accentColor={accent} style={styles.statCard} />
+            {showRadius ? <OverlayStatCard label={isSpanish(language) ? 'Radio' : 'Radius'} value={zone.radius} accentColor={accent} style={styles.statCard} /> : null}
+            <OverlayStatCard label={isSpanish(language) ? 'Prioridad' : 'Priority'} value={zone.priority} accentColor={accent} style={styles.statCard} />
           </View>
-
-          <CardBase style={styles.noteCard}>
-            <Text style={styles.noteLabel}>{isSpanish(language) ? 'Accion recomendada' : 'Recommended Action'}</Text>
-            <Text style={styles.noteText}>{zone.recommendedAction}</Text>
-          </CardBase>
         </CardBase>
       </View>
     </Modal>
-  );
-}
-
-function MetricStat({ label, value }: { label: string; value: string }) {
-  return (
-    <CardBase style={styles.statCard}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </CardBase>
   );
 }
 
@@ -128,42 +117,13 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   statCard: {
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: '48%',
     width: '48%',
+    minHeight: 104,
     borderRadius: 16,
     padding: 14,
-  },
-  statLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: AppColors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 8,
-  },
-  statValue: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '800',
-    color: AppColors.text.primary,
-  },
-  noteCard: {
-    marginHorizontal: 24,
-    marginBottom: 24,
-    borderRadius: 18,
-    padding: 16,
-  },
-  noteLabel: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '800',
-    color: AppColors.brand.action,
-    marginBottom: 8,
-  },
-  noteText: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: AppColors.text.body,
   },
 });
 

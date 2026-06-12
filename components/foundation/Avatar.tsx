@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type AvatarTone = 'default' | 'doctor' | 'admin' | 'neutral';
 export type AvatarSize = 'sm' | 'md' | 'lg';
@@ -20,9 +20,9 @@ const toneStyles = {
 };
 
 const sizeStyles = {
-  sm: { size: 28, fontSize: 10 },
-  md: { size: 36, fontSize: 12 },
-  lg: { size: 44, fontSize: 14 },
+  sm: { size: AppSpacing[14], fontSize: AppTypography.fontSizes.micro },
+  md: { size: AppSizes.controlSm, fontSize: AppTypography.fontSizes.caption },
+  lg: { size: AppSizes.controlLg, fontSize: AppTypography.fontSizes.body },
 };
 
 export function Avatar({
@@ -60,6 +60,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   initials: {
-    fontWeight: '600',
+    fontWeight: AppTypography.fontWeights.semibold,
   },
 });

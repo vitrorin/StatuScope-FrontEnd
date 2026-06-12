@@ -5,6 +5,9 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpa
 import { systemNavigationLinks, getSystemSidebarItems } from '@/components/dashboard/systemNavigation';
 import { Button } from '@/components/foundation/Button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DetailRow } from '@/components/overlays/DetailRow';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
+import { ResponsiveTable, ResponsiveTableColumn } from '@/components/tables/ResponsiveTable';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/i18n';
 import {
@@ -123,6 +126,77 @@ export function SystemHospitals() {
     }
   };
 
+  const hospitalTableColumns: ResponsiveTableColumn<HospitalResponse>[] = [
+    {
+      key: 'hospital',
+      label: es ? 'Hospital' : 'Hospital Name',
+      flex: 1.8,
+      minWidth: 260,
+      render: (hospital) => (
+        <TouchableOpacity
+          style={styles.hospitalCell}
+          activeOpacity={0.78}
+          onPress={() => setDetailHospital(hospital)}
+        >
+          <View style={[styles.hospitalIcon, !hospital.active && styles.hospitalIconInactive]}>
+            <MaterialCommunityIcons name="hospital-building" size={17} color={hospital.active ? AppColors.brand.link : AppColors.text.secondary} />
+          </View>
+          <View>
+            <Text style={styles.hospitalName}>{hospital.name}</Text>
+            <Text style={styles.hospitalCode}>{hospital.code}</Text>
+          </View>
+        </TouchableOpacity>
+      ),
+    },
+    {
+      key: 'location',
+      label: es ? 'Ubicación' : 'Location',
+      flex: 1.2,
+      minWidth: 180,
+      render: (hospital) => (
+        <View>
+          <Text style={styles.bodyStrong}>{hospital.municipalityName ?? (es ? 'Sin municipio' : 'No municipality')}</Text>
+          <Text style={styles.bodyMuted}>{hospital.stateName ?? (es ? 'Sin estado' : 'No state')}</Text>
+        </View>
+      ),
+    },
+    {
+      key: 'users',
+      label: es ? 'Usuarios' : 'Users',
+      flex: 0.8,
+      minWidth: 120,
+      render: (hospital) => (
+        <View>
+          <Text style={styles.bodyStrong}>{userCountsByHospital[hospital.id] ?? 0}</Text>
+          <Text style={styles.bodyMuted}>{es ? 'registrados' : 'registered'}</Text>
+        </View>
+      ),
+    },
+    {
+      key: 'status',
+      label: es ? 'Estado' : 'Status',
+      flex: 0.8,
+      minWidth: 120,
+      render: (hospital) => <StatusPill active={hospital.active} es={es} />,
+    },
+    {
+      key: 'actions',
+      label: es ? 'Acciones' : 'Actions',
+      width: 96,
+      align: 'center',
+      render: (hospital) => (
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={() => { setSelectedHospital(hospital); setEditorOpen(true); }} activeOpacity={0.75}>
+            <Feather name="edit-2" size={17} color={AppColors.text.secondary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => { void toggleStatus(hospital); }} activeOpacity={0.75} disabled={saving}>
+            <Feather name={hospital.active ? 'slash' : 'check-circle'} size={18} color={hospital.active ? AppColors.status.dangerBright : AppColors.status.successAccent} />
+          </TouchableOpacity>
+        </View>
+      ),
+    },
+  ];
+
   return (
     <DashboardLayout
       active="hospitals"
@@ -168,51 +242,15 @@ export function SystemHospitals() {
           />
         </View>
 
-        {loading ? <HospitalsSkeleton /> : (
-          <View style={styles.tableCard}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.headerCell, styles.hospitalCol]}>{es ? 'Hospital' : 'Hospital Name'}</Text>
-              <Text style={[styles.headerCell, styles.cityCol]}>{es ? 'Ubicación' : 'Location'}</Text>
-              <Text style={[styles.headerCell, styles.staffCol]}>{es ? 'Usuarios' : 'Users'}</Text>
-              <Text style={[styles.headerCell, styles.statusCol]}>{es ? 'Estado' : 'Status'}</Text>
-              <Text style={[styles.headerCell, styles.actionCol]}>{es ? 'Acciones' : 'Actions'}</Text>
-            </View>
-            {filteredHospitals.map((hospital) => (
-              <View key={hospital.id} style={styles.tableRow}>
-                <TouchableOpacity
-                  style={[styles.hospitalCell, styles.hospitalCol]}
-                  activeOpacity={0.78}
-                  onPress={() => setDetailHospital(hospital)}
-                >
-                  <View style={[styles.hospitalIcon, !hospital.active && styles.hospitalIconInactive]}>
-                    <MaterialCommunityIcons name="hospital-building" size={17} color={hospital.active ? AppColors.brand.link : AppColors.text.secondary} />
-                  </View>
-                  <View>
-                    <Text style={styles.hospitalName}>{hospital.name}</Text>
-                    <Text style={styles.hospitalCode}>{hospital.code}</Text>
-                  </View>
-                </TouchableOpacity>
-                <View style={styles.cityCol}>
-                  <Text style={styles.bodyStrong}>{hospital.municipalityName ?? (es ? 'Sin municipio' : 'No municipality')}</Text>
-                  <Text style={styles.bodyMuted}>{hospital.stateName ?? (es ? 'Sin estado' : 'No state')}</Text>
-                </View>
-                <View style={styles.staffCol}>
-                  <Text style={styles.bodyStrong}>{userCountsByHospital[hospital.id] ?? 0}</Text>
-                  <Text style={styles.bodyMuted}>{es ? 'registrados' : 'registered'}</Text>
-                </View>
-                <View style={styles.statusCol}><StatusPill active={hospital.active} es={es} /></View>
-                <View style={[styles.actionCol, styles.actions]}>
-                  <TouchableOpacity onPress={() => { setSelectedHospital(hospital); setEditorOpen(true); }} activeOpacity={0.75}>
-                    <Feather name="edit-2" size={17} color={AppColors.text.secondary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => { void toggleStatus(hospital); }} activeOpacity={0.75} disabled={saving}>
-                    <Feather name={hospital.active ? 'slash' : 'check-circle'} size={18} color={hospital.active ? AppColors.status.dangerBright : AppColors.status.successAccent} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
+        <ResponsiveTable
+          columns={hospitalTableColumns}
+          rows={filteredHospitals}
+          getRowKey={(hospital) => hospital.id}
+          loading={loading}
+          emptyTitle={es ? 'No se encontraron hospitales' : 'No hospitals found'}
+          emptyMessage={es ? 'Prueba ajustando la busqueda.' : 'Try adjusting the current search.'}
+          style={styles.tableCard}
+        />
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </ScrollView>
@@ -441,18 +479,46 @@ function HospitalDetailModal({
 
           <View style={styles.detailBody}>
             <View style={styles.detailStats}>
-              <DetailStat label={es ? 'Usuarios registrados' : 'Registered users'} value={String(registeredUsers)} />
-              <DetailStat label={es ? 'Camas' : 'Beds'} value={formatNullableNumber(hospital.bedCount, es)} />
-              <DetailStat label={es ? 'Personal operativo' : 'Operational staff'} value={formatNullableNumber(operationalStaff, es)} />
+              <OverlayStatCard
+                valueFirst
+                showAccentBar={false}
+                style={styles.detailStat}
+                valueStyle={styles.detailStatValue}
+                labelStyle={styles.detailStatLabel}
+                label={es ? 'Usuarios registrados' : 'Registered users'}
+                value={String(registeredUsers)}
+              />
+              <OverlayStatCard
+                valueFirst
+                showAccentBar={false}
+                style={styles.detailStat}
+                valueStyle={styles.detailStatValue}
+                labelStyle={styles.detailStatLabel}
+                label={es ? 'Camas' : 'Beds'}
+                value={formatNullableNumber(hospital.bedCount, es)}
+              />
+              <OverlayStatCard
+                valueFirst
+                showAccentBar={false}
+                style={styles.detailStat}
+                valueStyle={styles.detailStatValue}
+                labelStyle={styles.detailStatLabel}
+                label={es ? 'Personal operativo' : 'Operational staff'}
+                value={formatNullableNumber(operationalStaff, es)}
+              />
             </View>
 
             <View style={styles.detailRows}>
-              <DetailRow label={es ? 'Estado' : 'Status'} value={hospital.active ? (es ? 'Activo' : 'Active') : (es ? 'Inactivo' : 'Inactive')} />
-              <DetailRow label={es ? 'Direccion' : 'Address'} value={hospital.address || (es ? 'Sin direccion' : 'No address')} />
-              <DetailRow label={es ? 'Telefono' : 'Phone'} value={hospital.phone || (es ? 'Sin telefono' : 'No phone')} />
-              <DetailRow label={es ? 'Codigo postal' : 'Postal code'} value={hospital.postalCode || (es ? 'Sin codigo postal' : 'No postal code')} />
-              <DetailRow label="Invite Code" value={hospital.inviteCode || 'N/A'} />
+              <DetailRow boxed style={styles.detailRow} labelStyle={styles.detailRowLabel} valueStyle={styles.detailRowValue} label={es ? 'Estado' : 'Status'} value={hospital.active ? (es ? 'Activo' : 'Active') : (es ? 'Inactivo' : 'Inactive')} />
+              <DetailRow boxed style={styles.detailRow} labelStyle={styles.detailRowLabel} valueStyle={styles.detailRowValue} label={es ? 'Direccion' : 'Address'} value={hospital.address || (es ? 'Sin direccion' : 'No address')} />
+              <DetailRow boxed style={styles.detailRow} labelStyle={styles.detailRowLabel} valueStyle={styles.detailRowValue} label={es ? 'Telefono' : 'Phone'} value={hospital.phone || (es ? 'Sin telefono' : 'No phone')} />
+              <DetailRow boxed style={styles.detailRow} labelStyle={styles.detailRowLabel} valueStyle={styles.detailRowValue} label={es ? 'Codigo postal' : 'Postal code'} value={hospital.postalCode || (es ? 'Sin codigo postal' : 'No postal code')} />
+              <DetailRow boxed style={styles.detailRow} labelStyle={styles.detailRowLabel} valueStyle={styles.detailRowValue} label="Invite Code" value={hospital.inviteCode || 'N/A'} />
               <DetailRow
+                boxed
+                style={styles.detailRow}
+                labelStyle={styles.detailRowLabel}
+                valueStyle={styles.detailRowValue}
                 label={es ? 'Coordenadas' : 'Coordinates'}
                 value={
                   hospital.latitude != null && hospital.longitude != null
@@ -461,6 +527,10 @@ function HospitalDetailModal({
                 }
               />
               <DetailRow
+                boxed
+                style={styles.detailRow}
+                labelStyle={styles.detailRowLabel}
+                valueStyle={styles.detailRowValue}
                 label={es ? 'Doctores / Enfermeras' : 'Doctors / Nurses'}
                 value={`${formatNullableNumber(hospital.doctorCount, es)} / ${formatNullableNumber(hospital.nurseCount, es)}`}
               />
@@ -469,67 +539,6 @@ function HospitalDetailModal({
         </View>
       </View>
     </Modal>
-  );
-}
-
-function DetailStat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.detailStat}>
-      <Text style={styles.detailStatValue}>{value}</Text>
-      <Text style={styles.detailStatLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.detailRow}>
-      <Text style={styles.detailRowLabel}>{label}</Text>
-      <Text style={styles.detailRowValue}>{value}</Text>
-    </View>
-  );
-}
-
-function HospitalsSkeleton() {
-  return (
-    <View style={styles.tableCard}>
-      <View style={styles.tableHeader}>
-        <View style={styles.hospitalCol}><View style={[styles.skeletonLine, styles.skeletonHeaderShort]} /></View>
-        <View style={styles.cityCol}><View style={[styles.skeletonLine, styles.skeletonHeaderShort]} /></View>
-        <View style={styles.staffCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
-        <View style={styles.statusCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
-        <View style={styles.actionCol}><View style={[styles.skeletonLine, styles.skeletonHeaderTiny]} /></View>
-      </View>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <View key={index} style={styles.tableRow}>
-          <View style={[styles.hospitalCell, styles.hospitalCol]}>
-            <View style={styles.skeletonIcon} />
-            <View style={styles.skeletonStack}>
-              <View style={[styles.skeletonLine, { width: index === 1 ? 170 : 210 }]} />
-              <View style={[styles.skeletonLine, { width: 72, height: 10 }]} />
-            </View>
-          </View>
-          <View style={styles.cityCol}>
-            <View style={styles.skeletonStack}>
-              <View style={[styles.skeletonLine, { width: index === 2 ? 118 : 136 }]} />
-              <View style={[styles.skeletonLine, { width: 92, height: 10 }]} />
-            </View>
-          </View>
-          <View style={styles.staffCol}>
-            <View style={styles.skeletonStack}>
-              <View style={[styles.skeletonLine, { width: 28 }]} />
-              <View style={[styles.skeletonLine, { width: 72, height: 10 }]} />
-            </View>
-          </View>
-          <View style={styles.statusCol}>
-            <View style={styles.skeletonBadge} />
-          </View>
-          <View style={styles.actionCol}>
-            <View style={[styles.skeletonLine, { width: 44 }]} />
-          </View>
-        </View>
-      ))}
-    </View>
   );
 }
 
@@ -591,14 +600,6 @@ const styles = StyleSheet.create({
   toolbar: { backgroundColor: AppColors.surface.card, borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, padding: 18, shadowColor: AppColors.text.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 2 },
   searchInput: { minHeight: 46, borderRadius: 12, backgroundColor: AppColors.surface.subtle, borderWidth: 1, borderColor: AppColors.border.default, paddingHorizontal: 14, color: AppColors.text.strong, fontWeight: '600' },
   tableCard: { backgroundColor: AppColors.surface.card, borderRadius: 18, borderWidth: 1, borderColor: AppColors.border.default, overflow: 'hidden', shadowColor: AppColors.text.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 3 },
-  tableHeader: { minHeight: 52, flexDirection: 'row', alignItems: 'center', backgroundColor: AppColors.surface.subtle, paddingHorizontal: 20 },
-  tableRow: { minHeight: 76, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, borderTopWidth: 1, borderTopColor: AppColors.surface.muted },
-  headerCell: { fontSize: 12, fontWeight: '800', color: AppColors.text.secondary, textTransform: 'uppercase' },
-  hospitalCol: { flex: 1.8 },
-  cityCol: { flex: 1.2 },
-  staffCol: { flex: 0.8 },
-  statusCol: { flex: 0.8 },
-  actionCol: { flex: 0.6 },
   hospitalCell: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   hospitalIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: AppColors.status.infoSoft, alignItems: 'center', justifyContent: 'center' },
   hospitalIconInactive: { backgroundColor: AppColors.surface.muted },
@@ -610,17 +611,10 @@ const styles = StyleSheet.create({
   statusActive: { backgroundColor: AppColors.status.successSoft },
   statusInactive: { backgroundColor: AppColors.surface.muted },
   statusText: { fontSize: 11, fontWeight: '800' },
-  statusTextActive: { color: '#059669' },
+  statusTextActive: { color: AppColors.severityTone.active },
   statusTextInactive: { color: AppColors.text.secondary },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
   errorText: { color: AppColors.status.danger, fontWeight: '700' },
-  skeletonTable: { height: 360, backgroundColor: AppColors.surface.subtle },
-  skeletonLine: { height: 12, borderRadius: 999, backgroundColor: AppColors.chart.grid },
-  skeletonIcon: { width: 36, height: 36, borderRadius: 14, backgroundColor: AppColors.status.infoSoft },
-  skeletonStack: { gap: 7 },
-  skeletonBadge: { width: 82, height: 28, borderRadius: 999, backgroundColor: AppColors.border.soft },
-  skeletonHeaderShort: { width: 118 },
-  skeletonHeaderTiny: { width: 70 },
   modalBackdrop: { flex: 1, backgroundColor: AppColors.modal.darkBackdrop, alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalCard: { width: '100%', maxWidth: 820, maxHeight: '92%', backgroundColor: AppColors.surface.card, borderRadius: 24, overflow: 'hidden' },
   modalHeader: { padding: 24, borderBottomWidth: 1, borderBottomColor: AppColors.border.default, flexDirection: 'row', justifyContent: 'space-between', gap: 16 },

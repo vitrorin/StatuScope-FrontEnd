@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { InlineWarningBanner } from '../../components/feedback/InlineWarningBanner';
 
 const meta = {
-  title: 'Patterns/InlineWarningBanner',
+  title: 'Componentes reutilizables/Feedback/InlineWarningBanner',
   component: InlineWarningBanner,
   decorators: [
     (Story) => (

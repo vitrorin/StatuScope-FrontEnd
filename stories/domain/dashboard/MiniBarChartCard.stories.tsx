@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { MiniBarChartCard } from '../../../components/dashboard/MiniBarChartCard';
 
 const meta = {
-  title: 'Domain/Dashboard/MiniBarChartCard',
+  title: 'Componentes únicos/Dashboard/MiniBarChartCard',
   component: MiniBarChartCard,
   decorators: [
     (Story) => (

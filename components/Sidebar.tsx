@@ -203,6 +203,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '600',
-    color: 'rgba(71, 85, 105, 0.72)',
+    color: AppColors.overlay.sidebarMutedText,
   },
 });

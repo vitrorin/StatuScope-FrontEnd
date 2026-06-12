@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DoctorDashboardAlert } from '@/components/views/doctor/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
@@ -25,7 +26,7 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
       : alert.description.split('.')[0]);
   const clinicalRows = [
     { label: t('doctor.dashboard.alerts.activeCasesLabel'), value: activeCasesText, icon: 'activity' as const, color: accent },
-    { label: t('doctor.dashboard.overlays.municipality'), value: alert.municipalityName ?? alert.area, icon: 'map-pin' as const, color: '#3D7FFF' },
+    { label: t('doctor.dashboard.overlays.municipality'), value: alert.municipalityName ?? alert.area, icon: 'map-pin' as const, color: AppColors.decorative.alertBarInfo },
     { label: t('doctor.dashboard.overlays.state'), value: alert.stateName ?? alert.area, icon: 'map' as const, color: AppColors.brand.purple },
     { label: t('doctor.dashboard.overlays.status'), value: statusLabel, icon: 'check-circle' as const, color: statusAccent(alert.variant) },
     { label: t('doctor.dashboard.overlays.priority'), value: alert.priority, icon: 'flag' as const, color: priorityAccent(alert.variant) },
@@ -49,15 +50,19 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
 
           <View style={styles.body}>
             <View style={styles.metricsGrid}>
-              <MetricStat
+              <OverlayStatCard
                 label={t('doctor.dashboard.overlays.currentValue')}
                 value={diseaseName}
                 accentColor={accent}
+                valueNumberOfLines={2}
+                style={styles.statCard}
               />
-              <MetricStat
+              <OverlayStatCard
                 label={t('doctor.dashboard.overlays.signal')}
                 value={statusLabel}
                 accentColor={accent}
+                valueNumberOfLines={2}
+                style={styles.statCard}
               />
             </View>
 
@@ -86,34 +91,24 @@ export function AlertDetailOverlay({ visible, alert, onClose }: AlertDetailOverl
   );
 }
 
-function MetricStat({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
-  return (
-    <CardBase style={[styles.statCard, { borderColor: `${accentColor}24` }]}>
-      <View style={[styles.statAccent, { backgroundColor: accentColor }]} />
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue} numberOfLines={2}>{value}</Text>
-    </CardBase>
-  );
-}
-
 function accentColor(variant: DoctorDashboardAlert['variant']) {
-  if (variant === 'critical') return AppColors.status.infoDark;
-  if (variant === 'warning') return AppColors.roleTone.doctor.accent;
-  if (variant === 'success') return AppColors.auth.radarBlue;
+  if (variant === 'critical') return AppColors.status.dangerBright;
+  if (variant === 'warning') return AppColors.status.warningBright;
+  if (variant === 'success') return AppColors.status.successBright;
   if (variant === 'neutral') return AppColors.text.secondary;
   return AppColors.brand.primary;
 }
 
 function statusAccent(variant: DoctorDashboardAlert['variant']) {
-  if (variant === 'critical') return AppColors.status.infoDark;
-  if (variant === 'warning') return AppColors.roleTone.doctor.accent;
-  return AppColors.auth.radarBlue;
+  if (variant === 'critical') return AppColors.status.dangerBright;
+  if (variant === 'warning') return AppColors.status.warningBright;
+  return AppColors.status.successBright;
 }
 
 function priorityAccent(variant: DoctorDashboardAlert['variant']) {
-  if (variant === 'critical') return AppColors.status.infoDeep;
-  if (variant === 'warning') return AppColors.roleTone.doctor.accent;
-  return AppColors.auth.radarBlue;
+  if (variant === 'critical') return AppColors.status.danger;
+  if (variant === 'warning') return AppColors.status.warningDark;
+  return AppColors.status.info;
 }
 
 function diseaseFromTitle(title: string) {
@@ -145,15 +140,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: AppColors.surface.card,
   },
-  statAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-  },
-  statLabel: { fontSize: 12, lineHeight: 16, fontWeight: '800', color: AppColors.text.muted, textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 8 },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: AppColors.text.primary },
   insightsSection: {
     borderRadius: 18,
     borderWidth: 1,

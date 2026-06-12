@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppShadows, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type StaffingVariant = 'doctor' | 'nurse' | 'specialist' | 'default';
 
@@ -65,38 +65,35 @@ export function StaffingStatusCard({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: AppColors.surface.card,
-    borderRadius: 14,
+    borderRadius: AppRadii['2xl'],
     borderWidth: 1,
     borderColor: AppColors.border.muted,
     flexDirection: 'row',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    ...AppShadows.subtle,
     shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
   },
   accent: {
-    width: 4,
+    width: AppSpacing[2],
   },
   content: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: AppSpacing.card,
+    paddingVertical: AppSpacing[7],
   },
   leftCluster: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: AppSpacing[6],
   },
   iconWrap: {
     width: 30,
     height: 30,
-    borderRadius: 8,
+    borderRadius: AppRadii.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -104,17 +101,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...AppTypography.textStyles.bodyStrong,
     color: AppColors.text.strong,
-    marginBottom: 2,
+    marginBottom: AppSpacing[1],
   },
   subtitle: {
-    fontSize: 12,
+    ...AppTypography.textStyles.caption,
     color: AppColors.table.muted,
   },
   value: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: AppTypography.fontSizes.value,
+    lineHeight: AppTypography.lineHeights.sectionTitle,
+    fontWeight: AppTypography.fontWeights.bold,
   },
 });

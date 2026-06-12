@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { SegmentedControl } from '../../components/foundation/SegmentedControl';
 
 const meta = {
-  title: 'Foundation/SegmentedControl',
+  title: 'Componentes reutilizables/Foundation/SegmentedControl',
   component: SegmentedControl,
   decorators: [
     (Story) => (

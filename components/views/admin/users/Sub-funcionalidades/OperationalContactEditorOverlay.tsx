@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '@/components/foundation/Button';
+import { SelectableChip } from '@/components/foundation/SelectableChip';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
 import { HospitalDepartmentResourceResponse, OperationalContactInput, OperationalContactResponse } from '@/lib/adminOperational';
@@ -101,9 +102,24 @@ export function OperationalContactEditorOverlay({
               </View>
             </View>
             <View style={styles.toggleGrid}>
-              <ToggleChip label={spanish ? 'Puede recibir tareas' : 'Assignable'} active={assignable} onPress={() => setAssignable((value) => !value)} />
-              <ToggleChip label={spanish ? 'Puede recibir avisos' : 'Notifiable'} active={notifiable} onPress={() => setNotifiable((value) => !value)} />
-              <ToggleChip label={spanish ? 'Activo' : 'Active'} active={active} onPress={() => setActive((value) => !value)} />
+              <SelectableChip
+                label={spanish ? 'Puede recibir tareas' : 'Assignable'}
+                selected={assignable}
+                icon={<Feather name={assignable ? 'check-circle' : 'circle'} size={15} color={assignable ? AppColors.brand.action : AppColors.text.muted} />}
+                onPress={() => setAssignable((value) => !value)}
+              />
+              <SelectableChip
+                label={spanish ? 'Puede recibir avisos' : 'Notifiable'}
+                selected={notifiable}
+                icon={<Feather name={notifiable ? 'check-circle' : 'circle'} size={15} color={notifiable ? AppColors.brand.action : AppColors.text.muted} />}
+                onPress={() => setNotifiable((value) => !value)}
+              />
+              <SelectableChip
+                label={spanish ? 'Activo' : 'Active'}
+                selected={active}
+                icon={<Feather name={active ? 'check-circle' : 'circle'} size={15} color={active ? AppColors.brand.action : AppColors.text.muted} />}
+                onPress={() => setActive((value) => !value)}
+              />
             </View>
           </ScrollView>
 
@@ -132,15 +148,6 @@ export function OperationalContactEditorOverlay({
   );
 }
 
-function ToggleChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={[styles.toggleChip, active && styles.toggleChipActive]} onPress={onPress} activeOpacity={0.75}>
-      <Feather name={active ? 'check-circle' : 'circle'} size={15} color={active ? AppColors.brand.action : AppColors.text.muted} />
-      <Text style={[styles.toggleText, active && styles.toggleTextActive]}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: AppColors.modal.backdrop },
@@ -156,16 +163,12 @@ const styles = StyleSheet.create({
   inputContainer: { height: 50, borderRadius: 12 },
   departmentList: { gap: 8 },
   departmentOption: { minHeight: 48, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
-  departmentOptionActive: { borderColor: AppColors.border.brandMuted, backgroundColor: '#F7F8FF' },
+  departmentOptionActive: { borderColor: AppColors.border.brandMuted, backgroundColor: AppColors.selection.activeWash },
   departmentName: { fontSize: 13, lineHeight: 17, fontWeight: '800', color: AppColors.text.primary },
   departmentNameActive: { color: AppColors.brand.action },
   departmentCode: { marginTop: 2, fontSize: 11, lineHeight: 15, color: AppColors.text.soft, fontWeight: '700' },
   emptyText: { fontSize: 13, lineHeight: 18, color: AppColors.text.soft },
   toggleGrid: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
-  toggleChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: AppColors.border.default, backgroundColor: AppColors.surface.card },
-  toggleChipActive: { backgroundColor: AppColors.surface.brandSoft, borderColor: AppColors.border.brandMuted },
-  toggleText: { fontSize: 13, lineHeight: 18, fontWeight: '800', color: AppColors.text.secondary },
-  toggleTextActive: { color: AppColors.brand.action },
   footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingHorizontal: 24, paddingTop: 18, paddingBottom: 24, borderTopWidth: 1, borderTopColor: AppColors.border.soft },
   footerButton: { minWidth: 150 },
   primaryButton: { backgroundColor: AppColors.brand.action, borderColor: AppColors.brand.action },

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { PdfPreviewFrame, ReportOption } from '@/components/overlays';
 import { CardBase } from '@/components/patterns/CardBase';
 import { useTranslation } from '@/i18n';
 import { getDoctorDashboardReport, DoctorDashboardReportResponse, DoctorDashboardReportScope } from '@/lib/doctorDashboard';
@@ -137,7 +138,7 @@ export function EpidemiologicalReportOverlay({
                 title={t('doctor.dashboard.reports.localOptionTitle')}
                 description={localSection.contextValue}
                 disabled={exportingScope !== null}
-                isLoading={exportingScope === 'local'}
+                loading={exportingScope === 'local'}
                 onPress={() => { void handlePreview('local'); }}
               />
               <ReportOption
@@ -145,7 +146,7 @@ export function EpidemiologicalReportOverlay({
                 title={t('doctor.dashboard.reports.stateOptionTitle')}
                 description={stateSection.contextValue}
                 disabled={exportingScope !== null}
-                isLoading={exportingScope === 'state'}
+                loading={exportingScope === 'state'}
                 onPress={() => { void handlePreview('state'); }}
               />
               <ReportOption
@@ -153,7 +154,7 @@ export function EpidemiologicalReportOverlay({
                 title={t('doctor.dashboard.reports.bothOptionTitle')}
                 description={t('doctor.dashboard.reports.bothOptionDescription')}
                 disabled={exportingScope !== null}
-                isLoading={exportingScope === 'both'}
+                loading={exportingScope === 'both'}
                 onPress={() => { void handlePreview('both'); }}
               />
             </View>
@@ -162,48 +163,6 @@ export function EpidemiologicalReportOverlay({
       </View>
     </Modal>
   );
-}
-
-function ReportOption({
-  icon,
-  title,
-  description,
-  disabled,
-  isLoading,
-  onPress,
-}: {
-  icon: React.ComponentProps<typeof Feather>['name'];
-  title: string;
-  description: string;
-  disabled?: boolean;
-  isLoading?: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity style={[styles.optionCard, disabled ? styles.optionCardDisabled : null]} activeOpacity={0.82} onPress={onPress} disabled={disabled}>
-      <View style={styles.optionIcon}>
-        <Feather name={icon} size={18} color={AppColors.brand.primary} />
-      </View>
-      <View style={styles.optionCopy}>
-        <Text style={styles.optionTitle}>{title}</Text>
-        <Text style={styles.optionDescription}>{description}</Text>
-      </View>
-      <Feather name={isLoading ? 'loader' : 'download'} size={18} color={AppColors.text.secondary} />
-    </TouchableOpacity>
-  );
-}
-
-function PdfPreviewFrame({ url, title }: { url: string; title: string }) {
-  return React.createElement('iframe', {
-    src: url,
-    title,
-    style: {
-      width: '100%',
-      height: '100%',
-      border: '0',
-      backgroundColor: AppColors.surface.card,
-    },
-  });
 }
 
 function buildReportPdf({
@@ -228,7 +187,7 @@ function buildReportPdf({
   y += 24;
   pdf.text(`${t('doctor.dashboard.reports.hospital')}: ${report.hospitalName ?? ''}`, 54, y, 10, false, [82, 97, 116]);
   y += 17;
-  pdf.text(`${t('doctor.dashboard.reports.generatedAt')}: ${reportDate.toLocaleString()} | ${t('doctor.dashboard.reports.scope')}: ${scopeLabel(report.scope, t)}`, 54, y, 9, false, [82, 97, 116]);
+  pdf.text(`${t('doctor.dashboard.reports.generatedAt')}: ${reportDate.toLocaleString(language === 'es' ? 'es-MX' : 'en-US')} | ${t('doctor.dashboard.reports.scope')}: ${scopeLabel(report.scope, t)}`, 54, y, 9, false, [82, 97, 116]);
   y += 17;
   pdf.text(location || 'StatuScope', 54, y, 9, false, [82, 97, 116]);
   y = 146;
@@ -666,22 +625,6 @@ const styles = StyleSheet.create({
   },
   backText: { fontSize: 13, lineHeight: 16, fontWeight: '800', color: AppColors.brand.primary },
   options: { padding: 24, gap: 12 },
-  optionCard: {
-    minHeight: 78,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: AppColors.border.default,
-    backgroundColor: AppColors.surface.subtle,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  optionCardDisabled: { opacity: 0.58 },
-  optionIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: withAlpha(AppColors.brand.primary, 0.08), borderWidth: 1, borderColor: withAlpha(AppColors.brand.primary, 0.16) },
-  optionCopy: { flex: 1 },
-  optionTitle: { fontSize: 15, lineHeight: 20, fontWeight: '900', color: AppColors.text.primary },
-  optionDescription: { marginTop: 4, fontSize: 12, lineHeight: 16, fontWeight: '600', color: AppColors.text.secondary },
   previewBody: { flex: 1, padding: 18, gap: 14 },
   previewFallback: {
     flex: 1,

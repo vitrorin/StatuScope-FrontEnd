@@ -9,7 +9,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type InputFieldType = 'text' | 'password' | 'email' | 'number';
 
@@ -34,6 +34,7 @@ export interface InputFieldProps {
   placeholderTextColor?: string;
   labelAccessory?: React.ReactNode;
   maxLength?: number;
+  testID?: string;
 }
 
 export function InputField({
@@ -57,6 +58,7 @@ export function InputField({
   placeholderTextColor,
   labelAccessory,
   maxLength,
+  testID,
 }: InputFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -97,7 +99,7 @@ export function InputField({
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} testID={testID}>
       {label && (
         <View style={styles.labelContainer}>
           <Text style={[styles.label, labelStyle, disabled && styles.labelDisabled]}>{label}</Text>
@@ -140,6 +142,7 @@ export function InputField({
           maxLength={maxLength}
           editable={!disabled}
           autoCapitalize={type === 'email' ? 'none' : 'sentences'}
+          testID={testID ? `${testID}-input` : undefined}
         />
         {renderRightIcon()}
       </View>
@@ -155,36 +158,35 @@ export function InputField({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: AppSpacing.card,
   },
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: AppSpacing.fieldGap,
   },
   labelAccessory: {
     marginLeft: 'auto',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...AppTypography.textStyles.inputLabel,
     color: AppColors.text.body,
   },
   labelDisabled: {
     color: AppColors.text.disabled,
   },
   required: {
-    fontSize: 14,
+    fontSize: AppTypography.fontSizes.body,
     color: AppColors.status.dangerBright,
-    marginLeft: 4,
+    marginLeft: AppSpacing[2],
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
+    borderRadius: AppRadii.xl,
+    paddingHorizontal: AppSpacing.card,
+    height: AppSizes.inputHeight,
     backgroundColor: AppColors.surface.card,
   },
   inputFocused: {
@@ -196,7 +198,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    ...AppTypography.textStyles.inputText,
     color: AppColors.text.strong,
     padding: 0,
   },
@@ -204,22 +206,22 @@ const styles = StyleSheet.create({
     color: AppColors.text.disabled,
   },
   leftIconContainer: {
-    marginRight: 12,
+    marginRight: AppSpacing[6],
   },
   rightIconContainer: {
-    marginLeft: 12,
+    marginLeft: AppSpacing[6],
   },
   iconButton: {
-    padding: 4,
+    padding: AppSpacing[2],
   },
   hintText: {
-    fontSize: 12,
+    ...AppTypography.textStyles.caption,
     color: AppColors.table.muted,
-    marginTop: 6,
+    marginTop: AppSpacing[3],
   },
   errorText: {
-    fontSize: 12,
+    ...AppTypography.textStyles.caption,
     color: AppColors.status.dangerBright,
-    marginTop: 6,
+    marginTop: AppSpacing[3],
   },
 });

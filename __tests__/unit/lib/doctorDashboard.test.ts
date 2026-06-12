@@ -23,6 +23,17 @@ import {
   getDoctorDashboardStateBreakdown,
   getDoctorDashboardReport,
   getDoctorDashboardStateReport,
+  getAdminEpidemiologySummary,
+  getAdminEpidemiologyMetrics,
+  getAdminEpidemiologyMap,
+  getAdminEpidemiologyStateMap,
+  getAdminEpidemiologyDiseaseCatalog,
+  getAdminEpidemiologyStateOutbreakMap,
+  getAdminEpidemiologyAlerts,
+  getAdminEpidemiologyLocalBreakdown,
+  getAdminEpidemiologyStateBreakdown,
+  getAdminEpidemiologyReport,
+  getAdminEpidemiologyStateReport,
 } from '@/lib/doctorDashboard';
 
 // ── radiusQuery helper ────────────────────────────────────────────────────────
@@ -182,6 +193,35 @@ describe('doctorDashboard API – URL construction', () => {
     await getDoctorDashboardStateReport(stateId).catch(() => {});
     const url: string = fetchSpy.mock.calls[0][0];
     expect(url).toContain(`/doctor/dashboard/reports/states/${encodeURIComponent(stateId)}`);
+  });
+
+  it('admin epidemiology endpoints use the admin base path', async () => {
+    await getAdminEpidemiologySummary(10).catch(() => {});
+    await getAdminEpidemiologyMetrics(10).catch(() => {});
+    await getAdminEpidemiologyMap(10).catch(() => {});
+    await getAdminEpidemiologyStateMap().catch(() => {});
+    await getAdminEpidemiologyDiseaseCatalog().catch(() => {});
+    await getAdminEpidemiologyStateOutbreakMap('nuevo leon').catch(() => {});
+    await getAdminEpidemiologyAlerts(10).catch(() => {});
+    await getAdminEpidemiologyLocalBreakdown(10).catch(() => {});
+    await getAdminEpidemiologyStateBreakdown(10).catch(() => {});
+    await getAdminEpidemiologyReport('state', 10).catch(() => {});
+    await getAdminEpidemiologyStateReport('state 1').catch(() => {});
+
+    const urls = fetchSpy.mock.calls.map((call: unknown[]) => String(call[0]));
+    expect(urls).toEqual(expect.arrayContaining([
+      expect.stringContaining('/admin/epidemiology/summary?radiusKm=10'),
+      expect.stringContaining('/admin/epidemiology/metrics?radiusKm=10'),
+      expect.stringContaining('/admin/epidemiology/map?radiusKm=10'),
+      expect.stringContaining('/admin/epidemiology/map/states'),
+      expect.stringContaining('/admin/epidemiology/diseases'),
+      expect.stringContaining('/admin/epidemiology/map/states/nuevo leon/outbreaks'),
+      expect.stringContaining('/admin/epidemiology/alerts?radiusKm=10'),
+      expect.stringContaining('/admin/epidemiology/disease-breakdown/local?radiusKm=10'),
+      expect.stringContaining('/admin/epidemiology/disease-breakdown/state?radiusKm=10'),
+      expect.stringContaining('/admin/epidemiology/reports/state?radiusKm=10'),
+      expect.stringContaining(`/admin/epidemiology/reports/states/${encodeURIComponent('state 1')}`),
+    ]));
   });
 });
 

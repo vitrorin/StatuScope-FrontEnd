@@ -5,6 +5,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminNavigationLinks, getAdminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { Button } from '@/components/foundation/Button';
+import { EmptyState } from '@/components/feedback/EmptyState';
+import { SkeletonLine } from '@/components/feedback/SkeletonLine';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
 import { RecommendationDetailOverlay } from '@/components/views/admin/recommendations/Sub-funcionalidades/RecommendationDetailOverlay';
@@ -329,13 +331,16 @@ export function AdminRecommendations() {
                 ))}
               </View>
             ) : (
-              <CardBase style={styles.emptyCard}>
-                <View style={styles.emptyIconWrap}>
-                  <MaterialCommunityIcons name="progress-clock" size={22} color={AppColors.brand.action} />
-                </View>
-                <Text style={styles.emptyTitle}>{isSpanish(language) ? 'No se encontraron recomendaciones' : 'No recommendations found'}</Text>
-                <Text style={styles.emptySubtitle}>{isSpanish(language) ? 'El filtro actual todavia no tiene registros de recomendaciones.' : 'The current filter does not have any recommendation records yet.'}</Text>
-              </CardBase>
+              <EmptyState
+                style={styles.emptyCard}
+                icon={(
+                  <View style={styles.emptyIconWrap}>
+                    <MaterialCommunityIcons name="progress-clock" size={22} color={AppColors.brand.action} />
+                  </View>
+                )}
+                title={isSpanish(language) ? 'No se encontraron recomendaciones' : 'No recommendations found'}
+                message={isSpanish(language) ? 'El filtro actual todavia no tiene registros de recomendaciones.' : 'The current filter does not have any recommendation records yet.'}
+              />
             )}
           </View>
         </ScrollView>
@@ -459,14 +464,14 @@ function RecommendationsSkeleton() {
           <View style={styles.recommendationSkeletonHeader}>
             <View style={styles.skeletonCategoryRow}>
               <View style={styles.skeletonIcon} />
-              <View style={[styles.skeletonLine, { width: 96, height: 14 }]} />
+              <SkeletonLine width={96} height={14} />
             </View>
             <View style={styles.skeletonPill} />
           </View>
-          <View style={[styles.skeletonLine, { width: item === 1 ? '48%' : '62%', height: 20 }]} />
+          <SkeletonLine width={item === 1 ? '48%' : '62%'} height={20} />
           <View style={styles.skeletonParagraph}>
-            <View style={[styles.skeletonLine, { width: '92%' }]} />
-            <View style={[styles.skeletonLine, { width: '74%' }]} />
+            <SkeletonLine width="92%" />
+            <SkeletonLine width="74%" />
           </View>
           <View style={styles.skeletonSignalGrid}>
             <View style={styles.skeletonSignalCard} />
@@ -474,7 +479,7 @@ function RecommendationsSkeleton() {
             <View style={styles.skeletonSignalCard} />
           </View>
           <View style={styles.skeletonFooterRow}>
-            <View style={[styles.skeletonLine, { width: 118 }]} />
+            <SkeletonLine width={118} />
             <View style={styles.skeletonButtonRow}>
               <View style={styles.skeletonButton} />
               <View style={styles.skeletonButton} />
@@ -622,7 +627,7 @@ function recommendationCategoryTone(type: string) {
   if (normalized === 'SUPPLY') {
     return {
       accent: AppColors.recommendationCategory.staffing.accent,
-      soft: '#FAF5FF',
+      soft: AppColors.recommendationCategory.staffing.soft,
       border: AppColors.recommendationCategory.staffing.border,
       icon: 'package' as const,
     };
@@ -794,7 +799,7 @@ function mapRecommendation(
     metaItems: [
       { label: formatLastUpdatedLabel(item.updatedAt ?? item.createdAt, language), icon: <Feather name="clock" size={13} color={AppColors.text.soft} /> },
     ],
-    accentColor: severity === 'high' ? AppColors.clinicalSeverity.critical.border : severity === 'medium' ? '#F2E5C1' : '#E3E8F0',
+    accentColor: severity === 'high' ? AppColors.clinicalSeverity.critical.border : severity === 'medium' ? AppColors.severityTone.mediumBorder : AppColors.severityTone.neutralBorder,
     actions: buildActions(item.type, status, t, Boolean(activeTask)),
     confidenceScore: formatCalculatedPriority(item.confidenceScore),
     expectedImpact: content.expectedImpact,
@@ -1233,11 +1238,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  skeletonLine: {
-    height: 12,
-    borderRadius: 999,
-    backgroundColor: AppColors.chart.grid,
-  },
   skeletonIcon: {
     width: 18,
     height: 18,
@@ -1304,18 +1304,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: AppColors.surface.brandSoft,
     marginBottom: 14,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '800',
-    color: AppColors.text.strong,
-  },
-  emptySubtitle: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 22,
-    color: AppColors.text.soft,
   },
   recommendationCard: {
     padding: 0,

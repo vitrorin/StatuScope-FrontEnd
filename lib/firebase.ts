@@ -3,8 +3,10 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   initializeAuth,
+  browserSessionPersistence,
   // @ts-expect-error - getReactNativePersistence is RN-only and not in firebase types
   getReactNativePersistence,
+  setPersistence,
   Auth,
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,3 +26,10 @@ export const firebaseAuth: Auth =
     : initializeAuth(firebaseApp, {
         persistence: getReactNativePersistence(AsyncStorage),
       });
+
+export async function ensureWebSessionPersistence(): Promise<void> {
+  if (Platform.OS !== 'web') return;
+  await setPersistence(firebaseAuth, browserSessionPersistence);
+}
+
+void ensureWebSessionPersistence();

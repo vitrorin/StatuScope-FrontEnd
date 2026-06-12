@@ -4,10 +4,13 @@ import { useRouter } from 'expo-router';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { systemNavigationLinks, getSystemSidebarItems } from '@/components/dashboard/systemNavigation';
 import { Button } from '@/components/foundation/Button';
+import { SelectableChip } from '@/components/foundation/SelectableChip';
 import { StatusBadge, StatusBadgeVariant } from '@/components/feedback/StatusBadge';
 import { InputField } from '@/components/inputs/InputField';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DetailRow } from '@/components/overlays/DetailRow';
 import { CardBase } from '@/components/patterns/CardBase';
+import { ResponsiveTable, ResponsiveTableColumn } from '@/components/tables/ResponsiveTable';
 import { PaginationControl } from '@/components/users/PaginationControl';
 import { SummaryCountCard } from '@/components/users/SummaryCountCard';
 import { UserAvatarBadge } from '@/components/users/UserAvatarBadge';
@@ -163,6 +166,71 @@ export function SystemUsers() {
     }
   };
 
+  const userTableColumns: ResponsiveTableColumn<AdminUserResponse>[] = [
+    {
+      key: 'name',
+      label: es ? 'Nombre' : 'Name',
+      flex: 1.35,
+      minWidth: 220,
+      render: (user) => (
+        <View style={styles.nameCell}>
+          <UserAvatarBadge initials={initialsFromName(user.fullName)} variant="default" />
+          <View style={styles.userNameStack}>
+            <Text style={styles.userName}>{user.fullName}</Text>
+            <Text style={styles.userHospital}>{user.hospitalName ?? (es ? 'Sistema' : 'System')}</Text>
+          </View>
+        </View>
+      ),
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      flex: 1.35,
+      minWidth: 210,
+      render: (user) => <Text style={styles.emailText}>{user.email}</Text>,
+    },
+    {
+      key: 'role',
+      label: es ? 'Rol' : 'Role',
+      flex: 1,
+      minWidth: 150,
+      render: (user) => <RoleBadge role={user.roleCodes[0] ?? 'DOCTOR'} es={es} />,
+    },
+    {
+      key: 'status',
+      label: es ? 'Estado' : 'Status',
+      flex: 0.72,
+      minWidth: 130,
+      render: (user) => <StatusBadge label={statusLabel(user.status, es)} variant={statusBadgeVariant(user.status)} />,
+    },
+    {
+      key: 'actions',
+      label: es ? 'Acciones' : 'Actions',
+      width: 92,
+      align: 'center',
+      render: (user) => (
+        <View style={styles.actionsCol}>
+          <TouchableOpacity
+            style={styles.iconActionButton}
+            activeOpacity={0.76}
+            onPress={() => openEdit(user)}
+            disabled={actionBusyId === user.id}
+          >
+            <Feather name="edit-3" size={18} color={AppColors.text.secondary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconActionButton}
+            activeOpacity={0.76}
+            onPress={() => { void toggleUserStatus(user); }}
+            disabled={actionBusyId === user.id}
+          >
+            <Feather name={user.status === 'ACTIVE' ? 'slash' : 'check-circle'} size={18} color={user.status === 'ACTIVE' ? AppColors.status.dangerBright : AppColors.status.success} />
+          </TouchableOpacity>
+        </View>
+      ),
+    },
+  ];
+
   return (
     <DashboardLayout
       active="users"
@@ -226,16 +294,16 @@ export function SystemUsers() {
                       {(['ALL', ...roleOptions] as ('ALL' | BackendRoleCode)[]).map((role) => {
                         const isActive = roleFilter === role;
                         return (
-                          <TouchableOpacity
+                          <SelectableChip
                             key={role}
-                            style={[styles.filterChip, isActive && styles.filterChipActive]}
+                            label={role === 'ALL' ? (es ? 'Todos' : 'All') : roleLabel(role, es)}
+                            selected={isActive}
+                            style={styles.filterChip}
+                            selectedStyle={styles.filterChipActive}
+                            labelStyle={styles.filterChipText}
+                            selectedLabelStyle={styles.filterChipTextActive}
                             onPress={() => setRoleFilter(role)}
-                            activeOpacity={0.75}
-                          >
-                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
-                              {role === 'ALL' ? (es ? 'Todos' : 'All') : roleLabel(role, es)}
-                            </Text>
-                          </TouchableOpacity>
+                          />
                         );
                       })}
                     </View>
@@ -247,16 +315,16 @@ export function SystemUsers() {
                       {(['ALL', ...statusOptions] as ('ALL' | BackendUserStatus)[]).map((status) => {
                         const isActive = statusFilter === status;
                         return (
-                          <TouchableOpacity
+                          <SelectableChip
                             key={status}
-                            style={[styles.filterChip, isActive && styles.filterChipActive]}
+                            label={status === 'ALL' ? (es ? 'Todos' : 'All') : statusLabel(status, es)}
+                            selected={isActive}
+                            style={styles.filterChip}
+                            selectedStyle={styles.filterChipActive}
+                            labelStyle={styles.filterChipText}
+                            selectedLabelStyle={styles.filterChipTextActive}
                             onPress={() => setStatusFilter(status)}
-                            activeOpacity={0.75}
-                          >
-                            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
-                              {status === 'ALL' ? (es ? 'Todos' : 'All') : statusLabel(status, es)}
-                            </Text>
-                          </TouchableOpacity>
+                          />
                         );
                       })}
                     </View>
@@ -273,74 +341,17 @@ export function SystemUsers() {
               </CardBase>
             ) : null}
 
-            {loading ? (
-              <UsersTableSkeleton />
-            ) : (
-              <CardBase style={styles.tableCard}>
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.headerCell, styles.nameCol]}>{es ? 'Nombre' : 'Name'}</Text>
-                  <Text style={[styles.headerCell, styles.emailCol]}>Email</Text>
-                  <Text style={[styles.headerCell, styles.roleCol]}>{es ? 'Rol' : 'Role'}</Text>
-                  <Text style={[styles.headerCell, styles.statusCol]}>{es ? 'Estado' : 'Status'}</Text>
-                  <Text style={[styles.headerCell, styles.actionsCol]}>{es ? 'Acciones' : 'Actions'}</Text>
-                </View>
-
-                {visibleUsers.map((user, index) => {
-                  const role = user.roleCodes[0] ?? 'DOCTOR';
-                  return (
-                    <TouchableOpacity
-                      key={user.id}
-                      style={[styles.tableRow, index === visibleUsers.length - 1 && styles.tableRowLast]}
-                      activeOpacity={0.78}
-                      onPress={() => {
-                        setSelectedUser(user);
-                      }}
-                    >
-                      <View style={[styles.nameCol, styles.nameCell]}>
-                        <UserAvatarBadge initials={initialsFromName(user.fullName)} variant="default" />
-                        <View style={styles.userNameStack}>
-                          <Text style={styles.userName}>{user.fullName}</Text>
-                          <Text style={styles.userHospital}>{user.hospitalName ?? (es ? 'Sistema' : 'System')}</Text>
-                        </View>
-                      </View>
-                      <Text style={[styles.bodyCell, styles.emailCol, styles.emailText]}>{user.email}</Text>
-                      <View style={styles.roleCol}>
-                        <RoleBadge role={role} es={es} />
-                      </View>
-                      <View style={styles.statusCol}>
-                        <StatusBadge label={statusLabel(user.status, es)} variant={statusBadgeVariant(user.status)} />
-                      </View>
-                      <View style={styles.actionsCol}>
-                        <TouchableOpacity
-                          style={styles.iconActionButton}
-                          activeOpacity={0.76}
-                          onPress={() => openEdit(user)}
-                          disabled={actionBusyId === user.id}
-                        >
-                          <Feather name="edit-3" size={18} color={AppColors.text.secondary} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.iconActionButton}
-                          activeOpacity={0.76}
-                          onPress={() => { void toggleUserStatus(user); }}
-                          disabled={actionBusyId === user.id}
-                        >
-                          <Feather name={user.status === 'ACTIVE' ? 'slash' : 'check-circle'} size={18} color={user.status === 'ACTIVE' ? AppColors.status.dangerBright : AppColors.status.success} />
-                        </TouchableOpacity>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-
-                {visibleUsers.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateTitle}>{es ? 'No se encontraron usuarios' : 'No users found'}</Text>
-                    <Text style={styles.emptyStateSubtitle}>
-                      {es ? 'Prueba ajustando la busqueda o los filtros.' : 'Try adjusting the current search or filters.'}
-                    </Text>
-                  </View>
-                ) : null}
-
+            <ResponsiveTable
+              columns={userTableColumns}
+              rows={visibleUsers}
+              getRowKey={(user) => user.id}
+              loading={loading}
+              emptyTitle={es ? 'No se encontraron usuarios' : 'No users found'}
+              emptyMessage={es ? 'Prueba ajustando la busqueda o los filtros.' : 'Try adjusting the current search or filters.'}
+              onRowPress={(user) => setSelectedUser(user)}
+              style={styles.tableCard}
+              rowStyle={(_, index) => (index === visibleUsers.length - 1 ? styles.tableRowLast : undefined)}
+              footer={!loading ? (
                 <View style={styles.tableFooter}>
                   <Text style={styles.tableFooterText}>
                     {es ? 'Mostrando ' : 'Showing '}
@@ -352,8 +363,8 @@ export function SystemUsers() {
                   </Text>
                   <PaginationControl currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </View>
-              </CardBase>
-            )}
+              ) : null}
+            />
 
             <View style={styles.summaryRow}>
               <SummaryCountCard
@@ -480,10 +491,14 @@ function UserEditorModal({
             <Text style={styles.formLabel}>{es ? 'Rol' : 'Role'}</Text>
             <View style={styles.choiceRow}>
               {roleOptions.map((role) => (
-                <FilterChip
+                <SelectableChip
                   key={role}
                   label={roleLabel(role, es)}
-                  active={draft.roleCode === role}
+                  selected={draft.roleCode === role}
+                  style={styles.choiceChip}
+                  selectedStyle={styles.choiceChipActive}
+                  labelStyle={styles.choiceChipText}
+                  selectedLabelStyle={styles.choiceChipTextActive}
                   onPress={() => setDraft((prev) => ({ ...prev, roleCode: role, hospitalId: role === 'SYSTEM_ADMIN' ? undefined : prev.hospitalId ?? hospitals[0]?.id }))}
                 />
               ))}
@@ -494,10 +509,14 @@ function UserEditorModal({
                 <Text style={styles.formLabel}>{es ? 'Hospital asignado' : 'Assigned Hospital'}</Text>
                 <View style={styles.hospitalChoices}>
                   {hospitals.map((hospital) => (
-                    <FilterChip
+                    <SelectableChip
                       key={hospital.id}
                       label={hospital.name}
-                      active={draft.hospitalId === hospital.id}
+                      selected={draft.hospitalId === hospital.id}
+                      style={styles.choiceChip}
+                      selectedStyle={styles.choiceChipActive}
+                      labelStyle={styles.choiceChipText}
+                      selectedLabelStyle={styles.choiceChipTextActive}
                       onPress={() => setDraft((prev) => ({ ...prev, hospitalId: hospital.id }))}
                     />
                   ))}
@@ -510,10 +529,14 @@ function UserEditorModal({
                 <Text style={styles.formLabel}>{es ? 'Estado' : 'Status'}</Text>
                 <View style={styles.choiceRow}>
                   {statusOptions.map((status) => (
-                    <FilterChip
+                    <SelectableChip
                       key={status}
                       label={statusLabel(status, es)}
-                      active={draft.status === status}
+                      selected={draft.status === status}
+                      style={styles.choiceChip}
+                      selectedStyle={styles.choiceChipActive}
+                      labelStyle={styles.choiceChipText}
+                      selectedLabelStyle={styles.choiceChipTextActive}
                       onPress={() => setDraft((prev) => ({ ...prev, status }))}
                     />
                   ))}
@@ -574,10 +597,10 @@ function UserDetailModal({
             </View>
 
             <View style={styles.detailGrid}>
-              <DetailItem label={es ? 'Rol' : 'Role'} value={roleLabel(role, es)} />
-              <DetailItem label={es ? 'Estado' : 'Status'} value={user ? statusLabel(user.status, es) : '-'} />
-              <DetailItem label={es ? 'Hospital asignado' : 'Assigned Hospital'} value={user?.hospitalName ?? (es ? 'Sistema' : 'System')} />
-              <DetailItem label="ID" value={user?.id ?? '-'} />
+              <DetailRow boxed style={styles.detailItem} label={es ? 'Rol' : 'Role'} value={roleLabel(role, es)} />
+              <DetailRow boxed style={styles.detailItem} label={es ? 'Estado' : 'Status'} value={user ? statusLabel(user.status, es) : '-'} />
+              <DetailRow boxed style={styles.detailItem} label={es ? 'Hospital asignado' : 'Assigned Hospital'} value={user?.hospitalName ?? (es ? 'Sistema' : 'System')} />
+              <DetailRow boxed style={styles.detailItem} label="ID" value={user?.id ?? '-'} />
             </View>
           </View>
 
@@ -590,29 +613,12 @@ function UserDetailModal({
   );
 }
 
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.detailItem}>
-      <Text style={styles.detailItemLabel}>{label}</Text>
-      <Text style={styles.detailItemValue}>{value}</Text>
-    </View>
-  );
-}
-
 function Field({ label, value, onChangeText, secure = false }: { label: string; value: string; onChangeText: (value: string) => void; secure?: boolean }) {
   return (
     <View style={styles.field}>
       <Text style={styles.formLabel}>{label}</Text>
       <TextInput value={value} onChangeText={onChangeText} secureTextEntry={secure} style={styles.input} placeholderTextColor={AppColors.text.muted} />
     </View>
-  );
-}
-
-function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={[styles.choiceChip, active && styles.choiceChipActive]} onPress={onPress} activeOpacity={0.75}>
-      <Text style={[styles.choiceChipText, active && styles.choiceChipTextActive]}>{label}</Text>
-    </TouchableOpacity>
   );
 }
 
@@ -625,53 +631,6 @@ function RoleBadge({ role, es }: { role: BackendRoleCode; es: boolean }) {
         {roleLabel(role, es)}
       </Text>
     </View>
-  );
-}
-
-function UsersTableSkeleton() {
-  return (
-    <CardBase style={styles.tableCard}>
-      <View style={styles.tableHeader}>
-        <View style={[styles.usersSkeletonLine, styles.nameCol, { height: 12 }]} />
-        <View style={[styles.usersSkeletonLine, styles.emailCol, { height: 12 }]} />
-        <View style={[styles.usersSkeletonLine, styles.roleCol, { height: 12 }]} />
-        <View style={[styles.usersSkeletonLine, styles.statusCol, { height: 12 }]} />
-        <View style={[styles.usersSkeletonLine, styles.actionsCol, { height: 12 }]} />
-      </View>
-      {[0, 1, 2, 3, 4].map((item) => (
-        <View key={item} style={[styles.tableRow, item === 4 && styles.tableRowLast]}>
-          <View style={[styles.nameCol, styles.nameCell]}>
-            <View style={styles.usersSkeletonAvatar} />
-            <View style={styles.usersSkeletonNameStack}>
-              <View style={[styles.usersSkeletonLine, { width: item === 1 ? 116 : 148, height: 14 }]} />
-              <View style={[styles.usersSkeletonLine, { width: 88, height: 10 }]} />
-            </View>
-          </View>
-          <View style={styles.emailCol}>
-            <View style={[styles.usersSkeletonLine, { width: item === 2 ? 154 : 190 }]} />
-          </View>
-          <View style={styles.roleCol}>
-            <View style={styles.usersSkeletonBadge} />
-          </View>
-          <View style={styles.statusCol}>
-            <View style={[styles.usersSkeletonBadge, styles.usersSkeletonStatus]} />
-          </View>
-          <View style={styles.actionsCol}>
-            <View style={styles.usersSkeletonActions}>
-              <View style={styles.usersSkeletonIconAction} />
-              <View style={styles.usersSkeletonIconAction} />
-            </View>
-          </View>
-        </View>
-      ))}
-      <View style={styles.tableFooter}>
-        <View style={[styles.usersSkeletonLine, { width: 160 }]} />
-        <View style={styles.usersSkeletonPager}>
-          <View style={styles.usersSkeletonPagerButton} />
-          <View style={styles.usersSkeletonPagerButton} />
-        </View>
-      </View>
-    </CardBase>
   );
 }
 
@@ -817,46 +776,8 @@ const styles = StyleSheet.create({
     padding: 0,
     overflow: 'hidden',
   },
-  tableHeader: {
-    minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: AppColors.surface.subtle,
-    paddingHorizontal: 20,
-  },
-  tableRow: {
-    minHeight: 74,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: AppColors.surface.muted,
-  },
   tableRowLast: {
     borderBottomWidth: 0,
-  },
-  headerCell: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: AppColors.text.secondary,
-    textTransform: 'uppercase',
-  },
-  bodyCell: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: AppColors.text.body,
-  },
-  nameCol: {
-    flex: 1.35,
-  },
-  emailCol: {
-    flex: 1.35,
-  },
-  roleCol: {
-    flex: 1,
-  },
-  statusCol: {
-    flex: 0.72,
   },
   actionsCol: {
     width: 92,
@@ -927,20 +848,6 @@ const styles = StyleSheet.create({
   roleBadgeTextSystem: {
     color: AppColors.brand.purple,
   },
-  emptyState: {
-    padding: 28,
-    alignItems: 'center',
-  },
-  emptyStateTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: AppColors.text.secondary,
-  },
-  emptyStateSubtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    color: AppColors.text.muted,
-  },
   tableFooter: {
     minHeight: 58,
     borderTopWidth: 1,
@@ -979,50 +886,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: AppColors.text.secondary,
     lineHeight: 20,
-  },
-  usersSkeletonLine: {
-    height: 12,
-    borderRadius: 999,
-    backgroundColor: AppColors.chart.grid,
-  },
-  usersSkeletonAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 999,
-    backgroundColor: AppColors.border.brandSoft,
-  },
-  usersSkeletonNameStack: {
-    gap: 8,
-  },
-  usersSkeletonBadge: {
-    width: 126,
-    height: 28,
-    borderRadius: 999,
-    backgroundColor: AppColors.border.soft,
-  },
-  usersSkeletonStatus: {
-    width: 82,
-  },
-  usersSkeletonActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-  },
-  usersSkeletonIconAction: {
-    width: 28,
-    height: 28,
-    borderRadius: 10,
-    backgroundColor: AppColors.border.soft,
-  },
-  usersSkeletonPager: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  usersSkeletonPagerButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: AppColors.border.soft,
   },
   modalBackdrop: {
     flex: 1,
@@ -1122,19 +985,6 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface.subtle,
     padding: 14,
     gap: 6,
-  },
-  detailItemLabel: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    color: AppColors.text.muted,
-  },
-  detailItemValue: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '800',
-    color: AppColors.text.primary,
   },
   field: {
     gap: 7,

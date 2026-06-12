@@ -4,6 +4,10 @@ import axios, { AxiosHeaders, AxiosRequestConfig } from 'axios';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
 
+export function acceptAnyHttpStatus() {
+  return true;
+}
+
 export class ApiError extends Error {
   status: number;
   code: string | undefined;
@@ -20,7 +24,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  validateStatus: () => true,
+  validateStatus: acceptAnyHttpStatus,
 });
 
 apiClient.interceptors.request.use(async (config) => {

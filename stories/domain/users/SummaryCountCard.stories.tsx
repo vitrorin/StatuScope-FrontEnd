@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { SummaryCountCard } from '../../../components/users/SummaryCountCard';
 
 const meta = {
-  title: 'Domain/Users/SummaryCountCard',
+  title: 'Componentes únicos/Users/SummaryCountCard',
   component: SummaryCountCard,
   decorators: [
     (Story) => (

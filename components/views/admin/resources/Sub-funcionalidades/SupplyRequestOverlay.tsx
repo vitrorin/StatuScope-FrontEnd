@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
+import { InfoTile } from '@/components/overlays/InfoTile';
 import { CardBase } from '@/components/patterns/CardBase';
 import { HospitalInventoryMovementResponse } from '@/lib/adminOperational';
 import { InventoryResourceItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
@@ -100,9 +101,9 @@ export function SupplyRequestOverlay({
 
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.summaryGrid}>
-              <InfoTile label={es ? 'Existencia actual' : 'Current stock'} value={inventoryItem.valueText} />
-              <InfoTile label={es ? 'Objetivo' : 'Target'} value={inventoryItem.targetLevel} />
-              <InfoTile label={es ? 'Ubicación' : 'Location'} value={inventoryItem.location || (es ? 'Sin ubicación' : 'Unassigned')} />
+              <InfoTile style={styles.infoTile} label={es ? 'Existencia actual' : 'Current stock'} value={inventoryItem.valueText} />
+              <InfoTile style={styles.infoTile} label={es ? 'Objetivo' : 'Target'} value={inventoryItem.targetLevel} />
+              <InfoTile style={styles.infoTile} label={es ? 'Ubicación' : 'Location'} value={inventoryItem.location || (es ? 'Sin ubicación' : 'Unassigned')} />
             </View>
 
             <View style={styles.row}>
@@ -202,15 +203,6 @@ export function SupplyRequestOverlay({
   );
 }
 
-function InfoTile({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.infoTile}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
-  );
-}
-
 function localizePriority(priority: SupplyRequestDraft['priority'], es: boolean) {
   if (!es) return priority[0] + priority.slice(1).toLowerCase();
   const map = { LOW: 'Baja', MEDIUM: 'Media', HIGH: 'Alta', CRITICAL: 'Crítica' };
@@ -305,20 +297,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     backgroundColor: AppColors.surface.subtle,
-  },
-  infoLabel: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '800',
-    color: AppColors.text.muted,
-    textTransform: 'uppercase',
-  },
-  infoValue: {
-    marginTop: 8,
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '900',
-    color: AppColors.text.primary,
   },
   row: {
     flexDirection: 'row',

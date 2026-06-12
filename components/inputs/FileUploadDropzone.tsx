@@ -1,7 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type FileUploadState = 'empty' | 'dragging' | 'uploaded' | 'error';
 
@@ -81,25 +81,23 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   label: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
+    ...AppTypography.textStyles.captionStrong,
     color: AppColors.text.secondary,
-    marginBottom: 8,
+    marginBottom: AppSpacing.fieldGap,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: AppTypography.letterSpacing.eyebrow,
   },
   container: {
     minHeight: 96,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderRadius: 12,
+    borderRadius: AppRadii.xl,
     borderColor: AppColors.border.default,
     backgroundColor: AppColors.surface.card,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 22,
+    paddingHorizontal: AppSpacing.card,
+    paddingVertical: AppSpacing[11],
   },
   containerDragging: {
     borderColor: AppColors.brand.primary,
@@ -110,48 +108,43 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.status.successWash,
   },
   containerError: {
-    borderColor: '#FCA5A5',
+    borderColor: AppColors.status.dangerBorder,
     backgroundColor: AppColors.status.dangerSoft,
   },
   iconWrap: {
-    marginBottom: 12,
+    marginBottom: AppSpacing[6],
   },
   browseRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    marginBottom: 6,
+    marginBottom: AppSpacing[3],
   },
   description: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...AppTypography.textStyles.body,
     color: AppColors.text.body,
     textAlign: 'center',
   },
   browseLink: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '700',
+    ...AppTypography.textStyles.bodyStrong,
+    fontWeight: AppTypography.fontWeights.bold,
     color: AppColors.brand.primary,
   },
   formatText: {
-    fontSize: 12,
-    lineHeight: 18,
+    ...AppTypography.textStyles.caption,
+    lineHeight: AppTypography.lineHeights.caption,
     color: AppColors.text.muted,
     textAlign: 'center',
   },
   fileName: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '600',
+    ...AppTypography.textStyles.bodyStrong,
     color: AppColors.text.primary,
     textAlign: 'center',
   },
   errorText: {
-    marginTop: 6,
-    fontSize: 12,
-    lineHeight: 16,
+    marginTop: AppSpacing[3],
+    ...AppTypography.textStyles.caption,
     color: AppColors.status.danger,
   },
 });

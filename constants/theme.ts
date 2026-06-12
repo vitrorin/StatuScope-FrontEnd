@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 
 const brand = {
   primary: '#0003B8',
@@ -125,6 +125,13 @@ export const AppColors = {
   border,
   status,
   chart,
+  decorative: {
+    alertBarDanger: '#F05252',
+    alertBarInfo: '#3D7FFF',
+    linkAccent: '#0a7ea4',
+    hospitalIconWash: '#F0F1FF',
+    dashboardRoleWash: '#EEF0FF',
+  },
   clinicalSeverity: {
     critical: {
       accent: '#E11D48',
@@ -170,6 +177,7 @@ export const AppColors = {
       accent: status.dangerBright,
       background: status.dangerSoft,
       track: status.dangerBorder,
+      trackSoft: '#F9D8D8',
     },
     info: {
       accent: status.cyan,
@@ -215,6 +223,12 @@ export const AppColors = {
       value: status.infoDark,
     },
   },
+  severityTone: {
+    high: '#C2410C',
+    mediumBorder: '#F2E5C1',
+    neutralBorder: '#E3E8F0',
+    active: '#059669',
+  },
   roleTone: {
     doctor: {
       accent: '#3B82F6',
@@ -249,6 +263,11 @@ export const AppColors = {
     placeholder: '#6B7280',
     radarGreen: '#34D399',
     radarBlue: '#93C5FD',
+    halo: 'rgba(255,255,255,0.03)',
+    radarRing: 'rgba(255,255,255,0.10)',
+    statCardBorder: 'rgba(255,255,255,0.20)',
+    statCardBackground: 'rgba(255,255,255,0.10)',
+    radarCoreBorder: 'rgba(255,255,255,0.30)',
   },
   modal: {
     backdrop: 'rgba(255,255,255,0.74)',
@@ -266,6 +285,19 @@ export const AppColors = {
     glass: 'rgba(255,255,255,0.74)',
     glassStrong: 'rgba(255,255,255,0.92)',
     modal: neutral.white,
+    sidebarMutedText: 'rgba(71, 85, 105, 0.72)',
+    mapSkeletonPanel: 'rgba(255, 255, 255, 0.86)',
+    mapSkeletonPin: 'rgba(226, 232, 240, 0.85)',
+    analyticsBlueArea: 'rgba(80, 195, 244, 0.10)',
+    analyticsPurpleArea: 'rgba(139, 92, 246, 0.06)',
+  },
+  selection: {
+    activeWash: '#F7F8FF',
+    hoverWash: '#F1F5FF',
+  },
+  panel: {
+    diagnosisBorder: '#E6EDF8',
+    selectorBorder: '#D6E0EF',
   },
   shadow: {
     default: neutral.ink,
@@ -339,3 +371,232 @@ export const Fonts = Platform.select({
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });
+
+export const AppSpacing = {
+  0: 0,
+  1: 2,
+  2: 4,
+  3: 6,
+  4: 8,
+  5: 10,
+  6: 12,
+  7: 14,
+  8: 16,
+  9: 18,
+  10: 20,
+  11: 22,
+  12: 24,
+  13: 26,
+  14: 28,
+  16: 32,
+  20: 40,
+  24: 48,
+  27: 54,
+  28: 56,
+  32: 64,
+  fieldGap: 8,
+  card: 16,
+  screen: 24,
+  section: 32,
+} as const;
+
+export const AppRadii = {
+  none: 0,
+  xs: 4,
+  sm: 6,
+  md: 8,
+  lg: 10,
+  xl: 12,
+  '2xl': 14,
+  '3xl': 16,
+  '4xl': 20,
+  '5xl': 24,
+  pill: 999,
+} as const;
+
+export const AppSizes = {
+  iconXs: 12,
+  iconSm: 16,
+  iconMd: 18,
+  iconLg: 20,
+  iconXl: 24,
+  controlSm: 36,
+  controlMd: 40,
+  controlLg: 44,
+  inputHeight: 48,
+  textareaMinHeight: 120,
+  sidebarWidth: 272,
+} as const;
+
+export const AppTypography = {
+  fontFamilies: Fonts,
+  fontWeights: {
+    regular: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+    extrabold: '800',
+    black: '900',
+  },
+  fontSizes: {
+    micro: 10,
+    eyebrow: 11,
+    caption: 12,
+    small: 13,
+    body: 14,
+    bodyMedium: 15,
+    bodyLarge: 16,
+    cardTitle: 16,
+    sectionTitle: 22,
+    value: 24,
+    screenTitle: 28,
+    display: 32,
+  },
+  lineHeights: {
+    micro: 14,
+    tight: 16,
+    captionRelaxed: 17,
+    caption: 18,
+    body: 20,
+    bodyRelaxed: 22,
+    bodyLarge: 24,
+    sectionTitle: 28,
+    screenTitle: 34,
+    metricLarge: 38,
+    display: 40,
+  },
+  letterSpacing: {
+    none: 0,
+    tight: 0.3,
+    eyebrow: 0.5,
+    wide: 0.8,
+  },
+  textStyles: {
+    display: {
+      fontSize: 32,
+      lineHeight: 40,
+      fontWeight: '700',
+      letterSpacing: 0,
+    },
+    screenTitle: {
+      fontSize: 28,
+      lineHeight: 34,
+      fontWeight: '700',
+      letterSpacing: 0,
+    },
+    sectionTitle: {
+      fontSize: 22,
+      lineHeight: 28,
+      fontWeight: '800',
+      letterSpacing: 0,
+    },
+    cardTitle: {
+      fontSize: 16,
+      lineHeight: 23,
+      fontWeight: '600',
+      letterSpacing: 0,
+    },
+    body: {
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: '400',
+      letterSpacing: 0,
+    },
+    bodyStrong: {
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: '600',
+      letterSpacing: 0,
+    },
+    bodySmall: {
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: '400',
+      letterSpacing: 0,
+    },
+    caption: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '400',
+      letterSpacing: 0,
+    },
+    captionStrong: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '700',
+      letterSpacing: 0,
+    },
+    eyebrow: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: '800',
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
+    },
+    buttonLabel: {
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: '600',
+      letterSpacing: 0,
+    },
+    inputText: {
+      fontSize: 16,
+      lineHeight: 24,
+      fontWeight: '400',
+      letterSpacing: 0,
+    },
+    inputLabel: {
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: '500',
+      letterSpacing: 0,
+    },
+    metricValue: {
+      fontSize: 28,
+      lineHeight: 34,
+      fontWeight: '800',
+      letterSpacing: 0,
+    },
+  } satisfies Record<string, TextStyle>,
+} as const;
+
+export const AppShadows = {
+  none: {
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  subtle: {
+    shadowColor: AppColors.shadow.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  card: {
+    shadowColor: AppColors.text.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    elevation: 3,
+  },
+  floating: {
+    shadowColor: AppColors.shadow.black,
+    shadowOffset: { width: 0, height: 25 },
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    elevation: 12,
+  },
+  action: {
+    shadowColor: AppColors.brand.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+} as const satisfies Record<string, ViewStyle>;
+
+export type AppSpacing = typeof AppSpacing;
+export type AppRadii = typeof AppRadii;
+export type AppSizes = typeof AppSizes;
+export type AppTypography = typeof AppTypography;
+export type AppShadows = typeof AppShadows;

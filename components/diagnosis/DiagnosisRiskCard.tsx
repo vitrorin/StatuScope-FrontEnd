@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { AppColors } from '@/constants/theme';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type RiskVariant = 'critical' | 'warning' | 'info';
 
@@ -75,43 +75,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 14,
+    borderRadius: AppRadii['2xl'],
     borderWidth: 1,
-    padding: 14,
+    padding: AppSpacing[7],
   },
   content: {
     flex: 1,
   },
   title: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '700',
+    ...AppTypography.textStyles.bodySmall,
+    fontWeight: AppTypography.fontWeights.bold,
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    letterSpacing: AppTypography.letterSpacing.tight,
   },
   subtitle: {
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: '700',
-    marginTop: 4,
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
+    marginTop: AppSpacing[2],
   },
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: AppSpacing[5],
+    paddingVertical: AppSpacing[2],
+    borderRadius: AppRadii.pill,
   },
   statusText: {
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: '700',
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
     color: AppColors.surface.card,
     textTransform: 'uppercase',
   },
   statusTextPlain: {
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '700',
+    fontSize: AppTypography.fontSizes.bodyMedium,
+    lineHeight: AppTypography.lineHeights.bodyRelaxed,
+    fontWeight: AppTypography.fontWeights.bold,
     textTransform: 'uppercase',
-    letterSpacing: 0.2,
+    letterSpacing: AppTypography.letterSpacing.tight,
   },
 });

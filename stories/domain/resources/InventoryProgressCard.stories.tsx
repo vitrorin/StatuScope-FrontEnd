@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { InventoryProgressCard } from '../../../components/resources/InventoryProgressCard';
 
 const meta = {
-  title: 'Domain/Resources/InventoryProgressCard',
+  title: 'Componentes únicos/Resources/InventoryProgressCard',
   component: InventoryProgressCard,
   decorators: [
     (Story) => (

@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: withAlpha(AppColors.brand.primary, 0.05),
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,

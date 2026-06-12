@@ -6,6 +6,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { RadarMapCard, RadarMapPolygon } from '@/components/dashboard/RadarMapCard';
 import { adminNavigationLinks, getAdminSidebarItems } from '@/components/dashboard/adminNavigation';
 import { AlertCard } from '@/components/feedback/AlertCard';
+import { RetryState } from '@/components/feedback/RetryState';
+import { SkeletonLine } from '@/components/feedback/SkeletonLine';
+import { AlertListOverlay } from '@/components/overlays/AlertListOverlay';
 import { Button } from '@/components/foundation/Button';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CardBase } from '@/components/patterns/CardBase';
@@ -73,6 +76,7 @@ export function AdminDashboard() {
   const [selectedAlert, setSelectedAlert] = useState<AdminDashboardAlert | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<AdminDashboardMetric | null>(null);
   const [selectedZone, setSelectedZone] = useState<AdminDashboardZone | null>(null);
+  const [selectedZoneSource, setSelectedZoneSource] = useState<'main' | 'state' | null>(null);
   const [selectedAction, setSelectedAction] = useState<AdminDashboardSummaryResponse['recommendedActions'][number] | null>(null);
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false);
   const [selectedState, setSelectedState] = useState<DoctorDashboardStateMapItem | null>(null);
@@ -356,7 +360,7 @@ export function AdminDashboard() {
                   ) : mapState.status === 'error' ? (
                     <View style={[styles.retryHost, mapWidth ? { width: mapWidth } : styles.mapCard]}>
                       <MapSkeleton />
-                      <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadMap} />
+                      <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadMap} compact style={styles.retryOverlay} />
                     </View>
                   ) : (
                     <RadarMapCard
@@ -408,7 +412,10 @@ export function AdminDashboard() {
                           ) : (
                             <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />
                           ),
-                        onPress: () => setSelectedZone(zone),
+                        onPress: () => {
+                          setSelectedZone(zone);
+                          setSelectedZoneSource('main');
+                        },
                       }))}
                       style={[
                         styles.mapCard,
@@ -459,10 +466,11 @@ export function AdminDashboard() {
         onClose={() => setIsExportOpen(false)}
       />
       <AlertDetailOverlay visible={selectedAlert !== null} alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
-      <MoreAlertsOverlay
+      <AlertListOverlay
         visible={isMoreAlertsOpen}
         alerts={remainingAlerts}
-        language={language}
+        eyebrow={language === 'es' ? 'Brotes activos' : 'Active outbreaks'}
+        title={language === 'es' ? 'Mas brotes contextuales' : 'More contextual outbreaks'}
         onClose={() => setIsMoreAlertsOpen(false)}
         onSelectAlert={(alert) => {
           setIsMoreAlertsOpen(false);
@@ -485,12 +493,23 @@ export function AdminDashboard() {
           setSelectedState(null);
           setStateOutbreakMapState(initialSectionState());
         }}
-        onZonePress={setSelectedZone}
+        onZonePress={(zone) => {
+          setSelectedZone(zone);
+          setSelectedZoneSource('state');
+        }}
         onMapHoverChange={setIsMapHovered}
         t={t}
       />
       <MetricDetailOverlay visible={selectedMetric !== null} metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
-      <MapZoneDetailOverlay visible={selectedZone !== null} zone={selectedZone} onClose={() => setSelectedZone(null)} />
+      <MapZoneDetailOverlay
+        visible={selectedZone !== null}
+        zone={selectedZone}
+        showRadius={selectedZoneSource !== 'state'}
+        onClose={() => {
+          setSelectedZone(null);
+          setSelectedZoneSource(null);
+        }}
+      />
       <HospitalRecommendationOverlay
         visible={selectedAction !== null}
         action={selectedAction}
@@ -592,10 +611,6 @@ function metricCardIcon(metricId: string, color: string) {
           ? 'alert-triangle'
           : 'bar-chart-2';
   return <Feather name={iconName} size={18} color={color} />;
-}
-
-function SkeletonLine({ width, height = 12, style }: { width: number | string; height?: number; style?: object }) {
-  return <View style={[styles.skeletonLine, { width, height }, style]} />;
 }
 
 function ContextualAlertsPanel({
@@ -762,68 +777,6 @@ function PriorityActionsCard({
         ) : null}
       </View>
     </CardBase>
-  );
-}
-
-function MoreAlertsOverlay({
-  visible,
-  alerts,
-  language,
-  onClose,
-  onSelectAlert,
-}: {
-  visible: boolean;
-  alerts: AdminDashboardAlert[];
-  language: 'en' | 'es';
-  onClose: () => void;
-  onSelectAlert: (alert: AdminDashboardAlert) => void;
-}) {
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.moreAlertsOverlay}>
-        <Pressable style={styles.moreAlertsBackdrop} onPress={onClose} />
-        <View style={styles.moreAlertsCard}>
-          <View style={styles.moreAlertsHeader}>
-            <View>
-              <Text style={styles.moreAlertsEyebrow}>{language === 'es' ? 'Brotes activos' : 'Active outbreaks'}</Text>
-              <Text style={styles.moreAlertsTitle}>{language === 'es' ? 'Mas brotes contextuales' : 'More contextual outbreaks'}</Text>
-            </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color={AppColors.text.secondary} />
-            </TouchableOpacity>
-          </View>
-          <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
-            {alerts.map((alert) => (
-              <TouchableOpacity key={alert.id} activeOpacity={0.82} onPress={() => onSelectAlert(alert)}>
-                <AlertCard
-                  title={alert.title}
-                  description={alert.description}
-                  variant={alert.variant}
-                  style={styles.alertCard}
-                />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-function RetryOverlay({
-  label,
-  onRetry,
-}: {
-  label: string;
-  onRetry: () => void;
-}) {
-  return (
-    <View style={styles.retryOverlay}>
-      <TouchableOpacity style={styles.retryButton} activeOpacity={0.82} onPress={onRetry}>
-        <Feather name="refresh-cw" size={18} color={AppColors.brand.primary} />
-        <Text style={styles.retryText}>{label}</Text>
-      </TouchableOpacity>
-    </View>
   );
 }
 
@@ -1076,7 +1029,7 @@ function StateOutbreakExplorer({
               <MapSkeleton />
             ) : stateMapStatus === 'error' ? (
               <View style={styles.stateExplorerError}>
-                <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={() => onSelectState(selectedState)} />
+                <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={() => onSelectState(selectedState)} compact style={styles.retryOverlay} />
               </View>
             ) : (
               <RadarMapCard
@@ -1117,7 +1070,7 @@ function StateOutbreakExplorer({
             <MapSkeleton />
           ) : statesStatus === 'error' ? (
             <View style={styles.stateExplorerError}>
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={onRetryStates} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={onRetryStates} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <RadarMapCard
@@ -1953,7 +1906,7 @@ function recommendedActionCategoryTone(type: string) {
     return { accent: AppColors.recommendationCategory.logistics.accent, soft: AppColors.recommendationCategory.logistics.soft, border: AppColors.recommendationCategory.logistics.border };
   }
   if (normalized === 'SUPPLY') {
-    return { accent: AppColors.recommendationCategory.staffing.accent, soft: '#FAF5FF', border: AppColors.recommendationCategory.staffing.border };
+    return { accent: AppColors.recommendationCategory.staffing.accent, soft: AppColors.recommendationCategory.staffing.soft, border: AppColors.recommendationCategory.staffing.border };
   }
   if (normalized === 'LOCAL_EPIDEMIOLOGY' || normalized.startsWith('EPIDEMIOLOGY')) {
     return { accent: AppColors.clinicalSeverity.critical.text, soft: AppColors.status.dangerPanel, border: AppColors.recommendationCategory.critical.border };
@@ -2163,10 +2116,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     color: AppColors.brand.link,
-  },
-  skeletonLine: {
-    borderRadius: 999,
-    backgroundColor: AppColors.chart.grid,
   },
   skeletonSpacedSmall: {
     marginTop: 8,

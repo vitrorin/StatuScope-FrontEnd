@@ -70,7 +70,10 @@ npm run web
 npm run build:web
 npm run serve:dist
 npm run lint
+npm run test
+npm run test:coverage
 npm run cy:run
+npm run cy:e2e
 npm run cy:open
 npm run storybook
 npm run build-storybook
@@ -78,19 +81,42 @@ npm run docker:build
 ```
 
 `serve:dist` serves the exported web build on port `4173`.
+`cy:e2e` builds the web app, starts a temporary local static server for `dist`, runs Cypress against that production-like build, and stops the server automatically.
 
 ## Validate
 
 ```bash
 npm run lint
 node ./node_modules/typescript/bin/tsc --noEmit
-npx vitest run
+npm test
+npm run test:coverage
+npm run cy:e2e
+npm run build-storybook
 ```
 
 Recently verified:
 
-- `npm run lint` passes with warnings only.
 - `node ./node_modules/typescript/bin/tsc --noEmit` passes without errors.
+- `npm run cy:e2e` passes with 8 specs and 28 E2E tests.
+
+### Testing Strategy
+
+Jest is used for unit and integration tests under `__tests__`. These tests validate reusable components, hooks, contexts, API clients, i18n helpers, design tokens, and view-level behavior with mocked dependencies. Coverage can be generated with `npm run test:coverage`; the report is written to `coverage/lcov-report/index.html`.
+
+Cypress is used for browser E2E tests under `cypress/e2e`. The preferred command is `npm run cy:e2e` because it performs the full E2E cycle in one step: it exports the Expo web build, serves the generated `dist` folder from a temporary local server, runs Cypress in headless mode against that URL, and then stops the server. This avoids having to manually run `npm run build:web`, `npm run serve:dist`, and `npm run cy:run` separately.
+
+Current Cypress specs:
+
+| Spec | Scope |
+| --- | --- |
+| `01-login.cy.ts` | Login rendering, brand copy, validation errors, invalid credentials, and navigation to registration |
+| `02-register.cy.ts` | Registration rendering, required fields, password validation, password mismatch, and navigation back to login |
+| `03-routing.cy.ts` | Protected route redirects for unauthenticated users |
+| `04-responsive.cy.ts` | Responsive checks for login and registration at desktop and tablet widths |
+| `05-doctor-dashboard-screenshots.cy.ts` | Mocked authenticated doctor dashboard visual coverage and screenshots |
+| `06-doctor-diagnosis-screenshots.cy.ts` | Mocked authenticated diagnosis screen visual coverage and screenshots |
+| `07-main-authenticated-flows.cy.ts` | Main authenticated screens for doctor, hospital admin, and system admin |
+| `08-doctor-diagnosis-flow.cy.ts` | Functional diagnosis flow: required fields, evaluation creation, AI response, and clean restart of an unconfirmed report |
 
 The project also includes Cypress specs in `cypress/e2e` and Storybook stories in `stories`.
 

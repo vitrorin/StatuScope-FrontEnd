@@ -1,7 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { AppColors, withAlpha } from '@/constants/theme';
+import { AppColors, AppRadii, AppSpacing, AppTypography, withAlpha } from '@/constants/theme';
 
 export type DetectionBannerVariant = 'info' | 'warning' | 'critical';
 
@@ -58,25 +58,22 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: AppSpacing[7],
+    paddingHorizontal: AppSpacing.card,
+    borderRadius: AppRadii.xl,
   },
   icon: {
-    marginRight: 12,
+    marginRight: AppSpacing[6],
   },
   message: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 20,
-    fontWeight: '600',
+    ...AppTypography.textStyles.bodySmall,
+    fontWeight: AppTypography.fontWeights.semibold,
   },
   action: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
+    ...AppTypography.textStyles.captionStrong,
     color: AppColors.brand.primary,
     textDecorationLine: 'underline',
-    marginLeft: 12,
+    marginLeft: AppSpacing[6],
   },
 });

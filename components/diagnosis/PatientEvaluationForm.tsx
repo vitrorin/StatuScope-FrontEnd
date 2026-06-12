@@ -6,7 +6,7 @@ import { IconButton } from '../foundation/IconButton';
 import { FileUploadDropzone } from '../inputs/FileUploadDropzone';
 import { InputField } from '../inputs/InputField';
 import { SelectField } from '../inputs/SelectField';
-import { TextareaField } from '../inputs/TextareaField';
+import { TextAreaField } from '../inputs/TextAreaField';
 import { CardBase } from '../patterns/CardBase';
 import { AppColors } from '@/constants/theme';
 
@@ -105,6 +105,7 @@ export function PatientEvaluationForm({
             onChangeText={onPatientNameChange}
             style={styles.fieldBlock}
             inputContainerStyle={styles.fieldInputContainer}
+            testID="diagnosis-patient-name"
           />
         </View>
 
@@ -118,6 +119,7 @@ export function PatientEvaluationForm({
               maxLength={10}
               style={styles.fieldBlock}
               inputContainerStyle={styles.fieldInputContainer}
+              testID="diagnosis-birth-date"
             />
           </View>
 
@@ -129,18 +131,20 @@ export function PatientEvaluationForm({
               value={sexValue}
               onChange={onSexChange}
               style={[styles.fieldBlock, styles.sexFieldBlock]}
+              testID="diagnosis-sex"
             />
           </View>
         </View>
 
         <View>
           <Text style={styles.fieldLabel}>{symptomsLabel}</Text>
-          <TextareaField
+          <TextAreaField
             placeholder={symptomsPlaceholder}
             value={symptomsValue}
             onChangeText={onSymptomsChange}
             numberOfLines={3}
             style={styles.fieldBlock}
+            testID="diagnosis-symptoms"
           />
         </View>
 
@@ -169,6 +173,7 @@ export function PatientEvaluationForm({
           onPress={onPrimaryActionPress}
           style={styles.primaryButton}
           labelStyle={styles.primaryButtonLabel}
+          testID="diagnosis-run-analysis"
         />
 
         {showSecondaryAction ? (
