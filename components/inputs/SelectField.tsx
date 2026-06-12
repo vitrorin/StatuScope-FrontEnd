@@ -17,6 +17,7 @@ export interface SelectFieldProps {
   disabled?: boolean;
   onChange?: (value: string) => void;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 export function SelectField({
@@ -28,6 +29,7 @@ export function SelectField({
   disabled = false,
   onChange,
   style,
+  testID,
 }: SelectFieldProps) {
   const selectRef = useRef<View>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -35,14 +37,22 @@ export function SelectField({
 
   const selectedOption = options.find((option) => option.value === value);
   const openDropdown = () => {
-    selectRef.current?.measureInWindow((left, top, width, height) => {
+    setDropdownFrame({ left: 0, top: 0, width: 240 });
+    setIsOpen(true);
+
+    const measureInWindow = selectRef.current?.measureInWindow;
+    if (typeof measureInWindow !== 'function') {
+      return;
+    }
+
+    /* istanbul ignore next: native measurement callbacks are not invoked by the React Native test renderer. */
+    measureInWindow((left, top, width, height) => {
       setDropdownFrame({ left, top: top + height + 4, width });
-      setIsOpen(true);
     });
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} testID={testID}>
       {label ? <Text style={[styles.label, disabled && styles.labelDisabled]}>{label}</Text> : null}
 
       <View
@@ -66,6 +76,7 @@ export function SelectField({
           }}
           disabled={disabled}
           activeOpacity={0.75}
+          testID={testID ? `${testID}-button` : undefined}
         >
           <Text
             style={[
@@ -82,7 +93,11 @@ export function SelectField({
 
       {isOpen && !disabled ? (
         <Modal transparent visible={isOpen} animationType="none" onRequestClose={() => setIsOpen(false)}>
-          <Pressable style={styles.dropdownBackdrop} onPress={() => setIsOpen(false)} />
+          <Pressable
+            style={styles.dropdownBackdrop}
+            onPress={() => setIsOpen(false)}
+            testID={testID ? `${testID}-backdrop` : undefined}
+          />
           <View
             style={[
               styles.dropdown,
@@ -106,6 +121,7 @@ export function SelectField({
                   setIsOpen(false);
                 }}
                 activeOpacity={0.75}
+                testID={testID ? `${testID}-option-${option.value}` : undefined}
               >
                 <Text
                   style={[styles.optionText, option.value === value && styles.optionTextSelected]}

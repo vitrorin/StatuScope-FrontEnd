@@ -12,6 +12,7 @@ export interface TextAreaFieldProps {
   numberOfLines?: number;
   onChangeText?: (text: string) => void;
   style?: ViewStyle;
+  testID?: string;
 }
 
 export function TextAreaField({
@@ -24,6 +25,7 @@ export function TextAreaField({
   numberOfLines = 4,
   onChangeText,
   style,
+  testID,
 }: TextAreaFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -39,7 +41,7 @@ export function TextAreaField({
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} testID={testID}>
       {label && (
         <Text style={[styles.label, disabled && styles.labelDisabled]}>
           {label}
@@ -71,6 +73,7 @@ export function TextAreaField({
           numberOfLines={numberOfLines}
           textAlignVertical="top"
           editable={!disabled}
+          testID={testID ? `${testID}-input` : undefined}
         />
       </View>
       {error ? (

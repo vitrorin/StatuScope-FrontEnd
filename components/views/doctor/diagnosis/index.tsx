@@ -932,6 +932,7 @@ export function DoctorDiagnosis() {
                 onPress={handleStartNewReportPress}
                 style={styles.newReportButton}
                 labelStyle={styles.newReportButtonLabel}
+                testID="diagnosis-start-new-report"
               />
 
               <View style={styles.heroBadge}>

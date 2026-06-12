@@ -34,6 +34,7 @@ export interface InputFieldProps {
   placeholderTextColor?: string;
   labelAccessory?: React.ReactNode;
   maxLength?: number;
+  testID?: string;
 }
 
 export function InputField({
@@ -57,6 +58,7 @@ export function InputField({
   placeholderTextColor,
   labelAccessory,
   maxLength,
+  testID,
 }: InputFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -97,7 +99,7 @@ export function InputField({
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} testID={testID}>
       {label && (
         <View style={styles.labelContainer}>
           <Text style={[styles.label, labelStyle, disabled && styles.labelDisabled]}>{label}</Text>
@@ -140,6 +142,7 @@ export function InputField({
           maxLength={maxLength}
           editable={!disabled}
           autoCapitalize={type === 'email' ? 'none' : 'sentences'}
+          testID={testID ? `${testID}-input` : undefined}
         />
         {renderRightIcon()}
       </View>

@@ -105,6 +105,7 @@ export function PatientEvaluationForm({
             onChangeText={onPatientNameChange}
             style={styles.fieldBlock}
             inputContainerStyle={styles.fieldInputContainer}
+            testID="diagnosis-patient-name"
           />
         </View>
 
@@ -118,6 +119,7 @@ export function PatientEvaluationForm({
               maxLength={10}
               style={styles.fieldBlock}
               inputContainerStyle={styles.fieldInputContainer}
+              testID="diagnosis-birth-date"
             />
           </View>
 
@@ -129,6 +131,7 @@ export function PatientEvaluationForm({
               value={sexValue}
               onChange={onSexChange}
               style={[styles.fieldBlock, styles.sexFieldBlock]}
+              testID="diagnosis-sex"
             />
           </View>
         </View>
@@ -141,6 +144,7 @@ export function PatientEvaluationForm({
             onChangeText={onSymptomsChange}
             numberOfLines={3}
             style={styles.fieldBlock}
+            testID="diagnosis-symptoms"
           />
         </View>
 
@@ -169,6 +173,7 @@ export function PatientEvaluationForm({
           onPress={onPrimaryActionPress}
           style={styles.primaryButton}
           labelStyle={styles.primaryButtonLabel}
+          testID="diagnosis-run-analysis"
         />
 
         {showSecondaryAction ? (
