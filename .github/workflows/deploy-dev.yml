@@ -2,7 +2,9 @@ name: Deploy Dev
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
 
 env:
   REGISTRY_REGION: us-central1
@@ -29,11 +31,12 @@ jobs:
         run: npx eslint app components --max-warnings=-1 --config eslint.config.mjs
 
       - name: Unit tests
-        run: npx vitest run --project unit
+        run: npm test -- --runInBand
 
   deploy:
     name: Build & Deploy to Cloud Run
     needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
