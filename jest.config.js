@@ -1,6 +1,8 @@
 module.exports = {
   preset: 'jest-expo',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  // Render-heavy coverage suites can exceed Jest's 5s default on slower CI runners.
+  testTimeout: 30000,
   testMatch: ['<rootDir>/__tests__/**/*.test.ts', '<rootDir>/__tests__/**/*.test.tsx'],
   moduleNameMapper: {
     '^expo-localization$': '<rootDir>/__tests__/mocks/expoLocalization.ts',
