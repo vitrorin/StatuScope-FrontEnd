@@ -19,11 +19,6 @@ env:
   IMAGE_NAME: statuscope-frontend
   SERVICE_NAME: statuscope-frontend
   REGION: us-central1
-  EXPO_PUBLIC_API_URL: https://statusscope-backend-ohwdlmbinq-uc.a.run.app
-  EXPO_PUBLIC_FIREBASE_API_KEY: AIzaSyCf7uObKHhZ4MA_i2h4kZdbcmdqOnUEUH0
-  EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: proyecto-andres-d7931.firebaseapp.com
-  EXPO_PUBLIC_FIREBASE_PROJECT_ID: proyecto-andres-d7931
-  EXPO_PUBLIC_FIREBASE_APP_ID: "1:518300476278:web:0a4874dffef02342cd9057"
 
 jobs:
   validate:
@@ -49,6 +44,15 @@ jobs:
     name: Build & Deploy to Cloud Run
     needs: validate
     runs-on: ubuntu-latest
+    # Public client config — baked into the web bundle at build time only.
+    # Kept out of the workflow-level env so it does not leak into the test job
+    # (lib/api.ts reads EXPO_PUBLIC_API_URL, which would break localhost-based tests).
+    env:
+      EXPO_PUBLIC_API_URL: https://statusscope-backend-ohwdlmbinq-uc.a.run.app
+      EXPO_PUBLIC_FIREBASE_API_KEY: AIzaSyCf7uObKHhZ4MA_i2h4kZdbcmdqOnUEUH0
+      EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: proyecto-andres-d7931.firebaseapp.com
+      EXPO_PUBLIC_FIREBASE_PROJECT_ID: proyecto-andres-d7931
+      EXPO_PUBLIC_FIREBASE_APP_ID: "1:518300476278:web:0a4874dffef02342cd9057"
     steps:
       - uses: actions/checkout@v4
 
