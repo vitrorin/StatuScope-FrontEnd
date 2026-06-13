@@ -1,15 +1,18 @@
 import React from 'react';
 import { AnalyticsScreen } from '@/components/views/doctor/analytics';
-import { adminNavigationLinks, adminSidebarItems } from '@/components/dashboard/adminNavigation';
+import { adminNavigationLinks, getAdminSidebarItems } from '@/components/dashboard/adminNavigation';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
 
 export function AdminAnalytics() {
+  const { language } = useTranslation();
   return (
     <AnalyticsScreen
       active="analytics"
-      sectionLabel="Analytics"
-      searchPlaceholder="Search hospital metrics..."
+      sectionLabel={isSpanish(language) ? 'Analiticas' : 'Analytics'}
+      persona="admin"
       links={adminNavigationLinks}
-      sidebarItems={adminSidebarItems}
+      sidebarItems={getAdminSidebarItems(language)}
     />
   );
 }

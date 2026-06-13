@@ -13,6 +13,7 @@ import { MapControlButton } from '@/components/dashboard/MapControlButton';
 import { MapLegend } from '@/components/dashboard/MapLegend';
 import { RadarMapPin } from '@/components/dashboard/RadarMapCard';
 import { CardBase } from '@/components/patterns/CardBase';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 interface ExpandedMapOverlayProps {
   visible: boolean;
@@ -37,8 +38,7 @@ export function ExpandedMapOverlay({
 
   return (
     <Modal
-      visible={visible}
-      transparent
+      visible={visible} transparent
       animationType="fade"
       onRequestClose={() => {
         setZoom(1);
@@ -69,7 +69,7 @@ export function ExpandedMapOverlay({
               }}
               activeOpacity={0.75}
             >
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -88,7 +88,7 @@ export function ExpandedMapOverlay({
                       styles.pin,
                       {
                         borderColor: pin.borderColor,
-                        backgroundColor: pin.fillColor || '#FFFFFF',
+                        backgroundColor: pin.fillColor || AppColors.surface.card,
                       },
                     ]}
                   >
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -163,13 +163,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   closeButton: {
     width: 40,
@@ -187,13 +187,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
   mapShell: {
     height: 700,
     overflow: 'hidden',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
     position: 'relative',
   },
   mapStage: {
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     right: -12,
     width: '56%',
     height: '118%',
-    backgroundColor: 'rgba(80, 195, 244, 0.10)',
+    backgroundColor: AppColors.overlay.analyticsBlueArea,
     borderRadius: 220,
   },
   heatArea: {
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     width: 290,
     height: 230,
     borderRadius: 999,
-    backgroundColor: 'rgba(239, 68, 68, 0.16)',
+    backgroundColor: withAlpha(AppColors.status.dangerBright, 0.16),
   },
   purpleArea: {
     position: 'absolute',
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     width: 280,
     height: 340,
     borderRadius: 999,
-    backgroundColor: 'rgba(139, 92, 246, 0.06)',
+    backgroundColor: AppColors.overlay.analyticsPurpleArea,
   },
   pinWrap: {
     position: 'absolute',
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
@@ -260,18 +260,18 @@ const styles = StyleSheet.create({
     minWidth: 42,
     minHeight: 42,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   footer: {
     minHeight: 44,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: AppColors.border.default,
     paddingHorizontal: 18,
     paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   legend: {
     flex: 1,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#526174',
+    color: AppColors.text.body,
   },
 });
 

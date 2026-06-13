@@ -4,12 +4,14 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
+import { AppColors } from '@/constants/theme';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { AuthProvider, useAuth, UserProfile } from '@/contexts/AuthContext';
 import { I18nProvider } from '@/i18n';
+import { AppQueryProvider } from '@/lib/queryClient';
 import '@/global.css';
 
 export const unstable_settings = {
@@ -19,7 +21,10 @@ export const unstable_settings = {
 const AUTH_ROUTES = new Set(['login', 'register']);
 
 function dashboardForProfile(profile: UserProfile): string {
-  if (profile.roles.includes('SYSTEM_ADMIN') || profile.roles.includes('HOSPITAL_ADMIN')) {
+  if (profile.roles.includes('SYSTEM_ADMIN')) {
+    return '/system/dashboard';
+  }
+  if (profile.roles.includes('HOSPITAL_ADMIN')) {
     return '/dashboard/administrator';
   }
   return '/dashboard/doctor';
@@ -42,7 +47,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View className="flex-1 items-center justify-center" testID="app-auth-loading">
         <ActivityIndicator />
       </View>
     );
@@ -57,16 +62,18 @@ export default function RootLayout() {
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <I18nProvider>
-          <AuthProvider>
-            <AuthGate>
-              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F5F5F8' } }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="login" />
-                <Stack.Screen name="register" />
-                <Stack.Screen name="modal" options={{ headerShown: true, presentation: 'modal', title: 'Modal' }} />
-              </Stack>
-            </AuthGate>
-          </AuthProvider>
+          <AppQueryProvider>
+            <AuthProvider>
+              <AuthGate>
+                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: AppColors.surface.page } }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="login" />
+                  <Stack.Screen name="register" />
+                  <Stack.Screen name="modal" options={{ headerShown: true, presentation: 'modal', title: 'Modal' }} />
+                </Stack>
+              </AuthGate>
+            </AuthProvider>
+          </AppQueryProvider>
         </I18nProvider>
         <StatusBar style="auto" />
       </ThemeProvider>

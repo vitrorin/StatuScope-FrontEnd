@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export type ChatSender = 'user' | 'assistant';
 
@@ -41,11 +42,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   userContainer: {
-    backgroundColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
     alignSelf: 'flex-end',
   },
   assistantContainer: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     alignSelf: 'flex-start',
   },
   message: {
@@ -53,10 +54,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   userMessage: {
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
   },
   assistantMessage: {
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   compactMessage: {
     fontSize: 13,

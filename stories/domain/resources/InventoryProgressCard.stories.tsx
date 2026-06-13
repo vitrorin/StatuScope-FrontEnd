@@ -1,13 +1,14 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { View } from 'react-native';
 import { InventoryProgressCard } from '../../../components/resources/InventoryProgressCard';
 
 const meta = {
-  title: 'Domain/Resources/InventoryProgressCard',
+  title: 'Componentes únicos/Resources/InventoryProgressCard',
   component: InventoryProgressCard,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <Story />
       </View>
     ),

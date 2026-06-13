@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type RiskVariant = 'critical' | 'warning' | 'info';
 
@@ -14,22 +15,22 @@ export interface DiagnosisRiskCardProps {
 
 const variantStyles = {
   critical: {
-    border: '#FECACA',
-    background: '#FEF2F2',
-    text: '#B91C1C',
-    subtitle: '#DC2626',
+    border: AppColors.status.dangerBorder,
+    background: AppColors.status.dangerSoft,
+    text: AppColors.status.dangerDark,
+    subtitle: AppColors.status.danger,
   },
   warning: {
-    border: '#FDE68A',
-    background: '#FFFBEB',
-    text: '#B45309',
-    subtitle: '#D97706',
+    border: AppColors.status.warningBorder,
+    background: AppColors.status.warningWash,
+    text: AppColors.status.warningStrong,
+    subtitle: AppColors.status.warningText,
   },
   info: {
-    border: '#BFDBFE',
-    background: '#EFF6FF',
-    text: '#1D4ED8',
-    subtitle: '#2563EB',
+    border: AppColors.status.infoSoft,
+    background: AppColors.status.infoSoft,
+    text: AppColors.brand.link,
+    subtitle: AppColors.status.info,
   },
 };
 
@@ -74,43 +75,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: 14,
+    borderRadius: AppRadii['2xl'],
     borderWidth: 1,
-    padding: 14,
+    padding: AppSpacing[7],
   },
   content: {
     flex: 1,
   },
   title: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '700',
+    ...AppTypography.textStyles.bodySmall,
+    fontWeight: AppTypography.fontWeights.bold,
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    letterSpacing: AppTypography.letterSpacing.tight,
   },
   subtitle: {
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: '700',
-    marginTop: 4,
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
+    marginTop: AppSpacing[2],
   },
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: AppSpacing[5],
+    paddingVertical: AppSpacing[2],
+    borderRadius: AppRadii.pill,
   },
   statusText: {
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
+    color: AppColors.surface.card,
     textTransform: 'uppercase',
   },
   statusTextPlain: {
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '700',
+    fontSize: AppTypography.fontSizes.bodyMedium,
+    lineHeight: AppTypography.lineHeights.bodyRelaxed,
+    fontWeight: AppTypography.fontWeights.bold,
     textTransform: 'uppercase',
-    letterSpacing: 0.2,
+    letterSpacing: AppTypography.letterSpacing.tight,
   },
 });

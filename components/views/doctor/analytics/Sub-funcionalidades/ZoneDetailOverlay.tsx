@@ -1,7 +1,10 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
+import { useTranslation } from '@/i18n';
+import { AppColors } from '@/constants/theme';
 
 export interface AnalyticsZoneDetail {
   id: string;
@@ -21,6 +24,7 @@ interface ZoneDetailOverlayProps {
 }
 
 export function ZoneDetailOverlay({ visible, zone, onClose }: ZoneDetailOverlayProps) {
+  const { t } = useTranslation();
   if (!zone) return null;
 
   return (
@@ -30,38 +34,29 @@ export function ZoneDetailOverlay({ visible, zone, onClose }: ZoneDetailOverlayP
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Zone Detail</Text>
+              <Text style={styles.eyebrow}>{t('common.analytics.overlays.zoneDetail')}</Text>
               <Text style={styles.title}>{zone.name}</Text>
               <Text style={styles.subtitle}>{zone.note}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.metricsGrid}>
-            <MetricCard label="Risk Level" value={zone.risk} />
-            <MetricCard label="Primary Disease" value={zone.disease} />
-            <MetricCard label="Radius" value={zone.radius} />
-            <MetricCard label="Priority" value={zone.priority} />
+            <OverlayStatCard showAccentBar={false} style={styles.metricCard} labelStyle={styles.metricLabel} valueStyle={styles.metricValue} label={t('common.analytics.overlays.riskLevel')} value={zone.risk} />
+            <OverlayStatCard showAccentBar={false} style={styles.metricCard} labelStyle={styles.metricLabel} valueStyle={styles.metricValue} label={t('common.analytics.overlays.primaryDisease')} value={zone.disease} />
+            <OverlayStatCard showAccentBar={false} style={styles.metricCard} labelStyle={styles.metricLabel} valueStyle={styles.metricValue} label={t('common.analytics.overlays.radius')} value={zone.radius} />
+            <OverlayStatCard showAccentBar={false} style={styles.metricCard} labelStyle={styles.metricLabel} valueStyle={styles.metricValue} label={t('common.analytics.overlays.priority')} value={zone.priority} />
           </View>
 
           <CardBase style={styles.noteCard}>
-            <Text style={styles.noteTitle}>Observed Trend</Text>
+            <Text style={styles.noteTitle}>{t('common.analytics.overlays.observedTrend')}</Text>
             <Text style={styles.noteText}>{zone.trend}</Text>
           </CardBase>
         </CardBase>
       </View>
     </Modal>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <CardBase style={styles.metricCard}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
-    </CardBase>
   );
 }
 
@@ -74,7 +69,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -91,13 +86,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -106,13 +101,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -121,7 +116,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -130,6 +125,9 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   metricCard: {
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: '48%',
     width: '48%',
     borderRadius: 16,
     padding: 14,
@@ -138,7 +136,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
@@ -147,7 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   noteCard: {
     marginHorizontal: 24,
@@ -159,13 +157,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     marginBottom: 8,
   },
   noteText: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
 });
 

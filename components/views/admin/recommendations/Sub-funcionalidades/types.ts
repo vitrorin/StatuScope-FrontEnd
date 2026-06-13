@@ -1,7 +1,7 @@
 import React from 'react';
 import { SeverityLevel } from '@/components/recommendations/SeverityBadge';
 
-export type RecommendationTab = 'active' | 'high' | 'inProgress' | 'archive';
+export type RecommendationTab = 'active' | 'high' | 'assigned' | 'unassigned' | 'archive';
 export type RecommendationStatus =
   | 'new'
   | 'accepted'
@@ -11,7 +11,9 @@ export type RecommendationStatus =
 
 export interface RecommendationFeedItem {
   id: string;
+  type: string;
   severity: SeverityLevel;
+  backendSeverity: string;
   category: string;
   title: string;
   description: string;
@@ -28,5 +30,14 @@ export interface RecommendationFeedItem {
   recommendedActions: string[];
   status: RecommendationStatus;
   assignee?: string;
+  activeTask?: {
+    id: string;
+    ownerContactId?: string | null;
+    ownerLabel?: string | null;
+    departmentLabel?: string | null;
+    deadlineAt?: string | null;
+    notes?: string | null;
+    priority?: string | null;
+  };
   auditTrail: { timestamp: string; label: string }[];
 }

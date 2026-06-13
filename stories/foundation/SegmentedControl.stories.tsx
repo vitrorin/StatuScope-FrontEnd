@@ -1,13 +1,14 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { View } from 'react-native';
 import { SegmentedControl } from '../../components/foundation/SegmentedControl';
 
 const meta = {
-  title: 'Foundation/SegmentedControl',
+  title: 'Componentes reutilizables/Foundation/SegmentedControl',
   component: SegmentedControl,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ maxWidth: 560 }}>
           <Story />
         </View>

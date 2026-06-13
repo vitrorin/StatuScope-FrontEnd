@@ -1,6 +1,6 @@
 import { api } from './api';
 
-export type AdminRecommendationSeverity = 'HIGH' | 'MEDIUM' | 'LOW';
+export type AdminRecommendationSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 export type AdminRecommendationStatus = 'NEW' | 'ACCEPTED' | 'ASSIGNED' | 'COMPLETED' | 'REJECTED';
 
 export interface AdminDashboardSummaryResponse {
@@ -49,6 +49,7 @@ export interface AdminRecommendedActionResponse {
   type: string;
   severity: string;
   status: string;
+  translations?: Record<string, OperationalRecommendationTranslation> | null;
 }
 
 export interface OperationalRecommendationResponse {
@@ -65,6 +66,7 @@ export interface OperationalRecommendationResponse {
   expectedImpact: string;
   urgencyWindow: string;
   confidenceScore: number;
+  translations?: Record<string, OperationalRecommendationTranslation> | null;
   imageMode?: string | null;
   rationale: string[];
   recommendedActions: string[];
@@ -80,6 +82,15 @@ export interface OperationalRecommendationResponse {
   supplyRequests: SupplyRequestResponse[];
 }
 
+export interface OperationalRecommendationTranslation {
+  title?: string | null;
+  description?: string | null;
+  expectedImpact?: string | null;
+  urgencyWindow?: string | null;
+  rationale?: string[] | null;
+  recommendedActions?: string[] | null;
+}
+
 export interface OperationalRecommendationAuditEntryResponse {
   id: string;
   eventType: string;
@@ -89,6 +100,8 @@ export interface OperationalRecommendationAuditEntryResponse {
 
 export interface OperationalTaskResponse {
   id: string;
+  ownerContactId?: string | null;
+  ownerGroupId?: string | null;
   ownerLabel: string;
   departmentLabel: string;
   priority: string;
@@ -100,34 +113,72 @@ export interface OperationalTaskResponse {
 
 export interface OperationalNotificationResponse {
   id: string;
+  audienceContactId?: string | null;
+  audienceGroupId?: string | null;
+  audienceType?: 'CONTACT' | 'DEPARTMENT' | 'GROUP' | string | null;
+  audienceDepartmentCode?: string | null;
   audienceLabel: string;
   message: string;
   status: string;
+  deliveryChannel?: string | null;
+  deliveryStatusDetail?: string | null;
+  recipientSummary?: OperationalNotificationRecipientSummary | null;
+  recipients?: OperationalNotificationRecipientResponse[] | null;
   sentAt?: string | null;
+}
+
+export interface OperationalNotificationRecipientSummary {
+  total: number;
+  sent: number;
+  failed: number;
+}
+
+export interface OperationalNotificationRecipientResponse {
+  id: string;
+  contactId?: string | null;
+  recipientName?: string | null;
+  recipientEmail?: string | null;
+  status: string;
+  deliveryStatusDetail?: string | null;
+  deliveredAt?: string | null;
 }
 
 export interface SupplyRequestResponse {
   id: string;
+  recommendationId?: string | null;
+  hospitalId?: string | null;
+  inventoryItemId?: string | null;
   supplyTypeLabel: string;
   quantity: number;
   unit: string;
   destination: string;
   suggestedSupplier?: string | null;
   status: string;
+  sourceActionCode?: string | null;
+  priority?: string | null;
+  requestedNeededBy?: string | null;
+  requestedByUserId?: string | null;
   createdAt: string;
+  updatedAt?: string | null;
 }
 
 export interface CreateOperationalTaskInput {
-  ownerLabel: string;
-  departmentLabel: string;
+  ownerContactId?: string;
+  ownerLabel?: string;
+  departmentLabel?: string;
   deadlineAt?: string | null;
-  priority: string;
+  priority?: string;
   notes?: string;
+  language?: 'en' | 'es';
 }
 
 export interface CreateOperationalNotificationInput {
-  audienceLabel: string;
+  audienceType: 'CONTACT' | 'DEPARTMENT';
+  audienceContactId?: string;
+  audienceDepartmentCode?: string;
+  audienceLabel?: string;
   message: string;
+  language?: 'en' | 'es';
 }
 
 export interface CreateSupplyRequestInput {
@@ -136,6 +187,19 @@ export interface CreateSupplyRequestInput {
   unit: string;
   destination: string;
   suggestedSupplier?: string;
+  priority?: string;
+  requestedNeededBy?: string | null;
+}
+
+export interface HospitalInventoryMovementResponse {
+  id: string;
+  inventoryItemId: string;
+  movementType: string;
+  quantityDelta: number;
+  unit?: string | null;
+  notes?: string | null;
+  relatedSupplyRequestId?: string | null;
+  createdAt: string;
 }
 
 export interface ResourceResponse<T> {
@@ -209,6 +273,16 @@ export interface OperationalContactResponse {
   updatedAt?: string | null;
 }
 
+export interface OperationalContactInput {
+  displayName: string;
+  roleLabel: string;
+  departmentCode: string;
+  email: string;
+  assignable: boolean;
+  notifiable: boolean;
+  availabilityStatus: 'ACTIVE' | 'INACTIVE';
+}
+
 export interface UpdateHospitalResourceSummaryInput extends HospitalResourceSummaryResponse {}
 export interface UpdateHospitalDepartmentInput extends HospitalDepartmentResourceResponse {}
 export interface UpdateHospitalStaffingProfileInput extends HospitalStaffingProfileResponse {}
@@ -222,6 +296,15 @@ function recommendationQuery(params: { status?: string; severity?: string; type?
   if (params.status) query.set('status', params.status);
   if (params.severity) query.set('severity', params.severity);
   if (params.type) query.set('type', params.type);
+  const value = query.toString();
+  return value ? `?${value}` : '';
+}
+
+function contactQuery(params: { assignable?: boolean; notifiable?: boolean; departmentCode?: string } = {}) {
+  const query = new URLSearchParams();
+  if (typeof params.assignable === 'boolean') query.set('assignable', String(params.assignable));
+  if (typeof params.notifiable === 'boolean') query.set('notifiable', String(params.notifiable));
+  if (params.departmentCode) query.set('departmentCode', params.departmentCode);
   const value = query.toString();
   return value ? `?${value}` : '';
 }
@@ -272,6 +355,38 @@ export async function createAdminSupplyRequest(id: string, input: CreateSupplyRe
   });
 }
 
+export async function createAdminResourceSupplyRequest(itemId: string, input: CreateSupplyRequestInput) {
+  return api<SupplyRequestResponse>(`/admin/resources/inventory/${itemId}/supply-requests`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function listOperationalContacts(params: { assignable?: boolean; notifiable?: boolean; departmentCode?: string } = {}) {
+  return api<OperationalContactResponse[]>(`/admin/operational-contacts${contactQuery(params)}`);
+}
+
+export async function createOperationalContact(input: OperationalContactInput) {
+  return api<OperationalContactResponse>('/admin/operational-contacts', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateOperationalContact(id: string, input: OperationalContactInput) {
+  return api<OperationalContactResponse>(`/admin/operational-contacts/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateOperationalContactStatus(id: string, status: 'ACTIVE' | 'INACTIVE') {
+  return api<OperationalContactResponse>(`/admin/operational-contacts/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+
 export async function getAdminResourceSummary() {
   return api<ResourceResponse<HospitalResourceSummaryResponse>>('/admin/resources/summary');
 }
@@ -286,6 +401,10 @@ export async function getAdminResourceStaffing() {
 
 export async function getAdminResourceInventory() {
   return api<ResourceResponse<HospitalInventoryItemResponse[]>>('/admin/resources/inventory');
+}
+
+export async function getAdminResourceInventoryMovements(itemId: string) {
+  return api<ResourceResponse<HospitalInventoryMovementResponse[]>>(`/admin/resources/inventory/${itemId}/movements`);
 }
 
 export async function getAdminOperationalRoster() {

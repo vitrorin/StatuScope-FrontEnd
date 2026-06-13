@@ -1,32 +1,25 @@
 import React from 'react';
-import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { Avatar } from '../foundation/Avatar';
-import { SearchInput } from '../inputs/SearchInput';
 import { LanguageSwitcher } from '../inputs/LanguageSwitcher';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface TopHeaderProps {
   sectionLabel?: string;
-  searchPlaceholder?: string;
   userName: string;
   userId?: string;
   showNotificationDot?: boolean;
   avatarText?: string;
-  onSearchPress?: () => void;
-  onNotificationPress?: () => void;
   onProfilePress?: () => void;
   style?: ViewStyle;
 }
 
 export function TopHeader({
   sectionLabel,
-  searchPlaceholder = 'Search...',
   userName,
   userId,
   showNotificationDot = false,
   avatarText = 'SC',
-  onSearchPress,
-  onNotificationPress,
   onProfilePress,
   style,
 }: TopHeaderProps) {
@@ -36,21 +29,8 @@ export function TopHeader({
         {sectionLabel ? <Text style={styles.sectionLabel}>{sectionLabel}</Text> : null}
       </View>
 
-      <View style={styles.centerSection}>
-        <SearchInput
-          placeholder={searchPlaceholder}
-          onFocus={onSearchPress}
-          style={styles.searchContainer}
-        />
-      </View>
-
       <View style={styles.rightSection}>
         <LanguageSwitcher />
-
-        <TouchableOpacity style={styles.notificationButton} onPress={onNotificationPress}>
-          <Feather name="bell" size={18} color="#64748B" />
-          {showNotificationDot ? <View style={styles.notificationDot} /> : null}
-        </TouchableOpacity>
 
         <View style={styles.divider} />
 
@@ -71,79 +51,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     minHeight: 68,
-    paddingHorizontal: 32,
+    paddingHorizontal: AppSpacing.section,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
   },
   leftSection: {
     flex: 1,
     justifyContent: 'center',
   },
   sectionLabel: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#94A3B8',
-  },
-  centerSection: {
-    width: 344,
-    marginRight: 28,
-    alignItems: 'flex-end',
-  },
-  searchContainer: {
-    width: 288,
+    ...AppTypography.textStyles.body,
+    color: AppColors.text.muted,
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
-  },
-  notificationButton: {
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  notificationDot: {
-    position: 'absolute',
-    right: -1,
-    top: 0,
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: '#EF4444',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    gap: AppSpacing[10],
   },
   divider: {
     width: 1,
-    height: 32,
-    backgroundColor: '#E2E8F0',
+    height: AppSpacing.section,
+    backgroundColor: AppColors.border.default,
   },
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 1,
-    gap: 14,
+    gap: AppSpacing[7],
   },
   profileInfo: {
     alignItems: 'flex-end',
   },
   userName: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: '#0F172A',
+    ...AppTypography.textStyles.bodyStrong,
+    fontWeight: AppTypography.fontWeights.bold,
+    color: AppColors.text.primary,
   },
   userId: {
     marginTop: 0,
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#94A3B8',
+    ...AppTypography.textStyles.caption,
+    color: AppColors.text.muted,
   },
   avatar: {
-    backgroundColor: '#5FA8A2',
+    backgroundColor: AppColors.brand.teal,
   },
 });

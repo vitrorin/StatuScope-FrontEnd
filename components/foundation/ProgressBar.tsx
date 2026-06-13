@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface ProgressBarProps {
   value: number;
@@ -11,8 +12,8 @@ export interface ProgressBarProps {
 
 export function ProgressBar({
   value,
-  color = '#1D4ED8',
-  trackColor = '#E5E7EB',
+  color = AppColors.brand.link,
+  trackColor = AppColors.border.muted,
   height = 6,
   style,
 }: ProgressBarProps) {

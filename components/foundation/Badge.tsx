@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type BadgeTone =
   | 'critical'
@@ -19,15 +20,15 @@ export interface BadgeProps {
 }
 
 const toneStyles: Record<BadgeTone, { background: string; text: string }> = {
-  critical: { background: '#FDEBEC', text: '#F04B4B' },
-  success: { background: '#DDF8E8', text: '#35B56A' },
-  warning: { background: '#FFF1CC', text: '#E9A400' },
-  neutral: { background: '#F3F4F6', text: '#6B7280' },
-  info: { background: '#DBEAFE', text: '#2563EB' },
-  role: { background: '#EEF2FF', text: '#1D4ED8' },
-  high: { background: '#FDEBEC', text: '#F04B4B' },
-  medium: { background: '#FFF1CC', text: '#E9A400' },
-  low: { background: '#DDF8E8', text: '#35B56A' },
+  critical: { background: AppColors.status.dangerSoft, text: AppColors.status.dangerAccent },
+  success: { background: AppColors.status.successSoft, text: AppColors.status.success },
+  warning: { background: AppColors.status.warningSoft, text: AppColors.status.warningText },
+  neutral: { background: AppColors.surface.control, text: AppColors.table.muted },
+  info: { background: AppColors.status.infoSoft, text: AppColors.status.info },
+  role: { background: AppColors.surface.brandSoft, text: AppColors.brand.link },
+  high: { background: AppColors.status.dangerSoft, text: AppColors.status.dangerAccent },
+  medium: { background: AppColors.status.warningSoft, text: AppColors.status.warningText },
+  low: { background: AppColors.status.successSoft, text: AppColors.status.success },
 };
 
 export function Badge({ label, tone = 'neutral', style }: BadgeProps) {
@@ -42,15 +43,16 @@ export function Badge({ label, tone = 'neutral', style }: BadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: AppSpacing[5],
+    paddingVertical: AppSpacing[2],
+    borderRadius: AppRadii.pill,
     alignSelf: 'flex-start',
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
+    lineHeight: AppTypography.lineHeights.tight,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: AppTypography.letterSpacing.tight,
   },
 });

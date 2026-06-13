@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { firebaseAuth } from '@/lib/firebase';
+import { useQueryClient } from '@tanstack/react-query';
+import { ensureWebSessionPersistence, firebaseAuth } from '@/lib/firebase';
 import { api } from '@/lib/api';
 
 export interface UserProfile {
@@ -25,7 +27,7 @@ export interface RegisterPayload {
   inviteCode: string;
 }
 
-interface AuthContextValue {
+export interface AuthContextValue {
   firebaseUser: FirebaseUser | null;
   profile: UserProfile | null;
   loading: boolean;
@@ -34,9 +36,12 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasPrivilege: (priv: string) => boolean;
+  isAdmin: () => boolean;
+  isSystemAdmin: () => boolean;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const WEB_INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
 
 type RawProfile = Omit<UserProfile, 'roles' | 'privileges'> & {
   roles: string[] | null | undefined;
@@ -52,9 +57,15 @@ function normalizeProfile(raw: RawProfile): UserProfile {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const clearSessionState = useCallback(() => {
+    setProfile(null);
+    queryClient.clear();
+  }, [queryClient]);
 
   useEffect(() => {
     return onAuthStateChanged(firebaseAuth, async (fbUser) => {
@@ -65,16 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(normalizeProfile(me));
         } catch {
           await signOut(firebaseAuth).catch(() => undefined);
-          setProfile(null);
+          clearSessionState();
         }
       } else {
-        setProfile(null);
+        clearSessionState();
       }
       setLoading(false);
     });
-  }, []);
+  }, [clearSessionState]);
 
   const login = async (email: string, password: string) => {
+    await ensureWebSessionPersistence();
     await signInWithEmailAndPassword(firebaseAuth, email, password);
     const me = normalizeProfile(await api<RawProfile>('/auth/me'));
     setProfile(me);
@@ -89,17 +101,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return login(payload.email, payload.password);
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await signOut(firebaseAuth);
-    setProfile(null);
-  };
+    clearSessionState();
+  }, [clearSessionState]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !firebaseUser || typeof window === 'undefined') return undefined;
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        void logout();
+      }, WEB_INACTIVITY_TIMEOUT_MS);
+    };
+
+    const events = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'] as const;
+    events.forEach((eventName) => window.addEventListener(eventName, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach((eventName) => window.removeEventListener(eventName, resetTimer));
+    };
+  }, [firebaseUser, logout]);
 
   const hasRole = (r: string) => !!profile?.roles?.includes(r);
   const hasPrivilege = (p: string) => !!profile?.privileges?.includes(p);
+  const isAdmin = () => hasRole('HOSPITAL_ADMIN');
+  const isSystemAdmin = () => hasRole('SYSTEM_ADMIN') || hasPrivilege('isSystemAdmin');
 
   return (
     <AuthContext.Provider
-      value={{ firebaseUser, profile, loading, login, register, logout, hasRole, hasPrivilege }}
+      value={{ firebaseUser, profile, loading, login, register, logout, hasRole, hasPrivilege, isAdmin, isSystemAdmin }}
     >
       {children}
     </AuthContext.Provider>

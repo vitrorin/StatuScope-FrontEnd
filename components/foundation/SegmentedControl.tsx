@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
 import { Badge } from './Badge';
+import { AppColors, AppRadii, AppShadows, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface SegmentedOption {
   label: string;
@@ -88,57 +89,53 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#94A3B8',
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    letterSpacing: AppTypography.letterSpacing.eyebrow,
+    marginBottom: AppSpacing[4],
   },
   container: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 4,
-    gap: 4,
+    backgroundColor: AppColors.surface.control,
+    borderRadius: AppRadii.xl,
+    padding: AppSpacing[2],
+    gap: AppSpacing[2],
   },
   segment: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    paddingVertical: AppSpacing[5],
+    paddingHorizontal: AppSpacing.card,
+    borderRadius: AppRadii.lg,
   },
   segmentSm: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+    paddingVertical: AppSpacing[4],
+    paddingHorizontal: AppSpacing[7],
+    borderRadius: AppRadii.md,
   },
   segmentFullWidth: {
     flex: 1,
   },
   segmentActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: AppColors.surface.card,
+    ...AppShadows.subtle,
   },
   text: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
+    ...AppTypography.textStyles.body,
+    fontWeight: AppTypography.fontWeights.medium,
+    color: AppColors.table.muted,
   },
   textSm: {
-    fontSize: 13,
+    ...AppTypography.textStyles.bodySmall,
   },
   textActive: {
-    color: '#111827',
-    fontWeight: '600',
+    color: AppColors.text.strong,
+    fontWeight: AppTypography.fontWeights.semibold,
   },
   badgeWrap: {
-    marginLeft: 8,
+    marginLeft: AppSpacing[4],
   },
 });

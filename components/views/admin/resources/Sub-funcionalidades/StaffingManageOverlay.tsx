@@ -13,6 +13,9 @@ import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
 import { StaffingProfileItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface StaffingManageOverlayProps {
   visible: boolean;
@@ -43,6 +46,7 @@ export function StaffingManageOverlay({
   onSave,
   onDelete,
 }: StaffingManageOverlayProps) {
+  const { language } = useTranslation();
   const [draft, setDraft] = useState<StaffingProfileItem>(EMPTY_PROFILE);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
 
@@ -69,21 +73,21 @@ export function StaffingManageOverlay({
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Staffing Profiles</Text>
-              <Text style={styles.title}>Manage Staffing</Text>
-              <Text style={styles.subtitle}>Create, update, and remove real staffing profiles from the hospital database.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Perfiles de personal' : 'Staffing Profiles'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Gestionar personal' : 'Manage Staffing'}</Text>
+              <Text style={styles.subtitle}>{isSpanish(language) ? 'Crea, actualiza y elimina perfiles de personal del hospital.' : 'Create, update, and remove real staffing profiles from the hospital database.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <View style={styles.scrollContentWrapper}>
             <View style={styles.listPane}>
               <View style={styles.listHeader}>
-                <Text style={styles.listTitle}>Profiles</Text>
+                <Text style={styles.listTitle}>{isSpanish(language) ? 'Perfiles' : 'Profiles'}</Text>
                 <Button
-                  label="New"
+                  label={isSpanish(language) ? 'Nuevo' : 'New'}
                   variant="surface"
                   size="sm"
                   onPress={() => {
@@ -105,7 +109,9 @@ export function StaffingManageOverlay({
                       <Text style={styles.profileName}>{profile.roleName}</Text>
                       <Text style={styles.profileMeta}>{profile.roleCode}</Text>
                       <Text style={styles.profileMeta}>
-                        {profile.onShiftCount} on shift, {profile.onCallCount} on call, {profile.standbyCount} standby
+                        {isSpanish(language)
+                          ? `${profile.onShiftCount} en turno, ${profile.onCallCount} en guardia, ${profile.standbyCount} en reserva`
+                          : `${profile.onShiftCount} on shift, ${profile.onCallCount} on call, ${profile.standbyCount} standby`}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -114,15 +120,15 @@ export function StaffingManageOverlay({
             </View>
 
             <View style={styles.formPane}>
-              <Text style={styles.formTitle}>{mode === 'create' ? 'New Profile' : 'Edit Profile'}</Text>
+              <Text style={styles.formTitle}>{mode === 'create' ? (isSpanish(language) ? 'Nuevo perfil' : 'New Profile') : (isSpanish(language) ? 'Editar perfil' : 'Edit Profile')}</Text>
               <InputField
-                label="Role Name"
+                label={isSpanish(language) ? 'Nombre del rol' : 'Role Name'}
                 value={draft.roleName}
                 onChangeText={(text) => updateField('roleName', text)}
                 inputContainerStyle={styles.inputContainer}
               />
               <InputField
-                label="Role Code"
+                label={isSpanish(language) ? 'Código del rol' : 'Role Code'}
                 value={draft.roleCode}
                 onChangeText={(text) => updateField('roleCode', text.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
                 inputContainerStyle={styles.inputContainer}
@@ -130,7 +136,7 @@ export function StaffingManageOverlay({
               <View style={styles.row}>
                 <View style={styles.field}>
                   <InputField
-                    label="Headcount"
+                    label={isSpanish(language) ? 'Total' : 'Headcount'}
                     type="number"
                     value={draft.headcount}
                     onChangeText={(text) => updateField('headcount', text.replace(/[^0-9]/g, ''))}
@@ -139,7 +145,7 @@ export function StaffingManageOverlay({
                 </View>
                 <View style={styles.field}>
                   <InputField
-                    label="On Shift"
+                    label={isSpanish(language) ? 'En turno' : 'On Shift'}
                     type="number"
                     value={draft.onShiftCount}
                     onChangeText={(text) => updateField('onShiftCount', text.replace(/[^0-9]/g, ''))}
@@ -150,7 +156,7 @@ export function StaffingManageOverlay({
               <View style={styles.row}>
                 <View style={styles.field}>
                   <InputField
-                    label="On Call"
+                    label={isSpanish(language) ? 'En guardia' : 'On Call'}
                     type="number"
                     value={draft.onCallCount}
                     onChangeText={(text) => updateField('onCallCount', text.replace(/[^0-9]/g, ''))}
@@ -159,7 +165,7 @@ export function StaffingManageOverlay({
                 </View>
                 <View style={styles.field}>
                   <InputField
-                    label="Standby"
+                    label={isSpanish(language) ? 'En reserva' : 'Standby'}
                     type="number"
                     value={draft.standbyCount}
                     onChangeText={(text) => updateField('standbyCount', text.replace(/[^0-9]/g, ''))}
@@ -171,7 +177,7 @@ export function StaffingManageOverlay({
               <View style={styles.footer}>
                 {mode === 'edit' ? (
                   <Button
-                    label={deleting ? 'Deleting...' : 'Delete'}
+                    label={deleting ? (isSpanish(language) ? 'Eliminando...' : 'Deleting...') : (isSpanish(language) ? 'Eliminar' : 'Delete')}
                     variant="danger"
                     size="md"
                     style={styles.deleteButton}
@@ -180,7 +186,7 @@ export function StaffingManageOverlay({
                   />
                 ) : null}
                 <Button
-                  label={saving ? 'Saving...' : mode === 'create' ? 'Create Profile' : 'Save Profile'}
+                  label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : mode === 'create' ? (isSpanish(language) ? 'Crear perfil' : 'Create Profile') : (isSpanish(language) ? 'Guardar perfil' : 'Save Profile')}
                   variant="primary"
                   size="md"
                   style={styles.primaryButton}
@@ -188,9 +194,9 @@ export function StaffingManageOverlay({
                   onPress={() => onSave(draft, mode)}
                 />
               </View>
+</View>
             </View>
-          </View>
-        </CardBase>
+          </CardBase>
       </View>
     </Modal>
   );
@@ -205,7 +211,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -223,13 +229,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -238,13 +244,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -253,16 +259,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
-  content: {
+  scrollContentWrapper: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
     flexDirection: 'row',
-    minHeight: 520,
   },
   listPane: {
     width: 320,
     borderRightWidth: 1,
-    borderRightColor: '#EEF2F7',
+    borderRightColor: AppColors.border.soft,
     padding: 20,
   },
   listHeader: {
@@ -275,33 +283,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   profileList: {
     gap: 10,
   },
   profileCard: {
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
     borderRadius: 16,
     padding: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   profileCardActive: {
-    borderColor: '#C9D1FF',
-    backgroundColor: '#F8FAFF',
+    borderColor: AppColors.border.brandMuted,
+    backgroundColor: AppColors.surface.raised,
   },
   profileName: {
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   profileMeta: {
     marginTop: 4,
     fontSize: 12,
     lineHeight: 18,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   formPane: {
     flex: 1,
@@ -311,7 +319,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 16,
   },
   row: {
@@ -336,8 +344,8 @@ const styles = StyleSheet.create({
   primaryButton: {
     marginLeft: 'auto',
     minWidth: 160,
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
 });
 

@@ -1,14 +1,15 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
 import { View } from 'react-native';
 import { AssistantInputBar } from '../../components/diagnosis/AssistantInputBar';
 
 const meta = {
-  title: 'Compositions/AssistantInputBar',
+  title: 'Componentes únicos/Diagnosis/AssistantInputBar',
   component: AssistantInputBar,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <Story />
       </View>
     ),

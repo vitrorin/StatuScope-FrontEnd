@@ -9,8 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { CardBase } from '@/components/patterns/CardBase';
 import { StaffRosterItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface FullRosterOverlayProps {
   visible: boolean;
@@ -19,6 +23,18 @@ interface FullRosterOverlayProps {
 }
 
 export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverlayProps) {
+  const { language } = useTranslation();
+
+  const availabilityLabel = (availability: StaffRosterItem['availability']): string => {
+    const map: Record<string, string> = {
+      'On Shift': isSpanish(language) ? 'En turno' : 'On Shift',
+      'On Call': isSpanish(language) ? 'En guardia' : 'On Call',
+      'Standby': isSpanish(language) ? 'En reserva' : 'Standby',
+      'Unavailable': isSpanish(language) ? 'No disponible' : 'Unavailable',
+    };
+    return map[availability] ?? availability;
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -26,23 +42,26 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Staffing Overview</Text>
-              <Text style={styles.title}>Full Active Roster</Text>
-              <Text style={styles.subtitle}>Live roster across departments, shifts, and availability states.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Vista de personal' : 'Staffing Overview'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Roster activo completo' : 'Full Active Roster'}</Text>
+              <Text style={styles.subtitle}>{isSpanish(language) ? 'Roster en vivo por departamentos, turnos y estados de disponibilidad.' : 'Live roster across departments, shifts, and availability states.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
           <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
             {roster.length === 0 ? (
-              <CardBase style={styles.emptyCard}>
-                <Text style={styles.emptyTitle}>No live operational contacts available</Text>
-                <Text style={styles.emptyText}>
-                  This roster now only shows real contact records returned by the backend.
-                </Text>
-              </CardBase>
+              <EmptyState
+                style={styles.emptyCard}
+                title={isSpanish(language) ? 'No hay contactos operativos disponibles' : 'No live operational contacts available'}
+                message={
+                  isSpanish(language)
+                    ? 'Este roster ahora solo muestra registros de contactos reales devueltos por el backend.'
+                    : 'This roster now only shows real contact records returned by the backend.'
+                }
+              />
             ) : null}
 
             {roster.map((member) => (
@@ -76,9 +95,9 @@ export function FullRosterOverlay({ visible, roster, onClose }: FullRosterOverla
                             : 'close-circle-outline'
                     }
                     size={14}
-                    color="#1718C7"
+                    color={AppColors.brand.action}
                   />
-                  <Text style={styles.availabilityText}>{member.availability}</Text>
+                  <Text style={styles.availabilityText}>{availabilityLabel(member.availability)}</Text>
                 </View>
               </CardBase>
             ))}
@@ -98,7 +117,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -116,13 +135,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -131,13 +150,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -146,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   list: {
     padding: 20,
@@ -155,20 +174,8 @@ const styles = StyleSheet.create({
   emptyCard: {
     borderRadius: 16,
     padding: 18,
-    backgroundColor: '#F8FAFF',
-    borderColor: '#E0E7FF',
-  },
-  emptyTitle: {
-    fontSize: 14,
-    lineHeight: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  emptyText: {
-    marginTop: 8,
-    fontSize: 13,
-    lineHeight: 20,
-    color: '#70839B',
+    backgroundColor: AppColors.surface.raised,
+    borderColor: AppColors.border.brandSoft,
   },
   rosterCard: {
     flexDirection: 'row',
@@ -183,13 +190,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF1FF',
+    backgroundColor: AppColors.surface.brandSoft,
   },
   avatarText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   memberInfo: {
     flex: 1,
@@ -198,13 +205,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   memberMeta: {
     marginTop: 2,
     fontSize: 13,
     lineHeight: 18,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   availabilityPill: {
     flexDirection: 'row',
@@ -213,15 +220,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
     borderRadius: 999,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: '#E0E7FF',
+    borderColor: AppColors.border.brandSoft,
   },
   availabilityText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
 });
 

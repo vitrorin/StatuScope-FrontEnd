@@ -1,14 +1,15 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
 import { View } from 'react-native';
 import { SelectField } from '../../components/inputs/SelectField';
 
 const meta = {
-  title: 'Patterns/SelectField',
+  title: 'Componentes reutilizables/Inputs/SelectField',
   component: SelectField,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ maxWidth: 400 }}>
           <Story />
         </View>

@@ -1,13 +1,14 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { View } from 'react-native';
 import { SummaryCountCard } from '../../../components/users/SummaryCountCard';
 
 const meta = {
-  title: 'Domain/Users/SummaryCountCard',
+  title: 'Componentes únicos/Users/SummaryCountCard',
   component: SummaryCountCard,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB', flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas, flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
         <Story />
       </View>
     ),

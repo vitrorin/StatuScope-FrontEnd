@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle, TextStyle } from 'react-native';
+import { AppColors, AppRadii, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'surface';
 
@@ -14,8 +15,10 @@ export interface ButtonProps {
   trailingIcon?: React.ReactNode;
   children?: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   labelStyle?: TextStyle;
+  testID?: string;
+  accessibilityLabel?: string;
 }
 
 const variantStyles: Record<
@@ -23,29 +26,29 @@ const variantStyles: Record<
   { backgroundColor: string; borderColor: string; textColor: string }
 > = {
   primary: {
-    backgroundColor: '#1D4ED8',
-    borderColor: '#1D4ED8',
-    textColor: '#FFFFFF',
+    backgroundColor: AppColors.brand.link,
+    borderColor: AppColors.brand.link,
+    textColor: AppColors.surface.card,
   },
   secondary: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
-    textColor: '#4B5563',
+    backgroundColor: AppColors.surface.card,
+    borderColor: AppColors.border.muted,
+    textColor: AppColors.text.body,
   },
   ghost: {
     backgroundColor: 'transparent',
     borderColor: 'transparent',
-    textColor: '#6B7280',
+    textColor: AppColors.table.muted,
   },
   danger: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FEE2E2',
-    textColor: '#DC2626',
+    backgroundColor: AppColors.status.dangerSoft,
+    borderColor: AppColors.status.dangerBorder,
+    textColor: AppColors.status.danger,
   },
   surface: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#E5E7EB',
-    textColor: '#374151',
+    backgroundColor: AppColors.surface.control,
+    borderColor: AppColors.border.muted,
+    textColor: AppColors.text.body,
   },
 };
 
@@ -53,19 +56,19 @@ const sizeStyles: Record<
   ButtonSize,
   { paddingVertical: number; paddingHorizontal: number; borderRadius: number; minHeight: number }
 > = {
-  sm: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, minHeight: 36 },
-  md: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, minHeight: 44 },
-  lg: { paddingVertical: 14, paddingHorizontal: 20, borderRadius: 12, minHeight: 48 },
-  chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, minHeight: 32 },
-  icon: { paddingVertical: 0, paddingHorizontal: 0, borderRadius: 10, minHeight: 36 },
+  sm: { paddingVertical: AppSpacing[5], paddingHorizontal: AppSpacing[7], borderRadius: AppRadii.lg, minHeight: AppSizes.controlSm },
+  md: { paddingVertical: AppSpacing[6], paddingHorizontal: AppSpacing.card, borderRadius: AppRadii.xl, minHeight: AppSizes.controlLg },
+  lg: { paddingVertical: AppSpacing[7], paddingHorizontal: AppSpacing[10], borderRadius: AppRadii.xl, minHeight: AppSizes.inputHeight },
+  chip: { paddingVertical: AppSpacing[4], paddingHorizontal: AppSpacing[7], borderRadius: AppRadii['4xl'], minHeight: AppSpacing[16] },
+  icon: { paddingVertical: AppSpacing[0], paddingHorizontal: AppSpacing[0], borderRadius: AppRadii.lg, minHeight: AppSizes.controlSm },
 };
 
 const textSizes: Record<ButtonSize, number> = {
-  sm: 13,
-  md: 14,
+  sm: AppTypography.fontSizes.small,
+  md: AppTypography.fontSizes.body,
   lg: 15,
-  chip: 13,
-  icon: 16,
+  chip: AppTypography.fontSizes.small,
+  icon: AppTypography.fontSizes.bodyLarge,
 };
 
 export function Button({
@@ -79,6 +82,8 @@ export function Button({
   onPress,
   style,
   labelStyle,
+  testID,
+  accessibilityLabel,
 }: ButtonProps) {
   const colors = variantStyles[variant];
   const metrics = sizeStyles[size];
@@ -88,8 +93,8 @@ export function Button({
       style={[
         styles.base,
         {
-          backgroundColor: disabled ? '#F9FAFB' : colors.backgroundColor,
-          borderColor: disabled ? '#E5E7EB' : colors.borderColor,
+          backgroundColor: disabled ? AppColors.surface.disabled : colors.backgroundColor,
+          borderColor: disabled ? AppColors.border.muted : colors.borderColor,
           paddingVertical: metrics.paddingVertical,
           paddingHorizontal: metrics.paddingHorizontal,
           borderRadius: metrics.borderRadius,
@@ -102,6 +107,8 @@ export function Button({
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
     >
       {leadingIcon ? <View style={styles.iconSlot}>{leadingIcon}</View> : null}
       {children || label ? (
@@ -109,7 +116,7 @@ export function Button({
           style={[
             styles.label,
             {
-              color: disabled ? '#9CA3AF' : colors.textColor,
+              color: disabled ? AppColors.text.disabled : colors.textColor,
               fontSize: textSizes[size],
             },
             labelStyle,
@@ -129,13 +136,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    gap: 8,
+    gap: AppSpacing.fieldGap,
   },
   disabled: {
     opacity: 0.9,
   },
   label: {
-    fontWeight: '600',
+    ...AppTypography.textStyles.buttonLabel,
   },
   iconSlot: {
     alignItems: 'center',

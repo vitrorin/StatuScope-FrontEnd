@@ -1,14 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { AppColors } from '@/constants/theme';
 
 import { View } from 'react-native';
 import { ProgressMetricRow } from '../../components/dashboard/ProgressMetricRow';
 
 const meta = {
-  title: 'Patterns/ProgressMetricRow',
+  title: 'Componentes únicos/Dashboard/ProgressMetricRow',
   component: ProgressMetricRow,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ maxWidth: 400 }}>
           <Story />
         </View>
@@ -51,7 +52,7 @@ export const CriticalColor: Story = {
     label: 'COVID-like illness',
     valueText: '245 cases',
     progress: 85,
-    barColor: '#EF4444',
+    barColor: AppColors.status.dangerBright,
   },
 };
 
@@ -60,6 +61,6 @@ export const NeutralColor: Story = {
     label: 'Pertussis',
     valueText: '12 cases',
     progress: 10,
-    barColor: '#9CA3AF',
+    barColor: AppColors.text.disabled,
   },
 };

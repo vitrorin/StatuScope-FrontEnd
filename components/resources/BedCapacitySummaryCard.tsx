@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type BedCapacityVariant = 'default' | 'warning' | 'critical' | 'highlighted';
 
@@ -21,20 +22,20 @@ export interface BedCapacitySummaryCardProps {
 
 const variantStyles = {
   default: {
-    valueColor: '#111827',
-    accentColor: '#1D4ED8',
+    valueColor: AppColors.text.strong,
+    accentColor: AppColors.brand.primary,
   },
   warning: {
-    valueColor: '#D97706',
-    accentColor: '#F59E0B',
+    valueColor: AppColors.status.warningText,
+    accentColor: AppColors.status.warning,
   },
   critical: {
-    valueColor: '#DC2626',
-    accentColor: '#EF4444',
+    valueColor: AppColors.status.danger,
+    accentColor: AppColors.status.dangerBright,
   },
   highlighted: {
-    valueColor: '#1E40AF',
-    accentColor: '#1D4ED8',
+    valueColor: AppColors.status.infoDark,
+    accentColor: AppColors.brand.primary,
   },
 };
 
@@ -82,42 +83,42 @@ export function BedCapacitySummaryCard({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: AppSpacing.card,
   },
   title: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6B7280',
+    ...AppTypography.textStyles.caption,
+    fontWeight: AppTypography.fontWeights.medium,
+    color: AppColors.table.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    letterSpacing: AppTypography.letterSpacing.eyebrow,
+    marginBottom: AppSpacing.fieldGap,
   },
   valueContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   value: {
-    fontSize: 32,
-    fontWeight: '700',
-    lineHeight: 38,
+    ...AppTypography.textStyles.display,
+    fontWeight: AppTypography.fontWeights.bold,
+    lineHeight: AppTypography.lineHeights.metricLarge,
   },
   unitText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#6B7280',
-    marginLeft: 4,
+    ...AppTypography.textStyles.inputText,
+    fontWeight: AppTypography.fontWeights.medium,
+    color: AppColors.table.muted,
+    marginLeft: AppSpacing[2],
   },
   trendText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 4,
+    ...AppTypography.textStyles.caption,
+    color: AppColors.table.muted,
+    marginTop: AppSpacing[2],
   },
   progressContainer: {
-    marginTop: 12,
+    marginTop: AppSpacing[6],
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 8,
+    ...AppTypography.textStyles.captionStrong,
+    fontWeight: AppTypography.fontWeights.semibold,
+    marginTop: AppSpacing.fieldGap,
   },
 });

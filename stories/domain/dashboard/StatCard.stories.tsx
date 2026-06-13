@@ -1,14 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { AppColors } from '@/constants/theme';
 
 import { View } from 'react-native';
 import { StatCard } from '../../../components/dashboard/StatCard';
 
 const meta = {
-  title: 'Domain/Dashboard/StatCard',
+  title: 'Componentes únicos/Dashboard/StatCard',
   component: StatCard,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <Story />
       </View>
     ),
@@ -96,6 +97,6 @@ export const EmergencyCapacity: Story = {
     status: 'danger',
     showProgress: true,
     progressValue: 85,
-    progressColor: '#EF4444',
+    progressColor: AppColors.status.dangerBright,
   },
 };

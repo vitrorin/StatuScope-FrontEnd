@@ -4,6 +4,7 @@ import { StatusBadge } from '../feedback/StatusBadge';
 import { CardBase } from '../patterns/CardBase';
 import { PaginationControl } from './PaginationControl';
 import { UserAvatarBadge } from './UserAvatarBadge';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type UserStatusVariant = 'success' | 'warning' | 'neutral' | 'info';
 
@@ -88,41 +89,41 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    padding: 16,
+    ...AppTypography.textStyles.cardTitle,
+    color: AppColors.text.strong,
+    padding: AppSpacing.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: AppColors.border.muted,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: AppColors.surface.disabled,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderBottomColor: AppColors.border.muted,
+    paddingVertical: AppSpacing[6],
+    paddingHorizontal: AppSpacing.card,
   },
   headerCell: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#6B7280',
+    ...AppTypography.textStyles.captionStrong,
+    fontSize: AppTypography.fontSizes.eyebrow,
+    fontWeight: AppTypography.fontWeights.semibold,
+    color: AppColors.table.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: AppTypography.letterSpacing.eyebrow,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: AppSpacing[6],
+    paddingHorizontal: AppSpacing.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: AppColors.surface.control,
     alignItems: 'center',
   },
   rowAlternate: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: AppColors.table.rowAlt,
   },
   cell: {
-    paddingRight: 12,
+    paddingRight: AppSpacing[6],
   },
   nameColumn: {
     flex: 1.5,
@@ -142,36 +143,36 @@ const styles = StyleSheet.create({
     flex: 0.8,
   },
   nameInfo: {
-    marginLeft: 10,
+    marginLeft: AppSpacing[5],
   },
   userName: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
+    ...AppTypography.textStyles.body,
+    fontWeight: AppTypography.fontWeights.medium,
+    color: AppColors.text.strong,
   },
   emailText: {
-    fontSize: 13,
-    color: '#6B7280',
+    ...AppTypography.textStyles.bodySmall,
+    color: AppColors.table.muted,
   },
   roleBadge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: AppColors.surface.brandSoft,
+    paddingHorizontal: AppSpacing.fieldGap,
+    paddingVertical: AppSpacing[2],
+    borderRadius: AppRadii.xl,
   },
   roleText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#1D4ED8',
+    ...AppTypography.textStyles.caption,
+    fontWeight: AppTypography.fontWeights.medium,
+    color: AppColors.brand.primary,
   },
   pcIdText: {
-    fontSize: 13,
-    color: '#6B7280',
+    ...AppTypography.textStyles.bodySmall,
+    color: AppColors.table.muted,
   },
   paginationContainer: {
-    padding: 16,
+    padding: AppSpacing.card,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: AppColors.border.muted,
     alignItems: 'center',
   },
 });

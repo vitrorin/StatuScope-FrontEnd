@@ -1,4 +1,5 @@
 import { api } from './api';
+import { AppLanguage } from '@/i18n/language';
 
 export type LocalityRiskLevel = 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
 
@@ -16,9 +17,15 @@ export interface AssistantSuggestion {
 
 export interface AssistantMessage {
   id?: string;
+  clientId?: string;
   role: 'user' | 'assistant';
   content: string;
+  contentByLanguage?: Partial<Record<AppLanguage, string>>;
   createdAt?: string;
+  kind?: 'manual' | 'analysisPrompt' | 'assistant';
+  promptKey?: string;
+  promptParams?: Record<string, string | number | null | undefined>;
+  sourceLanguage?: AppLanguage;
   suggestions?: AssistantSuggestion[];
 }
 
@@ -51,6 +58,7 @@ export interface AssistantRequest {
 
 export interface AssistantResponse {
   reply: string;
+  replyByLanguage?: Partial<Record<AppLanguage, string>>;
   contextUsed: AssistantContext;
   messageId?: string | null;
   suggestions?: AssistantSuggestion[];
@@ -65,6 +73,22 @@ export interface AssistantThread {
   contextUsed: AssistantContext | null;
 }
 
+export interface AssistantTranslationRequest {
+  targetLanguage: AppLanguage;
+  messages: Array<{
+    clientId: string;
+    role: 'user' | 'assistant';
+    content: string;
+  }>;
+}
+
+export interface AssistantTranslationResponse {
+  translations: Array<{
+    clientId: string;
+    content: string;
+  }>;
+}
+
 export async function askAssistant(body: AssistantRequest): Promise<AssistantResponse> {
   return api<AssistantResponse>('/diagnosis/assistant/messages', {
     method: 'POST',
@@ -74,4 +98,13 @@ export async function askAssistant(body: AssistantRequest): Promise<AssistantRes
 
 export async function getAssistantThread(evaluationId: string): Promise<AssistantThread> {
   return api<AssistantThread>(`/diagnosis/assistant/evaluations/${evaluationId}/thread`);
+}
+
+export async function translateAssistantMessages(
+  body: AssistantTranslationRequest,
+): Promise<AssistantTranslationResponse> {
+  return api<AssistantTranslationResponse>('/diagnosis/assistant/translations', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }

@@ -1,14 +1,15 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
 import { View } from 'react-native';
 import { RecommendedTestsCard } from '../../../components/diagnosis/RecommendedTestsCard';
 
 const meta = {
-  title: 'Domain/Diagnosis/RecommendedTestsCard',
+  title: 'Componentes únicos/Diagnosis/RecommendedTestsCard',
   component: RecommendedTestsCard,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <Story />
       </View>
     ),

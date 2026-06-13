@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { AppColors } from '@/constants/theme';
 
 export interface MiniBarChartBar {
   label: string;
@@ -60,7 +61,7 @@ export function MiniBarChartCard({
                     styles.bar,
                     {
                       height: `${heightPercent}%`,
-                      backgroundColor: isActive ? '#1D4ED8' : '#E2E8F0',
+                      backgroundColor: isActive ? AppColors.brand.primary : AppColors.border.default,
                     },
                   ]}
                 />
@@ -94,10 +95,10 @@ export function MiniBarChartCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: AppColors.shadow.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -113,11 +114,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   subtitle: {
     fontSize: 12,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginTop: 4,
   },
   chartContainer: {
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
   barContainer: {
     width: 24,
     height: 80,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: AppColors.surface.control,
     borderRadius: 6,
     justifyContent: 'flex-end',
     overflow: 'hidden',
@@ -147,12 +148,12 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     fontSize: 10,
-    color: '#6B7280',
+    color: AppColors.table.muted,
     marginTop: 8,
   },
   listContainer: {
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: AppColors.border.muted,
     paddingTop: 16,
     marginBottom: 16,
   },
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 14,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
@@ -172,15 +173,15 @@ const styles = StyleSheet.create({
   },
   listLabel: {
     fontSize: 13,
-    color: '#6B7280',
+    color: AppColors.table.muted,
   },
   listValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#111827',
+    color: AppColors.text.strong,
   },
   button: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: AppColors.surface.control,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
@@ -188,6 +189,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    color: AppColors.text.body,
   },
 });

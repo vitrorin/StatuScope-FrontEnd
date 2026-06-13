@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type InlineWarningBannerVariant = 'critical' | 'warning' | 'info';
 
@@ -13,24 +14,24 @@ export interface InlineWarningBannerProps {
 
 const variantStyles = {
   critical: {
-    background: '#FEF2F2',
-    border: '#FECACA',
-    titleColor: '#DC2626',
-    messageColor: '#B91C1C',
+    background: AppColors.status.dangerSoft,
+    border: AppColors.status.dangerBorder,
+    titleColor: AppColors.status.danger,
+    messageColor: AppColors.status.dangerDark,
     icon: 'alert-triangle' as const,
   },
   warning: {
-    background: '#FFFBEB',
-    border: '#FDE68A',
-    titleColor: '#D97706',
-    messageColor: '#92400E',
+    background: AppColors.status.warningWash,
+    border: AppColors.status.warningBorder,
+    titleColor: AppColors.status.warningText,
+    messageColor: AppColors.status.warningLabel,
     icon: 'zap' as const,
   },
   info: {
-    background: '#EFF6FF',
-    border: '#BFDBFE',
-    titleColor: '#1D4ED8',
-    messageColor: '#1E40AF',
+    background: AppColors.status.infoSoft,
+    border: AppColors.status.infoSoft,
+    titleColor: AppColors.brand.link,
+    messageColor: AppColors.status.infoDark,
     icon: 'info' as const,
   },
 };
@@ -66,24 +67,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 14,
+    borderRadius: AppRadii.lg,
+    padding: AppSpacing[7],
   },
   icon: {
-    marginRight: 12,
-    marginTop: 1,
+    marginRight: AppSpacing[6],
+    marginTop: AppSpacing[1] / 2,
   },
   content: {
     flex: 1,
   },
   title: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '700',
-    marginBottom: 4,
+    ...AppTypography.textStyles.bodySmall,
+    fontWeight: AppTypography.fontWeights.bold,
+    marginBottom: AppSpacing[2],
   },
   message: {
-    fontSize: 12,
-    lineHeight: 18,
+    ...AppTypography.textStyles.caption,
+    lineHeight: AppTypography.lineHeights.caption,
   },
 });
