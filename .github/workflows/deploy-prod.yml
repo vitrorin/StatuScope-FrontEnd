@@ -43,7 +43,7 @@ jobs:
         run: npx eslint app components --max-warnings=-1 --config eslint.config.mjs
 
       - name: Unit tests
-        run: npx vitest run --project unit
+        run: npm test -- --runInBand
 
   deploy:
     name: Build & Deploy to Cloud Run
