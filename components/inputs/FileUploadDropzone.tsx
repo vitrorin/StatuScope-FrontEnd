@@ -1,6 +1,7 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type FileUploadState = 'empty' | 'dragging' | 'uploaded' | 'error';
 
@@ -9,6 +10,8 @@ export interface FileUploadDropzoneProps {
   description?: string;
   supportedFormats?: string;
   maxSizeText?: string;
+  browseLabel?: string;
+  upToLabel?: string;
   state?: FileUploadState;
   fileName?: string;
   error?: string;
@@ -21,6 +24,8 @@ export function FileUploadDropzone({
   description = 'Drag and drop files or',
   supportedFormats = 'PDF, JPG, PNG',
   maxSizeText = '10MB',
+  browseLabel = 'browse',
+  upToLabel = 'up to',
   state = 'empty',
   fileName,
   error,
@@ -42,11 +47,11 @@ export function FileUploadDropzone({
       >
         <View style={styles.iconWrap}>
           {state === 'uploaded' ? (
-            <Feather name="check-circle" size={24} color="#16A34A" />
+            <Feather name="check-circle" size={24} color={AppColors.status.success} />
           ) : state === 'error' ? (
-            <Feather name="alert-circle" size={24} color="#DC2626" />
+            <Feather name="alert-circle" size={24} color={AppColors.status.danger} />
           ) : (
-            <Feather name="upload-cloud" size={24} color="#94A3B8" />
+            <Feather name="upload-cloud" size={24} color={AppColors.text.muted} />
           )}
         </View>
 
@@ -57,11 +62,11 @@ export function FileUploadDropzone({
             <View style={styles.browseRow}>
               <Text style={styles.description}>{description} </Text>
               <TouchableOpacity onPress={onBrowsePress} activeOpacity={0.75}>
-                <Text style={styles.browseLink}>browse</Text>
+                <Text style={styles.browseLink}>{browseLabel}</Text>
               </TouchableOpacity>
             </View>
             <Text style={styles.formatText}>
-              {supportedFormats} up to {maxSizeText}
+              {supportedFormats} {upToLabel} {maxSizeText}
             </Text>
           </>
         )}
@@ -76,77 +81,70 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   label: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-    color: '#64748B',
-    marginBottom: 8,
+    ...AppTypography.textStyles.captionStrong,
+    color: AppColors.text.secondary,
+    marginBottom: AppSpacing.fieldGap,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: AppTypography.letterSpacing.eyebrow,
   },
   container: {
     minHeight: 96,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderRadius: 12,
-    borderColor: '#D9E2F0',
-    backgroundColor: '#FFFFFF',
+    borderRadius: AppRadii.xl,
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 22,
+    paddingHorizontal: AppSpacing.card,
+    paddingVertical: AppSpacing[11],
   },
   containerDragging: {
-    borderColor: '#0003B8',
-    backgroundColor: '#EEF2FF',
+    borderColor: AppColors.brand.primary,
+    backgroundColor: AppColors.surface.brandSoft,
   },
   containerUploaded: {
-    borderColor: '#16A34A',
-    backgroundColor: '#F0FDF4',
+    borderColor: AppColors.status.success,
+    backgroundColor: AppColors.status.successWash,
   },
   containerError: {
-    borderColor: '#FCA5A5',
-    backgroundColor: '#FEF2F2',
+    borderColor: AppColors.status.dangerBorder,
+    backgroundColor: AppColors.status.dangerSoft,
   },
   iconWrap: {
-    marginBottom: 12,
+    marginBottom: AppSpacing[6],
   },
   browseRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    marginBottom: 6,
+    marginBottom: AppSpacing[3],
   },
   description: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#475569',
+    ...AppTypography.textStyles.body,
+    color: AppColors.text.body,
     textAlign: 'center',
   },
   browseLink: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '700',
-    color: '#0003B8',
+    ...AppTypography.textStyles.bodyStrong,
+    fontWeight: AppTypography.fontWeights.bold,
+    color: AppColors.brand.primary,
   },
   formatText: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#94A3B8',
+    ...AppTypography.textStyles.caption,
+    lineHeight: AppTypography.lineHeights.caption,
+    color: AppColors.text.muted,
     textAlign: 'center',
   },
   fileName: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: '#0F172A',
+    ...AppTypography.textStyles.bodyStrong,
+    color: AppColors.text.primary,
     textAlign: 'center',
   },
   errorText: {
-    marginTop: 6,
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#DC2626',
+    marginTop: AppSpacing[3],
+    ...AppTypography.textStyles.caption,
+    color: AppColors.status.danger,
   },
 });

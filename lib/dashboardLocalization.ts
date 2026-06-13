@@ -14,6 +14,10 @@ function translateKnownValue(t: Translate, value: string): string {
     review: 'common.priority.review',
     routine: 'common.priority.routine',
     'operational review': 'common.priority.operationalReview',
+    'no priority outbreaks': 'common.statuses.noPriorityOutbreaks',
+    'no priority municipality': 'common.statuses.noPriorityMunicipality',
+    'priority municipality': 'common.statuses.priorityMunicipality',
+    'priority focus': 'common.statuses.priorityFocus',
   };
   return keyByValue[normalized] ? t(keyByValue[normalized]) : value;
 }
@@ -23,6 +27,12 @@ export function translateDashboardValue(t: Translate, value: string): string {
   if (activeOutbreaks) {
     const count = activeOutbreaks[1];
     return t(count === '1' ? 'common.units.activeOutbreak' : 'common.units.activeOutbreaks', { count });
+  }
+
+  const priorityOutbreaks = value.match(/^([\d,]+) priority outbreaks?$/i);
+  if (priorityOutbreaks) {
+    const count = priorityOutbreaks[1];
+    return t(count === '1' ? 'common.units.priorityOutbreak' : 'common.units.priorityOutbreaks', { count });
   }
 
   const beds = value.match(/^([\d,]+) beds?$/i);
@@ -66,10 +76,30 @@ export function translateDashboardBadge(t: Translate, badge: string | undefined)
     });
   }
 
+  const open = badge.match(/^([\d,]+) open$/i);
+  if (open) {
+    return t('common.units.open', { count: open[1] });
+  }
+
+  const free = badge.match(/^([\d,]+) free$/i);
+  if (free) {
+    return t('common.units.free', { count: free[1] });
+  }
+
+  const doctors = badge.match(/^([\d,]+) doctors?$/i);
+  if (doctors) {
+    return t(doctors[1] === '1' ? 'common.units.doctor' : 'common.units.doctors', { count: doctors[1] });
+  }
+
   const cases = badge.match(/^([\d,]+) cases?$/i);
   if (cases) {
     const count = cases[1];
     return t(count === '1' ? 'common.units.case' : 'common.units.cases', { count });
+  }
+
+  const priority = badge.match(/^([\d,]+) priority$/i);
+  if (priority) {
+    return t('common.units.priorityShort', { count: priority[1] });
   }
 
   return translateKnownValue(t, badge);

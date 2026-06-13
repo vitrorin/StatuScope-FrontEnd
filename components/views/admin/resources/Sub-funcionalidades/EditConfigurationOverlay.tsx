@@ -13,6 +13,9 @@ import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DepartmentResourceItem, ResourceConfiguration } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 type ConfigurationTab = 'capacity' | 'staff' | 'specialists' | 'departments';
 
@@ -24,23 +27,23 @@ interface EditConfigurationOverlayProps {
   onSave: (value: ResourceConfiguration) => void;
 }
 
-const tabs: { key: ConfigurationTab; label: string }[] = [
-  { key: 'capacity', label: 'Capacity' },
-  { key: 'staff', label: 'Core Staff' },
-  { key: 'specialists', label: 'Specialists' },
-  { key: 'departments', label: 'Departments' },
+const tabs: { key: ConfigurationTab; labelEn: string; labelEs: string }[] = [
+  { key: 'capacity', labelEn: 'Capacity', labelEs: 'Capacidad' },
+  { key: 'staff', labelEn: 'Core Staff', labelEs: 'Personal base' },
+  { key: 'specialists', labelEn: 'Specialists', labelEs: 'Especialistas' },
+  { key: 'departments', labelEn: 'Departments', labelEs: 'Departamentos' },
 ];
 
-const specialistFields: { key: keyof ResourceConfiguration; label: string }[] = [
-  { key: 'neurologists', label: 'Neurologists' },
-  { key: 'cardiologists', label: 'Cardiologists' },
-  { key: 'pediatricians', label: 'Pediatricians' },
-  { key: 'surgeons', label: 'Surgeons' },
-  { key: 'anesthesiologists', label: 'Anesthesiologists' },
-  { key: 'radiologists', label: 'Radiologists' },
-  { key: 'pulmonologists', label: 'Pulmonologists' },
-  { key: 'infectiousDiseaseSpecialists', label: 'Infectious Disease' },
-  { key: 'emergencyPhysicians', label: 'Emergency Physicians' },
+const specialistFields: { key: keyof ResourceConfiguration; labelEn: string; labelEs: string }[] = [
+  { key: 'neurologists', labelEn: 'Neurologists', labelEs: 'Neurólogos' },
+  { key: 'cardiologists', labelEn: 'Cardiologists', labelEs: 'Cardiólogos' },
+  { key: 'pediatricians', labelEn: 'Pediatricians', labelEs: 'Pediatras' },
+  { key: 'surgeons', labelEn: 'Surgeons', labelEs: 'Cirujanos' },
+  { key: 'anesthesiologists', labelEn: 'Anesthesiologists', labelEs: 'Anestesiólogos' },
+  { key: 'radiologists', labelEn: 'Radiologists', labelEs: 'Radiólogos' },
+  { key: 'pulmonologists', labelEn: 'Pulmonologists', labelEs: 'Pulmonólogos' },
+  { key: 'infectiousDiseaseSpecialists', labelEn: 'Infectious Disease', labelEs: 'Enf. infecciosas' },
+  { key: 'emergencyPhysicians', labelEn: 'Emergency Physicians', labelEs: 'Urgenciólogos' },
 ];
 
 export function EditConfigurationOverlay({
@@ -50,6 +53,7 @@ export function EditConfigurationOverlay({
   onClose,
   onSave,
 }: EditConfigurationOverlayProps) {
+  const { language } = useTranslation();
   const [draft, setDraft] = useState<ResourceConfiguration>(value);
   const [activeTab, setActiveTab] = useState<ConfigurationTab>('capacity');
 
@@ -78,15 +82,17 @@ export function EditConfigurationOverlay({
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Resource Configuration</Text>
-              <Text style={styles.title}>Hospital Capacity Settings</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Configuración de recursos' : 'Resource Configuration'}</Text>
+              <Text style={styles.title}>{isSpanish(language) ? 'Ajustes de capacidad hospitalaria' : 'Hospital Capacity Settings'}</Text>
               <Text style={styles.subtitle}>
-                Update bed totals, staffing pool, specialist availability, and monitor department coverage.
+                {isSpanish(language)
+                  ? 'Actualiza totales de camas, personal base, disponibilidad de especialistas y monitorea la cobertura de departamentos.'
+                  : 'Update bed totals, staffing pool, specialist availability, and monitor department coverage.'}
               </Text>
             </View>
 
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -100,7 +106,7 @@ export function EditConfigurationOverlay({
                   onPress={() => setActiveTab(tab.key)}
                   activeOpacity={0.75}
                 >
-                  <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
+                  <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{isSpanish(language) ? tab.labelEs : tab.labelEn}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -109,11 +115,11 @@ export function EditConfigurationOverlay({
           <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
             {activeTab === 'capacity' ? (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Capacity Overview</Text>
+                <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Resumen de capacidad' : 'Capacity Overview'}</Text>
                 <View style={styles.grid}>
                   <View style={styles.field}>
                     <InputField
-                      label="Total Beds"
+                      label={isSpanish(language) ? 'Camas totales' : 'Total Beds'}
                       type="number"
                       value={draft.totalBeds}
                       onChangeText={(text) => updateField('totalBeds', text)}
@@ -122,7 +128,7 @@ export function EditConfigurationOverlay({
                   </View>
                   <View style={styles.field}>
                     <InputField
-                      label="Total Personnel"
+                      label={isSpanish(language) ? 'Personal total' : 'Total Personnel'}
                       type="number"
                       value={draft.totalPersonnel}
                       onChangeText={(text) => updateField('totalPersonnel', text)}
@@ -131,19 +137,19 @@ export function EditConfigurationOverlay({
                   </View>
                 </View>
                 <CardBase style={styles.infoCard}>
-                  <Text style={styles.infoTitle}>Current Department Bed Count</Text>
-                  <Text style={styles.infoValue}>{totalDepartmentBeds} beds mapped across monitored departments</Text>
+                  <Text style={styles.infoTitle}>{isSpanish(language) ? 'Camas actuales por departamento' : 'Current Department Bed Count'}</Text>
+                  <Text style={styles.infoValue}>{isSpanish(language) ? `${totalDepartmentBeds} camas distribuidas en departamentos monitoreados` : `${totalDepartmentBeds} beds mapped across monitored departments`}</Text>
                 </CardBase>
               </View>
             ) : null}
 
             {activeTab === 'staff' ? (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Core Staffing</Text>
+                <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Personal base' : 'Core Staffing'}</Text>
                 <View style={styles.grid}>
                   <View style={styles.field}>
                     <InputField
-                      label="Doctors"
+                      label={isSpanish(language) ? 'Doctores' : 'Doctors'}
                       type="number"
                       value={draft.doctors}
                       onChangeText={(text) => updateField('doctors', text)}
@@ -152,7 +158,7 @@ export function EditConfigurationOverlay({
                   </View>
                   <View style={styles.field}>
                     <InputField
-                      label="Nurses"
+                      label={isSpanish(language) ? 'Enfermeras' : 'Nurses'}
                       type="number"
                       value={draft.nurses}
                       onChangeText={(text) => updateField('nurses', text)}
@@ -161,9 +167,11 @@ export function EditConfigurationOverlay({
                   </View>
                 </View>
                 <CardBase style={styles.infoCard}>
-                  <Text style={styles.infoTitle}>Staffing Snapshot</Text>
+                  <Text style={styles.infoTitle}>{isSpanish(language) ? 'Resumen de personal' : 'Staffing Snapshot'}</Text>
                   <Text style={styles.infoValue}>
-                    {draft.doctors || '0'} doctors and {draft.nurses || '0'} nurses are currently planned.
+                    {isSpanish(language)
+                      ? `${draft.doctors || '0'} doctores y ${draft.nurses || '0'} enfermeras planificados.`
+                      : `${draft.doctors || '0'} doctors and ${draft.nurses || '0'} nurses are currently planned.`}
                   </Text>
                 </CardBase>
               </View>
@@ -171,12 +179,12 @@ export function EditConfigurationOverlay({
 
             {activeTab === 'specialists' ? (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Specialist Doctors</Text>
+                <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Doctores especialistas' : 'Specialist Doctors'}</Text>
                 <View style={styles.grid}>
                   {specialistFields.map((field) => (
                     <View key={field.key} style={styles.field}>
                       <InputField
-                        label={field.label}
+                        label={isSpanish(language) ? field.labelEs : field.labelEn}
                         type="number"
                         value={draft[field.key]}
                         onChangeText={(text) => updateField(field.key, text)}
@@ -190,7 +198,7 @@ export function EditConfigurationOverlay({
 
             {activeTab === 'departments' ? (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Departments Overview</Text>
+                <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Resumen de departamentos' : 'Departments Overview'}</Text>
                 <View style={styles.departmentList}>
                   {departments.map((department) => (
                     <CardBase key={department.id} style={styles.departmentCard}>
@@ -200,16 +208,20 @@ export function EditConfigurationOverlay({
                       </View>
                       <Text style={styles.departmentMeta}>{department.level}</Text>
                       <Text style={styles.departmentMeta}>
-                        {department.occupiedBeds}/{department.totalBeds} beds currently occupied
+                        {isSpanish(language)
+                          ? `${department.occupiedBeds}/${department.totalBeds} camas ocupadas`
+                          : `${department.occupiedBeds}/${department.totalBeds} beds currently occupied`}
                       </Text>
                       <Text style={styles.departmentNote}>{department.notes}</Text>
                     </CardBase>
                   ))}
                 </View>
                 <View style={styles.departmentHint}>
-                  <MaterialCommunityIcons name="information-outline" size={16} color="#1718C7" />
+                  <MaterialCommunityIcons name="information-outline" size={16} color={AppColors.brand.action} />
                   <Text style={styles.departmentHintText}>
-                    Detailed department editing lives in the individual Manage action from the main resources table.
+                    {isSpanish(language)
+                      ? 'La edición detallada de departamentos se encuentra en la acción Administrar de la tabla principal de recursos.'
+                      : 'Detailed department editing lives in the individual Manage action from the main resources table.'}
                   </Text>
                 </View>
               </View>
@@ -217,12 +229,12 @@ export function EditConfigurationOverlay({
           </ScrollView>
 
           <View style={styles.footer}>
-            <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
+            <Button label={isSpanish(language) ? 'Cancelar' : 'Cancel'} variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
             <Button
-              label="Save Configuration"
+              label={isSpanish(language) ? 'Guardar configuración' : 'Save Configuration'}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               onPress={() => onSave(draft)}
             />
           </View>
@@ -246,7 +258,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -255,8 +267,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E4EAF4',
+    backgroundColor: AppColors.surface.card,
+    borderColor: AppColors.border.default,
     shadowOpacity: 0.12,
     shadowRadius: 30,
     elevation: 12,
@@ -270,7 +282,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
@@ -278,20 +290,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    color: '#1718C7',
+    color: AppColors.brand.action,
     marginBottom: 8,
   },
   title: {
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
     maxWidth: 580,
   },
   closeButton: {
@@ -301,8 +313,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
   tabsRow: {
     flexDirection: 'row',
@@ -315,22 +327,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 999,
-    backgroundColor: '#F6F8FC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
   },
   tabActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
+    backgroundColor: AppColors.surface.brandSoft,
+    borderColor: AppColors.border.brandMuted,
   },
   tabLabel: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   tabLabelActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   formContent: {
     paddingHorizontal: 26,
@@ -345,7 +357,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   grid: {
     flexDirection: 'row',
@@ -359,19 +371,19 @@ const styles = StyleSheet.create({
   inputContainer: {
     height: 50,
     borderRadius: 12,
-    borderColor: '#DCE3EE',
+    borderColor: AppColors.border.default,
   },
   infoCard: {
     padding: 16,
     borderRadius: 16,
-    backgroundColor: '#F8FAFF',
-    borderColor: '#E0E7FF',
+    backgroundColor: AppColors.surface.raised,
+    borderColor: AppColors.border.brandSoft,
   },
   infoTitle: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 6,
@@ -379,7 +391,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   departmentList: {
     gap: 12,
@@ -398,25 +410,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     flex: 1,
   },
   departmentStatus: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   departmentMeta: {
     fontSize: 12,
     lineHeight: 18,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   departmentNote: {
     marginTop: 8,
     fontSize: 13,
     lineHeight: 20,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   departmentHint: {
     flexDirection: 'row',
@@ -424,15 +436,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 14,
     borderRadius: 14,
-    backgroundColor: '#F8FAFF',
+    backgroundColor: AppColors.surface.raised,
     borderWidth: 1,
-    borderColor: '#E0E7FF',
+    borderColor: AppColors.border.brandSoft,
   },
   departmentHintText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 20,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   footer: {
     flexDirection: 'row',
@@ -442,14 +454,14 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
   },
   footerButton: {
     minWidth: 150,
   },
   primaryButton: {
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
 });
 

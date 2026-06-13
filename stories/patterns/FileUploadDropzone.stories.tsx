@@ -1,14 +1,15 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
 import { View } from 'react-native';
 import { FileUploadDropzone } from '../../components/inputs/FileUploadDropzone';
 
 const meta = {
-  title: 'Patterns/FileUploadDropzone',
+  title: 'Componentes reutilizables/Inputs/FileUploadDropzone',
   component: FileUploadDropzone,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ maxWidth: 400 }}>
           <Story />
         </View>

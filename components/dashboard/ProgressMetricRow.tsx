@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { ProgressBar } from '../foundation/ProgressBar';
+import { AppColors } from '@/constants/theme';
 
 export interface ProgressMetricRowProps {
   label: string;
@@ -15,7 +16,7 @@ export function ProgressMetricRow({
   label,
   valueText,
   progress,
-  barColor = '#1D4ED8',
+  barColor = AppColors.brand.primary,
   barHeight = 6,
   style,
 }: ProgressMetricRowProps) {
@@ -25,7 +26,7 @@ export function ProgressMetricRow({
         <Text style={styles.label}>{label}</Text>
         <Text style={styles.valueText}>{valueText}</Text>
       </View>
-      <ProgressBar value={progress} color={barColor} height={barHeight} trackColor="#EEF2F7" />
+      <ProgressBar value={progress} color={barColor} height={barHeight} trackColor="AppColors.border.soft" />
     </View>
   );
 }
@@ -44,13 +45,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     textTransform: 'uppercase',
   },
   valueText: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
 });

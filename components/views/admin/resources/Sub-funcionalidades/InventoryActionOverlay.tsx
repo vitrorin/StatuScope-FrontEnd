@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,6 +13,9 @@ import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
 import { InventoryResourceItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface InventoryActionOverlayProps {
   visible: boolean;
@@ -54,6 +58,7 @@ export function InventoryActionOverlay({
   onSave,
   onDelete,
 }: InventoryActionOverlayProps) {
+  const { language } = useTranslation();
   const [draft, setDraft] = useState<InventoryResourceItem>(inventoryItem ?? EMPTY_ITEM);
 
   useEffect(() => {
@@ -75,20 +80,20 @@ export function InventoryActionOverlay({
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Inventory Item</Text>
-              <Text style={styles.title}>{isCreate ? 'Add Inventory Item' : draft.title || 'Inventory Item'}</Text>
-              <Text style={styles.subtitle}>Manage the real inventory record for stock, capacity, thresholds, and location.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Artículo de inventario' : 'Inventory Item'}</Text>
+              <Text style={styles.title}>{isCreate ? (isSpanish(language) ? 'Agregar artículo de inventario' : 'Add Inventory Item') : draft.title || (isSpanish(language) ? 'Artículo de inventario' : 'Inventory Item')}</Text>
+              <Text style={styles.subtitle}>{isSpanish(language) ? 'Gestiona el registro de inventario para existencias, capacidad, umbrales y ubicación.' : 'Manage the real inventory record for stock, capacity, thresholds, and location.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Item Name"
+                  label={isSpanish(language) ? 'Nombre del artículo' : 'Item Name'}
                   value={draft.title}
                   onChangeText={(text) => updateField('title', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -96,7 +101,7 @@ export function InventoryActionOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Item Code"
+                  label={isSpanish(language) ? 'Código del artículo' : 'Item Code'}
                   value={draft.itemCode}
                   onChangeText={(text) => updateField('itemCode', text.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
                   inputContainerStyle={styles.inputContainer}
@@ -107,7 +112,7 @@ export function InventoryActionOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Category"
+                  label={isSpanish(language) ? 'Categoría' : 'Category'}
                   value={draft.category}
                   onChangeText={(text) => updateField('category', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -115,7 +120,7 @@ export function InventoryActionOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Location"
+                  label={isSpanish(language) ? 'Ubicación' : 'Location'}
                   value={draft.location}
                   onChangeText={(text) => updateField('location', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -126,7 +131,7 @@ export function InventoryActionOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Current Quantity"
+                  label={isSpanish(language) ? 'Cantidad actual' : 'Current Quantity'}
                   type="number"
                   value={draft.currentQuantity}
                   onChangeText={(text) => updateField('currentQuantity', text.replace(/[^0-9]/g, ''))}
@@ -135,7 +140,7 @@ export function InventoryActionOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Capacity"
+                  label={isSpanish(language) ? 'Capacidad' : 'Capacity'}
                   type="number"
                   value={draft.capacityQuantity}
                   onChangeText={(text) => updateField('capacityQuantity', text.replace(/[^0-9]/g, ''))}
@@ -147,7 +152,7 @@ export function InventoryActionOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Critical Threshold"
+                  label={isSpanish(language) ? 'Umbral crítico' : 'Critical Threshold'}
                   type="number"
                   value={draft.criticalThreshold}
                   onChangeText={(text) => updateField('criticalThreshold', text.replace(/[^0-9]/g, ''))}
@@ -156,7 +161,7 @@ export function InventoryActionOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Target Quantity"
+                  label={isSpanish(language) ? 'Cantidad objetivo' : 'Target Quantity'}
                   type="number"
                   value={draft.targetQuantity}
                   onChangeText={(text) => updateField('targetQuantity', text.replace(/[^0-9]/g, ''))}
@@ -168,7 +173,7 @@ export function InventoryActionOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Unit"
+                  label={isSpanish(language) ? 'Unidad' : 'Unit'}
                   value={draft.unit}
                   onChangeText={(text) => updateField('unit', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -176,19 +181,19 @@ export function InventoryActionOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Status"
+                  label={isSpanish(language) ? 'Estado' : 'Status'}
                   value={draft.status}
                   onChangeText={(text) => updateField('status', text.toUpperCase().replace(/[^A-Z_]/g, '_'))}
                   inputContainerStyle={styles.inputContainer}
                 />
               </View>
             </View>
-          </View>
+          </ScrollView>
 
           <View style={styles.footer}>
             {!isCreate && onDelete ? (
               <Button
-                label={deleting ? 'Deleting...' : 'Delete'}
+                label={deleting ? (isSpanish(language) ? 'Eliminando...' : 'Deleting...') : (isSpanish(language) ? 'Eliminar' : 'Delete')}
                 variant="danger"
                 size="md"
                 style={styles.deleteButton}
@@ -196,12 +201,12 @@ export function InventoryActionOverlay({
                 onPress={() => onDelete(draft)}
               />
             ) : null}
-            <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
+            <Button label={isSpanish(language) ? 'Cancelar' : 'Cancel'} variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
             <Button
-              label={saving ? 'Saving...' : isCreate ? 'Create Item' : 'Save Item'}
+              label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : isCreate ? (isSpanish(language) ? 'Crear artículo' : 'Create Item') : (isSpanish(language) ? 'Guardar artículo' : 'Save Item')}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               disabled={saving || deleting || !draft.title.trim() || !draft.itemCode.trim()}
               onPress={() => onSave(draft)}
             />
@@ -221,11 +226,12 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
     maxWidth: 760,
+    maxHeight: '90%',
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
@@ -238,13 +244,13 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
@@ -253,13 +259,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -268,7 +274,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   content: {
     padding: 24,
@@ -293,7 +299,7 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
   },
   deleteButton: {
     marginRight: 'auto',
@@ -303,8 +309,8 @@ const styles = StyleSheet.create({
     minWidth: 150,
   },
   primaryButton: {
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
 });
 

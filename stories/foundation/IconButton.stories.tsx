@@ -1,13 +1,14 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { View } from 'react-native';
 import { IconButton } from '../../components/foundation/IconButton';
 
 const meta = {
-  title: 'Foundation/IconButton',
+  title: 'Componentes reutilizables/Foundation/IconButton',
   component: IconButton,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <Story />
         </View>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors, AppRadii, AppShadows, AppSpacing, AppTypography } from '@/constants/theme';
 
 export interface TableColumn {
   key: string;
@@ -87,68 +88,68 @@ export function DataTable({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: AppColors.surface.card,
+    borderRadius: AppRadii['3xl'],
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: AppColors.border.muted,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    ...AppShadows.subtle,
+    shadowOffset: { width: 0, height: AppSpacing[1] },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: AppSpacing[4],
     elevation: 2,
   },
   header: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: AppColors.surface.disabled,
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: AppColors.border.muted,
   },
   headerCompact: {
-    paddingVertical: 10,
+    paddingVertical: AppSpacing[5],
   },
   headerCell: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: AppSpacing.card,
+    paddingVertical: AppSpacing[7],
   },
   headerCellCompact: {
-    paddingVertical: 10,
+    paddingVertical: AppSpacing[5],
   },
   headerText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
+    ...AppTypography.textStyles.captionStrong,
+    fontWeight: AppTypography.fontWeights.semibold,
+    color: AppColors.table.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: AppTypography.letterSpacing.eyebrow,
   },
   headerTextCompact: {
-    fontSize: 11,
+    fontSize: AppTypography.fontSizes.eyebrow,
   },
   row: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: AppColors.surface.control,
   },
   rowCompact: {
-    paddingVertical: 10,
+    paddingVertical: AppSpacing[5],
   },
   rowAlternate: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: AppColors.table.rowAlt,
   },
   cell: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: AppSpacing.card,
+    paddingVertical: AppSpacing[7],
   },
   cellCompact: {
-    paddingVertical: 10,
+    paddingVertical: AppSpacing[5],
   },
   cellText: {
-    fontSize: 14,
-    color: '#111827',
+    ...AppTypography.textStyles.body,
+    color: AppColors.text.strong,
   },
   cellTextCompact: {
-    fontSize: 13,
+    ...AppTypography.textStyles.bodySmall,
   },
 });

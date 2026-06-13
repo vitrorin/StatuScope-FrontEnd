@@ -1,13 +1,14 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 import { View } from 'react-native';
 import { UserTableCard } from '../../../components/users/UserTableCard';
 
 const meta = {
-  title: 'Domain/Users/UserTableCard',
+  title: 'Componentes únicos/Users/UserTableCard',
   component: UserTableCard,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <Story />
       </View>
     ),

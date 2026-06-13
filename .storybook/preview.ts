@@ -2,6 +2,11 @@ import type { Preview } from '@storybook/react-native-web-vite'
 
 const preview: Preview = {
   parameters: {
+    options: {
+      storySort: {
+        order: ['Vistas', 'Overlays', 'Componentes reutilizables', 'Componentes únicos'],
+      },
+    },
     controls: {
       matchers: {
        color: /(background|color)$/i,

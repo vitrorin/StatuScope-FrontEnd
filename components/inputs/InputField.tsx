@@ -9,6 +9,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { AppColors, AppRadii, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type InputFieldType = 'text' | 'password' | 'email' | 'number';
 
@@ -24,6 +25,8 @@ export interface InputFieldProps {
   disabled?: boolean;
   required?: boolean;
   onChangeText?: (text: string) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   style?: ViewStyle;
   inputContainerStyle?: ViewStyle;
   inputStyle?: TextStyle;
@@ -31,6 +34,7 @@ export interface InputFieldProps {
   placeholderTextColor?: string;
   labelAccessory?: React.ReactNode;
   maxLength?: number;
+  testID?: string;
 }
 
 export function InputField({
@@ -45,6 +49,8 @@ export function InputField({
   disabled = false,
   required = false,
   onChangeText,
+  onFocus,
+  onBlur,
   style,
   inputContainerStyle,
   inputStyle,
@@ -52,19 +58,20 @@ export function InputField({
   placeholderTextColor,
   labelAccessory,
   maxLength,
+  testID,
 }: InputFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const getBorderColor = () => {
-    if (error) return '#EF4444';
-    if (isFocused) return '#1D4ED8';
-    return '#E5E7EB';
+    if (error) return AppColors.status.dangerBright;
+    if (isFocused) return AppColors.brand.link;
+    return AppColors.border.muted;
   };
 
   const getBackgroundColor = () => {
-    if (disabled) return '#F9FAFB';
-    return '#FFFFFF';
+    if (disabled) return AppColors.surface.disabled;
+    return AppColors.surface.card;
   };
 
   const handleTogglePassword = () => {
@@ -78,7 +85,7 @@ export function InputField({
           <Feather
             name={isPasswordVisible ? 'eye' : 'eye-off'}
             size={18}
-            color={disabled ? '#CBD5E1' : '#94A3B8'}
+            color={disabled ? AppColors.border.strong : AppColors.text.muted}
           />
         </TouchableOpacity>
       );
@@ -92,7 +99,7 @@ export function InputField({
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, style]} testID={testID}>
       {label && (
         <View style={styles.labelContainer}>
           <Text style={[styles.label, labelStyle, disabled && styles.labelDisabled]}>{label}</Text>
@@ -117,11 +124,17 @@ export function InputField({
         <TextInput
           style={[styles.input, inputStyle, disabled && styles.inputTextDisabled]}
           placeholder={placeholder}
-          placeholderTextColor={placeholderTextColor ?? (disabled ? '#D1D5DB' : '#94A3B8')}
+          placeholderTextColor={placeholderTextColor ?? (disabled ? AppColors.border.strong : AppColors.text.muted)}
           value={value}
           onChangeText={onChangeText}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={() => {
+            setIsFocused(true);
+            onFocus?.();
+          }}
+          onBlur={() => {
+            setIsFocused(false);
+            onBlur?.();
+          }}
           secureTextEntry={type === 'password' && !isPasswordVisible}
           keyboardType={
             type === 'email' ? 'email-address' : type === 'number' ? 'numeric' : 'default'
@@ -129,6 +142,7 @@ export function InputField({
           maxLength={maxLength}
           editable={!disabled}
           autoCapitalize={type === 'email' ? 'none' : 'sentences'}
+          testID={testID ? `${testID}-input` : undefined}
         />
         {renderRightIcon()}
       </View>
@@ -144,71 +158,70 @@ export function InputField({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: AppSpacing.card,
   },
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: AppSpacing.fieldGap,
   },
   labelAccessory: {
     marginLeft: 'auto',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    ...AppTypography.textStyles.inputLabel,
+    color: AppColors.text.body,
   },
   labelDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
   required: {
-    fontSize: 14,
-    color: '#EF4444',
-    marginLeft: 4,
+    fontSize: AppTypography.fontSizes.body,
+    color: AppColors.status.dangerBright,
+    marginLeft: AppSpacing[2],
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
-    backgroundColor: '#FFFFFF',
+    borderRadius: AppRadii.xl,
+    paddingHorizontal: AppSpacing.card,
+    height: AppSizes.inputHeight,
+    backgroundColor: AppColors.surface.card,
   },
   inputFocused: {
-    borderWidth: 2,
+    borderColor: AppColors.brand.primary,
   },
   inputDisabled: {
-    backgroundColor: '#F9FAFB',
-    borderColor: '#E5E7EB',
+    backgroundColor: AppColors.surface.disabled,
+    borderColor: AppColors.border.muted,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#111827',
+    ...AppTypography.textStyles.inputText,
+    color: AppColors.text.strong,
     padding: 0,
   },
   inputTextDisabled: {
-    color: '#9CA3AF',
+    color: AppColors.text.disabled,
   },
   leftIconContainer: {
-    marginRight: 12,
+    marginRight: AppSpacing[6],
   },
   rightIconContainer: {
-    marginLeft: 12,
+    marginLeft: AppSpacing[6],
   },
   iconButton: {
-    padding: 4,
+    padding: AppSpacing[2],
   },
   hintText: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 6,
+    ...AppTypography.textStyles.caption,
+    color: AppColors.table.muted,
+    marginTop: AppSpacing[3],
   },
   errorText: {
-    fontSize: 12,
-    color: '#EF4444',
-    marginTop: 6,
+    ...AppTypography.textStyles.caption,
+    color: AppColors.status.dangerBright,
+    marginTop: AppSpacing[3],
   },
 });

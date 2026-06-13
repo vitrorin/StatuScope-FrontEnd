@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from '@/i18n';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 export type SidebarItemKey =
   | 'dashboard'
@@ -10,7 +11,8 @@ export type SidebarItemKey =
   | 'analytics'
   | 'resources'
   | 'recommendations'
-  | 'users';
+  | 'users'
+  | 'hospitals';
 
 export type SidebarActive = SidebarItemKey;
 
@@ -31,17 +33,17 @@ const navItems: SidebarNavItem[] = [
   {
     key: 'dashboard',
     label: 'Dashboard',
-    icon: <MaterialCommunityIcons name="view-grid-outline" size={18} color="#475569" />,
+    icon: <MaterialCommunityIcons name="view-grid-outline" size={18} color={AppColors.text.body} />,
   },
   {
     key: 'diagnosis',
     label: 'Diagnosis',
-    icon: <MaterialCommunityIcons name="stethoscope" size={18} color="#475569" />,
+    icon: <MaterialCommunityIcons name="stethoscope" size={18} color={AppColors.text.body} />,
   },
   {
     key: 'analytics',
     label: 'Analytics',
-    icon: <Feather name="bar-chart-2" size={18} color="#475569" />,
+    icon: <Feather name="bar-chart-2" size={18} color={AppColors.text.body} />,
   },
 ];
 
@@ -61,7 +63,7 @@ export function Sidebar({ active = 'dashboard', onLogout, links, items = navItem
     <View style={styles.container}>
       <View style={styles.brandWrap}>
         <View style={styles.brandBadge}>
-          <MaterialCommunityIcons name="radar" size={18} color="#FFFFFF" />
+          <MaterialCommunityIcons name="radar" size={18} color={AppColors.surface.card} />
         </View>
         <View>
           <Text style={styles.brandName}>StatuScope</Text>
@@ -95,7 +97,7 @@ export function Sidebar({ active = 'dashboard', onLogout, links, items = navItem
 
       <View style={styles.logoutWrap}>
         <TouchableOpacity style={styles.logout} activeOpacity={0.75} onPress={onLogout}>
-          <Feather name="power" size={18} color="#64748B" />
+          <Feather name="power" size={18} color={AppColors.text.secondary} />
           <Text style={styles.logoutLabel}>{t('layout.sidebar.logout')}</Text>
         </TouchableOpacity>
       </View>
@@ -107,9 +109,9 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     width: 256,
-    backgroundColor: '#FCFDFE',
+    backgroundColor: AppColors.surface.cardSoft,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(0, 3, 184, 0.10)',
+    borderRightColor: withAlpha(AppColors.brand.primary, 0.1),
     paddingRight: 1,
     alignSelf: 'stretch',
     minHeight: '100%',
@@ -126,7 +128,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -134,13 +136,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 23,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   brandSubtitle: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
-    color: '#64748B',
+    color: AppColors.text.secondary,
     letterSpacing: 0.6,
   },
   nav: {
@@ -159,9 +161,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   navItemActive: {
-    backgroundColor: 'rgba(0, 3, 184, 0.14)',
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.14),
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.10)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.1),
   },
   navIcon: {
     width: 20,
@@ -172,19 +174,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '600',
-    color: '#526174',
+    color: AppColors.text.body,
   },
   navLabelActive: {
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   logoutWrap: {
     position: 'absolute',
     left: 0,
     right: 1,
     bottom: 0,
-    backgroundColor: '#FCFDFE',
+    backgroundColor: AppColors.surface.cardSoft,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: AppColors.surface.muted,
     paddingHorizontal: 16,
     paddingTop: 17,
     paddingBottom: 16,
@@ -201,6 +203,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '600',
-    color: 'rgba(71, 85, 105, 0.72)',
+    color: AppColors.overlay.sidebarMutedText,
   },
 });

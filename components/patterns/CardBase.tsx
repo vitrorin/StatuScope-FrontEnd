@@ -1,26 +1,24 @@
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { AppColors, AppRadii, AppShadows, AppSpacing } from '@/constants/theme';
 
 export interface CardBaseProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
-export function CardBase({ children, style }: CardBaseProps) {
-  return <View style={[styles.card, style]}>{children}</View>;
+export function CardBase({ children, style, testID }: CardBaseProps) {
+  return <View style={[styles.card, style]} testID={testID}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FCFDFE',
-    borderRadius: 14,
+    backgroundColor: AppColors.surface.cardSoft,
+    borderRadius: AppRadii['2xl'],
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.06,
-    shadowRadius: 24,
-    elevation: 3,
+    borderColor: AppColors.border.default,
+    padding: AppSpacing.card,
+    ...AppShadows.card,
   },
 });

@@ -1,14 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { AppColors } from '@/constants/theme';
 
 import { View } from 'react-native';
 import { DiseaseBreakdownCard } from '../../../components/dashboard/DiseaseBreakdownCard';
 
 const meta = {
-  title: 'Domain/Dashboard/DiseaseBreakdownCard',
+  title: 'Componentes únicos/Dashboard/DiseaseBreakdownCard',
   component: DiseaseBreakdownCard,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ maxWidth: 360 }}>
           <Story />
         </View>
@@ -34,7 +35,7 @@ export const Default: Story = {
     ],
     summaryItems: [
       { label: 'Total Cases', value: '782' },
-      { label: 'Active Outbreaks', value: '3', valueColor: '#EF4444' },
+      { label: 'Active Outbreaks', value: '3', valueColor: AppColors.status.dangerBright },
     ],
     buttonLabel: 'Export Full Report',
   },
@@ -44,13 +45,13 @@ export const HighVolume: Story = {
   args: {
     title: 'Disease Breakdown Card',
     rows: [
-      { label: 'Influenza A', valueText: '1,245 cases', progress: 85, barColor: '#EF4444' },
-      { label: 'Influenza B', valueText: '892 cases', progress: 62, barColor: '#F59E0B' },
-      { label: 'RSV', valueText: '456 cases', progress: 35, barColor: '#1D4ED8' },
+      { label: 'Influenza A', valueText: '1,245 cases', progress: 85, barColor: AppColors.status.dangerBright },
+      { label: 'Influenza B', valueText: '892 cases', progress: 62, barColor: AppColors.status.warning },
+      { label: 'RSV', valueText: '456 cases', progress: 35, barColor: AppColors.brand.link },
       { label: 'Common Cold', valueText: '234 cases', progress: 18 },
     ],
     summaryItems: [
-      { label: 'Total Cases', value: '2,827', valueColor: '#EF4444' },
+      { label: 'Total Cases', value: '2,827', valueColor: AppColors.status.dangerBright },
       { label: 'Peak Region', value: 'West District' },
     ],
     buttonLabel: 'View Detailed Analysis',

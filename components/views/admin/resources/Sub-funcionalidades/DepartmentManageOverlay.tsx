@@ -3,6 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,6 +13,9 @@ import { Button } from '@/components/foundation/Button';
 import { InputField } from '@/components/inputs/InputField';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DepartmentResourceItem } from '@/components/views/admin/resources/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface DepartmentManageOverlayProps {
   visible: boolean;
@@ -45,6 +49,7 @@ export function DepartmentManageOverlay({
   onSave,
   onDelete,
 }: DepartmentManageOverlayProps) {
+  const { language } = useTranslation();
   const [draft, setDraft] = useState<DepartmentResourceItem>(department ?? EMPTY_DEPARTMENT);
 
   useEffect(() => {
@@ -66,20 +71,20 @@ export function DepartmentManageOverlay({
         <CardBase style={styles.dialog}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>Department Manager</Text>
-              <Text style={styles.title}>{isCreate ? 'Add Department' : draft.name || 'Department'}</Text>
-              <Text style={styles.subtitle}>Manage the real department record stored for this hospital.</Text>
+              <Text style={styles.eyebrow}>{isSpanish(language) ? 'Gestor de departamentos' : 'Department Manager'}</Text>
+              <Text style={styles.title}>{isCreate ? (isSpanish(language) ? 'Agregar departamento' : 'Add Department') : draft.name || (isSpanish(language) ? 'Departamento' : 'Department')}</Text>
+              <Text style={styles.subtitle}>{isSpanish(language) ? 'Gestiona el registro de departamento almacenado para este hospital.' : 'Manage the real department record stored for this hospital.'}</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Department Name"
+                  label={isSpanish(language) ? 'Nombre del departamento' : 'Department Name'}
                   value={draft.name}
                   onChangeText={(text) => updateField('name', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -87,7 +92,7 @@ export function DepartmentManageOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Department Code"
+                  label={isSpanish(language) ? 'Código del departamento' : 'Department Code'}
                   value={draft.code}
                   onChangeText={(text) => updateField('code', text.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
                   inputContainerStyle={styles.inputContainer}
@@ -98,7 +103,7 @@ export function DepartmentManageOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Level"
+                  label={isSpanish(language) ? 'Nivel' : 'Level'}
                   value={draft.level}
                   onChangeText={(text) => updateField('level', text)}
                   inputContainerStyle={styles.inputContainer}
@@ -106,7 +111,7 @@ export function DepartmentManageOverlay({
               </View>
               <View style={styles.field}>
                 <InputField
-                  label="Total Beds"
+                  label={isSpanish(language) ? 'Camas totales' : 'Total Beds'}
                   type="number"
                   value={draft.totalBeds}
                   onChangeText={(text) => updateField('totalBeds', text.replace(/[^0-9]/g, ''))}
@@ -118,7 +123,7 @@ export function DepartmentManageOverlay({
             <View style={styles.row}>
               <View style={styles.field}>
                 <InputField
-                  label="Occupied Beds"
+                  label={isSpanish(language) ? 'Camas ocupadas' : 'Occupied Beds'}
                   type="number"
                   value={draft.occupiedBeds}
                   onChangeText={(text) => updateField('occupiedBeds', text.replace(/[^0-9]/g, ''))}
@@ -129,6 +134,11 @@ export function DepartmentManageOverlay({
 
             <View style={styles.statusRow}>
               {(['Critical', 'Stable', 'High Demand'] as DepartmentResourceItem['status'][]).map((status) => {
+                const statusLabels: Record<string, string> = {
+                  'Critical': isSpanish(language) ? 'Crítico' : 'Critical',
+                  'Stable': isSpanish(language) ? 'Estable' : 'Stable',
+                  'High Demand': isSpanish(language) ? 'Alta demanda' : 'High Demand',
+                };
                 const isActive = draft.status === status;
                 return (
                   <TouchableOpacity
@@ -137,25 +147,25 @@ export function DepartmentManageOverlay({
                     onPress={() => updateField('status', status)}
                     activeOpacity={0.75}
                   >
-                    <Text style={[styles.statusChipText, isActive && styles.statusChipTextActive]}>{status}</Text>
+                    <Text style={[styles.statusChipText, isActive && styles.statusChipTextActive]}>{statusLabels[status] ?? status}</Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
             <InputField
-              label="Operational Notes"
+              label={isSpanish(language) ? 'Notas operativas' : 'Operational Notes'}
               value={draft.notes}
               onChangeText={(text) => updateField('notes', text)}
               inputContainerStyle={styles.notesInputContainer}
               inputStyle={styles.notesInput}
             />
-          </View>
+          </ScrollView>
 
           <View style={styles.footer}>
             {!isCreate && onDelete ? (
               <Button
-                label={deleting ? 'Deleting...' : 'Delete'}
+                label={deleting ? (isSpanish(language) ? 'Eliminando...' : 'Deleting...') : (isSpanish(language) ? 'Eliminar' : 'Delete')}
                 variant="danger"
                 size="md"
                 style={styles.deleteButton}
@@ -163,12 +173,12 @@ export function DepartmentManageOverlay({
                 onPress={() => onDelete(draft)}
               />
             ) : null}
-            <Button label="Cancel" variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
+            <Button label={isSpanish(language) ? 'Cancelar' : 'Cancel'} variant="secondary" size="md" style={styles.footerButton} onPress={onClose} />
             <Button
-              label={saving ? 'Saving...' : isCreate ? 'Create Department' : 'Save Department'}
+              label={saving ? (isSpanish(language) ? 'Guardando...' : 'Saving...') : isCreate ? (isSpanish(language) ? 'Crear departamento' : 'Create Department') : (isSpanish(language) ? 'Guardar departamento' : 'Save Department')}
               variant="primary"
               size="md"
-              style={{ ...styles.footerButton, ...styles.primaryButton }}
+              style={[styles.footerButton, styles.primaryButton]}
               disabled={saving || deleting || !draft.name.trim() || !draft.code.trim()}
               onPress={() => onSave(draft)}
             />
@@ -188,11 +198,12 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
     maxWidth: 720,
+    maxHeight: '90%',
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
@@ -205,7 +216,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   eyebrow: {
     fontSize: 12,
@@ -213,20 +224,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     marginBottom: 8,
   },
   title: {
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   closeButton: {
     width: 40,
@@ -235,7 +246,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   content: {
     padding: 24,
@@ -261,22 +272,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#F6F8FC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 1,
-    borderColor: '#E8EDF5',
+    borderColor: AppColors.resourceStatus.stable.track,
   },
   statusChipActive: {
-    backgroundColor: '#EEF1FF',
-    borderColor: '#C9D1FF',
+    backgroundColor: AppColors.surface.brandSoft,
+    borderColor: AppColors.border.brandMuted,
   },
   statusChipText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   statusChipTextActive: {
-    color: '#1718C7',
+    color: AppColors.brand.action,
   },
   notesInputContainer: {
     height: 52,
@@ -293,7 +304,7 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#EEF2F7',
+    borderTopColor: AppColors.border.soft,
   },
   deleteButton: {
     marginRight: 'auto',
@@ -303,8 +314,8 @@ const styles = StyleSheet.create({
     minWidth: 150,
   },
   primaryButton: {
-    backgroundColor: '#1718C7',
-    borderColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
+    borderColor: AppColors.brand.action,
   },
 });
 

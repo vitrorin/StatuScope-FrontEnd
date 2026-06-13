@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Button, ButtonVariant } from '../foundation/Button';
 import { ProgressBar } from '../foundation/ProgressBar';
 import { CardBase } from '../patterns/CardBase';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type InventoryVariant = 'normal' | 'warning' | 'critical';
 
@@ -25,19 +26,19 @@ export interface InventoryProgressCardProps {
 
 const variantStyles = {
   normal: {
-    progressBg: '#E5E7EB',
-    progressFill: '#22C55E',
-    statusText: '#6B7280',
+    progressBg: AppColors.border.muted,
+    progressFill: AppColors.status.successBright,
+    statusText: AppColors.table.muted,
   },
   warning: {
-    progressBg: '#FEF3C7',
-    progressFill: '#F59E0B',
-    statusText: '#D97706',
+    progressBg: AppColors.status.warningSoft,
+    progressFill: AppColors.status.warning,
+    statusText: AppColors.status.warningText,
   },
   critical: {
-    progressBg: '#FEE2E2',
-    progressFill: '#EF4444',
-    statusText: '#DC2626',
+    progressBg: AppColors.status.dangerBorder,
+    progressFill: AppColors.status.dangerBright,
+    statusText: AppColors.status.danger,
   },
 };
 
@@ -100,37 +101,36 @@ export function InventoryProgressCard({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: AppSpacing.card,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: AppSpacing[6],
   },
   titleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: AppSpacing[3],
     flex: 1,
-    marginRight: 12,
+    marginRight: AppSpacing[6],
   },
   titleIcon: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    ...AppTypography.textStyles.bodyStrong,
+    color: AppColors.text.strong,
   },
   valueText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
+    ...AppTypography.textStyles.body,
+    fontWeight: AppTypography.fontWeights.medium,
+    color: AppColors.table.muted,
   },
   progressContainer: {
-    marginBottom: 12,
+    marginBottom: AppSpacing[6],
   },
   footer: {
     flexDirection: 'row',
@@ -138,11 +138,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   belowActionWrap: {
-    marginTop: 10,
+    marginTop: AppSpacing[5],
     alignItems: 'flex-end',
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '500',
+    ...AppTypography.textStyles.caption,
+    fontWeight: AppTypography.fontWeights.medium,
   },
 });

@@ -1,14 +1,15 @@
+import { AppColors } from '@/constants/theme';
 import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
 
 import { View } from 'react-native';
 import { CheckboxField } from '../../components/inputs/CheckboxField';
 
 const meta = {
-  title: 'Patterns/CheckboxField',
+  title: 'Componentes reutilizables/Inputs/CheckboxField',
   component: CheckboxField,
   decorators: [
     (Story) => (
-      <View style={{ flex: 1, padding: 24, backgroundColor: '#F5F7FB' }}>
+      <View style={{ flex: 1, padding: 24, backgroundColor: AppColors.surface.canvas }}>
         <View style={{ maxWidth: 400 }}>
           <Story />
         </View>

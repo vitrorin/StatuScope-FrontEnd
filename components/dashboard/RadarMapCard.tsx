@@ -16,6 +16,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { MapControlButton } from './MapControlButton';
 import { MapLegend } from './MapLegend';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 export interface RadarMapPin {
   id?: string;
@@ -58,6 +59,7 @@ export interface RadarMapCardProps {
   showHeader?: boolean;
   showFooter?: boolean;
   mapHeight?: number;
+  fitMapToCard?: boolean;
   mapCenterLatitude?: number;
   mapCenterLongitude?: number;
   mapZoom?: number;
@@ -73,18 +75,30 @@ export interface RadarMapCardProps {
   onBottomRightActionPress?: () => void;
 }
 
+type WheelZoomEvent = {
+  preventDefault?: () => void;
+  stopPropagation?: () => void;
+  deltaY?: number;
+  nativeEvent?: {
+    preventDefault?: () => void;
+    stopPropagation?: () => void;
+    stopImmediatePropagation?: () => void;
+    deltaY?: number;
+  };
+};
+
 const defaultPins: RadarMapPin[] = [
   {
     top: '49%',
     left: '48%',
-    borderColor: '#EF4444',
-    icon: <MaterialCommunityIcons name="alert" size={16} color="#EF4444" />,
+    borderColor: AppColors.status.dangerBright,
+    icon: <MaterialCommunityIcons name="alert" size={16} color={AppColors.status.dangerBright} />,
   },
   {
     top: '33%',
     left: '63%',
-    borderColor: '#0003B8',
-    icon: <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />,
+    borderColor: AppColors.brand.primary,
+    icon: <MaterialCommunityIcons name="hospital-box-outline" size={12} color={AppColors.brand.primary} />,
   },
 ];
 
@@ -104,6 +118,7 @@ export function RadarMapCard({
   showHeader = false,
   showFooter = true,
   mapHeight = 520,
+  fitMapToCard = false,
   mapCenterLatitude,
   mapCenterLongitude,
   mapZoom = 10,
@@ -120,7 +135,10 @@ export function RadarMapCard({
 }: RadarMapCardProps) {
   const mapPins = pins ?? defaultPins;
   const mapPolygons = polygons ?? [];
-  const [mapWidths, setMapWidths] = useState({ inline: 0, fullscreen: 0 });
+  const [mapSizes, setMapSizes] = useState({
+    inline: { width: 0, height: 0 },
+    fullscreen: { width: 0, height: 0 },
+  });
   const [currentZoom, setCurrentZoom] = useState(mapZoom);
   const [currentCenter, setCurrentCenter] = useState(() => ({
     latitude: mapCenterLatitude,
@@ -192,27 +210,37 @@ export function RadarMapCard({
     setCurrentZoom(mapZoom);
   };
 
-  const handleWheelZoom = (event: { preventDefault?: () => void; stopPropagation?: () => void; deltaY?: number }) => {
+  const handleWheelZoom = (event: WheelZoomEvent) => {
     event.preventDefault?.();
     event.stopPropagation?.();
-    const deltaY = event.deltaY ?? 0;
+    event.nativeEvent?.preventDefault?.();
+    event.nativeEvent?.stopPropagation?.();
+    event.nativeEvent?.stopImmediatePropagation?.();
+    const deltaY = event.deltaY ?? event.nativeEvent?.deltaY ?? 0;
     if (deltaY === 0) return;
     setCurrentZoom((zoom) => Math.max(minZoom, Math.min(maxZoom, zoom + (deltaY < 0 ? 1 : -1))));
   };
 
   const mapSurface = (height: number, fullscreen = false) => {
     const surfaceKey = fullscreen ? 'fullscreen' : 'inline';
-    const surfaceWidth = mapWidths[surfaceKey];
+    const shouldFitMapToCard = fitMapToCard && !fullscreen;
+    const surfaceSize = mapSizes[surfaceKey];
+    const surfaceWidth = surfaceSize.width;
+    const surfaceHeight = shouldFitMapToCard ? surfaceSize.height : height;
+    const surfaceReady = !shouldFitMapToCard || (surfaceWidth > 0 && surfaceHeight > 0);
     const pinSpreadOffsets = buildPinSpreadOffsets(mapPins);
 
     return (
     <MapSurfaceFrame
       height={height}
+      fillAvailableHeight={shouldFitMapToCard}
       onLayout={(event) => {
         const nextWidth = event.nativeEvent.layout.width;
-        setMapWidths((current) => (
-          Math.abs(current[surfaceKey] - nextWidth) > 1
-            ? { ...current, [surfaceKey]: nextWidth }
+        const nextHeight = event.nativeEvent.layout.height;
+        setMapSizes((current) => (
+          Math.abs(current[surfaceKey].width - nextWidth) > 1
+            || Math.abs(current[surfaceKey].height - nextHeight) > 1
+            ? { ...current, [surfaceKey]: { width: nextWidth, height: nextHeight } }
             : current
         ));
       }}
@@ -221,7 +249,11 @@ export function RadarMapCard({
       panHandlers={enablePan ? panResponder.panHandlers : undefined}
     >
       {(() => {
-        const surfaceTiles = buildTileLayout(currentCenter.latitude, currentCenter.longitude, currentZoom, surfaceWidth, height);
+        if (!surfaceReady) {
+          return <MapLoadingSkeleton />;
+        }
+
+        const surfaceTiles = buildTileLayout(currentCenter.latitude, currentCenter.longitude, currentZoom, surfaceWidth, surfaceHeight);
         const hasSurfaceMap = surfaceTiles.length > 0;
 
         return hasSurfaceMap ? (
@@ -230,7 +262,7 @@ export function RadarMapCard({
             <Image
               key={`${tile.z}-${tile.x}-${tile.y}`}
               source={{ uri: `https://tile.openstreetmap.org/${tile.z}/${tile.x}/${tile.y}.png` }}
-              style={[styles.mapTile, { left: tile.left, top: tile.top }]}
+              style={[styles.mapTile, { left: tile.left, top: tile.top, width: tile.size, height: tile.size }]}
               contentFit="cover"
               pointerEvents="none"
             />
@@ -243,11 +275,11 @@ export function RadarMapCard({
         );
       })()}
 
-      {mapPolygons.length > 0
+      {surfaceReady && mapPolygons.length > 0
         && typeof currentCenter.latitude === 'number'
         && typeof currentCenter.longitude === 'number'
         && surfaceWidth > 0 ? (
-          <Svg style={styles.polygonLayer} width={surfaceWidth} height={height}>
+              <Svg style={styles.polygonLayer} width={surfaceWidth} height={surfaceHeight}>
             {mapPolygons.map((polygon) => (
               <Path
                 key={polygon.id}
@@ -257,10 +289,10 @@ export function RadarMapCard({
                   currentCenter.longitude as number,
                   currentZoom,
                   surfaceWidth,
-                  height,
+                  surfaceHeight,
                 )}
-                fill={polygon.fillColor ?? 'rgba(0, 3, 184, 0.08)'}
-                stroke={polygon.strokeColor ?? 'rgba(0, 3, 184, 0.5)'}
+                fill={polygon.fillColor ?? withAlpha(AppColors.brand.primary, 0.08)}
+                stroke={polygon.strokeColor ?? withAlpha(AppColors.brand.primary, 0.5)}
                 strokeWidth={polygon.strokeWidth ?? 1.5}
                 onPress={polygon.onPress}
               />
@@ -280,7 +312,7 @@ export function RadarMapCard({
           </View>
           {overlayItems?.map((item, index) => (
             <View key={index} style={styles.overlayItem}>
-              <View style={[styles.overlayDot, { backgroundColor: item.color || '#1D4ED8' }]} />
+              <View style={[styles.overlayDot, { backgroundColor: item.color || AppColors.brand.primary }]} />
               <Text style={styles.overlayLabel}>{item.label}</Text>
               <Text style={styles.overlayValue}>{item.value}</Text>
             </View>
@@ -288,7 +320,7 @@ export function RadarMapCard({
         </View>
       ) : null}
 
-      {typeof surveillanceRadiusKm === 'number'
+      {surfaceReady && typeof surveillanceRadiusKm === 'number'
         && typeof mapCenterLatitude === 'number'
         && typeof mapCenterLongitude === 'number'
         && typeof currentCenter.latitude === 'number'
@@ -306,19 +338,19 @@ export function RadarMapCard({
                 currentCenter.longitude,
                 currentZoom,
                 surfaceWidth,
-                height,
+                surfaceHeight,
               ),
             ]}
           />
         ) : null}
 
-      {mapPins.map((pin, index) => {
+      {surfaceReady ? mapPins.map((pin, index) => {
         const key = pin.id ?? index;
         const projected = typeof currentCenter.latitude === 'number'
           && typeof currentCenter.longitude === 'number'
           && typeof pin.latitude === 'number'
           && typeof pin.longitude === 'number'
-          ? projectPin(pin.latitude, pin.longitude, currentCenter.latitude, currentCenter.longitude, currentZoom, surfaceWidth, height)
+          ? projectPin(pin.latitude, pin.longitude, currentCenter.latitude, currentCenter.longitude, currentZoom, surfaceWidth, surfaceHeight)
           : null;
         const spreadOffset = projected ? pinSpreadOffsets.get(index) : undefined;
         const pinPosition = projected
@@ -331,7 +363,7 @@ export function RadarMapCard({
           projected.left < -48
           || projected.left > surfaceWidth + 48
           || projected.top < -48
-          || projected.top > height + 48
+          || projected.top > surfaceHeight + 48
         )) {
           return null;
         }
@@ -341,7 +373,7 @@ export function RadarMapCard({
               styles.pin,
               {
                 borderColor: pin.borderColor,
-                backgroundColor: pin.fillColor || '#FFFFFF',
+                backgroundColor: pin.fillColor || AppColors.surface.card,
               },
             ]}
           >
@@ -370,7 +402,7 @@ export function RadarMapCard({
             )}
           </View>
         );
-      })}
+      }) : null}
 
       {showControls ? (
         <View style={styles.controlsContainer}>
@@ -386,7 +418,7 @@ export function RadarMapCard({
           activeOpacity={0.8}
           onPress={onBottomRightActionPress ?? (() => setIsFullscreen(true))}
         >
-          <Feather name="maximize-2" size={14} color="#0003B8" />
+          <Feather name="maximize-2" size={14} color={AppColors.brand.primary} />
           <Text style={styles.expandButtonText}>{bottomRightActionLabel}</Text>
         </TouchableOpacity>
       ) : null}
@@ -399,7 +431,7 @@ export function RadarMapCard({
       {showHeader ? (
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
-            <Feather name="map" size={18} color="#0003B8" />
+            <Feather name="map" size={18} color={AppColors.brand.primary} />
             <Text style={styles.headerTitle}>{title}</Text>
           </View>
 
@@ -416,9 +448,9 @@ export function RadarMapCard({
           {legendItems && legendItems.length > 0 && !showHeader ? (
             <MapLegend items={legendItems} orientation="horizontal" style={styles.footerLegend} />
           ) : (
-            <Text style={styles.footerText}>{footerTextLeft}</Text>
+            footerTextLeft ? <Text style={styles.footerText}>{footerTextLeft}</Text> : <View />
           )}
-          <Text style={styles.footerText}>{footerTextRight}</Text>
+          {footerTextRight ? <Text style={styles.footerText}>{footerTextRight}</Text> : null}
         </View>
       ) : null}
 
@@ -428,11 +460,11 @@ export function RadarMapCard({
           <View style={styles.fullscreenCard}>
             <View style={styles.fullscreenHeader}>
               <View style={styles.headerTitleRow}>
-                <Feather name="map" size={18} color="#0003B8" />
+                <Feather name="map" size={18} color={AppColors.brand.primary} />
                 <Text style={styles.headerTitle}>{title}</Text>
               </View>
               <TouchableOpacity style={styles.closeButton} onPress={() => setIsFullscreen(false)} activeOpacity={0.75}>
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
             {mapSurface(720, true)}
@@ -446,6 +478,7 @@ export function RadarMapCard({
 function MapSurfaceFrame({
   children,
   height,
+  fillAvailableHeight,
   onLayout,
   onWheel,
   onHoverChange,
@@ -453,14 +486,48 @@ function MapSurfaceFrame({
 }: {
   children: React.ReactNode;
   height: number;
+  fillAvailableHeight?: boolean;
   onLayout: (event: LayoutChangeEvent) => void;
-  onWheel: (event: { preventDefault?: () => void; stopPropagation?: () => void; deltaY?: number }) => void;
+  onWheel: (event: WheelZoomEvent) => void;
   onHoverChange?: (isHovering: boolean) => void;
   panHandlers?: object;
 }) {
+  const frameRef = useRef<View | null>(null);
+
+  useEffect(() => {
+    const node = frameRef.current as unknown as {
+      addEventListener?: (
+        type: 'wheel',
+        listener: (event: WheelEvent) => void,
+        options?: { passive?: boolean; capture?: boolean },
+      ) => void;
+      removeEventListener?: (
+        type: 'wheel',
+        listener: (event: WheelEvent) => void,
+        options?: { passive?: boolean; capture?: boolean },
+      ) => void;
+    } | null;
+
+    if (!node?.addEventListener || !node.removeEventListener) return undefined;
+
+    const handleNativeWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      onWheel(event);
+    };
+    const wheelOptions = { passive: false, capture: true };
+
+    node.addEventListener('wheel', handleNativeWheel, wheelOptions);
+    return () => {
+      node.removeEventListener?.('wheel', handleNativeWheel, wheelOptions);
+    };
+  }, [onWheel]);
+
   return (
     <View
-      style={[styles.mapContainer, { height }]}
+      ref={frameRef}
+      style={[styles.mapContainer, fillAvailableHeight ? styles.mapContainerFill : { height }]}
       onLayout={onLayout}
       {...(panHandlers ?? {})}
       {...({
@@ -470,6 +537,22 @@ function MapSurfaceFrame({
       } as object)}
     >
       {children}
+    </View>
+  );
+}
+
+function MapLoadingSkeleton() {
+  return (
+    <View style={styles.mapLoadingSkeleton}>
+      <View style={styles.mapLoadingPanel}>
+        <View style={styles.mapLoadingTitle} />
+        <View style={styles.mapLoadingLine} />
+        <View style={[styles.mapLoadingLine, styles.mapLoadingLineShort]} />
+      </View>
+      <View style={[styles.mapLoadingPin, styles.mapLoadingPinLarge, { top: '30%', left: '39%' }]} />
+      <View style={[styles.mapLoadingPin, { top: '42%', left: '54%' }]} />
+      <View style={[styles.mapLoadingPin, { top: '58%', left: '47%' }]} />
+      <View style={[styles.mapLoadingPin, styles.mapLoadingPinLarge, { top: '50%', left: '64%' }]} />
     </View>
   );
 }
@@ -506,17 +589,19 @@ function buildTileLayout(
     return [];
   }
 
-  const worldSize = TILE_SIZE * 2 ** zoom;
+  const tileZoom = Math.max(0, Math.min(19, Math.round(zoom)));
+  const tileScale = 2 ** (zoom - tileZoom);
+  const scaledTileSize = TILE_SIZE * tileScale;
   const centerX = lonToWorldX(longitude, zoom);
   const centerY = latToWorldY(latitude, zoom);
   const originX = centerX - width / 2;
   const originY = centerY - height / 2;
-  const startX = Math.floor(originX / TILE_SIZE);
-  const endX = Math.floor((originX + width) / TILE_SIZE);
-  const startY = Math.floor(originY / TILE_SIZE);
-  const endY = Math.floor((originY + height) / TILE_SIZE);
-  const maxTile = 2 ** zoom;
-  const tiles: { x: number; y: number; z: number; left: number; top: number }[] = [];
+  const startX = Math.floor(originX / scaledTileSize);
+  const endX = Math.floor((originX + width) / scaledTileSize);
+  const startY = Math.floor(originY / scaledTileSize);
+  const endY = Math.floor((originY + height) / scaledTileSize);
+  const maxTile = 2 ** tileZoom;
+  const tiles: { x: number; y: number; z: number; left: number; top: number; size: number }[] = [];
 
   for (let tileX = startX; tileX <= endX; tileX += 1) {
     for (let tileY = startY; tileY <= endY; tileY += 1) {
@@ -525,9 +610,10 @@ function buildTileLayout(
       tiles.push({
         x: wrappedX,
         y: tileY,
-        z: zoom,
-        left: tileX * TILE_SIZE - originX,
-        top: tileY * TILE_SIZE - originY,
+        z: tileZoom,
+        left: tileX * scaledTileSize - originX,
+        top: tileY * scaledTileSize - originY,
+        size: scaledTileSize,
       });
     }
   }
@@ -666,12 +752,12 @@ function radiusCircleStyle(
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: '#FCFDFE',
+    backgroundColor: AppColors.surface.cardSoft,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.05)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.05),
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -680,13 +766,13 @@ const styles = StyleSheet.create({
   header: {
     minHeight: 66,
     borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
+    borderBottomColor: AppColors.surface.subtle,
     paddingHorizontal: 20,
     paddingVertical: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -697,14 +783,62 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   mapContainer: {
     position: 'relative',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
     overflow: 'hidden',
     cursor: 'grab' as never,
     userSelect: 'none' as never,
+    overscrollBehavior: 'contain' as never,
+    touchAction: 'none' as never,
+  },
+  mapContainerFill: {
+    flex: 1,
+  },
+  mapLoadingSkeleton: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: AppColors.border.default,
+  },
+  mapLoadingPanel: {
+    position: 'absolute',
+    top: 24,
+    left: 24,
+    width: 214,
+    borderRadius: 14,
+    padding: 16,
+    backgroundColor: withAlpha(AppColors.surface.card, 0.92),
+  },
+  mapLoadingTitle: {
+    width: 112,
+    height: 14,
+    borderRadius: 999,
+    backgroundColor: AppColors.border.strong,
+    marginBottom: 16,
+  },
+  mapLoadingLine: {
+    width: 156,
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: AppColors.border.default,
+    marginTop: 10,
+  },
+  mapLoadingLineShort: {
+    width: 118,
+  },
+  mapLoadingPin: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: AppColors.border.strong,
+    backgroundColor: AppColors.surface.subtle,
+  },
+  mapLoadingPinLarge: {
+    width: 34,
+    height: 34,
   },
   mapImage: {
     position: 'absolute',
@@ -715,11 +849,11 @@ const styles = StyleSheet.create({
   },
   mapPlaceholder: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#DCE7F3',
+    backgroundColor: AppColors.border.panelSoft,
   },
   tileLayer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.border.default,
     pointerEvents: 'none',
   },
   mapTile: {
@@ -732,10 +866,10 @@ const styles = StyleSheet.create({
     top: 24,
     left: 24,
     width: 214,
-    backgroundColor: 'rgba(255,255,255,0.94)',
+    backgroundColor: withAlpha(AppColors.surface.card, 0.94),
     borderRadius: 14,
     padding: 16,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.08,
     shadowRadius: 24,
@@ -757,10 +891,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '700',
     letterSpacing: 1.4,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   overlayBadge: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: AppColors.status.successSoft,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
@@ -769,7 +903,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 14,
     fontWeight: '700',
-    color: '#16A34A',
+    color: AppColors.status.success,
   },
   overlayItem: {
     flexDirection: 'row',
@@ -786,13 +920,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     lineHeight: 16,
-    color: '#334155',
+    color: AppColors.text.body,
   },
   overlayValue: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   pinWrap: {
     position: 'absolute',
@@ -801,8 +935,8 @@ const styles = StyleSheet.create({
   radiusCircle: {
     position: 'absolute',
     borderWidth: 2,
-    borderColor: 'rgba(0, 3, 184, 0.32)',
-    backgroundColor: 'rgba(0, 3, 184, 0.07)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.32),
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.07),
     zIndex: 2,
   },
   pin: {
@@ -813,7 +947,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
+    shadowColor: AppColors.neutral.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
@@ -840,13 +974,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.12)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.12),
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -857,7 +991,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '700',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   controlButton: {
     width: 40,
@@ -867,8 +1001,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 0,
     paddingVertical: 0,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#0F172A',
+    backgroundColor: AppColors.surface.card,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -877,13 +1011,13 @@ const styles = StyleSheet.create({
   footer: {
     minHeight: 38,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: AppColors.border.default,
     paddingHorizontal: 18,
     paddingVertical: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   footerLegend: {
     flex: 1,
@@ -891,7 +1025,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 10,
     lineHeight: 14,
-    color: '#64748B',
+    color: AppColors.text.secondary,
   },
   fullscreenOverlay: {
     flex: 1,
@@ -900,16 +1034,16 @@ const styles = StyleSheet.create({
   },
   fullscreenBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.36)',
+    backgroundColor: AppColors.overlay.scrim,
   },
   fullscreenCard: {
     flex: 1,
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.16,
     shadowRadius: 34,
@@ -922,7 +1056,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
   },
   closeButton: {
     width: 40,
@@ -931,7 +1065,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
 });

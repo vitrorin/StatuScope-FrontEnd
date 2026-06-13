@@ -1,0 +1,73 @@
+name: OWASP ZAP - Frontend Full Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Frontend URL to scan'
+        required: true
+        default: 'http://localhost:8080'
+  push:
+    branches: [main]
+
+jobs:
+  zap-full-scan:
+    name: ZAP Full Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        env:
+          EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://example.com' }}
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY || 'placeholder' }}
+          EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || 'placeholder' }}
+          EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'placeholder' }}
+          EXPO_PUBLIC_FIREBASE_APP_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_APP_ID || 'placeholder' }}
+        run: npx expo export --platform web
+
+      - name: Serve web app
+        run: |
+          npm install -g serve
+          serve dist -p 8080 &
+          sleep 5
+          echo "App running on http://localhost:8080"
+
+      - name: Create ZAP rules file
+        run: |
+          cat > zap-rules.tsv << 'EOF'
+          10202	IGNORE	(Absence of Anti-CSRF Tokens)
+          10015	IGNORE	(Incomplete or No Cache-control Header Set)
+          10098	IGNORE	(Cross-Domain Misconfiguration)
+          EOF
+
+      - name: ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          target: ${{ github.event.inputs.target_url || 'http://localhost:8080' }}
+          rules_file_name: zap-rules.tsv
+          cmd_options: '-a -j'
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-frontend-report-${{ github.run_number }}
+          path: |
+            report_json.json
+            report_html.html
+          retention-days: 30

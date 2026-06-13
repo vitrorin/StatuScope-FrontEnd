@@ -59,7 +59,7 @@ export interface InventoryResourceItem {
   status: string;
   valueText: string;
   progress: number;
-  tone: 'normal' | 'critical';
+  tone: 'normal' | 'low' | 'critical';
   actionLabel: string;
   actionType: 'refill' | 'order' | 'manage';
   location: string;

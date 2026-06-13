@@ -7,6 +7,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RadarMapCard, RadarMapPolygon } from '@/components/dashboard/RadarMapCard';
 import { AlertCard } from '@/components/feedback/AlertCard';
+import { RetryState } from '@/components/feedback/RetryState';
+import { SkeletonLine } from '@/components/feedback/SkeletonLine';
+import { AlertListOverlay } from '@/components/overlays/AlertListOverlay';
 import { DiseaseBreakdownCard } from '@/components/dashboard/DiseaseBreakdownCard';
 import { AlertDetailOverlay } from '@/components/views/doctor/dashboard/Sub-funcionalidades/AlertDetailOverlay';
 import { EpidemiologicalReportOverlay, ReportSection } from '@/components/views/doctor/dashboard/Sub-funcionalidades/EpidemiologicalReportOverlay';
@@ -36,7 +39,9 @@ import {
 import { useTranslation } from '@/i18n';
 import { translateDiseaseName } from '@/lib/diseaseLocalization';
 import { translateDashboardBadge, translateDashboardValue } from '@/lib/dashboardLocalization';
+import { diseaseSeverityColor, severityFillColor, zoneSeverityColor } from '@/lib/dashboardMapColors';
 import { MexicoStateBoundary, mexicoStateBoundaries } from '@/assets/maps/mexicoStateBoundaries';
+import { AppColors, withAlpha } from '@/constants/theme';
 
 const navigationLinks = {
   dashboard: '/dashboard/doctor',
@@ -45,6 +50,12 @@ const navigationLinks = {
 } as const;
 
 const outbreakRadiusOptions = [35, 75, 150] as const;
+const dashboardMetricIds = [
+  'active-cases-nearby',
+  'highest-case-disease',
+  'local-risk-level',
+  'priority-municipality',
+] as const;
 
 type SectionStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -80,7 +91,7 @@ function positionZones(zones: DoctorDashboardMapResponse['zones']): DoctorDashbo
       ...zone,
       top: `${32 + index * 8}%`,
       left: `${44 + index * 6}%`,
-      borderColor: zone.borderColor || (index === 0 ? '#0003B8' : '#F97316'),
+      borderColor: zoneSeverityColor(zone),
     }));
   }
 
@@ -93,7 +104,7 @@ function positionZones(zones: DoctorDashboardMapResponse['zones']): DoctorDashbo
   const latRange = Math.max(maxLat - minLat, 0.01);
   const lonRange = Math.max(maxLon - minLon, 0.01);
 
-  return zones.map((zone, index) => {
+  return zones.map((zone) => {
     const latitude = typeof zone.latitude === 'number' ? zone.latitude : minLat + latRange / 2;
     const longitude = typeof zone.longitude === 'number' ? zone.longitude : minLon + lonRange / 2;
     const top = 18 + ((maxLat - latitude) / latRange) * 64;
@@ -103,7 +114,7 @@ function positionZones(zones: DoctorDashboardMapResponse['zones']): DoctorDashbo
       ...zone,
       top: `${Math.max(12, Math.min(82, top))}%`,
       left: `${Math.max(12, Math.min(82, left))}%`,
-      borderColor: zone.borderColor || (index === 0 ? '#0003B8' : '#F97316'),
+      borderColor: zoneSeverityColor(zone),
     };
   });
 }
@@ -181,6 +192,28 @@ function toMetric(
   };
 }
 
+function placeholderMetrics(
+  t: (key: string, params?: Record<string, string | number>) => string,
+  hospitalName?: string | null,
+): DoctorDashboardMetric[] {
+  return dashboardMetricIds.map((id) => {
+    const title = t(`doctor.dashboard.metrics.${id}.title`);
+
+    return {
+      id,
+      title,
+      value: '',
+      badge: '',
+      status: 'neutral',
+      subtitle: t(`doctor.dashboard.metrics.${id}.subtitle`),
+      detailTitle: title,
+      detailSummary: t(`doctor.dashboard.metrics.${id}.detailSummary`),
+      signalLabel: t(`doctor.dashboard.metrics.${id}.signalLabel`),
+      recommendedAction: t(`doctor.dashboard.metrics.${id}.recommendedAction`),
+    };
+  });
+}
+
 function formatSurroundingsLabel(
   municipalityName: string | null | undefined,
   fallback: string,
@@ -229,7 +262,7 @@ function buildDiseaseRows(
       count: formatNumber(disease.caseCount),
     }),
     progress: disease.progress,
-    barColor: '#1718C7',
+    barColor: AppColors.brand.action,
     barHeight: 12,
   }));
 }
@@ -339,83 +372,37 @@ function getRadiusBounds(
 }
 
 function metricAccentColor(status?: DoctorDashboardMetric['status']) {
-  if (status === 'danger') return '#EF4444';
-  if (status === 'warning') return '#F59E0B';
-  if (status === 'positive') return '#22C55E';
-  return '#64748B';
+  if (status === 'danger') return AppColors.status.dangerBright;
+  if (status === 'warning') return AppColors.status.warningBright;
+  if (status === 'positive') return AppColors.status.successBright;
+  return AppColors.text.secondary;
 }
 
-function metricIcon(metric: DoctorDashboardMetric) {
-  const color = metricAccentColor(metric.status);
+function metricIcon(metric: DoctorDashboardMetric, isLoading = false) {
+  const color = isLoading ? metricAccentColor('neutral') : metricAccentColor(metric.status);
   const iconName = metric.id === 'active-cases-nearby'
     ? 'activity'
     : metric.id === 'highest-case-disease'
       ? 'trending-up'
       : metric.id === 'local-risk-level'
         ? 'alert-triangle'
-        : metric.id === 'hospital-profile'
-          ? 'briefcase'
+        : metric.id === 'priority-municipality'
+          ? 'map-pin'
           : 'bar-chart-2';
 
   return <Feather name={iconName} size={18} color={color} />;
 }
 
-function SkeletonLine({ width, height = 12, style }: { width: number | string; height?: number; style?: object }) {
-  return <View style={[styles.skeletonLine, { width, height }, style]} />;
-}
-
-function RetryOverlay({
-  label,
-  onRetry,
-}: {
-  label: string;
-  onRetry: () => void;
-}) {
-  return (
-    <View style={styles.retryOverlay}>
-      <TouchableOpacity style={styles.retryButton} activeOpacity={0.82} onPress={onRetry}>
-        <Feather name="refresh-cw" size={18} color="#0003B8" />
-        <Text style={styles.retryText}>{label}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function MetricSkeleton({ width }: { width?: number }) {
-  return (
-    <View style={[styles.metricSkeleton, width ? { width } : styles.metricTouchable]}>
-      <View style={styles.skeletonHeader}>
-        <SkeletonLine width="42%" />
-        <SkeletonLine width={48} height={22} />
-      </View>
-      <SkeletonLine width="62%" height={34} />
-      <SkeletonLine width="78%" height={12} style={styles.skeletonSpaced} />
-    </View>
-  );
-}
-
 function MapSkeleton({ width }: { width?: number }) {
-  return (
-    <View style={[styles.mapSkeleton, width ? { width, flex: undefined } : null]}>
-      <View style={styles.skeletonMapOverlay}>
-        <SkeletonLine width={130} height={18} />
-        <SkeletonLine width={70} height={22} />
-      </View>
-      <View style={styles.skeletonPinLarge} />
-      <View style={styles.skeletonPinSmall} />
-      <View style={styles.skeletonMapFooter}>
-        <SkeletonLine width={160} />
-        <SkeletonLine width={130} />
-      </View>
-    </View>
-  );
+  return <View style={[styles.mapSkeleton, width ? { width, flex: undefined } : null]} />;
 }
 
-function AlertsSkeleton({ width }: { width?: number }) {
+function AlertsSkeleton({ width, title }: { width?: number; title: string }) {
   return (
     <View style={[styles.alertsPanel, width ? { width } : null]}>
       <View style={styles.alertsHeader}>
-        <SkeletonLine width={230} height={20} />
+        <Text style={styles.alertsTitle}>{title}</Text>
+        <View style={styles.sectionHeaderRule} />
       </View>
       <View style={styles.alertsList}>
         {[0, 1, 2].map((item) => (
@@ -430,10 +417,13 @@ function AlertsSkeleton({ width }: { width?: number }) {
   );
 }
 
-function BreakdownSkeleton() {
+function BreakdownSkeleton({ title, buttonLabel }: { title: string; buttonLabel: string }) {
   return (
     <View style={[styles.breakdownCard, styles.breakdownSkeleton]}>
-      <SkeletonLine width={230} height={20} />
+      <View style={styles.breakdownSkeletonHeader}>
+        <Text style={styles.breakdownSkeletonTitle}>{title}</Text>
+        <View style={styles.sectionHeaderRule} />
+      </View>
       <View style={styles.breakdownSkeletonRows}>
         {[0, 1, 2, 3, 4].map((item) => (
           <View key={item} style={styles.breakdownSkeletonRow}>
@@ -449,7 +439,9 @@ function BreakdownSkeleton() {
         <SkeletonLine width="100%" />
         <SkeletonLine width="82%" />
       </View>
-      <SkeletonLine width="100%" height={52} />
+      <View style={styles.breakdownSkeletonButton}>
+        <Text style={styles.breakdownSkeletonButtonText}>{buttonLabel}</Text>
+      </View>
     </View>
   );
 }
@@ -598,9 +590,15 @@ export function DoctorDashboard() {
 
   const hospitalName = metricsState.data?.hospitalName ?? profile?.hospitalName ?? profile?.email;
   const topMetrics = useMemo(
-    () => metricsState.data?.metrics.map((metric) => toMetric(metric, t, hospitalName)) ?? [],
+    () => {
+      const metrics = metricsState.data?.metrics ?? [];
+      return metrics.length > 0
+        ? metrics.map((metric) => toMetric(metric, t, hospitalName))
+        : placeholderMetrics(t, hospitalName);
+    },
     [hospitalName, metricsState.data?.metrics, t],
   );
+  const isMetricsLoading = metricsState.status === 'loading' || metricsState.status === 'idle';
   const alerts = useMemo(
     () => (alertsState.data?.alerts ?? []).map((alert) => describeAlert(alert, t)),
     [alertsState.data?.alerts, t],
@@ -687,7 +685,6 @@ export function DoctorDashboard() {
     <DashboardLayout
       active="dashboard"
       sectionLabel={t('doctor.dashboard.sectionLabel')}
-      searchPlaceholder={t('doctor.dashboard.searchPlaceholder')}
       userName={profile?.fullName ?? 'Doctor'}
       userId={hospitalName}
       avatarText={initialsFromName(profile?.fullName)}
@@ -695,17 +692,17 @@ export function DoctorDashboard() {
       onLogout={async () => { await logout(); router.replace('/login'); }}
     >
       <ScrollView
+        testID="doctor-dashboard-screen"
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         scrollEnabled={!isMapHovered}
       >
         <View style={styles.container}>
-        <View style={styles.dashboardToolbar}>
-          <View style={styles.dashboardToolbarContext}>
-            <View>
-              <Text style={styles.toolbarEyebrow}>Dashboard</Text>
-              <View style={styles.dashboardTitleUnderline} />
-            </View>
+        <View style={styles.heroStrip}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroEyebrow}>{t('doctor.dashboard.hero.eyebrow')}</Text>
+            <Text style={styles.heroTitle}>{t('doctor.dashboard.hero.title')}</Text>
+            <Text style={styles.heroDescription}>{t('doctor.dashboard.hero.description')}</Text>
           </View>
           <View style={styles.radiusControlGroup}>
             <Text style={styles.radiusControlLabel}>{t('doctor.dashboard.radiusControl.label')}</Text>
@@ -737,25 +734,31 @@ export function DoctorDashboard() {
             }
           }}
         >
-          {metricsState.status === 'loading' || metricsState.status === 'idle' ? (
-            [0, 1, 2, 3].map((item) => (
-              <MetricSkeleton key={item} width={metricWidth} />
-            ))
-          ) : metricsState.status === 'error' ? (
-            [0, 1, 2, 3].map((item) => (
+          {metricsState.status === 'error' ? (
+            topMetrics.map((metric) => (
               <View
-                key={item}
+                key={metric.id}
                 style={[styles.retryHost, metricWidth ? { width: metricWidth } : styles.metricTouchable]}
               >
-                <MetricSkeleton />
-                <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadMetrics} />
+                <StatCard
+                  title={metric.title}
+                  value={metric.value}
+                  badge={metric.badge}
+                  status={metric.status}
+                  subtitle={metric.subtitle}
+                  style={[styles.metricCard, metricWidth ? { width: undefined, flex: undefined } : null]}
+                  icon={metricIcon(metric, !metricsState.data)}
+                  isLoading={!metricsState.data}
+                />
+                <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadMetrics} compact style={styles.retryOverlay} />
               </View>
             ))
           ) : topMetrics.map((metric) => (
             <TouchableOpacity
-              key={metric.title}
+              key={metric.id}
               activeOpacity={0.84}
               onPress={() => setSelectedMetric(metric)}
+              disabled={isMetricsLoading}
               style={metricWidth ? { width: metricWidth } : styles.metricTouchable}
             >
               <StatCard
@@ -765,7 +768,8 @@ export function DoctorDashboard() {
                 status={metric.status}
                 subtitle={metric.subtitle}
                 style={[styles.metricCard, metricWidth ? { width: undefined, flex: undefined } : null]}
-                icon={metricIcon(metric)}
+                icon={metricIcon(metric, isMetricsLoading)}
+                isLoading={isMetricsLoading}
               />
             </TouchableOpacity>
           ))}
@@ -777,7 +781,7 @@ export function DoctorDashboard() {
           ) : mapState.status === 'error' ? (
             <View style={[styles.retryHost, mapWidth ? { width: mapWidth } : styles.mapCard]}>
               <MapSkeleton />
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadMap} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadMap} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <RadarMapCard
@@ -785,17 +789,17 @@ export function DoctorDashboard() {
               showOverlayPanel
               overlayTitle={t('doctor.dashboard.map.overlayTitle').toUpperCase()}
               overlayBadgeLabel={t('doctor.dashboard.map.secure').toUpperCase()}
-              overlayItems={(mapState.data?.diseaseBreakdown ?? []).slice(0, 3).map((disease, index) => ({
+              overlayItems={(mapState.data?.diseaseBreakdown ?? []).slice(0, 3).map((disease) => ({
                 label: translateDiseaseName(t, disease.diseaseName),
                 value: formatNumber(disease.caseCount),
-                color: index === 0 ? '#EF4444' : index === 1 ? '#F97316' : '#0003B8',
+                color: diseaseSeverityColor(disease),
               }))}
               showControls
               legendItems={[
-                { label: t('doctor.dashboard.map.highRisk'), color: '#EF4444' },
-                { label: t('doctor.dashboard.map.emerging'), color: '#FB923C' },
-                { label: t('doctor.dashboard.map.lowRisk'), color: '#22C55E' },
-                { label: t('doctor.dashboard.map.hospitalNode'), color: '#0003B8' },
+                { label: t('doctor.dashboard.map.highRisk'), color: AppColors.status.dangerBright },
+                { label: t('doctor.dashboard.map.emerging'), color: AppColors.status.warningBright },
+                { label: t('doctor.dashboard.map.lowRisk'), color: AppColors.status.successBright },
+                { label: t('doctor.dashboard.map.hospitalNode'), color: AppColors.brand.primary },
               ]}
               footerTextLeft="© OpenStreetMap contributors"
               footerTextRight={formatSyncTime(mapState.data?.generatedAt, t)}
@@ -817,13 +821,13 @@ export function DoctorDashboard() {
                 latitude: zone.latitude,
                 longitude: zone.longitude,
                 borderColor: zone.borderColor,
-                fillColor: '#FFFFFF',
+                fillColor: AppColors.surface.card,
                 icon:
-                  zone.borderColor === '#0003B8' ? (
-                    <MaterialCommunityIcons name="hospital-box-outline" size={12} color="#0003B8" />
-                  ) : zone.borderColor === '#F97316' ? (
+                  zone.borderColor === AppColors.brand.primary ? (
+                    <MaterialCommunityIcons name="hospital-box-outline" size={12} color={AppColors.brand.primary} />
+                  ) : zone.borderColor === AppColors.status.warningBright ? (
                     <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
-                  ) : zone.borderColor === '#22C55E' ? (
+                  ) : zone.borderColor === AppColors.status.successBright ? (
                     <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
                   ) : (
                     <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />
@@ -835,11 +839,11 @@ export function DoctorDashboard() {
           )}
 
           {alertsState.status === 'loading' || alertsState.status === 'idle' ? (
-            <AlertsSkeleton width={mapWidth} />
+            <AlertsSkeleton width={mapWidth} title={t('doctor.dashboard.alerts.title')} />
           ) : alertsState.status === 'error' ? (
             <View style={[styles.retryHost, mapWidth ? { width: mapWidth } : null]}>
-              <AlertsSkeleton />
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadAlerts} />
+              <AlertsSkeleton title={t('doctor.dashboard.alerts.title')} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadAlerts} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <View
@@ -847,6 +851,7 @@ export function DoctorDashboard() {
             >
               <View style={styles.alertsHeader}>
                 <Text style={styles.alertsTitle}>{t('doctor.dashboard.alerts.title')}</Text>
+                <View style={styles.sectionHeaderRule} />
               </View>
               <View style={styles.alertsList}>
                 {alerts.length === 0 ? (
@@ -878,7 +883,7 @@ export function DoctorDashboard() {
                         activeOpacity={0.82}
                         onPress={() => setIsMoreAlertsOpen(true)}
                       >
-                        <Feather name="list" size={17} color="#0003B8" />
+                        <Feather name="list" size={17} color={AppColors.brand.primary} />
                         <Text style={styles.moreAlertsText}>{t('doctor.dashboard.alerts.showMore')}</Text>
                         <View style={styles.moreAlertsBadge}>
                           <Text style={styles.moreAlertsBadgeText}>{remainingAlerts.length}</Text>
@@ -895,11 +900,17 @@ export function DoctorDashboard() {
 
         <View style={styles.breakdownGrid}>
           {localBreakdownState.status === 'loading' || localBreakdownState.status === 'idle' ? (
-            <BreakdownSkeleton />
+            <BreakdownSkeleton
+              title={t('doctor.dashboard.diseaseBreakdown.localTitle')}
+              buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
+            />
           ) : localBreakdownState.status === 'error' ? (
             <View style={[styles.retryHost, styles.breakdownRetryHost]}>
-              <BreakdownSkeleton />
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadLocalBreakdown} />
+              <BreakdownSkeleton
+                title={t('doctor.dashboard.diseaseBreakdown.localTitle')}
+                buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
+              />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadLocalBreakdown} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <DiseaseBreakdownCard
@@ -916,11 +927,17 @@ export function DoctorDashboard() {
           )}
 
           {stateBreakdownState.status === 'loading' || stateBreakdownState.status === 'idle' ? (
-            <BreakdownSkeleton />
+            <BreakdownSkeleton
+              title={t('doctor.dashboard.diseaseBreakdown.stateTitle')}
+              buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
+            />
           ) : stateBreakdownState.status === 'error' ? (
             <View style={[styles.retryHost, styles.breakdownRetryHost]}>
-              <BreakdownSkeleton />
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={loadStateBreakdown} />
+              <BreakdownSkeleton
+                title={t('doctor.dashboard.diseaseBreakdown.stateTitle')}
+                buttonLabel={t('doctor.dashboard.diseaseBreakdown.exportReport')}
+              />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={loadStateBreakdown} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <DiseaseBreakdownCard
@@ -941,15 +958,16 @@ export function DoctorDashboard() {
       <MetricDetailOverlay visible={selectedMetric !== null} metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
       <MapZoneDetailOverlay visible={selectedZone !== null} zone={selectedZone} onClose={() => setSelectedZone(null)} />
       <AlertDetailOverlay visible={selectedAlert !== null} alert={selectedAlert} onClose={() => setSelectedAlert(null)} />
-      <MoreAlertsOverlay
+      <AlertListOverlay
         visible={isMoreAlertsOpen}
+        title={t('doctor.dashboard.alerts.moreTitle')}
+        eyebrow={t('doctor.dashboard.alerts.moreEyebrow')}
         alerts={remainingAlerts}
         onClose={() => setIsMoreAlertsOpen(false)}
         onSelectAlert={(alert) => {
           setIsMoreAlertsOpen(false);
           setSelectedAlert(alert);
         }}
-        t={t}
       />
       <EpidemiologicalReportOverlay
         visible={isReportOpen}
@@ -1022,15 +1040,15 @@ function StateOutbreakExplorer({
     states.map((state) => [stateLookupKey(state.stateName), state]),
   ), [states]);
   const selectedBoundary = useMemo(() => getStateBoundary(selectedState?.stateName), [selectedState?.stateName]);
+  const selectedStateColor = AppColors.brand.primary;
   const selectorPolygons = useMemo<RadarMapPolygon[]>(() => mexicoStateBoundaries.map((boundary) => {
     const state = statesByName.get(stateLookupKey(boundary.name));
-    const hasOutbreaks = (state?.outbreakCount ?? 0) > 0;
     return {
       id: boundary.id,
       geometry: boundary.geometry,
-      fillColor: hasOutbreaks ? 'rgba(0, 3, 184, 0.08)' : 'rgba(100, 116, 139, 0.04)',
-      strokeColor: hasOutbreaks ? 'rgba(0, 3, 184, 0.42)' : 'rgba(100, 116, 139, 0.24)',
-      strokeWidth: hasOutbreaks ? 1.3 : 1,
+      fillColor: state ? withAlpha(AppColors.brand.primary, 0.05) : withAlpha(AppColors.text.secondary, 0.04),
+      strokeColor: state ? withAlpha(AppColors.brand.primary, 0.62) : withAlpha(AppColors.text.secondary, 0.24),
+      strokeWidth: state && state.outbreakCount > 0 ? 1.3 : 1,
     };
   }), [statesByName]);
   const selectedPolygons = useMemo<RadarMapPolygon[]>(() => (
@@ -1038,12 +1056,12 @@ function StateOutbreakExplorer({
       ? [{
         id: selectedBoundary.id,
         geometry: selectedBoundary.geometry,
-        fillColor: 'rgba(0, 3, 184, 0.12)',
-        strokeColor: '#0003B8',
+        fillColor: severityFillColor(selectedStateColor),
+        strokeColor: selectedStateColor,
         strokeWidth: 2,
       }]
       : []
-  ), [selectedBoundary]);
+  ), [selectedBoundary, selectedStateColor]);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -1062,12 +1080,12 @@ function StateOutbreakExplorer({
             <View style={styles.stateExplorerActions}>
               {selectedState ? (
                 <TouchableOpacity style={styles.stateExplorerSecondaryButton} onPress={onBack} activeOpacity={0.75}>
-                  <Feather name="arrow-left" size={16} color="#0003B8" />
+                  <Feather name="arrow-left" size={16} color={AppColors.brand.primary} />
                   <Text style={styles.stateExplorerSecondaryText}>{t('doctor.dashboard.map.backToStates')}</Text>
                 </TouchableOpacity>
               ) : null}
               <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -1077,21 +1095,22 @@ function StateOutbreakExplorer({
               <MapSkeleton />
             ) : stateMapStatus === 'error' ? (
               <View style={styles.stateExplorerError}>
-                <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={() => onSelectState(selectedState)} />
+                <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={() => onSelectState(selectedState)} compact style={styles.retryOverlay} />
               </View>
             ) : (
               <RadarMapCard
                 title={shortStateName(selectedState.stateName)}
                 showControls
                 showFooter
+                fitMapToCard
                 footerTextLeft="© OpenStreetMap contributors"
                 footerTextRight={t('doctor.dashboard.map.stateOutbreakCount', {
                   count: formatNumber(stateZones.length),
                 })}
-                mapHeight={720}
+                mapHeight={600}
                 mapCenterLatitude={selectedStateCenter?.latitude}
                 mapCenterLongitude={selectedStateCenter?.longitude}
-                mapZoom={7}
+                mapZoom={8}
                 minZoom={6}
                 maxZoom={13}
                 mapBounds={selectedStateBounds}
@@ -1103,10 +1122,10 @@ function StateOutbreakExplorer({
                   latitude: zone.latitude,
                   longitude: zone.longitude,
                   borderColor: zone.borderColor,
-                  fillColor: '#FFFFFF',
-                  icon: zone.borderColor === '#22C55E'
+                  fillColor: AppColors.surface.card,
+                  icon: zone.borderColor === AppColors.status.successBright
                     ? <MaterialCommunityIcons name="check-circle-outline" size={14} color={zone.borderColor} />
-                    : zone.borderColor === '#F97316'
+                    : zone.borderColor === AppColors.status.warningBright
                       ? <MaterialCommunityIcons name="virus-outline" size={14} color={zone.borderColor} />
                       : <MaterialCommunityIcons name="alert" size={16} color={zone.borderColor} />,
                   onPress: () => onZonePress(zone),
@@ -1117,19 +1136,19 @@ function StateOutbreakExplorer({
             <MapSkeleton />
           ) : statesStatus === 'error' ? (
             <View style={styles.stateExplorerError}>
-              <RetryOverlay label={t('doctor.dashboard.retry')} onRetry={onRetryStates} />
+              <RetryState actionLabel={t('doctor.dashboard.retry')} onRetry={onRetryStates} compact style={styles.retryOverlay} />
             </View>
           ) : (
             <RadarMapCard
               title={t('doctor.dashboard.map.stateSelector')}
               showControls
               showFooter
+              fitMapToCard
               footerTextLeft="© OpenStreetMap contributors"
-              footerTextRight={t('doctor.dashboard.map.selectStateHint')}
-              mapHeight={720}
+              mapHeight={600}
               mapCenterLatitude={mexicoCenter.latitude}
               mapCenterLongitude={mexicoCenter.longitude}
-              mapZoom={5}
+              mapZoom={6}
               minZoom={5}
               maxZoom={12}
               enablePan
@@ -1139,59 +1158,14 @@ function StateOutbreakExplorer({
                 id: state.stateId,
                 latitude: state.latitude,
                 longitude: state.longitude,
-                borderColor: state.outbreakCount > 0 ? '#0003B8' : '#64748B',
-                fillColor: '#FFFFFF',
+                borderColor: AppColors.brand.primary,
+                fillColor: AppColors.surface.card,
                 label: shortStateName(state.stateName),
-                icon: <Feather name="map-pin" size={13} color={state.outbreakCount > 0 ? '#0003B8' : '#64748B'} />,
+                icon: <Feather name="map-pin" size={13} color={AppColors.brand.primary} />,
                 onPress: () => onSelectState(state),
               }))}
             />
           )}
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-function MoreAlertsOverlay({
-  visible,
-  alerts,
-  onClose,
-  onSelectAlert,
-  t,
-}: {
-  visible: boolean;
-  alerts: DoctorDashboardAlert[];
-  onClose: () => void;
-  onSelectAlert: (alert: DoctorDashboardAlert) => void;
-  t: (key: string, params?: Record<string, string | number>) => string;
-}) {
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.moreAlertsOverlay}>
-        <Pressable style={styles.stateExplorerBackdrop} onPress={onClose} />
-        <View style={styles.moreAlertsCard}>
-          <View style={styles.moreAlertsHeader}>
-            <View>
-              <Text style={styles.stateExplorerEyebrow}>{t('doctor.dashboard.alerts.moreEyebrow')}</Text>
-              <Text style={styles.stateExplorerTitle}>{t('doctor.dashboard.alerts.moreTitle')}</Text>
-            </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-              <Feather name="x" size={18} color="#64748B" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView contentContainerStyle={styles.moreAlertsList} showsVerticalScrollIndicator={false}>
-            {alerts.map((alert) => (
-              <TouchableOpacity key={alert.id} activeOpacity={0.82} onPress={() => onSelectAlert(alert)}>
-                <AlertCard
-                  title={alert.title}
-                  description={alert.description}
-                  variant={alert.variant}
-                  style={styles.alertCard}
-                />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -1203,31 +1177,51 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   container: {
-    padding: 32,
-    gap: 32,
+    padding: 24,
+    gap: 24,
   },
-  dashboardToolbar: {
+  heroStrip: {
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderRadius: 24,
+    backgroundColor: AppColors.surface.raised,
+    borderWidth: 1,
+    borderColor: withAlpha(AppColors.brand.primary, 0.08),
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 18,
+    justifyContent: 'space-between',
+    shadowColor: AppColors.shadow.blue,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 26,
+    elevation: 4,
   },
-  dashboardToolbarContext: {
-    minWidth: 0,
+  heroCopy: {
     flex: 1,
+    paddingRight: 24,
   },
-  toolbarEyebrow: {
-    fontSize: 40,
-    lineHeight: 48,
-    fontWeight: '900',
-    color: '#0F172A',
+  heroEyebrow: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: AppColors.brand.primary,
+    marginBottom: 8,
   },
-  dashboardTitleUnderline: {
-    width: 214,
-    height: 3,
-    borderRadius: 999,
-    backgroundColor: '#0F172A',
-    marginTop: 8,
+  heroTitle: {
+    fontSize: 26,
+    lineHeight: 34,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+    marginBottom: 8,
+    maxWidth: 720,
+  },
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: AppColors.text.body,
+    maxWidth: 760,
   },
   radiusControlGroup: {
     flexDirection: 'row',
@@ -1238,7 +1232,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
     fontWeight: '900',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -1250,18 +1244,18 @@ const styles = StyleSheet.create({
   radiusSegment: {
     height: 48,
     minWidth: 90,
-    borderRadius: 9,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.18)',
-    backgroundColor: '#FFFFFF',
+    borderColor: withAlpha(AppColors.brand.primary, 0.18),
+    backgroundColor: AppColors.surface.card,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radiusSegmentActive: {
-    backgroundColor: '#0003B8',
-    borderColor: '#0003B8',
-    shadowColor: '#0003B8',
+    backgroundColor: AppColors.brand.primary,
+    borderColor: AppColors.brand.primary,
+    shadowColor: AppColors.brand.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.22,
     shadowRadius: 18,
@@ -1271,10 +1265,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   radiusSegmentTextActive: {
-    color: '#FFFFFF',
+    color: AppColors.surface.card,
   },
   metricsRow: {
     flexDirection: 'row',
@@ -1295,7 +1289,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(248, 250, 252, 0.72)',
+    backgroundColor: AppColors.surface.subtleTranslucent,
   },
   retryButton: {
     flexDirection: 'row',
@@ -1304,10 +1298,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.14)',
-    shadowColor: '#0F172A',
+    borderColor: withAlpha(AppColors.brand.primary, 0.14),
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -1317,11 +1311,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#0003B8',
-  },
-  skeletonLine: {
-    borderRadius: 999,
-    backgroundColor: '#E8EEF6',
+    color: AppColors.brand.primary,
   },
   skeletonSpaced: {
     marginTop: 14,
@@ -1339,9 +1329,9 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FEFFFF',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.frost,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1352,8 +1342,8 @@ const styles = StyleSheet.create({
     height: 560,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.05)',
-    backgroundColor: '#E2E8F0',
+    borderColor: withAlpha(AppColors.brand.primary, 0.05),
+    backgroundColor: AppColors.border.default,
     overflow: 'hidden',
   },
   skeletonMapOverlay: {
@@ -1362,9 +1352,31 @@ const styles = StyleSheet.create({
     left: 24,
     width: 214,
     padding: 16,
-    gap: 14,
+    gap: 12,
     borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.86)',
+    backgroundColor: AppColors.overlay.mapSkeletonPanel,
+  },
+  skeletonMapOverlayHeader: {
+    gap: 10,
+  },
+  skeletonMapOverlayTitle: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    color: AppColors.text.primary,
+  },
+  skeletonMapOverlayBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.08),
+  },
+  skeletonMapOverlayBadgeText: {
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '800',
+    color: AppColors.brand.primary,
   },
   skeletonPinLarge: {
     position: 'absolute',
@@ -1373,7 +1385,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 160,
     borderRadius: 999,
-    backgroundColor: 'rgba(226, 232, 240, 0.85)',
+    backgroundColor: AppColors.overlay.mapSkeletonPin,
   },
   skeletonPinSmall: {
     position: 'absolute',
@@ -1382,9 +1394,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 999,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderColor: AppColors.border.strong,
   },
   skeletonMapFooter: {
     position: 'absolute',
@@ -1396,22 +1408,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   alertSkeletonItem: {
     minHeight: 96,
     gap: 12,
     padding: 20,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
     borderLeftWidth: 4,
-    borderLeftColor: '#E2E8F0',
+    borderLeftColor: AppColors.border.default,
   },
   breakdownSkeleton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
+  },
+  breakdownSkeletonHeader: {
+    marginBottom: 16,
+  },
+  breakdownSkeletonTitle: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+  },
+  sectionHeaderRule: {
+    width: 72,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.14),
+    marginTop: 10,
   },
   breakdownSkeletonRows: {
-    marginTop: 28,
     marginBottom: 24,
     gap: 22,
   },
@@ -1426,9 +1453,23 @@ const styles = StyleSheet.create({
   breakdownSkeletonSummary: {
     paddingTop: 22,
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    borderTopColor: AppColors.surface.muted,
     marginBottom: 18,
     gap: 14,
+  },
+  breakdownSkeletonButton: {
+    minHeight: 52,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: withAlpha(AppColors.brand.primary, 0.1),
+  },
+  breakdownSkeletonButtonText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: AppColors.brand.primary,
   },
   loadingBanner: {
     flexDirection: 'row',
@@ -1437,35 +1478,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: AppColors.surface.brandSoft,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.12)',
+    borderColor: withAlpha(AppColors.brand.primary, 0.12),
   },
   loadingText: {
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
-    color: '#000F6B',
+    color: AppColors.shadow.blue,
   },
   errorBanner: {
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: AppColors.status.infoSoft,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: AppColors.status.infoSoft,
   },
   errorTitle: {
     fontSize: 14,
     lineHeight: 20,
     fontWeight: '700',
-    color: '#991B1B',
+    color: AppColors.status.infoDeep,
   },
   errorText: {
     marginTop: 4,
     fontSize: 13,
     lineHeight: 20,
-    color: '#B91C1C',
+    color: AppColors.brand.link,
   },
   mainGrid: {
     flexDirection: 'row',
@@ -1478,12 +1519,12 @@ const styles = StyleSheet.create({
   },
   alertsPanel: {
     flexShrink: 0,
-    backgroundColor: '#FCFDFE',
+    backgroundColor: AppColors.surface.cardSoft,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.06,
     shadowRadius: 26,
@@ -1492,18 +1533,21 @@ const styles = StyleSheet.create({
   },
   alertsHeader: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 20,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
   },
   alertsTitle: {
     fontSize: 18,
     lineHeight: 28,
     fontWeight: '700',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   alertsList: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
     gap: 16,
     flexDirection: 'column',
   },
@@ -1515,8 +1559,8 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.16)',
-    backgroundColor: '#EEF2FF',
+    borderColor: withAlpha(AppColors.brand.primary, 0.16),
+    backgroundColor: AppColors.surface.brandSoft,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1526,7 +1570,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   moreAlertsBadge: {
     minWidth: 26,
@@ -1535,13 +1579,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   moreAlertsBadgeText: {
     fontSize: 12,
     lineHeight: 14,
     fontWeight: '900',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   breakdownGrid: {
     flexDirection: 'row',
@@ -1564,16 +1608,16 @@ const styles = StyleSheet.create({
   },
   stateExplorerBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.38)',
+    backgroundColor: withAlpha(AppColors.text.primary, 0.38),
   },
   stateExplorerCard: {
     flex: 1,
     overflow: 'hidden',
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.16,
     shadowRadius: 34,
@@ -1588,13 +1632,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
   },
   stateExplorerEyebrow: {
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
@@ -1603,7 +1647,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   stateExplorerActions: {
     flexDirection: 'row',
@@ -1618,20 +1662,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 3, 184, 0.14)',
-    backgroundColor: '#F8FAFC',
+    borderColor: withAlpha(AppColors.brand.primary, 0.14),
+    backgroundColor: AppColors.surface.subtle,
   },
   stateExplorerSecondaryText: {
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#0003B8',
+    color: AppColors.brand.primary,
   },
   stateExplorerError: {
     flex: 1,
     minHeight: 620,
     position: 'relative',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.surface.subtle,
   },
   moreAlertsOverlay: {
     flex: 1,
@@ -1645,10 +1689,10 @@ const styles = StyleSheet.create({
     maxHeight: '86%',
     overflow: 'hidden',
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
+    borderColor: AppColors.border.default,
+    shadowColor: AppColors.text.primary,
     shadowOffset: { width: 0, height: 18 },
     shadowOpacity: 0.16,
     shadowRadius: 42,
@@ -1659,7 +1703,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: AppColors.border.default,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1676,8 +1720,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
 });
 

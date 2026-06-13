@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTranslation } from '@/i18n';
+import { AppColors, AppRadii, AppSpacing, AppTypography } from '@/constants/theme';
 
 export function LanguageSwitcher() {
   const { language, toggleLanguage, t } = useTranslation();
@@ -21,18 +22,17 @@ const styles = StyleSheet.create({
   button: {
     minWidth: 42,
     height: 30,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    paddingHorizontal: AppSpacing[5],
+    borderRadius: AppRadii.md,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
   label: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: '#0003B8',
+    ...AppTypography.textStyles.captionStrong,
+    fontWeight: AppTypography.fontWeights.extrabold,
+    color: AppColors.brand.primary,
   },
 });

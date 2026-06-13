@@ -9,9 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
-import { SeverityBadge } from '@/components/recommendations/SeverityBadge';
 import { RecommendationFeedItem } from '@/components/views/admin/recommendations/Sub-funcionalidades/types';
+import { useTranslation } from '@/i18n';
+import { getRecommendationSourceLabel, isSpanish } from '@/components/views/admin/localization';
+import { AppColors } from '@/constants/theme';
 
 interface RecommendationDetailOverlayProps {
   visible: boolean;
@@ -24,6 +27,7 @@ export function RecommendationDetailOverlay({
   item,
   onClose,
 }: RecommendationDetailOverlayProps) {
+  const { language } = useTranslation();
   if (!item) return null;
 
   return (
@@ -38,39 +42,57 @@ export function RecommendationDetailOverlay({
               <Text style={styles.subtitle}>{item.description}</Text>
             </View>
             <View style={styles.headerRight}>
-              <SeverityBadge label={item.severity.toUpperCase()} severity={item.severity} />
               <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.75}>
-                <Feather name="x" size={18} color="#64748B" />
+                <Feather name="x" size={18} color={AppColors.text.secondary} />
               </TouchableOpacity>
             </View>
           </View>
 
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.metricRow}>
-              <MetricCard label="Confidence" value={`${item.confidenceScore}%`} />
-              <MetricCard label="Expected Impact" value={item.expectedImpact} />
-              <MetricCard label="Urgency Window" value={item.urgencyWindow} />
+              <OverlayStatCard
+                showAccentBar={false}
+                style={styles.metricCard}
+                labelStyle={styles.metricLabel}
+                valueStyle={styles.metricValue}
+                label={isSpanish(language) ? 'Prioridad calculada' : 'Calculated Priority'}
+                value={getSeverityLabel(item.backendSeverity, language)}
+              />
+              <OverlayStatCard
+                showAccentBar={false}
+                style={styles.metricCard}
+                labelStyle={styles.metricLabel}
+                valueStyle={styles.metricValue}
+                label={isSpanish(language) ? 'Impacto esperado' : 'Expected Impact'}
+                value={item.expectedImpact}
+              />
+              <OverlayStatCard
+                showAccentBar={false}
+                style={styles.metricCard}
+                labelStyle={styles.metricLabel}
+                valueStyle={styles.metricValue}
+                label={isSpanish(language) ? 'Ventana de urgencia' : 'Urgency Window'}
+                value={item.urgencyWindow}
+              />
             </View>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Generation Source</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Origen de generacion' : 'Generation Source'}</Text>
               <Text style={styles.sectionValue}>
-                {item.createdByMode === 'LLM_ASSISTED'
-                  ? 'LLM-assisted recommendation grounded in real-time outbreaks and hospital resource capacity.'
-                  : 'Operational recommendation generated from live hospital and outbreak rules.'}
+                {getRecommendationSourceLabel(item.createdByMode, language)}
               </Text>
             </CardBase>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Affected Scope</Text>
-              <Text style={styles.sectionLabel}>Departments</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Alcance afectado' : 'Affected Scope'}</Text>
+              <Text style={styles.sectionLabel}>{isSpanish(language) ? 'Departamentos' : 'Departments'}</Text>
               <Text style={styles.sectionValue}>{item.affectedDepartments.join(', ')}</Text>
-              <Text style={[styles.sectionLabel, styles.sectionLabelSpacing]}>Resources</Text>
+              <Text style={[styles.sectionLabel, styles.sectionLabelSpacing]}>{isSpanish(language) ? 'Recursos' : 'Resources'}</Text>
               <Text style={styles.sectionValue}>{item.affectedResources.join(', ')}</Text>
             </CardBase>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Why the AI flagged this</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Por que IA marco esto' : 'Why the AI flagged this'}</Text>
               {item.rationale.map((reason) => (
                 <View key={reason} style={styles.bulletRow}>
                   <View style={styles.bullet} />
@@ -80,17 +102,17 @@ export function RecommendationDetailOverlay({
             </CardBase>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Recommended Actions</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Acciones recomendadas' : 'Recommended Actions'}</Text>
               {item.recommendedActions.map((action) => (
                 <View key={action} style={styles.actionRow}>
-                  <Feather name="check-circle" size={15} color="#1718C7" />
+                  <Feather name="check-circle" size={15} color={AppColors.brand.action} />
                   <Text style={styles.bulletText}>{action}</Text>
                 </View>
               ))}
             </CardBase>
 
             <CardBase style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>Activity Trail</Text>
+              <Text style={styles.sectionTitle}>{isSpanish(language) ? 'Historial de actividad' : 'Activity Trail'}</Text>
               {item.auditTrail.map((event) => (
                 <View key={`${event.timestamp}-${event.label}`} style={styles.auditRow}>
                   <Text style={styles.auditTime}>{event.timestamp}</Text>
@@ -105,15 +127,6 @@ export function RecommendationDetailOverlay({
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <CardBase style={styles.metricCard}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{value}</Text>
-    </CardBase>
-  );
-}
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -123,7 +136,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.74)',
+    backgroundColor: AppColors.modal.backdrop,
   },
   dialog: {
     width: '100%',
@@ -141,7 +154,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   headerCopy: {
     flex: 1,
@@ -152,20 +165,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    color: '#1718C7',
+    color: AppColors.brand.action,
     marginBottom: 8,
   },
   title: {
     fontSize: 24,
     lineHeight: 32,
     fontWeight: '900',
-    color: '#0F172A',
+    color: AppColors.text.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 14,
     lineHeight: 22,
-    color: '#70839B',
+    color: AppColors.text.soft,
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -178,8 +191,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: AppColors.border.default,
+    backgroundColor: AppColors.surface.card,
   },
   content: {
     padding: 24,
@@ -187,10 +200,14 @@ const styles = StyleSheet.create({
   },
   metricRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   metricCard: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: '48%',
+    width: '48%',
     borderRadius: 16,
     padding: 14,
   },
@@ -198,16 +215,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
     marginBottom: 8,
   },
   metricValue: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '900',
-    color: '#0F172A',
+    fontSize: 16,
+    lineHeight: 23,
+    fontWeight: '600',
+    color: AppColors.text.primary,
   },
   sectionCard: {
     borderRadius: 18,
@@ -217,14 +234,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.text.primary,
     marginBottom: 12,
   },
   sectionLabel: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
@@ -235,7 +252,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   bulletRow: {
     flexDirection: 'row',
@@ -253,35 +270,44 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 999,
-    backgroundColor: '#1718C7',
+    backgroundColor: AppColors.brand.action,
     marginTop: 6,
   },
   bulletText: {
     flex: 1,
     fontSize: 14,
     lineHeight: 22,
-    color: '#526174',
+    color: AppColors.text.body,
   },
   auditRow: {
     flexDirection: 'row',
     gap: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: AppColors.surface.muted,
   },
   auditTime: {
     width: 110,
     fontSize: 12,
     lineHeight: 18,
     fontWeight: '700',
-    color: '#8A9AAF',
+    color: AppColors.text.muted,
   },
   auditLabel: {
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
-    color: '#526174',
+    color: AppColors.text.body,
   },
 });
 
 export default RecommendationDetailOverlay;
+
+function getSeverityLabel(severity: string, language: 'en' | 'es') {
+  const normalized = severity.toUpperCase();
+  if (!isSpanish(language)) return normalized;
+  if (normalized === 'CRITICAL') return 'CRITICA';
+  if (normalized === 'HIGH') return 'ALTA';
+  if (normalized === 'MEDIUM') return 'MEDIA';
+  return 'BAJA';
+}

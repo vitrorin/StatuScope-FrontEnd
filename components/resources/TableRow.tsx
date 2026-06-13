@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { ActionChipButton } from '../recommendations/ActionChipButton';
 import { StatusBadge } from '../feedback/StatusBadge';
+import { AppColors, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type TableRowStatusVariant = 'critical' | 'warning' | 'success' | 'neutral';
 
@@ -68,49 +69,48 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: AppSpacing[7],
+    paddingHorizontal: AppSpacing.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: AppColors.surface.control,
+    backgroundColor: AppColors.surface.card,
   },
   mainContent: {
     flex: 1,
-    marginRight: 16,
+    marginRight: AppSpacing.card,
   },
   titleSection: {},
   title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    ...AppTypography.textStyles.bodyStrong,
+    color: AppColors.text.strong,
   },
   subtitle: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
+    ...AppTypography.textStyles.caption,
+    color: AppColors.table.muted,
+    marginTop: AppSpacing[1],
   },
   metricsSection: {
     flexDirection: 'row',
-    marginRight: 16,
+    marginRight: AppSpacing.card,
   },
   metricCell: {
     alignItems: 'center',
-    marginHorizontal: 12,
+    marginHorizontal: AppSpacing[6],
     minWidth: 50,
   },
   metricValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+    ...AppTypography.textStyles.bodyStrong,
+    color: AppColors.text.strong,
   },
   metricLabel: {
-    fontSize: 10,
-    color: '#9CA3AF',
-    marginTop: 2,
+    fontSize: AppTypography.fontSizes.micro,
+    lineHeight: AppTypography.lineHeights.micro,
+    color: AppColors.text.disabled,
+    marginTop: AppSpacing[1],
   },
   statusSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: AppSpacing.fieldGap,
   },
 });

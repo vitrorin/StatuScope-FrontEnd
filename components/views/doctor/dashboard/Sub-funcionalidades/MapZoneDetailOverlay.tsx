@@ -1,9 +1,11 @@
 import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { OverlayStatCard } from '@/components/overlays/OverlayStatCard';
 import { CardBase } from '@/components/patterns/CardBase';
 import { DoctorDashboardZone } from '@/components/views/doctor/dashboard/Sub-funcionalidades/types';
 import { useTranslation } from '@/i18n';
+import { AppColors } from '@/constants/theme';
 
 interface MapZoneDetailOverlayProps {
   visible: boolean;
@@ -45,42 +47,31 @@ export function MapZoneDetailOverlay({ visible, zone, onClose }: MapZoneDetailOv
               ) : null}
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.78}>
-              <Feather name="x" size={18} color="#64748B" />
+              <Feather name="x" size={18} color={AppColors.text.secondary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.metricsGrid}>
             {metrics.map((metric) => (
-              <MetricStat key={metric.label} label={metric.label} value={metric.value} accentColor={zone.borderColor} />
+              <OverlayStatCard
+                key={metric.label}
+                label={metric.label}
+                value={metric.value}
+                accentColor={zone.borderColor}
+                valueNumberOfLines={2}
+                style={styles.statCard}
+              />
             ))}
           </View>
-
-          <CardBase style={[styles.noteCard, { borderColor: `${zone.borderColor}33` }]}>
-            <Text style={[styles.noteLabel, { color: zone.borderColor }]}>{t('doctor.dashboard.overlays.recommendedAction')}</Text>
-            <Text style={styles.noteText}>{zone.recommendedAction}</Text>
-          </CardBase>
         </CardBase>
       </View>
     </Modal>
   );
 }
 
-function MetricStat({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
-  return (
-    <CardBase style={[styles.statCard, { borderColor: `${accentColor}24` }]}>
-      <View style={[styles.statAccent, { backgroundColor: accentColor }]} />
-      <View style={[styles.statIcon, { backgroundColor: `${accentColor}12` }]}>
-        <Feather name="activity" size={15} color={accentColor} />
-      </View>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue} numberOfLines={2}>{value}</Text>
-    </CardBase>
-  );
-}
-
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.74)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: AppColors.modal.backdrop },
   dialog: { width: '100%', maxWidth: 680, borderRadius: 24, padding: 0, overflow: 'hidden' },
   header: {
     flexDirection: 'row',
@@ -90,20 +81,20 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEF2F7',
+    borderBottomColor: AppColors.border.soft,
   },
   headerCopy: { flex: 1 },
   eyebrow: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '800',
-    color: '#1718C7',
+    color: AppColors.brand.action,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
   },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: '#0F172A' },
-  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: '#70839B' },
+  title: { fontSize: 22, lineHeight: 28, fontWeight: '900', color: AppColors.text.primary },
+  subtitle: { marginTop: 8, fontSize: 14, lineHeight: 22, color: AppColors.text.soft },
   locationPill: {
     alignSelf: 'flex-start',
     marginTop: 12,
@@ -115,7 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  locationText: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: '#0F172A' },
+  locationText: { fontSize: 13, lineHeight: 17, fontWeight: '900', color: AppColors.text.primary },
   closeButton: {
     width: 40,
     height: 40,
@@ -123,47 +114,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.border.default,
   },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 24 },
   statCard: {
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: '48%',
     width: '48%',
-    minHeight: 118,
+    minHeight: 106,
     borderRadius: 14,
     padding: 16,
-    paddingLeft: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface.card,
   },
-  statAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-  },
-  statIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  statLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '800',
-    color: '#8A9AAF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 8,
-  },
-  statValue: { fontSize: 18, lineHeight: 24, fontWeight: '900', color: '#0F172A' },
-  noteCard: { marginHorizontal: 24, marginBottom: 24, borderRadius: 18, padding: 16, borderWidth: 1 },
-  noteLabel: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: '#1718C7', marginBottom: 8 },
-  noteText: { fontSize: 14, lineHeight: 22, color: '#526174' },
 });
 
 export default MapZoneDetailOverlay;

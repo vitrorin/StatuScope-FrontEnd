@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { AppColors, AppSizes, AppSpacing, AppTypography } from '@/constants/theme';
 
 export type AvatarTone = 'default' | 'doctor' | 'admin' | 'neutral';
 export type AvatarSize = 'sm' | 'md' | 'lg';
@@ -12,16 +13,16 @@ export interface AvatarProps {
 }
 
 const toneStyles = {
-  default: { bg: '#DBEAFE', text: '#1D4ED8' },
-  doctor: { bg: '#DCFCE7', text: '#16A34A' },
-  admin: { bg: '#FEF3C7', text: '#D97706' },
-  neutral: { bg: '#F3F4F6', text: '#6B7280' },
+  default: { bg: AppColors.status.infoSoft, text: AppColors.brand.link },
+  doctor: { bg: AppColors.status.successSoft, text: AppColors.status.success },
+  admin: { bg: AppColors.status.warningSoft, text: AppColors.status.warningText },
+  neutral: { bg: AppColors.surface.control, text: AppColors.table.muted },
 };
 
 const sizeStyles = {
-  sm: { size: 28, fontSize: 10 },
-  md: { size: 36, fontSize: 12 },
-  lg: { size: 44, fontSize: 14 },
+  sm: { size: AppSpacing[14], fontSize: AppTypography.fontSizes.micro },
+  md: { size: AppSizes.controlSm, fontSize: AppTypography.fontSizes.caption },
+  lg: { size: AppSizes.controlLg, fontSize: AppTypography.fontSizes.body },
 };
 
 export function Avatar({
@@ -59,6 +60,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   initials: {
-    fontWeight: '600',
+    fontWeight: AppTypography.fontWeights.semibold,
   },
 });
