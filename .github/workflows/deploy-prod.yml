@@ -1,0 +1,91 @@
+name: Deploy Prod
+
+# Deploys the web frontend to Cloud Run (project: statuscope) on every push to main.
+# The ONLY GitHub secret required is GCP_SA_KEY_PROD (the gh-deployer service-account JSON key).
+# The EXPO_PUBLIC_* values are public client config (shipped in the web bundle), so they are inline.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: frontend-prod-deploy
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: statuscope
+  REGISTRY_REGION: us-central1
+  REGISTRY_REPO: statuscope
+  IMAGE_NAME: statuscope-frontend
+  SERVICE_NAME: statuscope-frontend
+  REGION: us-central1
+  EXPO_PUBLIC_API_URL: https://statusscope-backend-ohwdlmbinq-uc.a.run.app
+  EXPO_PUBLIC_FIREBASE_API_KEY: AIzaSyCf7uObKHhZ4MA_i2h4kZdbcmdqOnUEUH0
+  EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: proyecto-andres-d7931.firebaseapp.com
+  EXPO_PUBLIC_FIREBASE_PROJECT_ID: proyecto-andres-d7931
+  EXPO_PUBLIC_FIREBASE_APP_ID: "1:518300476278:web:0a4874dffef02342cd9057"
+
+jobs:
+  validate:
+    name: Lint & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npx eslint app components --max-warnings=-1 --config eslint.config.mjs
+
+      - name: Unit tests
+        run: npx vitest run --project unit
+
+  deploy:
+    name: Build & Deploy to Cloud Run
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_PROD }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGISTRY_REGION }}-docker.pkg.dev
+
+      - name: Build and push Docker image
+        run: |
+          docker build \
+            --build-arg EXPO_PUBLIC_API_URL="${{ env.EXPO_PUBLIC_API_URL }}" \
+            --build-arg EXPO_PUBLIC_FIREBASE_API_KEY="${{ env.EXPO_PUBLIC_FIREBASE_API_KEY }}" \
+            --build-arg EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN="${{ env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}" \
+            --build-arg EXPO_PUBLIC_FIREBASE_PROJECT_ID="${{ env.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}" \
+            --build-arg EXPO_PUBLIC_FIREBASE_APP_ID="${{ env.EXPO_PUBLIC_FIREBASE_APP_ID }}" \
+            -t ${{ env.REGISTRY_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGISTRY_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:prod \
+            .
+          docker push ${{ env.REGISTRY_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:prod
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGISTRY_REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --min-instances 0 \
+            --max-instances 4 \
+            --memory 256Mi \
+            --project ${{ env.PROJECT_ID }}
